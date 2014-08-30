@@ -86,7 +86,7 @@ private:
 
         // Tokenize..
         Tokenizer& tokenizer = preprocessor.cfg[""]->tokenizer;
-        tokenizer.initForChecking();
+        tokenizer.prepareChecking();
 
         // Check..
         CheckString checkString(&tokenizer, &settings, this);

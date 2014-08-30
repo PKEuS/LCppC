@@ -10873,7 +10873,7 @@ private:
         Preprocessor2 preprocessor(&settings);
         std::istringstream fin(raw_code);
         preprocessor.preprocess(fin, "", settings._includePaths);
-        preprocessor.cfg[""]->tokenizer.initForChecking(); // just survive...
+        preprocessor.cfg[""]->tokenizer.prepareChecking(); // just survive...
     }
 
     void astGarbage() {

@@ -241,6 +241,36 @@ void TokenList::insertTokens(Token *dest, const Token *src, unsigned int n)
     }
 }
 
+void TokenList::insertTokens(Token *dest, const Token *src_start, const Token *src_end)
+{
+    std::stack<Token *> link;
+
+    while (src_start != src_end->next()) {
+        dest->insertToken(src_start->str(), src_start->originalName());
+        dest = dest->next();
+
+        // Set links
+        if (Token::Match(dest, "(|[|{"))
+            link.push(dest);
+        else if (!link.empty() && Token::Match(dest, ")|]|}")) {
+            Token::createMutualLinks(dest, link.top());
+            link.pop();
+        }
+
+        dest->fileIndex(src_start->fileIndex());
+        dest->linenr(src_start->linenr());
+        dest->varId(src_start->varId());
+        dest->type(src_start->type());
+        dest->isUnsigned(src_start->isUnsigned());
+        dest->isSigned(src_start->isSigned());
+        dest->isPointerCompare(src_start->isPointerCompare());
+        dest->isLong(src_start->isLong());
+        dest->isAttributeUnused(src_start->isAttributeUnused());
+        dest->isExpandedMacro(src_start->isExpandedMacro());
+        src_start = src_start->next();
+    }
+}
+
 //---------------------------------------------------------------------------
 // Tokenize - tokenizes a given file.
 //---------------------------------------------------------------------------

@@ -227,6 +227,9 @@ void Preprocessor2::removeComments(std::string& str, const std::string& filename
             writeError(filename, lineno, _errorLogger, "syntaxError", errmsg.str());
         }
 
+        if (_settings && _settings->terminated())
+            return;
+
         // First skip over any whitespace that may be present
         if (std::isspace(ch)) {
             if (ch == ' ' && previous == ' ') {
@@ -253,7 +256,7 @@ void Preprocessor2::removeComments(std::string& str, const std::string& filename
 
         // Remove comments..
         if (str.compare(i, 2, "//", 0, 2) == 0) {
-            size_t commentStart = i + 2;
+            std::size_t commentStart = i + 2;
             i = str.find('\n', i);
             if (i == std::string::npos)
                 break;
@@ -278,7 +281,7 @@ void Preprocessor2::removeComments(std::string& str, const std::string& filename
             previous = '\n';
             ++lineno;
         } else if (str.compare(i, 2, "/*", 0, 2) == 0) {
-            size_t commentStart = i + 2;
+            std::size_t commentStart = i + 2;
             unsigned char chPrev = 0;
             ++i;
             while (i < str.length() && (chPrev != '*' || ch != '/')) {
@@ -315,7 +318,7 @@ void Preprocessor2::removeComments(std::string& str, const std::string& filename
             if (!suppressionIDs.empty()) {
                 if (_settings != NULL) {
                     // Add the suppressions.
-                    for (size_t j(0); j < suppressionIDs.size(); ++j) {
+                    for (std::size_t j = 0; j < suppressionIDs.size(); ++j) {
                         const std::string errmsg(_settings->nomsg.addSuppression(suppressionIDs[j], Path::fromNativeSeparators(filename), lineno));
                         if (!errmsg.empty()) {
                             writeError(filename, lineno, _errorLogger, "cppcheckError", errmsg);
@@ -342,8 +345,19 @@ void Preprocessor2::removeComments(std::string& str, const std::string& filename
                 // Add any pending inline suppressions that have accumulated.
                 if (!suppressionIDs.empty()) {
                     if (_settings != NULL) {
+                        // Relative filename
+                        std::string relativeFilename(filename);
+                        if (_settings->_relativePaths) {
+                            for (std::size_t j = 0U; j < _settings->_basePaths.size(); ++j) {
+                                const std::string bp = _settings->_basePaths[j] + "/";
+                                if (relativeFilename.compare(0,bp.size(),bp)==0) {
+                                    relativeFilename = relativeFilename.substr(bp.size());
+                                }
+                            }
+                        }
+
                         // Add the suppressions.
-                        for (size_t j(0); j < suppressionIDs.size(); ++j) {
+                        for (std::size_t j = 0; j < suppressionIDs.size(); ++j) {
                             const std::string errmsg(_settings->nomsg.addSuppression(suppressionIDs[j], Path::fromNativeSeparators(filename), lineno));
                             if (!errmsg.empty()) {
                                 writeError(filename, lineno, _errorLogger, "cppcheckError", errmsg);
@@ -606,9 +620,9 @@ bool Preprocessor2::Configuration::replaceMacro_inner(Preprocessor2::Configurati
                 replacementMap[tok2].insert(replacementMap[tok].begin(), replacementMap[tok].end());
 
             if (config.defs.find(tok2->str()) != config.defs.end()) { // Look for further replacements (-> recursion)
-                Token* temp = tok2->next();
+                Token* temp = tok2->previous();
                 if (replaceMacro_inner(config, tok2, config.defs.at(tok2->str()), replacementMap))
-                    tok2 = (temp&&temp->previous())?temp->tokAt(-2):config.tokenizer.list.back();
+                    tok2 = temp;
                 else // No replacement done, because recursion was detected
                     tok2 = tok2->previous();
             } else
@@ -617,7 +631,9 @@ bool Preprocessor2::Configuration::replaceMacro_inner(Preprocessor2::Configurati
         if (found)
             replacementMap.erase(tok);
     } else { // "Function" macro
-        if (replacementMap.find(tok) != replacementMap.end() && replacementMap[tok].find(tok->str()) != replacementMap[tok].end()) // Avoid recursion
+        bool found = replacementMap.find(tok) != replacementMap.end();
+        std::string name = tok->str();
+        if (found && replacementMap[tok].find(name) != replacementMap[tok].end()) // Avoid recursion
             return false;
 
         unsigned int bracketCount = 1;
@@ -633,6 +649,96 @@ bool Preprocessor2::Configuration::replaceMacro_inner(Preprocessor2::Configurati
         }
         std::string definedAs = definition.substr(i+1);
         std::string definedFrom = definition.substr(0, i+1);
+
+        Token* start = tok->previous(); // Points to token before expanded code
+        config.tokenizer.list.tokenizeString(definedAs, tok); // expand
+        tok->deleteThis(); // Delete function macro's name
+        Token* argListStart = tok->next(); // Points one behind start to avoid problems with recursion
+        Token* tok2 = tok->next(); // Points to argument list now
+        Token* end = tok2->previous();
+
+        // Create mapping between argument names and argument content (first and last token)
+        std::map<std::string, std::pair<Token*, Token*>> argumentMap;
+        i = 2;
+        while (tok2 && tok2->str() != ")" && i < definedFrom.size() && definedFrom[i] != ')') {
+            std::string::size_type j = definedFrom.find(' ', i);
+            Token* first = tok2;
+            Token* last = NULL;
+            std::string name = definedFrom.substr(i, j - i);
+
+            i = j + 3; // Jump to next argument name
+
+            // Find next passed argument
+            int indent = 0;
+            while (tok2) {
+                if (tok2->str() == "(")
+                    indent++;
+                else if (indent > 0 && tok2->str() == ")") {
+                    indent--;
+                } else if (indent == 0 && (tok2->str() == "," || tok2->str() == ")")) {
+                    last = tok2->previous();
+                    tok2 = tok2->next();
+                    break;
+                }
+                tok2 = tok2->next();
+            }
+
+            argumentMap[name] = std::make_pair(first, last);
+            for (Token* tok3 = first; tok3 != last->next(); tok3 = tok3->next())
+                tok3->isExpandedMacro(true);
+        }
+        Token* behindArgList = tok2;
+        if (argumentMap.empty())
+            behindArgList = behindArgList->next();
+
+        if (start == NULL)
+            start = config.tokenizer.list.front();
+        else
+            start = start->next();
+
+        // Insert arguments and concatenate tokens
+        Token* beforeStart = start->previous();
+        for (tok2 = end->previous(); tok2 != beforeStart;) {
+            std::map<std::string, std::pair<Token*, Token*>>::const_iterator j = argumentMap.find(tok2->str());
+            if (j != argumentMap.end()) {
+                TokenList::insertTokens(tok2, j->second.first, j->second.second); // Insert argument
+                tok2->deleteThis();
+            }
+
+            tok2->isExpandedMacro(true);
+            replacementMap[tok2].insert(name); // tok2 was expanded from macro with name tok->str()
+            if (found)
+                replacementMap[tok2].insert(replacementMap[tok].begin(), replacementMap[tok].end());
+
+            if (tok2->strAt(1) == "##") { // Concatenate
+                tok2->str(tok2->str() + tok2->strAt(2));
+                tok2->deleteNext();
+                tok2->deleteNext();
+            }
+
+            tok2 = tok2->previous();
+        }
+
+        // Look for further replacements (-> recursion)
+        for (tok2 = end->previous(); tok2 != beforeStart;) {
+            if (config.defs.find(tok2->str()) != config.defs.end()) {
+                Token* temp = tok2->previous();
+                if (replaceMacro_inner(config, tok2, config.defs.at(tok2->str()), replacementMap)) {
+                    if (!temp)
+                        break;
+
+                    tok2 = temp->next();
+                }
+            }
+
+            tok2 = tok2->previous();
+        }
+
+        argListStart = argListStart->previous();
+        Token::eraseTokens(argListStart, behindArgList);
+        argListStart->deleteThis();
+        if (found)
+            replacementMap.erase(tok);
     }
     return true;
 }
@@ -1045,6 +1151,11 @@ Start:
     while (!configs.empty()) { // Remove remaining cfg's
         delete configs.front();
         configs.pop();
+    }
+
+    // Set Tokenizer::_configuration for each configuration
+    for (std::map<std::string, Preprocessor2::Configuration*>::const_iterator i = cfg.begin(); i != cfg.end(); ++i) {
+        i->second->tokenizer.setConfiguration(i->first);
     }
 }
 

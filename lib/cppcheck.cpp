@@ -311,8 +311,8 @@ void CppCheck::checkFile(Tokenizer& tokenizer)
             }
         }*/
 
-        Timer timer1("Tokenizer::initForChecking", _settings._showtime, &S_timerResults);
-        if (!tokenizer.initForChecking())
+        Timer timer1("Tokenizer::prepareChecking", _settings._showtime, &S_timerResults);
+        if (!tokenizer.prepareChecking())
             return;
         timer1.Stop();
 

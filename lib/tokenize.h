@@ -97,7 +97,10 @@ public:
                   const std::string &configuration = emptyString,
                   bool noSymbolDB_AST = false);
 
-    bool initForChecking(bool noSymbolDB_AST = false);
+    /**
+    * Initializes token list for checking - creates SymbolDatabase and AST
+    */
+    bool prepareChecking(bool noSymbolDB_AST = false);
 
     /** Set variable id */
     void setVarId();
@@ -712,6 +715,10 @@ public:
     /** Was there templates in the code? */
     bool codeWithTemplates() const {
         return _codeWithTemplates;
+    }
+
+    void setConfiguration(const std::string& config) {
+        _configuration = config;
     }
 
     void setSettings(const Settings *settings) {

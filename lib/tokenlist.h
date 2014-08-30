@@ -66,6 +66,7 @@ public:
     void addtoken(const Token* tok);
 
     static void insertTokens(Token *dest, const Token *src, unsigned int n);
+    static void insertTokens(Token *dest, const Token *src_start, const Token *src_end);
 
     /**
      * Create tokens from code.

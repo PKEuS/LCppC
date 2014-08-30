@@ -235,7 +235,7 @@ private:
 
         // Tokenize..
         Tokenizer& tokenizer = preprocessor.cfg[""]->tokenizer;
-        tokenizer.initForChecking();
+        tokenizer.prepareChecking();
 
         // Check..
         CheckOther checkOther(&tokenizer, &settings, &logger);

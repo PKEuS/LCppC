@@ -6393,7 +6393,7 @@ private:
 
         // Tokenize..
         Tokenizer& tokenizer = preprocessor.cfg[""]->tokenizer;
-        tokenizer.initForChecking();
+        tokenizer.prepareChecking();
         tokenizer.simplifyTokenList2();
 
         // Check for memory leaks..
@@ -6445,7 +6445,7 @@ private:
 
         // Tokenize..
         Tokenizer& tokenizer = preprocessor.cfg[""]->tokenizer;
-        tokenizer.initForChecking();
+        tokenizer.prepareChecking();
         tokenizer.simplifyTokenList2();
 
         // Check for memory leaks..

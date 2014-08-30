@@ -1593,10 +1593,10 @@ bool Tokenizer::tokenize(std::istream &code,
         return false;
     }
 
-    return initForChecking(noSymbolDB_AST);
+    return prepareChecking(noSymbolDB_AST);
 }
 
-bool Tokenizer::initForChecking(bool noSymbolDB_AST)
+bool Tokenizer::prepareChecking(bool noSymbolDB_AST)
 {
     // make sure settings specified
     assert(_settings);
