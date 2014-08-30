@@ -127,8 +127,6 @@ public:
      */
     void analyseFile(std::istream &f, const std::string &filename);
 
-    void tooManyConfigsError(const std::string &file, const std::size_t numberOfConfigurations);
-
     void dontSimplify() {
         _simplify = false;
     }
@@ -147,7 +145,7 @@ private:
     unsigned int processFile(const std::string& filename, const std::string& fileContent);
 
     /** @brief Check file */
-    void checkFile(const std::string &code, const char FileName[]);
+    void checkFile(Tokenizer& tokenizer);
 
     /**
      * @brief Execute rules, if any
@@ -203,9 +201,6 @@ private:
     unsigned int exitcode;
 
     bool _useGlobalSuppressions;
-
-    /** Are there too many configs? */
-    bool tooManyConfigs;
 
     /** Simplify code? true by default */
     bool _simplify;

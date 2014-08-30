@@ -228,17 +228,14 @@ private:
 
         // Preprocess file..
         SimpleSuppressor logger(settings, this);
-        Preprocessor preprocessor(&settings, &logger);
+        Preprocessor2 preprocessor(&settings, &logger);
         std::list<std::string> configurations;
-        std::string filedata = "";
         std::istringstream fin(precode);
-        preprocessor.preprocess(fin, filedata, configurations, filename, settings._includePaths);
-        const std::string code = preprocessor.getcode(filedata, "", filename);
+        preprocessor.preprocess(fin, filename, settings._includePaths);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, &logger);
-        std::istringstream istr(code);
-        tokenizer.tokenize(istr, filename);
+        Tokenizer& tokenizer = preprocessor.cfg[""]->tokenizer;
+        tokenizer.initForChecking();
 
         // Check..
         CheckOther checkOther(&tokenizer, &settings, &logger);
@@ -3762,7 +3759,7 @@ private:
     }
 
     void duplicateBranch2() {
-        Preprocessor::macroChar = '$';
+        Preprocessor2::macroChar = '$';
 
         check("void f(int x) {\n" // #4329
               "  if (x)\n"
@@ -4111,7 +4108,7 @@ private:
     }
 
     void duplicateExpression5() {  // #3749 - macros with same values
-        Preprocessor::macroChar = '$';
+        Preprocessor2::macroChar = '$';
         check("void f() {\n"
               "    if ($a == $a) { }\n"
               "}");

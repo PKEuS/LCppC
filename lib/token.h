@@ -117,6 +117,8 @@ public:
      */
     const std::string &strAt(int index) const;
 
+    Token* getLineEnd();
+
     /**
      * Match given token (or list of tokens) to a pattern list.
      *
@@ -430,8 +432,14 @@ public:
      * the first one on the tokens list.
      */
     void insertToken(const std::string &tokenStr, bool prepend=false);
-
     void insertToken(const std::string &tokenStr, const std::string &originalNameStr, bool prepend=false);
+
+    /**
+     * Insert new token before this token. This function will handle
+     * relations between next and previous token also.
+     * @param tokenStr String for the new token.
+     */
+    void prependToken(const std::string &tokenStr);
 
     Token *previous() const {
         return _previous;

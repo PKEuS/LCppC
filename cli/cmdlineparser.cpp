@@ -38,6 +38,21 @@
 #include <tinyxml2.h>
 #endif
 
+// Insert string portions separated by the specified separator in a set
+static void split(std::set<std::string>& parts, const std::string& s, char separator)
+{
+    std::string::size_type prevPos = 0;
+    for (std::string::size_type pos = 0; pos < s.length(); ++pos) {
+        if (s[pos] == separator) {
+            if (pos > prevPos)
+                parts.insert(s.substr(prevPos, pos - prevPos));
+            prevPos = pos + 1;
+        }
+    }
+    if (prevPos < s.length())
+        parts.insert(s.substr(prevPos));
+}
+
 static void AddFilesToList(const std::string& FileList, std::vector<std::string>& PathNames)
 {
     // to keep things initially simple, if the file can't be opened, just be
@@ -374,53 +389,55 @@ bool CmdLineParser::ParseFromArgs(int argc, const char* const argv[])
 
         // User define
         else if (std::strncmp(argv[i], "-D", 2) == 0) {
+            _settings->userDefined = true;
             std::string define;
 
             // "-D define"
             if (std::strcmp(argv[i], "-D") == 0) {
                 ++i;
-                if (i >= argc || argv[i][0] == '-') {
+                if (i >= argc || (argv[i][0] == '-' && argv[i][1] != 0)) {
                     PrintMessage("cppcheck: argument to '-D' is missing.");
                     return false;
-                }
+                } else if (i >= argc || argv[i][0] == '-')
+                    continue;
 
                 define = argv[i];
             }
             // "-Ddefine"
             else {
                 define = 2 + argv[i];
+                if (define == "-")
+                    continue;
             }
 
-            // No "=", append a "=1"
-            if (define.find("=") == std::string::npos)
-                define += "=1";
-
-            if (!_settings->userDefines.empty())
-                _settings->userDefines += ";";
-            _settings->userDefines += define;
+            split(_settings->userDefines, define, ';');
 
             def = true;
         }
         // User undef
         else if (std::strncmp(argv[i], "-U", 2) == 0) {
+            _settings->userUndefined = true;
             std::string undef;
 
             // "-U undef"
             if (std::strcmp(argv[i], "-U") == 0) {
                 ++i;
-                if (i >= argc || argv[i][0] == '-') {
+                if (i >= argc || (argv[i][0] == '-' && argv[i][1] != 0)) {
                     PrintMessage("cppcheck: argument to '-U' is missing.");
                     return false;
-                }
+                } else if (i >= argc || argv[i][0] == '-')
+                    continue;
 
                 undef = argv[i];
             }
             // "-Uundef"
             else {
                 undef = 2 + argv[i];
+                if (undef == "-")
+                    continue;
             }
 
-            _settings->userUndefs.insert(undef);
+            split(_settings->userUndefs, undef, ';');
         }
 
         // Include paths
@@ -847,16 +864,21 @@ void CmdLineParser::PrintHelp()
               "                         analysis is disabled by this flag.\n"
               "    --check-library      Show information messages when library files have\n"
               "                         incomplete info.\n"
+              "    -D<ID>, -U<ID>       By default Cppcheck checks all configurations. Use this\n"
+              "                         option to explicitly define/undefine certain macros to\n"
+              "                         enable/disable certain configurations. Unless not both\n"
+              "                         options are given, all other macros are assumed to be (not)\n"
+              "                         defined. Use '-' as ID to indicate that nothing should be\n"
+              "                         defined/undefined. Indicate respective definition with '='.\n"
+              "                         Multiple macros can be separated by ';'. Examples:\n"
+              "                         '-U FOO;DEBUG' -> assume all macros exept DEBUG and FOO are\n"
+              "                                           defined\n"
+              "                         '-DFOO=4' -> assume, only macro FOO is defined (as 4)\n"
+              "                         '-UFOO -D-' -> FOO is undefined, all other configurations\n"
+              "                                        possible\n"
               "    --dump               Dump xml data for each translation unit. The dump\n"
               "                         files have the extension .dump and contain ast,\n"
               "                         tokenlist, symboldatabase, valueflow.\n"
-              "    -D<ID>               Define preprocessor symbol. Unless --max-configs or\n"
-              "                         --force is used, Cppcheck will only check the given\n"
-              "                         configuration when -D is used.\n"
-              "                         Example: '-DDEBUG=1 -D__cplusplus'.\n"
-              "    -U<ID>               Undefine preprocessor symbol. Use -U to explicitly\n"
-              "                         hide certain #ifdef <ID> code paths from checking.\n"
-              "                         Example: '-UDEBUG'\n"
               "    --enable=<id>        Enable additional checks. The available ids are:\n"
               "                          * all\n"
               "                                  Enable all checks. It is recommended to only\n"

@@ -50,6 +50,12 @@ Tokenizer::Tokenizer() :
 {
 }
 
+Tokenizer::Tokenizer(const Tokenizer& t2, Token*& tokPair)
+    : list(t2.list, tokPair), _settings(t2._settings), _errorLogger(t2._errorLogger), _symbolDatabase(0), _configuration(t2._configuration)
+    , _typeSize(t2._typeSize), _varId(t2._varId), _codeWithTemplates(t2._codeWithTemplates), m_timerResults(t2.m_timerResults)
+{
+}
+
 Tokenizer::Tokenizer(const Settings *settings, ErrorLogger *errorLogger) :
     list(settings),
     _settings(settings),
@@ -62,8 +68,6 @@ Tokenizer::Tokenizer(const Settings *settings, ErrorLogger *errorLogger) :
     ,maxtime(std::time(0) + MAXTIME)
 #endif
 {
-    // make sure settings are specified
-    assert(_settings);
 }
 
 Tokenizer::~Tokenizer()
@@ -1589,7 +1593,15 @@ bool Tokenizer::tokenize(std::istream &code,
         return false;
     }
 
-    if (simplifyTokenList1(FileName)) {
+    return initForChecking(noSymbolDB_AST);
+}
+
+bool Tokenizer::initForChecking(bool noSymbolDB_AST)
+{
+    // make sure settings specified
+    assert(_settings);
+
+    if (simplifyTokenList1()) {
         if (!noSymbolDB_AST) {
             createSymbolDatabase();
 
@@ -1611,78 +1623,7 @@ bool Tokenizer::tokenize(std::istream &code,
     }
     return false;
 }
-//---------------------------------------------------------------------------
 
-bool Tokenizer::tokenizeCondition(const std::string &code)
-{
-    assert(_settings);
-
-    // Fill the map _typeSize..
-    fillTypeSizes();
-
-    {
-        std::istringstream istr(code);
-        if (!list.createTokens(istr, "")) {
-            cppcheckError(0);
-            return false;
-        }
-    }
-
-    // Combine strings
-    combineStrings();
-
-    // Remove "volatile", "inline", "register", and "restrict"
-    simplifyKeyword();
-
-    // convert platform dependent types to standard types
-    // 32 bits: size_t -> unsigned long
-    // 64 bits: size_t -> unsigned long long
-    simplifyPlatformTypes();
-
-    // collapse compound standard types into a single token
-    // unsigned long long int => long _isUnsigned=true,_isLong=true
-    simplifyStdType();
-
-    // Concatenate double sharp: 'a ## b' -> 'ab'
-    concatenateDoubleSharp();
-
-    createLinks();
-
-    // replace 'NULL' and similar '0'-defined macros with '0'
-    simplifyNull();
-
-    // replace 'sin(0)' to '0' and other similar math expressions
-    simplifyMathExpressions();
-
-    // combine "- %num%"
-    concatenateNegativeNumberAndAnyPositive();
-
-    // simplify simple calculations
-    for (Token *tok = list.front() ? list.front()->next() : nullptr;
-         tok;
-         tok = tok->next()) {
-        if (tok->isNumber())
-            TemplateSimplifier::simplifyNumericCalculations(tok->previous());
-    }
-
-    combineOperators();
-
-    simplifyRedundantParentheses();
-    for (Token *tok = list.front();
-         tok;
-         tok = tok->next())
-        while (TemplateSimplifier::simplifyNumericCalculations(tok))
-            ;
-
-    simplifyCAlternativeTokens();
-
-    // Convert e.g. atol("0") into 0
-    while (simplifyMathFunctions()) {};
-
-    simplifyDoublePlusAndDoubleMinus();
-
-    return true;
-}
 
 void Tokenizer::findComplicatedSyntaxErrorsInTemplates()
 {
@@ -3121,7 +3062,12 @@ bool Tokenizer::simplifySizeof()
     return ret;
 }
 
-bool Tokenizer::simplifyTokenList1(const char FileName[])
+bool Tokenizer::simplifyTokenList0()
+{
+    return true;
+}
+
+bool Tokenizer::simplifyTokenList1()
 {
     if (_settings->terminated())
         return false;
@@ -3247,7 +3193,7 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
     // ";a+=b;" => ";a=a+b;"
     simplifyCompoundAssignment();
 
-    if (!_settings->library.markupFile(FileName)) {
+    if (!_settings->library.markupFile(list.getSourceFilePath())) {
         findComplicatedSyntaxErrorsInTemplates();
     }
 

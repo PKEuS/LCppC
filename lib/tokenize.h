@@ -32,6 +32,7 @@
 
 class Settings;
 class SymbolDatabase;
+class Preprocessor2;
 class TimerResults;
 
 /// @addtogroup Core
@@ -39,9 +40,12 @@ class TimerResults;
 
 /** @brief The main purpose is to tokenize the source code. It also has functions that simplify the token list */
 class CPPCHECKLIB Tokenizer {
+    friend class Preprocessor2;
 public:
     Tokenizer();
     Tokenizer(const Settings * settings, ErrorLogger *errorLogger);
+    /** Ctor that creates a copy from t2 (without links) and writes the equivalent in new token list of tokPair to tokPair */
+    Tokenizer(const Tokenizer& t2, Token*& tokPair);
     ~Tokenizer();
 
     void setTimerResults(TimerResults *tr) {
@@ -92,15 +96,19 @@ public:
                   const char FileName[],
                   const std::string &configuration = emptyString,
                   bool noSymbolDB_AST = false);
-    /**
-     * tokenize condition and run simple simplifications on it
-     * @param code code
-     * @return true if success.
-     */
-    bool tokenizeCondition(const std::string &code);
+
+    bool initForChecking(bool noSymbolDB_AST = false);
 
     /** Set variable id */
     void setVarId();
+
+    /**
+    * Weak simplification of tokenlist. Can be used before preprocessing.
+    *
+    * @return false if there is an error that requires aborting
+    * the checking of this file.
+    */
+    bool simplifyTokenList0();
 
     /**
     * Basic simplification of tokenlist
@@ -111,7 +119,7 @@ public:
     * @return false if there is an error that requires aborting
     * the checking of this file.
     */
-    bool simplifyTokenList1(const char FileName[]);
+    bool simplifyTokenList1();
 
     /**
     * Most aggressive simplification of tokenlist

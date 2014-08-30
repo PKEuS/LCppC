@@ -70,7 +70,8 @@ void Token::update_property_info()
                 _type = eName;
         } else if (std::isdigit((unsigned char)_str[0]) || (_str.length() > 1 && _str[0] == '-' && std::isdigit((unsigned char)_str[1])))
             _type = eNumber;
-        else if (_str.length() > 1 && _str[0] == '"' && _str[_str.length()-1] == '"')
+        else if (_str.length() > 1 && ((_str[0] == '"' && _str[_str.length()-1] == '"') ||
+                                       (_str[0] == '<' && _str[_str.length()-1] == '>')))
             _type = eString;
         else if (_str.length() > 1 && _str[0] == '\'' && _str[_str.length()-1] == '\'')
             _type = eChar;
@@ -278,6 +279,13 @@ const std::string &Token::strAt(int index) const
 {
     const Token *tok = this->tokAt(index);
     return tok ? tok->_str : emptyString;
+}
+
+Token* Token::getLineEnd()
+{
+    for (Token* tok = this; ; tok = tok->next())
+        if (!tok->next() || tok->next()->_linenr != _linenr || tok->next()->_fileIndex != _fileIndex)
+            return tok;
 }
 
 static int multiComparePercent(const Token *tok, const char*& haystack, bool emptyStringFound, unsigned int varid)
@@ -895,6 +903,27 @@ void Token::insertToken(const std::string &tokenStr, const std::string &original
     }
 }
 
+void Token::prependToken(const std::string &tokenStr)
+{
+    Token *newToken;
+    if (_str == "")
+        newToken = this;
+    else
+        newToken = new Token(tokensBack);
+    newToken->str(tokenStr);
+    newToken->_linenr = _linenr;
+    newToken->_fileIndex = _fileIndex;
+    newToken->_progressValue = _progressValue;
+    if (newToken != this) {
+        if (this->previous())
+            this->previous()->next(this);
+        //else // TODO. Set new start of token list
+        newToken->next(this);
+        newToken->previous(this->previous());
+        this->previous(newToken);
+    }
+}
+
 void Token::eraseTokens(Token *begin, const Token *end)
 {
     if (!begin || begin == end)
@@ -941,9 +970,9 @@ void Token::stringify(std::ostream& os, bool varid, bool attributes) const
             else
                 os << "long ";
         }
+        if (isExpandedMacro())
+            os << '$';
     }
-    if (isExpandedMacro())
-        os << "$";
     if (_str[0] != '\"' || _str.find("\0") == std::string::npos)
         os << _str;
     else {

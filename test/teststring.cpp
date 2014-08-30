@@ -80,17 +80,13 @@ private:
         settings.addEnabled("warning");
 
         // Preprocess file..
-        Preprocessor preprocessor(&settings, this);
-        std::list<std::string> configurations;
-        std::string filedata;
+        Preprocessor2 preprocessor(&settings, this);
         std::istringstream fin(precode);
-        preprocessor.preprocess(fin, filedata, configurations, "test.cpp", settings._includePaths);
-        const std::string code = preprocessor.getcode(filedata, "", "test.cpp");
+        preprocessor.preprocess(fin, "test.cpp", settings._includePaths);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
-        std::istringstream istr(code);
-        tokenizer.tokenize(istr, "test.cpp");
+        Tokenizer& tokenizer = preprocessor.cfg[""]->tokenizer;
+        tokenizer.initForChecking();
 
         // Check..
         CheckString checkString(&tokenizer, &settings, this);

@@ -6387,15 +6387,13 @@ private:
         errout.str("");
 
         // Preprocess...
-        Preprocessor preprocessor(&settings, this);
+        Preprocessor2 preprocessor(&settings, this);
         std::istringstream istrpreproc(code);
-        std::map<std::string, std::string> actual;
-        preprocessor.preprocess(istrpreproc, actual, "test.c");
+        preprocessor.preprocess(istrpreproc, "test.c");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
-        std::istringstream istr(actual[""]);
-        tokenizer.tokenize(istr, "test.c");
+        Tokenizer& tokenizer = preprocessor.cfg[""]->tokenizer;
+        tokenizer.initForChecking();
         tokenizer.simplifyTokenList2();
 
         // Check for memory leaks..
@@ -6441,15 +6439,13 @@ private:
         errout.str("");
 
         // Preprocess...
-        Preprocessor preprocessor(&settings, this);
+        Preprocessor2 preprocessor(&settings, this);
         std::istringstream istrpreproc(code);
-        std::map<std::string, std::string> actual;
-        preprocessor.preprocess(istrpreproc, actual, "test.c");
+        preprocessor.preprocess(istrpreproc, "test.c");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
-        std::istringstream istr(actual[""]);
-        tokenizer.tokenize(istr, "test.c");
+        Tokenizer& tokenizer = preprocessor.cfg[""]->tokenizer;
+        tokenizer.initForChecking();
         tokenizer.simplifyTokenList2();
 
         // Check for memory leaks..

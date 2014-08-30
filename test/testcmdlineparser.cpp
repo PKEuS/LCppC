@@ -20,6 +20,7 @@
 #include "cmdlineparser.h"
 #include "settings.h"
 #include "redirect.h"
+#include "preprocessor.h"
 #include "timer.h"
 
 class TestCmdlineParser : public TestFixture {
@@ -58,6 +59,8 @@ private:
         TEST_CASE(defines3);
         TEST_CASE(defines4);
         TEST_CASE(enforceLanguage);
+        TEST_CASE(defines5);
+        TEST_CASE(defines6);
         TEST_CASE(includesnopath);
         TEST_CASE(includes);
         TEST_CASE(includesslash);
@@ -139,6 +142,8 @@ private:
         TEST_CASE(undefs_noarg3);
         TEST_CASE(undefs);
         TEST_CASE(undefs2);
+        TEST_CASE(undefs3);
+        TEST_CASE(undefs4);
     }
 
 
@@ -325,7 +330,7 @@ private:
         const char *argv[] = {"cppcheck", "-D_WIN32", "file.cpp"};
         settings.userDefines.clear();
         ASSERT(defParser.ParseFromArgs(3, argv));
-        ASSERT_EQUALS("_WIN32=1", settings.userDefines);
+        ASSERT_EQUALS("_WIN32", join(settings.userDefines, ';'));
     }
 
     void defines2() {
@@ -333,7 +338,7 @@ private:
         const char *argv[] = {"cppcheck", "-D_WIN32", "-DNODEBUG", "file.cpp"};
         settings.userDefines.clear();;
         ASSERT(defParser.ParseFromArgs(4, argv));
-        ASSERT_EQUALS("_WIN32=1;NODEBUG=1", settings.userDefines);
+        ASSERT_EQUALS("NODEBUG;_WIN32", join(settings.userDefines, ';'));
     }
 
     void defines3() {
@@ -341,7 +346,7 @@ private:
         const char *argv[] = {"cppcheck", "-D", "DEBUG", "file.cpp"};
         settings.userDefines.clear();
         ASSERT(defParser.ParseFromArgs(4, argv));
-        ASSERT_EQUALS("DEBUG=1", settings.userDefines);
+        ASSERT_EQUALS("DEBUG", join(settings.userDefines, ';'));
     }
 
     void defines4() {
@@ -349,7 +354,27 @@ private:
         const char *argv[] = {"cppcheck", "-DDEBUG=", "file.cpp"}; // #5137 - defining empty macro
         settings.userDefines.clear();
         ASSERT(defParser.ParseFromArgs(3, argv));
-        ASSERT_EQUALS("DEBUG=", settings.userDefines);
+        ASSERT_EQUALS("DEBUG=", join(settings.userDefines, ';'));
+    }
+
+    void defines5() {
+        REDIRECT;
+        const char *argv[] = {"cppcheck", "-D-", "file.cpp"};
+        Settings settings;
+        CmdLineParser parser(&settings);
+        ASSERT(parser.ParseFromArgs(3, argv));
+        ASSERT(settings.userDefines.empty());
+        ASSERT(settings.userDefined);
+    }
+
+    void defines6() {
+        REDIRECT;
+        const char *argv[] = {"cppcheck", "-D", "-", "file.cpp"};
+        Settings settings;
+        CmdLineParser parser(&settings);
+        ASSERT(parser.ParseFromArgs(4, argv));
+        ASSERT(settings.userDefines.empty());
+        ASSERT(settings.userDefined);
     }
 
     void enforceLanguage() {
@@ -1013,6 +1038,26 @@ private:
         ASSERT_EQUALS(2, settings.userUndefs.size());
         ASSERT(settings.userUndefs.find("_WIN32") != settings.userUndefs.end());
         ASSERT(settings.userUndefs.find("NODEBUG") != settings.userUndefs.end());
+    }
+
+    void undefs3() {
+        REDIRECT;
+        const char *argv[] = {"cppcheck", "-U-", "file.cpp"};
+        Settings settings;
+        CmdLineParser parser(&settings);
+        ASSERT(parser.ParseFromArgs(3, argv));
+        ASSERT(settings.userUndefs.empty());
+        ASSERT(settings.userUndefined);
+    }
+
+    void undefs4() {
+        REDIRECT;
+        const char *argv[] = {"cppcheck", "-U", "-", "file.cpp"};
+        Settings settings;
+        CmdLineParser parser(&settings);
+        ASSERT(parser.ParseFromArgs(4, argv));
+        ASSERT(settings.userUndefs.empty());
+        ASSERT(settings.userUndefined);
     }
 
     void undefs_noarg() {

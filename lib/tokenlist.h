@@ -34,6 +34,8 @@ class Settings;
 class CPPCHECKLIB TokenList {
 public:
     TokenList(const Settings* settings);
+    /** Ctor that creates a copy from t2 (without links) and writes the equivalent in new TokenList of tokPair to tokPair */
+    TokenList(const TokenList& t2, Token*& tokPair);
     ~TokenList();
 
     void setSettings(const Settings *settings) {
@@ -59,8 +61,9 @@ public:
      */
     static void deleteTokens(Token *tok);
 
-    void addtoken(const std::string & str, const unsigned int lineno, const unsigned int fileno, bool split = false);
+    void addtoken(const std::string & str, const unsigned int lineno, const unsigned int fileno, bool split = false, Token* follower = nullptr);
     void addtoken(const Token *tok, const unsigned int lineno, const unsigned int fileno);
+    void addtoken(const Token* tok);
 
     static void insertTokens(Token *dest, const Token *src, unsigned int n);
 
@@ -74,6 +77,9 @@ public:
      * @param file0 source file name
      */
     bool createTokens(std::istream &code, const std::string& file0 = emptyString);
+    void tokenizeStream(std::istream& code, unsigned int FileIndex, unsigned int lineno, Token* pos);
+    void tokenizeString(const std::string& code, Token* pos);
+    void tokenizeFile(std::istream& code, const std::string& filename, Token* pos);
 
     /** Deallocate list */
     void deallocateTokens();

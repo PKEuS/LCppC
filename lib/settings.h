@@ -178,8 +178,14 @@ public:
     /** @brief suppress exitcode */
     Suppressions nofail;
 
+    /** @brief user has defined some configurations explicitly */
+    bool userDefined;
+
     /** @brief defines given by the user */
-    std::string userDefines;
+    std::set<std::string> userDefines;
+
+    /** @brief user has undefined some configurations explicitly */
+    bool userUndefined;
 
     /** @brief undefines given by the user */
     std::set<std::string> userUndefs;

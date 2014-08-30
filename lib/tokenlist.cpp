@@ -46,6 +46,17 @@ TokenList::TokenList(const Settings* settings) :
 {
 }
 
+TokenList::TokenList(const TokenList& t2, Token*& tokPair)
+    : _settings(t2._settings), _files(t2._files), _front(0), _back(0)
+{
+    // Create a copy of the token list
+    for (const Token* tok = t2._front; tok; tok = tok->next()) {
+        this->addtoken(tok);
+        if (tok == tokPair)
+            tokPair = this->_back;
+    }
+}
+
 TokenList::~TokenList()
 {
     deallocateTokens();
@@ -108,7 +119,7 @@ void TokenList::deleteTokens(Token *tok)
 // add a token.
 //---------------------------------------------------------------------------
 
-void TokenList::addtoken(const std::string & str, const unsigned int lineno, const unsigned int fileno, bool split)
+void TokenList::addtoken(const std::string & str, const unsigned int lineno, const unsigned int fileno, bool split, Token* follower)
 {
     if (str.empty())
         return;
@@ -140,18 +151,44 @@ void TokenList::addtoken(const std::string & str, const unsigned int lineno, con
         str2 = str;
     }
 
-    if (_back) {
-        _back->insertToken(str2);
+    Token* tok;
+    if (follower) {
+        if (follower->previous()) { // Insert
+            follower->previous()->insertToken(str2);
+            tok = follower->previous();
+        } else if (_back) { // Prepend
+            _front->prependToken(str2);
+            _front = _front->previous();
+            tok = _front;
+        } else { // First element
+            _front = new Token(&_back);
+            _back = _front;
+            _back->str(str2);
+            tok = _front;
+        }
     } else {
-        _front = new Token(&_back);
-        _back = _front;
-        _back->str(str2);
+        if (_back) { // Append to list
+            _back->insertToken(str2);
+        } else { // First element
+            _front = new Token(&_back);
+            _back = _front;
+            _back->str(str2);
+        }
+        tok = _back;
     }
 
     if (isCPP() && str == "delete")
-        _back->isKeyword(true);
-    _back->linenr(lineno);
-    _back->fileIndex(fileno);
+        tok->isKeyword(true);
+    tok->linenr(lineno);
+    tok->fileIndex(fileno);
+}
+
+void TokenList::addtoken(const Token* tok)
+{
+    if (tok == 0)
+        return;
+
+    addtoken(tok, tok->linenr(), tok->fileIndex());
 }
 
 void TokenList::addtoken(const Token * tok, const unsigned int lineno, const unsigned int fileno)
@@ -173,6 +210,7 @@ void TokenList::addtoken(const Token * tok, const unsigned int lineno, const uns
     _back->fileIndex(fileno);
     _back->flags(tok->flags());
 }
+
 //---------------------------------------------------------------------------
 // InsertTokens - Copy and insert tokens
 //---------------------------------------------------------------------------
@@ -234,8 +272,8 @@ bool TokenList::createTokens(std::istream &code, const std::string& file0)
 
     // Read one byte at a time from code and create tokens
     for (char ch = (char)code.get(); code.good() && ch; ch = (char)code.get()) {
-        if (ch == Preprocessor::macroChar) {
-            while (code.peek() == Preprocessor::macroChar)
+        if (ch == Preprocessor2::macroChar) {
+            while (code.peek() == Preprocessor2::macroChar)
                 code.get();
             if (!CurrentToken.empty()) {
                 addtoken(CurrentToken, lineno, FileIndex, true);
@@ -392,6 +430,153 @@ bool TokenList::createTokens(std::istream &code, const std::string& file0)
         _files[i] = Path::getRelativePath(_files[i], _settings->_basePaths);
 
     return true;
+}
+
+void TokenList::tokenizeStream(std::istream& code, unsigned int FileIndex, unsigned int lineno, Token* pos)
+{
+    // The current token being parsed
+    std::string CurrentToken;
+
+    // Read one byte at a time from code and create tokens
+    for (char ch = (char)code.get(); code.good(); ch = (char)code.get()) {
+        // char/string literals
+        // multiline strings are not handled. The preprocessor should handle that for us.
+        if (ch == '\'' || ch == '\"') {
+            std::string line;
+
+            // read char
+            bool special = false;
+            char c = ch;
+            do {
+                // Append token..
+                line += c;
+
+                // Special sequence '\.'
+                if (special)
+                    special = false;
+                else
+                    special = (c == '\\');
+
+                // Get next character
+                c = (char)code.get();
+            } while (code.good() && (special || c != ch));
+            line += ch;
+
+            // Add previous token
+            addtoken(CurrentToken.c_str(), lineno, FileIndex, false, pos);
+
+            // Add content of the string
+            addtoken(line.c_str(), lineno, FileIndex, false, pos);
+
+            CurrentToken.clear();
+            continue;
+        } else if (ch == '<') {
+            const Token* tok = pos?pos->previous():_back;
+            if (tok && Token::simpleMatch(tok->previous(), "# include")) { // <foo> is only a string on include directives
+                std::string line;
+
+                // read char
+                char c = ch;
+                do {
+                    // Append token..
+                    line += c;
+
+                    // Get next character
+                    c = (char)code.get();
+                } while (code.good() && c != '>');
+                line += '>';
+
+                // Add previous token
+                addtoken(CurrentToken.c_str(), lineno, FileIndex, false, pos);
+
+                // Add content of the string
+                addtoken(line.c_str(), lineno, FileIndex, false, pos);
+
+                CurrentToken.clear();
+                continue;
+            }
+        } else if (ch == '(') { // #define
+            Token* tok = pos?pos->previous():_back;
+            if (tok && Token::simpleMatch(tok->previous(), "# define")) { // #define FOO( (without space between FOO and '(') needs special treatement to ensure that preprocessor works correctly
+                tok->isExpandedMacro(true); // Use expanded macro flag to indicate that this is a function macro
+            }
+        }
+
+        if (ch == '.' &&
+            CurrentToken.length() > 0 &&
+            std::isdigit(CurrentToken[0])) {
+            // Don't separate doubles "5.4"
+        } else if (strchr("+-", ch) &&
+                   CurrentToken.length() > 0 &&
+                   std::isdigit(CurrentToken[0]) &&
+                   CurrentToken.compare(0,2,"0x") != 0 &&
+                   (CurrentToken[CurrentToken.length()-1] == 'e' ||
+                    CurrentToken[CurrentToken.length()-1] == 'E')) {
+            // Don't separate doubles "4.2e+10"
+        } else if (CurrentToken.empty() && ch == '.' && std::isdigit(code.peek())) {
+            // tokenize .125 into 0.125
+            CurrentToken = "0";
+        } else if (ch=='&' && code.peek() == '&') {
+            if (!CurrentToken.empty()) {
+                addtoken(CurrentToken.c_str(), lineno, FileIndex, true, pos);
+                CurrentToken.clear();
+            }
+
+            // &&
+            ch = (char)code.get();
+            addtoken("&&", lineno, FileIndex, true, pos);
+            continue;
+        } else if (ch==':' && CurrentToken.empty() && code.peek() == ' ') {
+            // :
+            addtoken(":", lineno, FileIndex, true, pos);
+            CurrentToken.clear();
+            continue;
+        } else if (ch==':' && CurrentToken.empty() && code.peek() == ':') {
+            // ::
+            ch = (char)code.get();
+            addtoken("::", lineno, FileIndex, true, pos);
+            CurrentToken.clear();
+            continue;
+        } else if (strchr("+-*/%&|^?!=<>[](){};:,.~#\n ", ch)) {
+            addtoken(CurrentToken.c_str(), lineno, FileIndex, true, pos);
+
+            CurrentToken.clear();
+
+            if (ch == '\n') {
+                ++lineno;
+                continue;
+            } else if (ch == ' ') {
+                continue;
+            }
+
+            CurrentToken += ch;
+            // Add "++", "--", ">>" or ... token
+            if (strchr("+-<>#=:&|", ch) && (code.peek() == ch))
+                CurrentToken += (char)code.get();
+            addtoken(CurrentToken.c_str(), lineno, FileIndex, false, pos);
+            CurrentToken.clear();
+            continue;
+        }
+
+        CurrentToken += ch;
+    }
+    addtoken(CurrentToken.c_str(), lineno, FileIndex, true, pos);
+    Token::assignProgressValues(_front);
+}
+
+void TokenList::tokenizeString(const std::string& code, Token* pos)
+{
+    std::istringstream iss(code);
+    tokenizeStream(iss, pos->fileIndex(), pos->linenr(), pos);
+}
+
+void TokenList::tokenizeFile(std::istream& code, const std::string& filename, Token* pos)
+{
+    // FileIndex. What file in the _files vector is read now?
+    unsigned int FileIndex = _files.size();
+    _files.push_back(filename);
+
+    tokenizeStream(code, FileIndex, 1, pos);
 }
 
 //---------------------------------------------------------------------------

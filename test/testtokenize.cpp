@@ -10870,14 +10870,10 @@ private:
 
         // Preprocess file..
         Settings settings;
-        Preprocessor preprocessor(&settings);
-        std::list<std::string> configurations;
-        std::string filedata = "";
+        Preprocessor2 preprocessor(&settings);
         std::istringstream fin(raw_code);
-        preprocessor.preprocess(fin, filedata, configurations, "", settings._includePaths);
-        const std::string code = preprocessor.getcode(filedata, "", "");
-
-        tokenizeAndStringify(code.c_str()); // just survive...
+        preprocessor.preprocess(fin, "", settings._includePaths);
+        preprocessor.cfg[""]->tokenizer.initForChecking(); // just survive...
     }
 
     void astGarbage() {

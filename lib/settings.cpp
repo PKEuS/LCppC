@@ -45,6 +45,7 @@ Settings::Settings()
       enforcedLang(None),
       reportProgress(false),
       checkConfiguration(false),
+      userDefined(false), userUndefined(false),
       checkLibrary(false)
 {
     // This assumes the code you are checking is for the same architecture this is compiled on.
@@ -127,7 +128,6 @@ bool Settings::append(const std::string &filename)
     while (std::getline(fin, line)) {
         _append += line + "\n";
     }
-    Preprocessor::preprocessWhitespaces(_append);
     return true;
 }
 
