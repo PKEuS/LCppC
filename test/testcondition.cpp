@@ -36,7 +36,7 @@ private:
     Settings settings0;
     Settings settings1;
 
-    void run() OVERRIDE {
+    void run() override {
         LOAD_LIB_2(settings0.library, "qt.cfg");
         LOAD_LIB_2(settings0.library, "std.cfg");
 

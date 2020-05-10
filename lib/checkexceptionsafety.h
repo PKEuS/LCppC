@@ -61,7 +61,7 @@ public:
         : Check(myName(), tokenizer, settings, errorLogger) {
     }
 
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) OVERRIDE {
+    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
         if (tokenizer->isC())
             return;
 
@@ -136,7 +136,7 @@ private:
     }
 
     /** Generate all possible errors (for --errorlist) */
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const OVERRIDE {
+    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
         CheckExceptionSafety c(nullptr, settings, errorLogger);
         c.destructorsError(nullptr, "Class");
         c.deallocThrowError(nullptr, "p");
@@ -152,7 +152,7 @@ private:
     }
 
     /** wiki formatted description of the class (for --doc) */
-    std::string classInfo() const OVERRIDE {
+    std::string classInfo() const override {
         return "Checking exception safety\n"
                "- Throwing exceptions in destructors\n"
                "- Throwing exception during invalid state\n"

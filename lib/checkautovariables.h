@@ -51,7 +51,7 @@ public:
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) OVERRIDE {
+    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
         CheckAutoVariables checkAutoVariables(tokenizer, settings, errorLogger);
         checkAutoVariables.assignFunctionArg();
         checkAutoVariables.checkVarLifetime();
@@ -85,7 +85,7 @@ private:
     void errorUselessAssignmentArg(const Token *tok);
     void errorUselessAssignmentPtrArg(const Token *tok);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const OVERRIDE {
+    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
         ErrorPath errorPath;
         CheckAutoVariables c(nullptr,settings,errorLogger);
         c.errorAutoVariableAssignment(nullptr, false);
@@ -108,7 +108,7 @@ private:
         return "Auto Variables";
     }
 
-    std::string classInfo() const OVERRIDE {
+    std::string classInfo() const override {
         return "A pointer to a variable is only valid as long as the variable is in scope.\n"
                "Check:\n"
                "- returning a pointer to auto or temporary variable\n"

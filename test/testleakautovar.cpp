@@ -35,7 +35,7 @@ public:
 private:
     Settings settings;
 
-    void run() OVERRIDE {
+    void run() override {
         int id = 0;
         while (!Library::ismemory(++id));
         settings.library.setalloc("malloc", id, -1);
@@ -2052,7 +2052,7 @@ private:
         checkLeak.runChecks(&tokenizer, &settings, this);
     }
 
-    void run() OVERRIDE {
+    void run() override {
         LOAD_LIB_2(settings.library, "std.cfg");
 
         TEST_CASE(returnedValue); // #9298
@@ -2101,7 +2101,7 @@ private:
         checkLeak.runChecks(&tokenizer, &settings, this);
     }
 
-    void run() OVERRIDE {
+    void run() override {
         LOAD_LIB_2(settings.library, "windows.cfg");
 
         TEST_CASE(heapDoubleFree);

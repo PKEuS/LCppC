@@ -34,7 +34,7 @@ public:
     }
 
 private:
-    void run() OVERRIDE {
+    void run() override {
 #ifdef USE_Z3
         TEST_CASE(annotation1);
         TEST_CASE(annotation2);

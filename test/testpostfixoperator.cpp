@@ -46,7 +46,7 @@ private:
         checkPostfixOperator.postfixOperator();
     }
 
-    void run() OVERRIDE {
+    void run() override {
         settings.addEnabled("performance");
 
         TEST_CASE(testsimple);

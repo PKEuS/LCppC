@@ -2311,7 +2311,7 @@ struct ValueFlowForwardAnalyzer : ForwardAnalyzer {
         return Action::None;
     }
 
-    virtual Action analyze(const Token* tok) const OVERRIDE {
+    virtual Action analyze(const Token* tok) const override {
         if (invalid())
             return Action::Invalid;
         if (match(tok)) {
@@ -2351,7 +2351,7 @@ struct ValueFlowForwardAnalyzer : ForwardAnalyzer {
         return Action::None;
     }
 
-    virtual std::vector<int> evaluate(const Token* tok) const OVERRIDE {
+    virtual std::vector<int> evaluate(const Token* tok) const override {
         if (tok->hasKnownIntValue())
             return {static_cast<int>(tok->values().front().intvalue)};
         std::vector<int> result;
@@ -2363,7 +2363,7 @@ struct ValueFlowForwardAnalyzer : ForwardAnalyzer {
         return result;
     }
 
-    virtual void assume(const Token* tok, bool state, const Token* at) OVERRIDE {
+    virtual void assume(const Token* tok, bool state, const Token* at) override {
         // Update program state
         pms.removeModifiedVars(tok);
         pms.addState(tok, getProgramState());
@@ -2379,7 +2379,7 @@ struct ValueFlowForwardAnalyzer : ForwardAnalyzer {
             makeConditional();
     }
 
-    virtual void update(Token* tok, Action a) OVERRIDE {
+    virtual void update(Token* tok, Action a) override {
         ValueFlow::Value* value = getValue(tok);
         if (!value)
             return;
@@ -2429,22 +2429,22 @@ struct SingleValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
         return varids;
     }
 
-    virtual const ValueFlow::Value* getValue(const Token*) const OVERRIDE {
+    virtual const ValueFlow::Value* getValue(const Token*) const override {
         return &value;
     }
-    virtual ValueFlow::Value* getValue(const Token*) OVERRIDE {
+    virtual ValueFlow::Value* getValue(const Token*) override {
         return &value;
     }
 
-    virtual void makeConditional() OVERRIDE {
+    virtual void makeConditional() override {
         value.conditional = true;
     }
 
-    virtual void addErrorPath(const Token* tok, const std::string& s) OVERRIDE {
+    virtual void addErrorPath(const Token* tok, const std::string& s) override {
         value.errorPath.emplace_back(tok, s);
     }
 
-    virtual bool isAlias(const Token* tok) const OVERRIDE {
+    virtual bool isAlias(const Token* tok) const override {
         if (value.isLifetimeValue())
             return false;
         for (const auto& p:getVars()) {
@@ -2458,7 +2458,7 @@ struct SingleValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
         return false;
     }
 
-    virtual bool isGlobal() const OVERRIDE {
+    virtual bool isGlobal() const override {
         for (const auto&p:getVars()) {
             const Variable* var = p.second;
             if (var->isGlobal() && !var->isConst())
@@ -2467,20 +2467,20 @@ struct SingleValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
         return false;
     }
 
-    virtual bool lowerToPossible() OVERRIDE {
+    virtual bool lowerToPossible() override {
         if (value.isImpossible())
             return false;
         value.changeKnownToPossible();
         return true;
     }
-    virtual bool lowerToInconclusive() OVERRIDE {
+    virtual bool lowerToInconclusive() override {
         if (value.isImpossible())
             return false;
         value.setInconclusive();
         return true;
     }
 
-    virtual bool isConditional() const OVERRIDE {
+    virtual bool isConditional() const override {
         if (value.conditional)
             return true;
         if (value.condition)
@@ -2488,7 +2488,7 @@ struct SingleValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
         return false;
     }
 
-    virtual bool updateScope(const Token* endBlock, bool) const OVERRIDE {
+    virtual bool updateScope(const Token* endBlock, bool) const override {
         const Scope* scope = endBlock->scope();
         if (!scope)
             return false;
@@ -2524,11 +2524,15 @@ struct VariableForwardAnalyzer : SingleValueFlowForwardAnalyzer {
         varids[var->declarationId()] = var;
     }
 
-    virtual bool match(const Token* tok) const OVERRIDE {
+    virtual const std::unordered_map<nonneg int, const Variable*>& getVars() const override {
+        return varids;
+    }
+
+    virtual bool match(const Token* tok) const override {
         return tok->varId() == var->declarationId();
     }
 
-    virtual ProgramState getProgramState() const OVERRIDE {
+    virtual ProgramState getProgramState() const override {
         ProgramState ps;
         ps[var->declarationId()] = value;
         return ps;
@@ -2594,25 +2598,25 @@ struct ExpressionForwardAnalyzer : SingleValueFlowForwardAnalyzer {
         });
     }
 
-    virtual bool invalid() const OVERRIDE {
+    virtual bool invalid() const override {
         return unknown;
     }
 
-    virtual std::vector<int> evaluate(const Token* tok) const OVERRIDE {
+    virtual std::vector<int> evaluate(const Token* tok) const override {
         if (tok->hasKnownIntValue())
             return {static_cast<int>(tok->values().front().intvalue)};
         return std::vector<int> {};
     }
 
-    virtual bool match(const Token* tok) const OVERRIDE {
+    virtual bool match(const Token* tok) const override {
         return isSameExpression(isCPP(), true, expr, tok, getSettings()->library, true, true);
     }
 
-    virtual ProgramState getProgramState() const OVERRIDE {
+    virtual ProgramState getProgramState() const override {
         return ProgramState{};
     }
 
-    virtual bool isGlobal() const OVERRIDE {
+    virtual bool isGlobal() const override {
         return !local;
     }
 };
@@ -4701,7 +4705,7 @@ struct MultiValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
         return vars;
     }
 
-    virtual const ValueFlow::Value* getValue(const Token* tok) const OVERRIDE {
+    virtual const ValueFlow::Value* getValue(const Token* tok) const override {
         if (tok->varId() == 0)
             return nullptr;
         auto it = values.find(tok->varId());
@@ -4709,7 +4713,7 @@ struct MultiValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
             return nullptr;
         return &it->second;
     }
-    virtual ValueFlow::Value* getValue(const Token* tok) OVERRIDE {
+    virtual ValueFlow::Value* getValue(const Token* tok) override {
         if (tok->varId() == 0)
             return nullptr;
         auto it = values.find(tok->varId());
@@ -4718,19 +4722,19 @@ struct MultiValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
         return &it->second;
     }
 
-    virtual void makeConditional() OVERRIDE {
+    virtual void makeConditional() override {
         for (auto&& p:values) {
             p.second.conditional = true;
         }
     }
 
-    virtual void addErrorPath(const Token* tok, const std::string& s) OVERRIDE {
+    virtual void addErrorPath(const Token* tok, const std::string& s) override {
         for (auto&& p:values) {
             p.second.errorPath.emplace_back(tok, "Assuming condition is " + s);
         }
     }
 
-    virtual bool isAlias(const Token* tok) const OVERRIDE {
+    virtual bool isAlias(const Token* tok) const override {
         std::list<ValueFlow::Value> vals;
         std::transform(values.begin(), values.end(), std::back_inserter(vals), SelectMapValues{});
 
@@ -4745,11 +4749,11 @@ struct MultiValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
         return false;
     }
 
-    virtual bool isGlobal() const OVERRIDE {
+    virtual bool isGlobal() const override {
         return false;
     }
 
-    virtual bool lowerToPossible() OVERRIDE {
+    virtual bool lowerToPossible() override {
         for (auto&& p:values) {
             if (p.second.isImpossible())
                 return false;
@@ -4757,7 +4761,7 @@ struct MultiValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
         }
         return true;
     }
-    virtual bool lowerToInconclusive() OVERRIDE {
+    virtual bool lowerToInconclusive() override {
         for (auto&& p:values) {
             if (p.second.isImpossible())
                 return false;
@@ -4766,7 +4770,7 @@ struct MultiValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
         return true;
     }
 
-    virtual bool isConditional() const OVERRIDE {
+    virtual bool isConditional() const override {
         for (auto&& p:values) {
             if (p.second.conditional)
                 return true;
@@ -4776,7 +4780,7 @@ struct MultiValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
         return false;
     }
 
-    virtual bool updateScope(const Token* endBlock, bool) const OVERRIDE {
+    virtual bool updateScope(const Token* endBlock, bool) const override {
         const Scope* scope = endBlock->scope();
         if (!scope)
             return false;
@@ -4810,11 +4814,11 @@ struct MultiValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
         return false;
     }
 
-    virtual bool match(const Token* tok) const OVERRIDE {
+    virtual bool match(const Token* tok) const override {
         return values.count(tok->varId()) > 0;
     }
 
-    virtual ProgramState getProgramState() const OVERRIDE {
+    virtual ProgramState getProgramState() const override {
         ProgramState ps;
         for (const auto& p:values)
             ps[p.first] = p.second;

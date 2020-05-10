@@ -332,7 +332,7 @@ namespace {
                 constraints.push_back(value);
         }
 
-        void addError(int linenr) OVERRIDE {
+        void addError(int linenr) override {
             mTrackExecution->addError(linenr);
         }
 
@@ -371,7 +371,7 @@ namespace {
             }
         }
 
-        std::string getNewSymbolName() OVERRIDE {
+        std::string getNewSymbolName() override {
             return "$" + std::to_string(++(*symbolValueIndex));
         }
 

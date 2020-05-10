@@ -180,7 +180,7 @@ public:
         : Check(myName(), tokenizer, settings, errorLogger), CheckMemoryLeak(tokenizer, errorLogger, settings) {
     }
 
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) OVERRIDE {
+    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
         CheckMemoryLeakInFunction checkMemoryLeak(tokenizer, settings, errorLogger);
         checkMemoryLeak.checkReallocUsage();
     }
@@ -195,7 +195,7 @@ public:
 
 private:
     /** Report all possible errors (for the --errorlist) */
-    void getErrorMessages(ErrorLogger *e, const Settings *settings) const OVERRIDE {
+    void getErrorMessages(ErrorLogger *e, const Settings *settings) const override {
         CheckMemoryLeakInFunction c(nullptr, settings, e);
 
         c.memleakError(nullptr, "varname");
@@ -221,7 +221,7 @@ private:
      * Get class information (--doc)
      * @return Wiki formatted information about this class
      */
-    std::string classInfo() const OVERRIDE {
+    std::string classInfo() const override {
         return "Is there any allocated memory when a function goes out of scope\n";
     }
 };
@@ -241,7 +241,7 @@ public:
         : Check(myName(), tokenizer, settings, errorLogger), CheckMemoryLeak(tokenizer, errorLogger, settings) {
     }
 
-    void runChecks(const Tokenizer *tokenizr, const Settings *settings, ErrorLogger *errLog) OVERRIDE {
+    void runChecks(const Tokenizer *tokenizr, const Settings *settings, ErrorLogger *errLog) override {
         if (!tokenizr->isCPP())
             return;
 
@@ -260,7 +260,7 @@ private:
 
     void unsafeClassError(const Token *tok, const std::string &classname, const std::string &varname);
 
-    void getErrorMessages(ErrorLogger *e, const Settings *settings) const OVERRIDE {
+    void getErrorMessages(ErrorLogger *e, const Settings *settings) const override {
         CheckMemoryLeakInClass c(nullptr, settings, e);
         c.publicAllocationError(nullptr, "varname");
         c.unsafeClassError(nullptr, "class", "class::varname");
@@ -270,7 +270,7 @@ private:
         return "Memory leaks (class variables)";
     }
 
-    std::string classInfo() const OVERRIDE {
+    std::string classInfo() const override {
         return "If the constructor allocate memory then the destructor must deallocate it.\n";
     }
 };
@@ -288,7 +288,7 @@ public:
         : Check(myName(), tokenizer, settings, errorLogger), CheckMemoryLeak(tokenizer, errorLogger, settings) {
     }
 
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) OVERRIDE {
+    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
         CheckMemoryLeakStructMember checkMemoryLeak(tokenizer, settings, errorLogger);
         checkMemoryLeak.check();
     }
@@ -302,14 +302,14 @@ private:
 
     void checkStructVariable(const Variable * const variable);
 
-    void getErrorMessages(ErrorLogger * /*errorLogger*/, const Settings * /*settings*/) const OVERRIDE {
+    void getErrorMessages(ErrorLogger * /*errorLogger*/, const Settings * /*settings*/) const override {
     }
 
     static std::string myName() {
         return "Memory leaks (struct members)";
     }
 
-    std::string classInfo() const OVERRIDE {
+    std::string classInfo() const override {
         return "Don't forget to deallocate struct members\n";
     }
 };
@@ -327,7 +327,7 @@ public:
         : Check(myName(), tokenizer, settings, errorLogger), CheckMemoryLeak(tokenizer, errorLogger, settings) {
     }
 
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) OVERRIDE {
+    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
         CheckMemoryLeakNoVar checkMemoryLeak(tokenizer, settings, errorLogger);
         checkMemoryLeak.check();
     }
@@ -358,7 +358,7 @@ private:
     void returnValueNotUsedError(const Token* tok, const std::string &alloc);
     void unsafeArgAllocError(const Token *tok, const std::string &funcName, const std::string &ptrType, const std::string &objType);
 
-    void getErrorMessages(ErrorLogger *e, const Settings *settings) const OVERRIDE {
+    void getErrorMessages(ErrorLogger *e, const Settings *settings) const override {
         CheckMemoryLeakNoVar c(nullptr, settings, e);
 
         c.functionCallLeak(nullptr, "funcName", "funcName");
@@ -370,7 +370,7 @@ private:
         return "Memory leaks (address not taken)";
     }
 
-    std::string classInfo() const OVERRIDE {
+    std::string classInfo() const override {
         return "Not taking the address to allocated memory\n";
     }
 };

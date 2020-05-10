@@ -36,7 +36,7 @@ public:
 private:
     Settings settings;
 
-    void run() OVERRIDE {
+    void run() override {
         TEST_CASE(testFunctionReturnType);
         TEST_CASE(open);
     }
@@ -142,7 +142,7 @@ private:
     }
 
 
-    void run() OVERRIDE {
+    void run() override {
         LOAD_LIB_2(settings1.library, "std.cfg");
         LOAD_LIB_2(settings1.library, "posix.cfg");
         LOAD_LIB_2(settings2.library, "std.cfg");
@@ -455,7 +455,7 @@ private:
         checkMemoryLeak.check();
     }
 
-    void run() OVERRIDE {
+    void run() override {
         settings.addEnabled("warning");
         settings.addEnabled("style");
 
@@ -1628,7 +1628,7 @@ private:
         checkMemoryLeakStructMember.check();
     }
 
-    void run() OVERRIDE {
+    void run() override {
         LOAD_LIB_2(settings.library, "std.cfg");
         LOAD_LIB_2(settings.library, "posix.cfg");
 
@@ -2092,7 +2092,7 @@ private:
         checkMemoryLeakNoVar.check();
     }
 
-    void run() OVERRIDE {
+    void run() override {
         settings.inconclusive = true;
         settings.libraries.emplace_back("posix");
         settings.addEnabled("warning");

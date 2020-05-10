@@ -26,7 +26,7 @@ public:
     }
 
 private:
-    void run() OVERRIDE {
+    void run() override {
         TEST_CASE(isValidGlobPattern);
         TEST_CASE(matchglob);
     }

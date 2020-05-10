@@ -59,7 +59,7 @@ private:
         checkOther.checkIncompleteStatement();
     }
 
-    void run() OVERRIDE {
+    void run() override {
         settings.addEnabled("warning");
 
         TEST_CASE(test1);

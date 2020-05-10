@@ -57,8 +57,10 @@ public:
         return mPtr.release();
     }
 
-    T* get() NOEXCEPT { return mPtr.get(); }
-    const T* get() const NOEXCEPT {
+    T* get() noexcept {
+        return mPtr.get();
+    }
+    const T* get() const noexcept {
         return mPtr.get();
     }
 
@@ -69,8 +71,10 @@ public:
         return *get();
     }
 
-    T* operator->() NOEXCEPT { return get(); }
-    const T* operator->() const NOEXCEPT {
+    T* operator->() noexcept {
+        return get();
+    }
+    const T* operator->() const noexcept {
         return get();
     }
 
@@ -85,7 +89,7 @@ public:
         return *this;
     }
 
-    operator bool() const NOEXCEPT {
+    operator bool() const noexcept {
         return !!mPtr;
     }
     ~ValuePtr() {}

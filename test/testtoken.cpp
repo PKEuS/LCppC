@@ -42,7 +42,7 @@ private:
     std::vector<std::string> extendedOps;
     std::vector<std::string> assignmentOps;
 
-    void run() OVERRIDE {
+    void run() override {
         arithmeticalOps = { "+", "-", "*", "/", "%", "<<", ">>" };
         logicalOps = { "&&", "||", "!" };
         comparisonOps = { "==", "!=", "<", "<=", ">", ">=" };

@@ -38,7 +38,7 @@ public:
 
 private:
 
-    void run() OVERRIDE {
+    void run() override {
         TEST_CASE(setDefines);
         TEST_CASE(setIncludePaths1);
         TEST_CASE(setIncludePaths2);

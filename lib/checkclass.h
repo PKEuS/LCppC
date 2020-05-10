@@ -53,7 +53,7 @@ public:
     CheckClass(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger);
 
     /** @brief Run checks on the normal token list */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) OVERRIDE {
+    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
         if (tokenizer->isC())
             return;
 
@@ -190,7 +190,7 @@ private:
     void thisUseAfterFree(const Token *self, const Token *free, const Token *use);
     void unsafeClassRefMemberError(const Token *tok, const std::string &varname);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const OVERRIDE {
+    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
         CheckClass c(nullptr, settings, errorLogger);
         c.noConstructorError(nullptr, "classname", false);
         c.noExplicitConstructorError(nullptr, "classname", false);
@@ -233,7 +233,7 @@ private:
         return "Class";
     }
 
-    std::string classInfo() const OVERRIDE {
+    std::string classInfo() const override {
         return "Check the code for each class.\n"
                "- Missing constructors and copy constructors\n"
                //"- Missing allocation of memory in copy constructor\n"

@@ -38,7 +38,7 @@ private:
     Settings settings1;
     Settings settings2;
 
-    void run() OVERRIDE {
+    void run() override {
         settings0.addEnabled("style");
         settings2.addEnabled("style");
 
