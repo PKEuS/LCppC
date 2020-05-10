@@ -114,13 +114,7 @@ static void bailoutInternal(TokenList *tokenlist, ErrorLogger *errorLogger, cons
     errorLogger->reportErr(errmsg);
 }
 
-#if (defined __cplusplus) && __cplusplus >= 201103L
 #define bailout(tokenlist, errorLogger, tok, what) bailoutInternal(tokenlist, errorLogger, tok, what, __FILE__, __LINE__, __func__)
-#elif (defined __GNUC__) || (defined __clang__) || (defined _MSC_VER)
-#define bailout(tokenlist, errorLogger, tok, what) bailoutInternal(tokenlist, errorLogger, tok, what, __FILE__, __LINE__, __FUNCTION__)
-#else
-#define bailout(tokenlist, errorLogger, tok, what) bailoutInternal(tokenlist, errorLogger, tok, what, __FILE__, __LINE__, "(valueFlow)")
-#endif
 
 static void changeKnownToPossible(std::list<ValueFlow::Value> &values, int indirect=-1)
 {
