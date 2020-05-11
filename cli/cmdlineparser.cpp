@@ -114,6 +114,93 @@ void CmdLineParser::printMessage(const char* message)
     std::cout << message << std::endl;
 }
 
+std::string CmdLineParser::parseEnableList(const std::string& str, bool(*function)(Settings&, const std::string&, bool))
+{
+    // Enable parameters may be comma separated...
+    if (str.find(',') != std::string::npos) {
+        std::string::size_type prevPos = 0;
+        std::string::size_type pos = 0;
+        while ((pos = str.find(',', pos)) != std::string::npos) {
+            if (pos == prevPos)
+                return std::string("cppcheck: --enable parameter is empty");
+            const std::string errmsg(parseEnableList(str.substr(prevPos, pos - prevPos), function));
+            if (!errmsg.empty())
+                return errmsg;
+            ++pos;
+            prevPos = pos;
+        }
+        if (prevPos >= str.length())
+            return std::string("cppcheck: --enable parameter is empty");
+        return parseEnableList(str.substr(prevPos), function);
+    }
+
+    bool enable = str[0] != '-';
+    if (str.size() == (enable ? 0 : 1))
+        return std::string("cppcheck: --enable parameter is empty");
+
+    if (!function(*mSettings, enable ? str : str.substr(1), enable))
+        return std::string("cppcheck: unknown name '" + str + "'");
+    return std::string();
+}
+bool CmdLineParser::parseEnableList_setSeverity(Settings& settings, const std::string& str, bool enable)
+{
+    if (str == "all")
+        settings.severity.setEnabledAll(enable);
+    else if (str == "warning")
+        settings.severity.setEnabled(Severity::warning, enable);
+    else if (str == "style")
+        settings.severity.setEnabled(Severity::style, enable);
+    else if (str == "performance")
+        settings.severity.setEnabled(Severity::performance, enable);
+    else if (str == "portability")
+        settings.severity.setEnabled(Severity::portability, enable);
+    else if (str == "information")
+        settings.severity.setEnabled(Severity::information, enable);
+    else
+        return false;
+    return true;
+}
+bool CmdLineParser::parseEnableList_setCertainty(Settings& settings, const std::string& str, bool enable)
+{
+    if (str == "all")
+        settings.certainty.setEnabledAll(enable);
+    else if (str == "safe")
+        settings.certainty.setEnabled(Certainty::safe, enable);
+    else if (str == "inconclusive")
+        settings.certainty.setEnabled(Certainty::inconclusive, enable);
+    else if (str == "experimental")
+        settings.certainty.setEnabled(Certainty::experimental, enable);
+    else
+        return false;
+    return true;
+}
+bool CmdLineParser::parseEnableList_setOutput(Settings& settings, const std::string& str, bool enable)
+{
+    if (str == "all")
+        settings.output.setEnabledAll(enable);
+    else if (str == "status")
+        settings.output.setEnabled(Output::status, enable);
+    else if (str == "progress")
+        settings.output.setEnabled(Output::progress, enable);
+    else if (str == "verbose")
+        settings.output.setEnabled(Output::verbose, enable);
+    else if (str == "config")
+        settings.output.setEnabled(Output::config, enable);
+    else if (str == "findings")
+        settings.output.setEnabled(Output::findings, enable);
+    else
+        return false;
+    return true;
+}
+bool CmdLineParser::parseEnableList_setChecks(Settings& settings, const std::string& str, bool enable)
+{
+    if (str == "all")
+        settings.checks.setEnabledAll(enable);
+    else
+        settings.checks.setEnabled(str, enable);
+    return true;
+}
+
 bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 {
     bool def = false;
@@ -156,7 +243,6 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
             // -E
             else if (std::strcmp(argv[i], "-E") == 0) {
                 mSettings->preprocessOnly = true;
-                mSettings->quiet = true;
             }
 
             // Include paths
@@ -276,17 +362,59 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
             else if (std::strcmp(argv[i], "--dump") == 0)
                 mSettings->dump = true;
 
-            else if (std::strncmp(argv[i], "--enable=", 9) == 0) {
-                const std::string errmsg = mSettings->addEnabled(argv[i] + 9);
+            else if (std::strncmp(argv[i], "--severity=", 11) == 0) {
+                const std::string errmsg = parseEnableList(argv[i] + 11, parseEnableList_setSeverity);
                 if (!errmsg.empty()) {
                     printMessage(errmsg);
                     return false;
                 }
-                // when "style" is enabled, also enable "warning", "performance" and "portability"
-                if (mSettings->isEnabled(Settings::STYLE)) {
-                    mSettings->addEnabled("warning");
-                    mSettings->addEnabled("performance");
-                    mSettings->addEnabled("portability");
+            }
+
+            else if (std::strncmp(argv[i], "-s=", 3) == 0) {
+                const std::string errmsg = parseEnableList(argv[i] + 3, parseEnableList_setSeverity);
+                if (!errmsg.empty()) {
+                    printMessage(errmsg);
+                    return false;
+                }
+            }
+
+            else if (std::strncmp(argv[i], "--certainty=", 12) == 0) {
+                const std::string errmsg = parseEnableList(argv[i] + 12, parseEnableList_setCertainty);
+                if (!errmsg.empty()) {
+                    printMessage(errmsg);
+                    return false;
+                }
+            }
+
+            else if (std::strncmp(argv[i], "-c=", 3) == 0) {
+                const std::string errmsg = parseEnableList(argv[i] + 3, parseEnableList_setCertainty);
+                if (!errmsg.empty()) {
+                    printMessage(errmsg);
+                    return false;
+                }
+            }
+
+            else if (std::strncmp(argv[i], "--checks=", 9) == 0) {
+                const std::string errmsg = parseEnableList(argv[i] + 9, parseEnableList_setChecks);
+                if (!errmsg.empty()) {
+                    printMessage(errmsg);
+                    return false;
+                }
+            }
+
+            else if (std::strncmp(argv[i], "--output=", 9) == 0) {
+                const std::string errmsg = parseEnableList(argv[i] + 9, parseEnableList_setOutput);
+                if (!errmsg.empty()) {
+                    printMessage(errmsg);
+                    return false;
+                }
+            }
+
+            else if (std::strncmp(argv[i], "-o=", 3) == 0) {
+                const std::string errmsg = parseEnableList(argv[i] + 3, parseEnableList_setOutput);
+                if (!errmsg.empty()) {
+                    printMessage(errmsg);
+                    return false;
                 }
             }
 
@@ -401,10 +529,6 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                     return false;
                 }
             }
-
-            // Inconclusive checking
-            else if (std::strcmp(argv[i], "--inconclusive") == 0)
-                mSettings->inconclusive = true;
 
             // Enables inline suppressions.
             else if (std::strcmp(argv[i], "--inline-suppr") == 0)
@@ -538,10 +662,6 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                     mSettings->plistOutput += '/';
             }
 
-            // Only print something when there are errors
-            else if (std::strcmp(argv[i], "-q") == 0 || std::strcmp(argv[i], "--quiet") == 0)
-                mSettings->quiet = true;
-
             // Output relative paths
             else if (std::strcmp(argv[i], "-rp") == 0 || std::strcmp(argv[i], "--relative-paths") == 0)
                 mSettings->relativePaths = true;
@@ -566,7 +686,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 
             // Report progress
             else if (std::strcmp(argv[i], "--report-progress") == 0) {
-                mSettings->reportProgress = true;
+                mSettings->output.enable(Output::progress);
             }
 
 #ifdef HAVE_RULES
@@ -715,19 +835,6 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                     printMessage("cppcheck: argument to '--template' is missing.");
                     return false;
                 }
-
-                if (mSettings->templateFormat == "gcc") {
-                    mSettings->templateFormat = "{file}:{line}:{column}: warning: {message} [{id}]\\n{code}";
-                    mSettings->templateLocation = "{file}:{line}:{column}: note: {info}\\n{code}";
-                } else if (mSettings->templateFormat == "daca2") {
-                    mSettings->templateFormat = "{file}:{line}:{column}: {severity}: {message} [{id}]";
-                    mSettings->templateLocation = "{file}:{line}:{column}: note: {info}";
-                } else if (mSettings->templateFormat == "vs")
-                    mSettings->templateFormat = "{file}({line}): {severity}: {message}";
-                else if (mSettings->templateFormat == "edit")
-                    mSettings->templateFormat = "{file} +{line}: {severity}: {message}";
-                else if (mSettings->templateFormat == "cppcheck1")
-                    mSettings->templateFormat = "{callstack}: ({severity}{inconclusive:, inconclusive}) {message}";
             }
 
             else if (std::strcmp(argv[i], "--template-location") == 0 ||
@@ -792,8 +899,17 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
     }
 
     // Default template format..
-    if (mSettings->templateFormat.empty()) {
-        mSettings->templateFormat = "{file}:{line}:{column}: {severity}:{inconclusive:inconclusive:} {message} [{id}]\\n{code}";
+    if (mSettings->templateFormat.empty())
+        mSettings->templateFormat = "{callstack}: ({severity}{certainty:, certainty}) {message}";
+    else if (mSettings->templateFormat == "gcc") {
+        mSettings->templateFormat = "{file}:{line}:{column}: warning: {message} [{id}]\\n{code}";
+        mSettings->templateLocation = "{file}:{line}:{column}: note: {info}\\n{code}";
+    } else if (mSettings->templateFormat == "vs")
+        mSettings->templateFormat = "{file}({line}): {severity}: {message}";
+    else if (mSettings->templateFormat == "edit")
+        mSettings->templateFormat = "{file} +{line}: {severity}: {message}";
+    else if (mSettings->templateFormat == "cppcheck2") {
+        mSettings->templateFormat = "{file}:{line}:{column}: {severity}:{certainty:certainty:} {message} [{id}]\\n{code}";
         if (mSettings->templateLocation.empty())
             mSettings->templateLocation = "{file}:{line}:{column}: note: {info}\\n{code}";
     }
@@ -807,7 +923,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
     else if ((def || mSettings->preprocessOnly) && !maxconfigs)
         mSettings->maxConfigs = 1U;
 
-    if (mSettings->isEnabled(Settings::UNUSED_FUNCTION) && mSettings->jobs > 1) {
+    if (mSettings->checks.isEnabled("unusedFunction") && mSettings->jobs > 1) {
         printMessage("cppcheck: unusedFunction check can't be used with '-j' option. Disabling unusedFunction check.");
     }
 
@@ -842,7 +958,13 @@ void CmdLineParser::printHelp()
               "    cppcheck [OPTIONS] [files or paths]\n"
               "\n"
               "If a directory is given instead of a filename, *.cpp, *.cxx, *.cc, *.c++, *.c,\n"
-              "*.tpp, and *.txx files are checked recursively from the given directory.\n\n"
+              "*.tpp, and *.txx files are checked recursively from the given directory.\n"
+              "\n"
+              "For some options listed below, IDs have to be given to enable or disable certain\n"
+              "behaviour. For disabling, add a - in front of the ID. Several IDs can be given\n"
+              "as a comma-separated list. The ID 'all' affects all possible IDs for the switch.\n"
+              "Example: '-s=-all,performance' disables all severities but performance.\n"
+              "\n"
               "Options:\n"
               "    --addon=<addon>\n"
               "                         Execute addon. i.e. --addon=cert. If options must be\n"
@@ -854,6 +976,21 @@ void CmdLineParser::printHelp()
               "                         then \"python\".\n"
               "    --bug-hunting\n"
               "                         Noisy and soundy analysis.\n"
+              "    --certainty=<id>\n"
+              "    -c=<id>              Enables messages of given level of certainty. The\n"
+              "                         available ids are:\n"
+              "                          * all\n"
+              "                                  Enable all levels defined below.\n"
+              "                          * safe\n"
+              "                                  Messages where cppcheck is sure to be correct.\n"
+              "                          * inconclusive\n"
+              "                                  Inconclusive checks at the trade-off of\n"
+              "                                  getting more false-positives.\n"
+              "                          * experimental\n"
+              "                                  Experimental checks.\n"
+              "                         Default is: -c=safe\n"
+              "    --checks=<id>        Enables/disables certain checks.\n"
+              "                         Default is: --checks=all,-missingInclude,-unusedFunction\n"
               "    --cppcheck-build-dir=<dir>\n"
               "                         Analysis output directory. Useful for various data.\n"
               "                         Some possible usages are; whole program analysis,\n"
@@ -882,30 +1019,20 @@ void CmdLineParser::printHelp()
               "                         Example: '-UDEBUG'\n"
               "    -E                   Print preprocessor output on stdout and don't do any\n"
               "                         further processing.\n"
-              "    --enable=<id>        Enable additional checks. The available ids are:\n"
+              "    --severity=<id>\n"
+              "    -s=<id>              Enable checks of given severity. The available ids are:\n"
+              "                          * error\n"
+              "                                  Enable error messages\n"
               "                          * all\n"
-              "                                  Enable all checks. It is recommended to only\n"
-              "                                  use --enable=all when the whole program is\n"
-              "                                  scanned, because this enables unusedFunction.\n"
+              "                                  Enables messages of all severities.\n"
               "                          * warning\n"
               "                                  Enable warning messages\n"
               "                          * style\n"
-              "                                  Enable all coding style checks. All messages\n"
-              "                                  with the severities 'style', 'performance' and\n"
-              "                                  'portability' are enabled.\n"
+              "                                  Enable style messages\n"
               "                          * performance\n"
               "                                  Enable performance messages\n"
               "                          * portability\n"
               "                                  Enable portability messages\n"
-              "                          * information\n"
-              "                                  Enable information messages\n"
-              "                          * unusedFunction\n"
-              "                                  Check for unused functions. It is recommend\n"
-              "                                  to only enable this when the whole program is\n"
-              "                                  scanned.\n"
-              "                          * missingInclude\n"
-              "                                  Warn if there are missing includes. For\n"
-              "                                  detailed information, use '--check-config'.\n"
               "                         Several ids can be given if you separate them with\n"
               "                         commas. See also --std\n"
               "    --error-exitcode=<n> If errors are found, integer [n] is returned instead of\n"
@@ -943,11 +1070,6 @@ void CmdLineParser::printHelp()
               "                         from the check. This applies only to source files so\n"
               "                         header files included by source files are not matched.\n"
               "                         Directory name is matched to all parts of the path.\n"
-              "    --inconclusive       Allow that Cppcheck reports even though the analysis is\n"
-              "                         inconclusive.\n"
-              "                         There are false positives with this option. Each result\n"
-              "                         must be carefully investigated before you know if it is\n"
-              "                         good or bad.\n"
               "    --inline-suppr       Enable inline suppressions. Use them by placing one or\n"
               "                         more comments, like: '// cppcheck-suppress warningId'\n"
               "                         on the lines before the warning to suppress.\n"
@@ -971,6 +1093,23 @@ void CmdLineParser::printHelp()
               "                         before skipping it. Default is '12'. If used together\n"
               "                         with '--force', the last option is the one that is\n"
               "                         effective.\n"
+              "    --output=<id>\n"
+              "    -o=<id>              Enables different kinds of output. Available IDs:\n"
+              "                          * findings\n"
+              "                                  Outputs cppcheck's findings.\n"
+              "                          * debug\n"
+              "                                  Enables debugging output.\n"
+              "                          * status\n"
+              "                                  Prints the current file and configuration.\n"
+              "                          * progress\n"
+              "                                  Enables progress reports (implies status).\n"
+              "                          * verbose\n"
+              "                                  Output more detailed error information.\n"
+              "                          * information\n"
+              "                                  Enables information messages.\n"
+              "                          * config\n"
+              "                                  Check cppcheck configuration.\n"
+              "                         Default is: -o=findings,status\n"
               "    --platform=<type>, --platform=<file>\n"
               "                         Specifies platform specific types and sizes. The\n"
               "                         available builtin platforms are:\n"
@@ -993,7 +1132,6 @@ void CmdLineParser::printHelp()
               "                                 Unknown type sizes\n"
               "    --plist-output=<path>\n"
               "                         Generate Clang-plist output files in folder.\n"
-              "    -q, --quiet          Do not show progress reports.\n"
               "    -rp, --relative-paths\n"
               "    -rp=<paths>, --relative-paths=<paths>\n"
               "                         Use relative paths in output. When given, <paths> are\n"
@@ -1003,7 +1141,6 @@ void CmdLineParser::printHelp()
               "                         using e.g. ~ for home folder does not work. It is\n"
               "                         currently only possible to apply the base paths to\n"
               "                         files that are on a lower level in the directory tree.\n"
-              "    --report-progress    Report progress messages while checking a file.\n"
 #ifdef HAVE_RULES
               "    --rule=<rule>        Match regular expression.\n"
               "    --rule-file=<file>   Use given rule file. For more information, see: \n"
@@ -1045,8 +1182,8 @@ void CmdLineParser::printHelp()
               "                           {column}            column number\n"
               "                           {callstack}         show a callstack. Example:\n"
               "                                                 [file.c:1] -> [file.c:100]\n"
-              "                           {inconclusive:text} if warning is inconclusive, text\n"
-              "                                               is written\n"
+              "                           {certainty:certainty} if warning is not safe,\n"
+              "                                                 certainty is written\n"
               "                           {severity}          severity\n"
               "                           {message}           warning message\n"
               "                           {id}                warning id\n"
@@ -1059,8 +1196,7 @@ void CmdLineParser::printHelp()
               "                         '{file}:{line},{severity},{id},{message}' or\n"
               "                         '{file}({line}):({severity}) {message}' or\n"
               "                         '{callstack} {message}'\n"
-              "                         Pre-defined templates: gcc (default), cppcheck1 (old default), vs, edit.\n"
-              // Note: template daca2 also exists, but is for internal use (cppcheck scripts).
+              "                         Pre-defined templates: gcc (default), cppcheck2 (old default), vs, edit.\n"
               "    --template-location='<text>'\n"
               "                         Format error message location. If this is not provided\n"
               "                         then no extra location info is shown.\n"
@@ -1086,11 +1222,11 @@ void CmdLineParser::printHelp()
               "  # write errors to a file:\n"
               "  cppcheck . 2> err.txt\n"
               "\n"
-              "  # Recursively check ../myproject/ and don't print progress:\n"
-              "  cppcheck --quiet ../myproject/\n"
+              "  # Recursively check ../myproject/ and print progress:\n"
+              "  cppcheck --output=progress ../myproject/\n"
               "\n"
               "  # Check test.cpp, enable all checks:\n"
-              "  cppcheck --enable=all --inconclusive --library=posix test.cpp\n"
+              "  cppcheck --severity=all --certainty=inconclusive --library=posix test.cpp\n"
               "\n"
               "  # Check f.cpp and search include files from inc1/ and inc2/:\n"
               "  cppcheck -I inc1/ -I inc2/ f.cpp\n"

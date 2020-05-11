@@ -105,7 +105,7 @@ void CheckType::tooBigBitwiseShiftError(const Token *tok, int lhsbits, const Val
     const char id[] = "shiftTooManyBits";
 
     if (!tok) {
-        reportError(tok, Severity::error, id, "Shifting 32-bit value by 40 bits is undefined behaviour", CWE758, false);
+        reportError(tok, Severity::error, id, "Shifting 32-bit value by 40 bits is undefined behaviour", CWE758, Certainty::safe);
         return;
     }
 
@@ -116,7 +116,7 @@ void CheckType::tooBigBitwiseShiftError(const Token *tok, int lhsbits, const Val
     if (rhsbits.condition)
         errmsg << ". See condition at line " << rhsbits.condition->linenr() << ".";
 
-    reportError(errorPath, rhsbits.errorSeverity() ? Severity::error : Severity::warning, id, errmsg.str(), CWE758, rhsbits.isInconclusive());
+    reportError(errorPath, rhsbits.errorSeverity() ? Severity::error : Severity::warning, id, errmsg.str(), CWE758, rhsbits.isInconclusive() ? Certainty::inconclusive : Certainty::safe);
 }
 
 void CheckType::tooBigSignedBitwiseShiftError(const Token *tok, int lhsbits, const ValueFlow::Value &rhsbits)
@@ -129,7 +129,7 @@ void CheckType::tooBigSignedBitwiseShiftError(const Token *tok, int lhsbits, con
     if (cpp14)
         behaviour = "implementation-defined";
     if (!tok) {
-        reportError(tok, Severity::error, id, "Shifting signed 32-bit value by 31 bits is " + behaviour + " behaviour", CWE758, false);
+        reportError(tok, Severity::error, id, "Shifting signed 32-bit value by 31 bits is " + behaviour + " behaviour", CWE758, Certainty::safe);
         return;
     }
 
@@ -144,9 +144,9 @@ void CheckType::tooBigSignedBitwiseShiftError(const Token *tok, int lhsbits, con
     if (cpp14)
         severity = Severity::portability;
 
-    if ((severity == Severity::portability) && !mSettings->isEnabled(Settings::PORTABILITY))
+    if ((severity == Severity::portability) && !mSettings->severity.isEnabled(Severity::portability))
         return;
-    reportError(errorPath, severity, id, errmsg.str(), CWE758, rhsbits.isInconclusive());
+    reportError(errorPath, severity, id, errmsg.str(), CWE758, rhsbits.isInconclusive() ? Certainty::inconclusive : Certainty::safe);
 }
 
 //---------------------------------------------------------------------------
@@ -218,7 +218,7 @@ void CheckType::integerOverflowError(const Token *tok, const ValueFlow::Value &v
                 getMessageId(value, "integerOverflow").c_str(),
                 msg,
                 CWE190,
-                value.isInconclusive());
+                value.isInconclusive() ? Certainty::inconclusive : Certainty::safe);
 }
 
 //---------------------------------------------------------------------------
@@ -227,7 +227,7 @@ void CheckType::integerOverflowError(const Token *tok, const ValueFlow::Value &v
 
 void CheckType::checkSignConversion()
 {
-    if (!mSettings->isEnabled(Settings::WARNING))
+    if (!mSettings->severity.isEnabled(Severity::warning))
         return;
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
@@ -269,7 +269,7 @@ void CheckType::signConversionError(const Token *tok, const ValueFlow::Value *ne
         msg << "Expression '" << expr << "' can have a negative value. That is converted to an unsigned value and used in an unsigned calculation.";
 
     if (!negativeValue)
-        reportError(tok, Severity::warning, "signConversion", msg.str(), CWE195, false);
+        reportError(tok, Severity::warning, "signConversion", msg.str(), CWE195, Certainty::safe);
     else {
         const ErrorPath &errorPath = getErrorPath(tok,negativeValue,"Negative value is converted to an unsigned value");
         reportError(errorPath,
@@ -277,7 +277,7 @@ void CheckType::signConversionError(const Token *tok, const ValueFlow::Value *ne
                     Check::getMessageId(*negativeValue, "signConversion").c_str(),
                     msg.str(),
                     CWE195,
-                    negativeValue->isInconclusive());
+                    negativeValue->isInconclusive() ? Certainty::inconclusive : Certainty::safe);
     }
 }
 
@@ -288,7 +288,7 @@ void CheckType::signConversionError(const Token *tok, const ValueFlow::Value *ne
 
 void CheckType::checkLongCast()
 {
-    if (!mSettings->isEnabled(Settings::STYLE))
+    if (!mSettings->severity.isEnabled(Severity::style))
         return;
 
     // Assignments..
@@ -364,7 +364,7 @@ void CheckType::longCastAssignError(const Token *tok)
                 Severity::style,
                 "truncLongCastAssignment",
                 "int result is assigned to long variable. If the variable is long to avoid loss of information, then you have loss of information.\n"
-                "int result is assigned to long variable. If the variable is long to avoid loss of information, then there is loss of information. To avoid loss of information you must cast a calculation operand to long, for example 'l = a * b;' => 'l = (long)a * b;'.", CWE197, false);
+                "int result is assigned to long variable. If the variable is long to avoid loss of information, then there is loss of information. To avoid loss of information you must cast a calculation operand to long, for example 'l = a * b;' => 'l = (long)a * b;'.", CWE197, Certainty::safe);
 }
 
 void CheckType::longCastReturnError(const Token *tok)
@@ -373,7 +373,7 @@ void CheckType::longCastReturnError(const Token *tok)
                 Severity::style,
                 "truncLongCastReturn",
                 "int result is returned as long value. If the return value is long to avoid loss of information, then you have loss of information.\n"
-                "int result is returned as long value. If the return value is long to avoid loss of information, then there is loss of information. To avoid loss of information you must cast a calculation operand to long, for example 'return a*b;' => 'return (long)a*b'.", CWE197, false);
+                "int result is returned as long value. If the return value is long to avoid loss of information, then there is loss of information. To avoid loss of information you must cast a calculation operand to long, for example 'return a*b;' => 'return (long)a*b'.", CWE197, Certainty::safe);
 }
 
 //---------------------------------------------------------------------------
@@ -460,5 +460,5 @@ void CheckType::floatToIntegerOverflowError(const Token *tok, const ValueFlow::V
     reportError(getErrorPath(tok, &value, "float to integer conversion"),
                 value.errorSeverity() ? Severity::error : Severity::warning,
                 "floatConversionOverflow",
-                errmsg.str(), CWE190, value.isInconclusive());
+                errmsg.str(), CWE190, value.isInconclusive() ? Certainty::inconclusive : Certainty::safe);
 }

@@ -21,6 +21,7 @@
 //---------------------------------------------------------------------------
 
 #include "config.h"
+#include "errortypes.h"
 
 #include <istream>
 #include <list>
@@ -41,7 +42,7 @@ public:
             return mFileName;
         }
         int lineNumber;
-        bool inconclusive;
+        Certainty::CertaintyLevel certainty;
         std::string symbolNames;
     private:
         std::string mFileName;

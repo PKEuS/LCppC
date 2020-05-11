@@ -41,8 +41,8 @@ private:
     void run() override {
         LOAD_LIB_2(settings_std.library, "std.cfg");
         LOAD_LIB_2(settings_windows.library, "windows.cfg");
-        settings0.addEnabled("portability");
-        settings_windows.addEnabled("portability");
+        settings0.severity.enable(Severity::portability);
+        settings_windows.severity.enable(Severity::portability);
 
         TEST_CASE(combine_strings);
         TEST_CASE(combine_wstrings);

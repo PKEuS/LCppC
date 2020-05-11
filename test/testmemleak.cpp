@@ -456,8 +456,8 @@ private:
     }
 
     void run() override {
-        settings.addEnabled("warning");
-        settings.addEnabled("style");
+        settings.severity.enable(Severity::warning);
+        settings.severity.enable(Severity::style);
 
         LOAD_LIB_2(settings.library, "std.cfg");
 
@@ -2093,9 +2093,9 @@ private:
     }
 
     void run() override {
-        settings.inconclusive = true;
+        settings.certainty.setEnabled(Certainty::inconclusive, true);
         settings.libraries.emplace_back("posix");
-        settings.addEnabled("warning");
+        settings.severity.enable(Severity::warning);
 
         LOAD_LIB_2(settings.library, "std.cfg");
         LOAD_LIB_2(settings.library, "posix.cfg");

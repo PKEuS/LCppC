@@ -287,7 +287,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
     if (Settings::terminated())
         return mExitCode;
 
-    if (!mSettings.quiet) {
+    if (mSettings.output.isEnabled(Output::status)) {
         std::string fixedpath = Path::simplifyPath(filename);
         fixedpath = Path::toNativeSeparators(fixedpath);
         mErrorLogger.reportOut(std::string("Checking ") + fixedpath + ' ' + cfgname + std::string("..."));
@@ -351,7 +351,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
                                     Severity::error,
                                     output.msg,
                                     "syntaxError",
-                                    false);
+                                    Certainty::safe);
                 reportErr(errmsg);
                 return mExitCode;
             }
@@ -422,11 +422,8 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
             // Get toolinfo
             std::ostringstream toolinfo;
             toolinfo << CPPCHECK_VERSION_STRING;
-            toolinfo << (mSettings.isEnabled(Settings::WARNING) ? 'w' : ' ');
-            toolinfo << (mSettings.isEnabled(Settings::STYLE) ? 's' : ' ');
-            toolinfo << (mSettings.isEnabled(Settings::PERFORMANCE) ? 'p' : ' ');
-            toolinfo << (mSettings.isEnabled(Settings::PORTABILITY) ? 'p' : ' ');
-            toolinfo << (mSettings.isEnabled(Settings::INFORMATION) ? 'i' : ' ');
+            toolinfo << mSettings.severity.intValue() << ' ';
+            toolinfo << mSettings.certainty.intValue();
             toolinfo << mSettings.userDefines;
             mSettings.nomsg.dump(toolinfo);
 
@@ -482,7 +479,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
         }
 
         if (!mSettings.force && configurations.size() > mSettings.maxConfigs) {
-            if (mSettings.isEnabled(Settings::INFORMATION)) {
+            if (mSettings.severity.isEnabled(Severity::information)) {
                 tooManyConfigsError(Path::toNativeSeparators(filename),configurations.size());
             } else {
                 mTooManyConfigs = true;
@@ -549,7 +546,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
                 hasValidConfig = true;
 
                 // If only errors are printed, print filename after the check
-                if (!mSettings.quiet && (!mCurrentConfig.empty() || checkCount > 1)) {
+                if (mSettings.output.isEnabled(Output::status) && (!mCurrentConfig.empty() || checkCount > 1)) {
                     std::string fixedpath = Path::simplifyPath(filename);
                     fixedpath = Path::toNativeSeparators(fixedpath);
                     mErrorLogger.reportOut("Checking " + fixedpath + ": " + mCurrentConfig + "...");
@@ -629,14 +626,14 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
                                     Severity::error,
                                     e.errorMessage,
                                     e.id,
-                                    false);
+                                    Certainty::safe);
 
-                if (errmsg.severity == Severity::error || mSettings.isEnabled(errmsg.severity))
+                if (errmsg.severity == Severity::error || mSettings.severity.isEnabled(errmsg.severity))
                     reportErr(errmsg);
             }
         }
 
-        if (!hasValidConfig && configurations.size() > 1 && mSettings.isEnabled(Settings::INFORMATION)) {
+        if (!hasValidConfig && configurations.size() > 1 && mSettings.severity.isEnabled(Severity::information)) {
             std::string msg;
             msg = "This file is not analyzed. Cppcheck failed to extract a valid configuration. Use -v for more details.";
             msg += "\nThis file is not analyzed. Cppcheck failed to extract a valid configuration. The tested configurations have these preprocessor errors:";
@@ -652,7 +649,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
                                 Severity::information,
                                 msg,
                                 "noValidConfiguration",
-                                false);
+                                Certainty::safe);
             reportErr(errmsg);
         }
 
@@ -725,7 +722,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
 
     // In jointSuppressionReport mode, unmatched suppressions are
     // collected after all files are processed
-    if (!mSettings.jointSuppressionReport && (mSettings.isEnabled(Settings::INFORMATION) || mSettings.checkConfiguration)) {
+    if (!mSettings.jointSuppressionReport && (mSettings.severity.isEnabled(Severity::information) || mSettings.checkConfiguration)) {
         reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(filename, isUnusedFunctionCheckEnabled()));
     }
 
@@ -739,7 +736,7 @@ void CppCheck::internalError(const std::string &filename, const std::string &msg
     const std::string fixedpath = Path::toNativeSeparators(filename);
     const std::string fullmsg("Bailing out from checking " + fixedpath + " since there was an internal error: " + msg);
 
-    if (mSettings.isEnabled(Settings::INFORMATION)) {
+    if (mSettings.severity.isEnabled(Severity::information)) {
         const ErrorMessage::FileLocation loc1(filename, 0, 0);
         std::list<ErrorMessage::FileLocation> callstack(1, loc1);
 
@@ -748,7 +745,7 @@ void CppCheck::internalError(const std::string &filename, const std::string &msg
                             Severity::information,
                             fullmsg,
                             "internalError",
-                            false);
+                            Certainty::safe);
 
         mErrorLogger.reportErr(errmsg);
     } else {
@@ -985,7 +982,7 @@ void CppCheck::executeRules(const std::string &tokenlist, const Tokenizer &token
                                           Severity::error,
                                           msg,
                                           "pcre_compile",
-                                          false);
+                                          Certainty::safe);
 
                 reportErr(errmsg);
             }
@@ -1006,7 +1003,7 @@ void CppCheck::executeRules(const std::string &tokenlist, const Tokenizer &token
                                       Severity::error,
                                       msg,
                                       "pcre_study",
-                                      false);
+                                      Certainty::safe);
 
             reportErr(errmsg);
             // pcre_compile() worked, but pcre_study() returned an error. Free the resources allocated by pcre_compile().
@@ -1029,7 +1026,7 @@ void CppCheck::executeRules(const std::string &tokenlist, const Tokenizer &token
                                               Severity::error,
                                               std::string("pcre_exec failed: ") + errorMessage,
                                               "pcre_exec",
-                                              false);
+                                              Certainty::safe);
 
                     reportErr(errmsg);
                 }
@@ -1064,7 +1061,7 @@ void CppCheck::executeRules(const std::string &tokenlist, const Tokenizer &token
                 summary = "found '" + str.substr(pos1, pos2 - pos1) + "'";
             else
                 summary = rule.summary;
-            const ErrorMessage errmsg(callStack, tokenizer.list.getSourceFilePath(), rule.severity, summary, rule.id, false);
+            const ErrorMessage errmsg(callStack, tokenizer.list.getSourceFilePath(), rule.severity, summary, rule.id, Certainty::safe);
 
             // Report error
             reportErr(errmsg);
@@ -1084,12 +1081,12 @@ void CppCheck::executeRules(const std::string &tokenlist, const Tokenizer &token
 
 void CppCheck::tooManyConfigsError(const std::string &file, const std::size_t numberOfConfigurations)
 {
-    if (!mSettings.isEnabled(Settings::INFORMATION) && !mTooManyConfigs)
+    if (!mSettings.severity.isEnabled(Severity::information) && !mTooManyConfigs)
         return;
 
     mTooManyConfigs = false;
 
-    if (mSettings.isEnabled(Settings::INFORMATION) && file.empty())
+    if (mSettings.severity.isEnabled(Severity::information) && file.empty())
         return;
 
     std::list<ErrorMessage::FileLocation> loclist;
@@ -1118,7 +1115,7 @@ void CppCheck::tooManyConfigsError(const std::string &file, const std::size_t nu
                         Severity::information,
                         msg.str(),
                         "toomanyconfigs", CWE398,
-                        false);
+                        Certainty::safe);
 
     reportErr(errmsg);
 }
@@ -1127,7 +1124,7 @@ void CppCheck::purgedConfigurationMessage(const std::string &file, const std::st
 {
     mTooManyConfigs = false;
 
-    if (mSettings.isEnabled(Settings::INFORMATION) && file.empty())
+    if (mSettings.severity.isEnabled(Severity::information) && file.empty())
         return;
 
     std::list<ErrorMessage::FileLocation> loclist;
@@ -1142,7 +1139,7 @@ void CppCheck::purgedConfigurationMessage(const std::string &file, const std::st
                         Severity::information,
                         "The configuration '" + configuration + "' was not checked because its code equals another one.",
                         "purgedConfiguration",
-                        false);
+                        Certainty::safe);
 
     reportErr(errmsg);
 }
@@ -1216,11 +1213,11 @@ void CppCheck::reportStatus(unsigned int /*fileindex*/, unsigned int /*filecount
 void CppCheck::getErrorMessages()
 {
     Settings s(mSettings);
-    s.addEnabled("warning");
-    s.addEnabled("style");
-    s.addEnabled("portability");
-    s.addEnabled("performance");
-    s.addEnabled("information");
+    s.severity.enable(Severity::warning);
+    s.severity.enable(Severity::style);
+    s.severity.enable(Severity::portability);
+    s.severity.enable(Severity::performance);
+    s.severity.enable(Severity::information);
 
     purgedConfigurationMessage("","");
 
@@ -1258,7 +1255,7 @@ void CppCheck::analyseWholeProgram(const std::string &buildDir, const std::map<s
     (void)files;
     if (buildDir.empty())
         return;
-    if (mSettings.isEnabled(Settings::UNUSED_FUNCTION))
+    if (mSettings.checks.isEnabled("unusedFunction"))
         CheckUnusedFunctions::analyseWholeProgram(this, buildDir);
     std::list<Check::FileInfo*> fileInfoList;
     CTU::FileInfo ctuFileInfo;
@@ -1316,5 +1313,5 @@ void CppCheck::analyseWholeProgram(const std::string &buildDir, const std::map<s
 
 bool CppCheck::isUnusedFunctionCheckEnabled() const
 {
-    return (mSettings.jobs == 1 && mSettings.isEnabled(Settings::UNUSED_FUNCTION));
+    return (mSettings.jobs == 1 && mSettings.checks.isEnabled("unusedFunction"));
 }

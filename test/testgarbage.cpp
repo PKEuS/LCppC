@@ -35,13 +35,13 @@ private:
 
     void run() override {
         settings.debugwarnings = true;
-        settings.addEnabled("style");
-        settings.addEnabled("warning");
-        settings.addEnabled("portability");
-        settings.addEnabled("performance");
-        settings.addEnabled("information");
-        settings.inconclusive = true;
-        settings.experimental = true;
+        settings.severity.enable(Severity::style);
+        settings.severity.enable(Severity::warning);
+        settings.severity.enable(Severity::portability);
+        settings.severity.enable(Severity::performance);
+        settings.severity.enable(Severity::information);
+        settings.certainty.enable(Certainty::inconclusive);
+        settings.certainty.enable(Certainty::experimental);
 
         // don't freak out when the syntax is wrong
 

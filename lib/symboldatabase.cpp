@@ -1734,7 +1734,7 @@ void SymbolDatabase::validateExecutableScopes() const
             const ErrorMessage errmsg(callstack, &mTokenizer->list, Severity::debug,
                                       "symbolDatabaseWarning",
                                       msg,
-                                      false);
+                                      Certainty::safe);
             mErrorLogger->reportErr(errmsg);
         }
     }
@@ -2779,7 +2779,7 @@ void SymbolDatabase::debugMessage(const Token *tok, const std::string &msg) cons
                                   Severity::debug,
                                   "debug",
                                   msg,
-                                  false);
+                                  Certainty::safe);
         if (mErrorLogger)
             mErrorLogger->reportErr(errmsg);
     }

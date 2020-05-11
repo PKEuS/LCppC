@@ -2218,7 +2218,7 @@ bool Tokenizer::simplifyUsing()
                     str += " ;";
                     std::list<const Token *> callstack(1, usingStart);
                     mErrorLogger->reportErr(ErrorMessage(callstack, &list, Severity::debug, "debug",
-                                                         "Failed to parse \'" + str + "\'. The checking continues anyway.", false));
+                                                         "Failed to parse \'" + str + "\'. The checking continues anyway.", Certainty::safe));
                 }
             }
             tok1 = after;
@@ -4356,7 +4356,7 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
     }
 
     // class x y {
-    if (isCPP() && mSettings->isEnabled(Settings::INFORMATION)) {
+    if (isCPP() && mSettings->severity.isEnabled(Severity::information)) {
         for (const Token *tok = list.front(); tok; tok = tok->next()) {
             if (Token::Match(tok, "class %type% %type% [:{]")) {
                 unhandled_macro_class_x_y(tok);
@@ -6296,7 +6296,7 @@ bool Tokenizer::isScopeNoReturn(const Token *endScopeToken, bool *unknown) const
     const bool ret = mSettings->library.isScopeNoReturn(endScopeToken,&unknownFunc);
     if (unknown)
         *unknown = !unknownFunc.empty();
-    if (!unknownFunc.empty() && mSettings->checkLibrary && mSettings->isEnabled(Settings::INFORMATION)) {
+    if (!unknownFunc.empty() && mSettings->checkLibrary && mSettings->severity.isEnabled(Severity::information)) {
         // Is function global?
         bool globalFunction = true;
         if (Token::simpleMatch(endScopeToken->tokAt(-2), ") ; }")) {
@@ -8739,7 +8739,7 @@ void Tokenizer::reportError(const Token* tok, const Severity::SeverityType sever
 
 void Tokenizer::reportError(const std::list<const Token*>& callstack, Severity::SeverityType severity, const std::string& id, const std::string& msg, bool inconclusive) const
 {
-    const ErrorMessage errmsg(callstack, &list, severity, id, msg, inconclusive);
+    const ErrorMessage errmsg(callstack, &list, severity, id, msg, inconclusive ? Certainty::inconclusive : Certainty::safe);
     if (mErrorLogger)
         mErrorLogger->reportErr(errmsg);
     else

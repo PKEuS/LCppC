@@ -42,7 +42,7 @@ private:
 
     void run() override {
         LOAD_LIB_2(settings.library, "std.cfg");
-        settings.addEnabled("warning");
+        settings.severity.enable(Severity::warning);
 
         TEST_CASE(nullpointerAfterLoop);
         TEST_CASE(nullpointer1);
@@ -134,7 +134,7 @@ private:
         // Clear the error buffer..
         errout.str("");
 
-        settings.inconclusive = inconclusive;
+        settings.certainty.setEnabled(Certainty::inconclusive, inconclusive);
 
         // Tokenize..
         Tokenizer tokenizer(&settings, this);
@@ -151,7 +151,7 @@ private:
         // Clear the error buffer..
         errout.str("");
 
-        settings.inconclusive = false;
+        settings.certainty.setEnabled(Certainty::inconclusive, false);
 
         // Raw tokens..
         std::vector<std::string> files(1, "test.cpp");

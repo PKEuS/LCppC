@@ -198,7 +198,7 @@ private:
         // Check for leaks..
         CheckLeakAutoVar c;
         settings.checkLibrary = true;
-        settings.addEnabled("information");
+        settings.severity.enable(Severity::information);
         c.runChecks(&tokenizer, &settings, this);
     }
 
@@ -224,7 +224,7 @@ private:
         // Check for leaks..
         CheckLeakAutoVar c;
         settings.checkLibrary = true;
-        settings.addEnabled("information");
+        settings.severity.enable(Severity::information);
         c.runChecks(&tokenizer, &settings, this);
     }
 
@@ -2048,7 +2048,7 @@ private:
         // Check for leaks..
         CheckLeakAutoVar checkLeak;
         settings.checkLibrary = true;
-        settings.addEnabled("information");
+        settings.severity.enable(Severity::information);
         checkLeak.runChecks(&tokenizer, &settings, this);
     }
 

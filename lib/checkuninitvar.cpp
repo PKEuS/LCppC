@@ -1294,7 +1294,7 @@ bool CheckUninitVar::isMemberVariableUsage(const Token *tok, bool isPointer, All
              tok->astParent()->astParent()->astParent()->astOperand2() == tok->astParent()->astParent())
         return true;
 
-    else if (mSettings->experimental &&
+    else if (mSettings->certainty.isEnabled(Certainty::experimental) &&
              !isPointer &&
              Token::Match(tok->tokAt(-2), "[(,] & %name% [,)]") &&
              isVariableUsage(tok, isPointer, alloc))
@@ -1305,18 +1305,18 @@ bool CheckUninitVar::isMemberVariableUsage(const Token *tok, bool isPointer, All
 
 void CheckUninitVar::uninitstringError(const Token *tok, const std::string &varname, bool strncpy_)
 {
-    reportError(tok, Severity::error, "uninitstring", "$symbol:" + varname + "\nDangerous usage of '$symbol'" + (strncpy_ ? " (strncpy doesn't always null-terminate it)." : " (not null-terminated)."), CWE_USE_OF_POTENTIALLY_DANGEROUS_FUNCTION, false);
+    reportError(tok, Severity::error, "uninitstring", "$symbol:" + varname + "\nDangerous usage of '$symbol'" + (strncpy_ ? " (strncpy doesn't always null-terminate it)." : " (not null-terminated)."), CWE_USE_OF_POTENTIALLY_DANGEROUS_FUNCTION, Certainty::safe);
 }
 
 void CheckUninitVar::uninitdataError(const Token *tok, const std::string &varname)
 {
-    reportError(tok, Severity::error, "uninitdata", "$symbol:" + varname + "\nMemory is allocated but not initialized: $symbol", CWE_USE_OF_UNINITIALIZED_VARIABLE, false);
+    reportError(tok, Severity::error, "uninitdata", "$symbol:" + varname + "\nMemory is allocated but not initialized: $symbol", CWE_USE_OF_UNINITIALIZED_VARIABLE, Certainty::safe);
 }
 
 void CheckUninitVar::uninitvarError(const Token *tok, const std::string &varname, ErrorPath errorPath)
 {
     errorPath.emplace_back(tok, "");
-    reportError(errorPath, Severity::error, "uninitvar", "$symbol:" + varname + "\nUninitialized variable: $symbol", CWE_USE_OF_UNINITIALIZED_VARIABLE, false);
+    reportError(errorPath, Severity::error, "uninitvar", "$symbol:" + varname + "\nUninitialized variable: $symbol", CWE_USE_OF_UNINITIALIZED_VARIABLE, Certainty::safe);
 }
 
 void CheckUninitVar::uninitStructMemberError(const Token *tok, const std::string &membername)
@@ -1324,7 +1324,7 @@ void CheckUninitVar::uninitStructMemberError(const Token *tok, const std::string
     reportError(tok,
                 Severity::error,
                 "uninitStructMember",
-                "$symbol:" + membername + "\nUninitialized struct member: $symbol", CWE_USE_OF_UNINITIALIZED_VARIABLE, false);
+                "$symbol:" + membername + "\nUninitialized struct member: $symbol", CWE_USE_OF_UNINITIALIZED_VARIABLE, Certainty::safe);
 }
 
 static bool isLeafDot(const Token* tok)
@@ -1460,7 +1460,7 @@ bool CheckUninitVar::analyseWholeProgram(const CTU::FileInfo *ctu, const std::li
                                       "Using argument " + unsafeUsage.myArgumentName + " that points at uninitialized variable " + functionCall->callArgumentExpression,
                                       "ctuuninitvar",
                                       CWE_USE_OF_UNINITIALIZED_VARIABLE,
-                                      false);
+                                      Certainty::safe);
             errorLogger.reportErr(errmsg);
 
             foundErrors = true;

@@ -103,7 +103,7 @@ void ThreadExecutor::threadProc()
             mResult += fileChecker.check(file);
         }
 
-        if (!mSettings.quiet) {
+        if (mSettings.output.isEnabled(Output::progress)) {
             mReportSync.lock();
             mProcessedSize += fileSize;
             mProcessedFiles++;

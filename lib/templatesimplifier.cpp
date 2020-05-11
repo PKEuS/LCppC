@@ -2994,7 +2994,7 @@ bool TemplateSimplifier::simplifyTemplateInstantiations(
             if (printDebug && mErrorLogger) {
                 std::list<const Token *> callstack(1, tok2);
                 mErrorLogger->reportErr(ErrorMessage(callstack, &mTokenList, Severity::debug, "debug",
-                                                     "Failed to instantiate template \"" + instantiation.name() + "\". The checking continues anyway.", false));
+                                                     "Failed to instantiate template \"" + instantiation.name() + "\". The checking continues anyway.", Certainty::safe));
             }
             if (typeForNewName.empty())
                 continue;
@@ -3062,7 +3062,7 @@ bool TemplateSimplifier::simplifyTemplateInstantiations(
             if (printDebug && mErrorLogger) {
                 std::list<const Token *> callstack(1, tok2);
                 mErrorLogger->reportErr(ErrorMessage(callstack, &mTokenList, Severity::debug, "debug",
-                                                     "Failed to instantiate template \"" + templateDeclaration.name() + "\". The checking continues anyway.", false));
+                                                     "Failed to instantiate template \"" + templateDeclaration.name() + "\". The checking continues anyway.", Certainty::safe));
             }
             return false;
         }
@@ -3682,7 +3682,7 @@ void TemplateSimplifier::simplifyTemplates(
                                       Severity::debug,
                                       "debug",
                                       "TemplateSimplifier: pass count limit hit before simplifications were finished.",
-                                      false);
+                                      Certainty::safe);
             if (mErrorLogger)
                 mErrorLogger->reportErr(errmsg);
         }

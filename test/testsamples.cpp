@@ -72,7 +72,7 @@ private:
 #else
                 "./testrunner",
 #endif
-                "--enable=style,warning,performance,portability", "--inconclusive", "-rp", "-f", "-q", path
+                "--severity=style,warning,performance,portability", "--certainty=inconclusive", "--template=cppcheck2", "-rp", "-f", path
             };
             std::string filename = i->first.substr(i->first.find_last_of("/\\")+1);
             if (filename == "good.cpp" || filename == "good.c") {

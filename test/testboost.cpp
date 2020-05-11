@@ -32,8 +32,8 @@ private:
     Settings settings;
 
     void run() override {
-        settings.addEnabled("style");
-        settings.addEnabled("performance");
+        settings.severity.enable(Severity::style);
+        settings.severity.enable(Severity::performance);
 
         TEST_CASE(BoostForeachContainerModification);
     }

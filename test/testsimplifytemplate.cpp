@@ -39,7 +39,7 @@ private:
     Settings settings;
 
     void run() override {
-        settings.addEnabled("portability");
+        settings.severity.enable(Severity::portability);
 
         TEST_CASE(template1);
         TEST_CASE(template2);

@@ -78,13 +78,15 @@ private:
         TEST_CASE(enabledStyle);
         TEST_CASE(enabledPerformance);
         TEST_CASE(enabledPortability);
-        TEST_CASE(enabledUnusedFunction);
+        TEST_CASE(disableUnusedFunction);
         TEST_CASE(enabledMissingInclude);
 #ifdef CHECK_INTERNAL
         TEST_CASE(enabledInternal);
 #endif
         TEST_CASE(enabledMultiple);
-        TEST_CASE(inconclusive);
+        TEST_CASE(certaintyAll);
+        TEST_CASE(certaintyInconclusive);
+        TEST_CASE(certaintyExperimental);
         TEST_CASE(errorExitcode);
         TEST_CASE(errorExitcodeMissing);
         TEST_CASE(errorExitcodeStr);
@@ -284,18 +286,18 @@ private:
 
     void quietshort() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "-q", "file.cpp"};
-        settings.quiet = false;
+        const char * const argv[] = {"cppcheck", "--output=progress", "file.cpp"};
+        settings.output.clear();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT_EQUALS(true, settings.quiet);
+        ASSERT_EQUALS(true, settings.output.isEnabled(Output::progress));
     }
 
     void quietlong() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "--quiet", "file.cpp"};
-        settings.quiet = false;
+        const char * const argv[] = {"cppcheck", "-o=progress", "file.cpp"};
+        settings.output.clear();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT_EQUALS(true, settings.quiet);
+        ASSERT_EQUALS(true, settings.output.isEnabled(Output::progress));
     }
 
     void defines_noarg() {
@@ -370,7 +372,7 @@ private:
             ASSERT(!defParser.parseFromArgs(2, argv));
         }
         {
-            const char * const argv[] = {"cppcheck", "-x", "--inconclusive", "file.cpp"};
+            const char * const argv[] = {"cppcheck", "-x", "--certainty=all", "file.cpp"};
             ASSERT(!defParser.parseFromArgs(4, argv));
         }
         {
@@ -456,100 +458,114 @@ private:
 
     void enabledAll() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "--enable=all", "file.cpp"};
+        const char * const argv[] = {"cppcheck", "--severity=all", "file.cpp"};
         settings = Settings();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT(settings.isEnabled(Settings::STYLE));
-        ASSERT(settings.isEnabled(Settings::WARNING));
-        ASSERT(settings.isEnabled(Settings::UNUSED_FUNCTION));
-        ASSERT(settings.isEnabled(Settings::MISSING_INCLUDE));
-        ASSERT(!settings.isEnabled(Settings::INTERNAL));
+        ASSERT(settings.severity.isEnabled(Severity::style));
+        ASSERT(settings.severity.isEnabled(Severity::warning));
     }
 
     void enabledStyle() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "--enable=style", "file.cpp"};
+        const char * const argv[] = {"cppcheck", "--severity=style", "file.cpp"};
         settings = Settings();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT(settings.isEnabled(Settings::STYLE));
-        ASSERT(settings.isEnabled(Settings::WARNING));
-        ASSERT(settings.isEnabled(Settings::PERFORMANCE));
-        ASSERT(settings.isEnabled(Settings::PORTABILITY));
-        ASSERT(!settings.isEnabled(Settings::UNUSED_FUNCTION));
-        ASSERT(!settings.isEnabled(Settings::MISSING_INCLUDE));
+        ASSERT(settings.severity.isEnabled(Severity::style));
+        ASSERT(!settings.severity.isEnabled(Severity::warning));
+        ASSERT(!settings.severity.isEnabled(Severity::performance));
+        ASSERT(!settings.severity.isEnabled(Severity::portability));
     }
 
     void enabledPerformance() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "--enable=performance", "file.cpp"};
+        const char * const argv[] = {"cppcheck", "--severity=performance", "file.cpp"};
         settings = Settings();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT(!settings.isEnabled(Settings::STYLE));
-        ASSERT(!settings.isEnabled(Settings::WARNING));
-        ASSERT(settings.isEnabled(Settings::PERFORMANCE));
-        ASSERT(!settings.isEnabled(Settings::PORTABILITY));
-        ASSERT(!settings.isEnabled(Settings::UNUSED_FUNCTION));
-        ASSERT(!settings.isEnabled(Settings::MISSING_INCLUDE));
+        ASSERT(!settings.severity.isEnabled(Severity::style));
+        ASSERT(!settings.severity.isEnabled(Severity::warning));
+        ASSERT(settings.severity.isEnabled(Severity::performance));
+        ASSERT(!settings.severity.isEnabled(Severity::portability));
     }
 
     void enabledPortability() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "--enable=portability", "file.cpp"};
+        const char * const argv[] = {"cppcheck", "--severity=portability", "file.cpp"};
         settings = Settings();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT(!settings.isEnabled(Settings::STYLE));
-        ASSERT(!settings.isEnabled(Settings::WARNING));
-        ASSERT(!settings.isEnabled(Settings::PERFORMANCE));
-        ASSERT(settings.isEnabled(Settings::PORTABILITY));
-        ASSERT(!settings.isEnabled(Settings::UNUSED_FUNCTION));
-        ASSERT(!settings.isEnabled(Settings::MISSING_INCLUDE));
+        ASSERT(!settings.severity.isEnabled(Severity::style));
+        ASSERT(!settings.severity.isEnabled(Severity::warning));
+        ASSERT(!settings.severity.isEnabled(Severity::performance));
+        ASSERT(settings.severity.isEnabled(Severity::portability));
     }
 
-    void enabledUnusedFunction() {
+    void disableUnusedFunction() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "--enable=unusedFunction", "file.cpp"};
+        const char * const argv[] = {"cppcheck", "--checks=-unusedFunction", "file.cpp"};
         settings = Settings();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT(settings.isEnabled(Settings::UNUSED_FUNCTION));
+        ASSERT(!settings.checks.isEnabled("unusedFunction"));
+        ASSERT(!settings.checks.isEnabled("missingInclude"));
     }
 
     void enabledMissingInclude() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "--enable=missingInclude", "file.cpp"};
+        const char * const argv[] = {"cppcheck", "--checks=missingInclude", "file.cpp"};
         settings = Settings();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT(settings.isEnabled(Settings::MISSING_INCLUDE));
+        ASSERT(settings.checks.isEnabled("unusedFunction"));
+        ASSERT(settings.checks.isEnabled("missingInclude"));
     }
 
 #ifdef CHECK_INTERNAL
     void enabledInternal() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "--enable=internal", "file.cpp"};
+        const char * const argv[] = {"cppcheck", "--severity=internal", "file.cpp"};
         settings = Settings();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT(settings.isEnabled(Settings::INTERNAL));
+        ASSERT(settings.severity.isEnabled(Settings::INTERNAL));
     }
 #endif
 
     void enabledMultiple() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "--enable=missingInclude,portability,warning", "file.cpp"};
+        const char * const argv[] = {"cppcheck", "--severity=portability,warning,information", "file.cpp"};
         settings = Settings();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT(!settings.isEnabled(Settings::STYLE));
-        ASSERT(settings.isEnabled(Settings::WARNING));
-        ASSERT(!settings.isEnabled(Settings::PERFORMANCE));
-        ASSERT(settings.isEnabled(Settings::PORTABILITY));
-        ASSERT(!settings.isEnabled(Settings::UNUSED_FUNCTION));
-        ASSERT(settings.isEnabled(Settings::MISSING_INCLUDE));
+        ASSERT(!settings.severity.isEnabled(Severity::style));
+        ASSERT(settings.severity.isEnabled(Severity::warning));
+        ASSERT(!settings.severity.isEnabled(Severity::performance));
+        ASSERT(settings.severity.isEnabled(Severity::portability));
+        ASSERT(settings.severity.isEnabled(Severity::information));
     }
 
-    void inconclusive() {
+    void certaintyAll() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "--inconclusive"};
-        settings.inconclusive = false;
+        const char* argv[] = { "cppcheck", "--certainty=all" };
+        settings.certainty.disable(Certainty::inconclusive);
+        settings.certainty.disable(Certainty::experimental);
         ASSERT(defParser.parseFromArgs(2, argv));
-        ASSERT_EQUALS(true, settings.inconclusive);
+        ASSERT_EQUALS(true, settings.certainty.isEnabled(Certainty::inconclusive));
+        ASSERT_EQUALS(true, settings.certainty.isEnabled(Certainty::experimental));
+    }
+
+    void certaintyInconclusive() {
+        REDIRECT;
+        const char* argv[] = { "cppcheck", "--certainty=inconclusive" };
+        settings.certainty.disable(Certainty::inconclusive);
+        settings.certainty.disable(Certainty::experimental);
+        ASSERT(defParser.parseFromArgs(2, argv));
+        ASSERT_EQUALS(true, settings.certainty.isEnabled(Certainty::inconclusive));
+        ASSERT_EQUALS(false, settings.certainty.isEnabled(Certainty::experimental));
+    }
+
+    void certaintyExperimental() {
+        REDIRECT;
+        const char* argv[] = { "cppcheck", "--certainty=experimental" };
+        settings.certainty.disable(Certainty::inconclusive);
+        settings.certainty.disable(Certainty::experimental);
+        ASSERT(defParser.parseFromArgs(2, argv));
+        ASSERT_EQUALS(false, settings.certainty.isEnabled(Certainty::inconclusive));
+        ASSERT_EQUALS(true, settings.certainty.isEnabled(Certainty::experimental));
     }
 
     void errorExitcode() {
@@ -679,9 +695,9 @@ private:
     void reportProgressTest() {
         REDIRECT;
         const char * const argv[] = {"cppcheck", "--report-progress", "file.cpp"};
-        settings.reportProgress = false;
+        settings.output.clear();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT(settings.reportProgress);
+        ASSERT(settings.output.isEnabled(Output::progress));
     }
 
     void stdc99() {

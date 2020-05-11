@@ -106,6 +106,12 @@ protected:
     static void printMessage(const std::string &message);
     static void printMessage(const char* message);
 
+    std::string parseEnableList(const std::string& str, bool(*function)(Settings&, const std::string&, bool));
+    static bool parseEnableList_setSeverity(Settings& settings, const std::string& str, bool enable);
+    static bool parseEnableList_setCertainty(Settings& settings, const std::string& str, bool enable);
+    static bool parseEnableList_setChecks(Settings& settings, const std::string& str, bool enable);
+    static bool parseEnableList_setOutput(Settings& settings, const std::string& str, bool enable);
+
 private:
     std::vector<std::string> mPathNames;
     std::vector<std::string> mIgnoredPaths;

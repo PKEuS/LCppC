@@ -29,8 +29,7 @@ const char Settings::SafeChecks::XmlInternalFunctions[] = "internal-functions";
 const char Settings::SafeChecks::XmlExternalVariables[] = "external-variables";
 
 Settings::Settings()
-    : mEnabled(0),
-      checkAllConfigurations(true),
+    : checkAllConfigurations(true),
       checkConfiguration(false),
       checkHeaders(true),
       checkLibrary(false),
@@ -42,106 +41,30 @@ Settings::Settings()
       enforcedLang(None),
       exceptionHandling(false),
       exitCode(0),
-      experimental(false),
       force(false),
-      inconclusive(false),
       inlineSuppressions(false),
       jobs(1),
       jointSuppressionReport(false),
       maxConfigs(12),
       maxCtuDepth(2),
       preprocessOnly(false),
-      quiet(false),
       relativePaths(false),
-      reportProgress(false),
       showtime(SHOWTIME_MODES::SHOWTIME_NONE),
       verbose(false),
       xml(false),
       xml_version(2)
 {
-}
-
-std::string Settings::addEnabled(const std::string &str)
-{
-    // Enable parameters may be comma separated...
-    if (str.find(',') != std::string::npos) {
-        std::string::size_type prevPos = 0;
-        std::string::size_type pos = 0;
-        while ((pos = str.find(',', pos)) != std::string::npos) {
-            if (pos == prevPos)
-                return std::string("cppcheck: --enable parameter is empty");
-            const std::string errmsg(addEnabled(str.substr(prevPos, pos - prevPos)));
-            if (!errmsg.empty())
-                return errmsg;
-            ++pos;
-            prevPos = pos;
-        }
-        if (prevPos >= str.length())
-            return std::string("cppcheck: --enable parameter is empty");
-        return addEnabled(str.substr(prevPos));
-    }
-
-    if (str == "all") {
-        mEnabled |= WARNING | STYLE | PERFORMANCE | PORTABILITY | INFORMATION | UNUSED_FUNCTION | MISSING_INCLUDE;
-    } else if (str == "warning") {
-        mEnabled |= WARNING;
-    } else if (str == "style") {
-        mEnabled |= STYLE;
-    } else if (str == "performance") {
-        mEnabled |= PERFORMANCE;
-    } else if (str == "portability") {
-        mEnabled |= PORTABILITY;
-    } else if (str == "information") {
-        mEnabled |= INFORMATION | MISSING_INCLUDE;
-    } else if (str == "unusedFunction") {
-        mEnabled |= UNUSED_FUNCTION;
-    } else if (str == "missingInclude") {
-        mEnabled |= MISSING_INCLUDE;
-    }
-#ifdef CHECK_INTERNAL
-    else if (str == "internal") {
-        mEnabled |= INTERNAL;
-    }
-#endif
-    else {
-        if (str.empty())
-            return std::string("cppcheck: --enable parameter is empty");
-        else
-            return std::string("cppcheck: there is no --enable parameter with the name '" + str + "'");
-    }
-
-    return std::string();
-}
-
-bool Settings::isEnabled(Severity::SeverityType severity) const
-{
-    switch (severity) {
-    case Severity::none:
-        return true;
-    case Severity::error:
-        return true;
-    case Severity::warning:
-        return isEnabled(WARNING);
-    case Severity::style:
-        return isEnabled(STYLE);
-    case Severity::performance:
-        return isEnabled(PERFORMANCE);
-    case Severity::portability:
-        return isEnabled(PORTABILITY);
-    case Severity::information:
-        return isEnabled(INFORMATION);
-    case Severity::debug:
-        return false;
-    default:
-        return false;
-    }
+    severity.setEnabled(Severity::error, true);
+    certainty.setEnabled(Certainty::safe, true);
+    checks.setEnabled("missingInclude", false);
+    output.setEnabled(Output::findings, true);
 }
 
 bool Settings::isEnabled(const ValueFlow::Value *value, bool inconclusiveCheck) const
 {
-    if (!isEnabled(Settings::WARNING) && (value->condition || value->defaultArg))
+    if (!severity.isEnabled(Severity::warning) && (value->condition || value->defaultArg))
         return false;
-    if (!inconclusive && (inconclusiveCheck || value->isInconclusive()))
+    if (!certainty.isEnabled(Certainty::inconclusive) && (inconclusiveCheck || value->isInconclusive()))
         return false;
     return true;
 }

@@ -796,7 +796,7 @@ void Preprocessor::error(const std::string &filename, unsigned int linenr, const
                                          Severity::error,
                                          msg,
                                          "preprocessorErrorDirective",
-                                         false));
+                                         Certainty::safe));
 }
 
 // Report that include is missing
@@ -831,7 +831,7 @@ void Preprocessor::missingInclude(const std::string &filename, unsigned int line
                             "Include file: <" + header + "> not found. Please note: Cppcheck does not need standard library headers to get proper results." :
                             "Include file: \"" + header + "\" not found.",
                             (headerType==SystemHeader) ? "missingIncludeSystem" : "missingInclude",
-                            false);
+                            Certainty::safe);
         mErrorLogger->reportInfo(errmsg);
     }
 }
@@ -856,7 +856,7 @@ bool Preprocessor::validateCfg(const std::string &cfg, const std::list<simplecpp
             });
 
             if (!directiveLocation) {
-                if (mSettings.isEnabled(Settings::INFORMATION))
+                if (mSettings.severity.isEnabled(Severity::information))
                     validateCfgError(mu.useLocation.file(), mu.useLocation.line, cfg, macroName);
                 ret = false;
             }
@@ -872,7 +872,7 @@ void Preprocessor::validateCfgError(const std::string &file, const unsigned int 
     std::list<ErrorMessage::FileLocation> locationList;
     const ErrorMessage::FileLocation loc(file, line, 0);
     locationList.push_back(loc);
-    const ErrorMessage errmsg(locationList, mFile0, Severity::information, "Skipping configuration '" + cfg + "' since the value of '" + macro + "' is unknown. Use -D if you want to check it. You can use -U to skip it explicitly.", id, false);
+    const ErrorMessage errmsg(locationList, mFile0, Severity::information, "Skipping configuration '" + cfg + "' since the value of '" + macro + "' is unknown. Use -D if you want to check it. You can use -U to skip it explicitly.", id, Certainty::safe);
     mErrorLogger->reportInfo(errmsg);
 }
 

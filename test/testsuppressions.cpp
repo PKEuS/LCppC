@@ -183,9 +183,9 @@ private:
         CppCheck cppCheck(*this, settings, true, nullptr);
         settings.exitCode = 1;
         settings.inlineSuppressions = true;
-        if (suppression == "unusedFunction")
-            settings.addEnabled("unusedFunction");
-        settings.addEnabled("information");
+        if (suppression != "unusedFunction")
+            settings.checks.setEnabled("unusedFunction", false);
+        settings.severity.enable(Severity::information);
         settings.jointSuppressionReport = true;
         if (!suppression.empty()) {
             std::string r = settings.nomsg.addSuppressionLine(suppression);
@@ -196,7 +196,7 @@ private:
         for (std::map<std::string, std::string>::const_iterator file = files.begin(); file != files.end(); ++file) {
             exitCode |= cppCheck.check(file->first, file->second);
         }
-        if (cppCheck.analyseWholeProgram())
+        if (suppression == "unusedFunction" && cppCheck.analyseWholeProgram())
             exitCode |= settings.exitCode;
 
         reportSuppressions(settings, files);
@@ -214,7 +214,7 @@ private:
         Settings settings;
         settings.jobs = 1;
         settings.inlineSuppressions = true;
-        settings.addEnabled("information");
+        settings.severity.enable(Severity::information);
         if (!suppression.empty()) {
             EXPECT_EQ("", settings.nomsg.addSuppressionLine(suppression));
         }
@@ -663,7 +663,7 @@ private:
 
         Settings settings;
         CppCheck cppCheck(*this, settings, true, nullptr);
-        settings.addEnabled("style");
+        settings.severity.enable(Severity::style);
         settings.inlineSuppressions = true;
         settings.relativePaths = true;
         settings.basePaths.emplace_back("/somewhere");
@@ -760,13 +760,6 @@ private:
         mfiles["test2.cpp"] = "fi if";
         ASSERT_EQUALS(1, checkSuppression(mfiles, "*:test.cpp"));
         ASSERT_EQUALS("[test2.cpp:1]: (error) syntax error\n", errout.str());
-
-        // multi error in file, but only suppression one error
-        std::map<std::string, std::string> file2;
-        file2["test.cpp"] = "fi fi\n"
-                            "if if;";
-        ASSERT_EQUALS(1, checkSuppression(file2, "*:test.cpp:1"));  // suppress all error at line 1 of test.cpp
-        ASSERT_EQUALS("[test.cpp:2]: (error) syntax error\n", errout.str());
 
         // multi error in file, but only suppression one error (2)
         std::map<std::string, std::string> file3;

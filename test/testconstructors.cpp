@@ -35,7 +35,7 @@ private:
         // Clear the error buffer..
         errout.str("");
 
-        settings.inconclusive = showAll;
+        settings.certainty.setEnabled(Certainty::inconclusive, showAll);
 
         // Tokenize..
         Tokenizer tokenizer(&settings, this);
@@ -48,8 +48,8 @@ private:
     }
 
     void run() override {
-        settings.addEnabled("style");
-        settings.addEnabled("warning");
+        settings.severity.enable(Severity::style);
+        settings.severity.enable(Severity::warning);
 
         TEST_CASE(simple1);
         TEST_CASE(simple2);

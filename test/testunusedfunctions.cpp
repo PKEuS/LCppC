@@ -34,7 +34,7 @@ private:
     Settings settings;
 
     void run() override {
-        settings.addEnabled("style");
+        settings.severity.enable(Severity::style);
 
         TEST_CASE(incondition);
         TEST_CASE(return1);

@@ -369,8 +369,8 @@ static std::string arrayIndexMessage(const Token *tok, const std::vector<Dimensi
 void CheckBufferOverrun::arrayIndexError(const Token *tok, const std::vector<Dimension> &dimensions, const std::vector<const ValueFlow::Value *> &indexes)
 {
     if (!tok) {
-        reportError(tok, Severity::error, "arrayIndexOutOfBounds", "Array 'arr[16]' accessed at index 16, which is out of bounds.", CWE_BUFFER_OVERRUN, false);
-        reportError(tok, Severity::warning, "arrayIndexOutOfBoundsCond", "Array 'arr[16]' accessed at index 16, which is out of bounds.", CWE_BUFFER_OVERRUN, false);
+        reportError(tok, Severity::error, "arrayIndexOutOfBounds", "Array 'arr[16]' accessed at index 16, which is out of bounds.", CWE_BUFFER_OVERRUN, Certainty::safe);
+        reportError(tok, Severity::warning, "arrayIndexOutOfBoundsCond", "Array 'arr[16]' accessed at index 16, which is out of bounds.", CWE_BUFFER_OVERRUN, Certainty::safe);
         return;
     }
 
@@ -379,7 +379,7 @@ void CheckBufferOverrun::arrayIndexError(const Token *tok, const std::vector<Dim
     for (const ValueFlow::Value *indexValue: indexes) {
         if (!indexValue)
             continue;
-        if (!indexValue->errorSeverity() && !mSettings->isEnabled(Settings::WARNING))
+        if (!indexValue->errorSeverity() && !mSettings->severity.isEnabled(Severity::warning))
             return;
         if (indexValue->condition)
             condition = indexValue->condition;
@@ -392,13 +392,13 @@ void CheckBufferOverrun::arrayIndexError(const Token *tok, const std::vector<Dim
                 index->condition ? "arrayIndexOutOfBoundsCond" : "arrayIndexOutOfBounds",
                 arrayIndexMessage(tok, dimensions, indexes, condition),
                 CWE_BUFFER_OVERRUN,
-                index->isInconclusive());
+                index->isInconclusive() ? Certainty::inconclusive : Certainty::safe);
 }
 
 void CheckBufferOverrun::negativeIndexError(const Token *tok, const std::vector<Dimension> &dimensions, const std::vector<const ValueFlow::Value *> &indexes)
 {
     if (!tok) {
-        reportError(tok, Severity::error, "negativeIndex", "Negative array index", CWE_BUFFER_UNDERRUN, false);
+        reportError(tok, Severity::error, "negativeIndex", "Negative array index", CWE_BUFFER_UNDERRUN, Certainty::safe);
         return;
     }
 
@@ -407,7 +407,7 @@ void CheckBufferOverrun::negativeIndexError(const Token *tok, const std::vector<
     for (const ValueFlow::Value *indexValue: indexes) {
         if (!indexValue)
             continue;
-        if (!indexValue->errorSeverity() && !mSettings->isEnabled(Settings::WARNING))
+        if (!indexValue->errorSeverity() && !mSettings->severity.isEnabled(Severity::warning))
             return;
         if (indexValue->condition)
             condition = indexValue->condition;
@@ -420,14 +420,14 @@ void CheckBufferOverrun::negativeIndexError(const Token *tok, const std::vector<
                 "negativeIndex",
                 arrayIndexMessage(tok, dimensions, indexes, condition),
                 CWE_BUFFER_UNDERRUN,
-                negativeValue->isInconclusive());
+                negativeValue->isInconclusive() ? Certainty::inconclusive : Certainty::safe);
 }
 
 //---------------------------------------------------------------------------
 
 void CheckBufferOverrun::pointerArithmetic()
 {
-    if (!mSettings->isEnabled(Settings::PORTABILITY))
+    if (!mSettings->severity.isEnabled(Severity::portability))
         return;
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
@@ -479,8 +479,8 @@ void CheckBufferOverrun::pointerArithmetic()
 void CheckBufferOverrun::pointerArithmeticError(const Token *tok, const Token *indexToken, const ValueFlow::Value *indexValue)
 {
     if (!tok) {
-        reportError(tok, Severity::portability, "pointerOutOfBounds", "Pointer arithmetic overflow.", CWE_POINTER_ARITHMETIC_OVERFLOW, false);
-        reportError(tok, Severity::portability, "pointerOutOfBoundsCond", "Pointer arithmetic overflow.", CWE_POINTER_ARITHMETIC_OVERFLOW, false);
+        reportError(tok, Severity::portability, "pointerOutOfBounds", "Pointer arithmetic overflow.", CWE_POINTER_ARITHMETIC_OVERFLOW, Certainty::safe);
+        reportError(tok, Severity::portability, "pointerOutOfBoundsCond", "Pointer arithmetic overflow.", CWE_POINTER_ARITHMETIC_OVERFLOW, Certainty::safe);
         return;
     }
 
@@ -495,7 +495,7 @@ void CheckBufferOverrun::pointerArithmeticError(const Token *tok, const Token *i
                 indexValue->condition ? "pointerOutOfBoundsCond" : "pointerOutOfBounds",
                 errmsg,
                 CWE_POINTER_ARITHMETIC_OVERFLOW,
-                indexValue->isInconclusive());
+                indexValue->isInconclusive() ? Certainty::inconclusive : Certainty::safe);
 }
 
 //---------------------------------------------------------------------------
@@ -613,14 +613,14 @@ void CheckBufferOverrun::bufferOverflow()
 
 void CheckBufferOverrun::bufferOverflowError(const Token *tok, const ValueFlow::Value *value)
 {
-    reportError(getErrorPath(tok, value, "Buffer overrun"), Severity::error, "bufferAccessOutOfBounds", "Buffer is accessed out of bounds: " + (tok ? tok->expressionString() : "buf"), CWE_BUFFER_OVERRUN, false);
+    reportError(getErrorPath(tok, value, "Buffer overrun"), Severity::error, "bufferAccessOutOfBounds", "Buffer is accessed out of bounds: " + (tok ? tok->expressionString() : "buf"), CWE_BUFFER_OVERRUN, Certainty::safe);
 }
 
 //---------------------------------------------------------------------------
 
 void CheckBufferOverrun::arrayIndexThenCheck()
 {
-    if (!mSettings->isEnabled(Settings::PORTABILITY))
+    if (!mSettings->severity.isEnabled(Severity::portability))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -668,7 +668,7 @@ void CheckBufferOverrun::arrayIndexThenCheckError(const Token *tok, const std::s
                 "Defensive programming: The variable '$symbol' is used as an array index before it "
                 "is checked that is within limits. This can mean that the array might be accessed out of bounds. "
                 "Reorder conditions such as '(a[i] && i < 10)' to '(i < 10 && a[i])'. That way the array will "
-                "not be accessed if the index is out of limits.", CWE_ARRAY_INDEX_THEN_CHECK, false);
+                "not be accessed if the index is out of limits.", CWE_ARRAY_INDEX_THEN_CHECK, Certainty::safe);
 }
 
 //---------------------------------------------------------------------------
@@ -676,7 +676,7 @@ void CheckBufferOverrun::arrayIndexThenCheckError(const Token *tok, const std::s
 void CheckBufferOverrun::stringNotZeroTerminated()
 {
     // this is currently 'inconclusive'. See TestBufferOverrun::terminateStrncpy3
-    if (!mSettings->isEnabled(Settings::WARNING) || !mSettings->inconclusive)
+    if (!mSettings->severity.isEnabled(Severity::warning) || !mSettings->certainty.isEnabled(Certainty::inconclusive))
         return;
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope * const scope : symbolDatabase->functionScopes) {
@@ -723,7 +723,7 @@ void CheckBufferOverrun::terminateStrncpyError(const Token *tok, const std::stri
                 shortMessage + ' ' +
                 "If the source string's size fits or exceeds the given size, strncpy() does not add a "
                 "zero at the end of the buffer. This causes bugs later in the code if the code "
-                "assumes buffer is null-terminated.", CWE170, true);
+                "assumes buffer is null-terminated.", CWE170, Certainty::inconclusive);
 }
 
 void CheckBufferOverrun::bufferNotZeroTerminatedError(const Token *tok, const std::string &varname, const std::string &function)
@@ -734,7 +734,7 @@ void CheckBufferOverrun::bufferNotZeroTerminatedError(const Token *tok, const st
                                "The buffer '" + varname + "' is not null-terminated after the call to " + function + "(). "
                                "This will cause bugs later in the code if the code assumes the buffer is null-terminated.";
 
-    reportError(tok, Severity::warning, "bufferNotZeroTerminated", errmsg, CWE170, true);
+    reportError(tok, Severity::warning, "bufferNotZeroTerminated", errmsg, CWE170, Certainty::inconclusive);
 }
 
 
@@ -880,7 +880,7 @@ bool CheckBufferOverrun::analyseWholeProgram1(const CTU::FileInfo *ctu, const st
                                     Severity::error,
                                     errmsg,
                                     errorId,
-                                    cwe, false);
+                                    cwe, Certainty::safe);
     errorLogger.reportErr(errorMessage);
 
     return true;
@@ -934,5 +934,5 @@ void CheckBufferOverrun::objectIndexError(const Token *tok, const ValueFlow::Val
                 "objectIndex",
                 "The address of local variable '" + name + "' " + verb + " accessed at non-zero index.",
                 CWE758,
-                false);
+                Certainty::safe);
 }
