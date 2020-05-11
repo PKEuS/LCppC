@@ -317,7 +317,7 @@ public:
      * Get index of variable in declared order.
      * @return variable index
      */
-    nonneg int index() const {
+    std::size_t index() const {
         return mIndex;
     }
 
@@ -537,7 +537,7 @@ public:
      * Get array dimension length.
      * @return length of dimension
      */
-    MathLib::bigint dimension(nonneg int index_) const {
+    MathLib::bigint dimension(std::size_t index_) const {
         return mDimensions[index_].num;
     }
 
@@ -545,7 +545,7 @@ public:
      * Get array dimension known.
      * @return length of dimension known
      */
-    bool dimensionKnown(nonneg int index_) const {
+    bool dimensionKnown(std::size_t index_) const {
         return mDimensions[index_].known;
     }
 
@@ -661,7 +661,7 @@ private:
     const Token *mTypeEndToken;
 
     /** @brief order declared */
-    nonneg int mIndex;
+    std::size_t mIndex;
 
     /** @brief what section is this variable declared in? */
     AccessControl mAccess;  // public/protected/private
@@ -745,14 +745,14 @@ public:
 
     std::string fullName() const;
 
-    nonneg int argCount() const {
+    std::size_t argCount() const {
         return argumentList.size();
     }
-    nonneg int minArgCount() const {
+    std::size_t minArgCount() const {
         return argumentList.size() - initArgCount;
     }
-    const Variable* getArgumentVar(nonneg int num) const;
-    nonneg int initializedArgCount() const {
+    const Variable* getArgumentVar(std::size_t num) const;
+    std::size_t initializedArgCount() const {
         return initArgCount;
     }
     void addArguments(const SymbolDatabase *symbolDatabase, const Scope *scope);
@@ -885,7 +885,7 @@ public:
     const Scope *functionScope;       ///< scope of function body
     const Scope* nestedIn;            ///< Scope the function is declared in
     std::list<Variable> argumentList; ///< argument list
-    nonneg int initArgCount;        ///< number of args with default values
+    std::size_t initArgCount;         ///< number of args with default values
     Type type;                        ///< constructor, destructor, ...
     AccessControl access;             ///< public/protected/private
     const Token *noexceptArg;         ///< noexcept token
@@ -1139,7 +1139,7 @@ private:
      */
     bool isVariableDeclaration(const Token* const tok, const Token*& vartok, const Token*& typetok) const;
 
-    void findFunctionInBase(const std::string & name, nonneg int args, std::vector<const Function *> & matches) const;
+    void findFunctionInBase(const std::string & name, std::size_t args, std::vector<const Function *> & matches) const;
 };
 
 

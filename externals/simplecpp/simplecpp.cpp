@@ -735,7 +735,7 @@ static bool isFloatSuffix(const simplecpp::Token *tok)
 {
     if (!tok || tok->str().size() != 1U)
         return false;
-    const char c = std::tolower(tok->str()[0]);
+    const char c = static_cast<char>(std::tolower(tok->str()[0]));
     return c == 'f' || c == 'l';
 }
 
@@ -1198,7 +1198,7 @@ unsigned int simplecpp::TokenList::fileIndex(const std::string &filename)
             return i;
     }
     files.push_back(filename);
-    return files.size() - 1U;
+    return static_cast<unsigned int>(files.size() - 1U);
 }
 
 

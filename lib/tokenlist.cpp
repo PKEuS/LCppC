@@ -154,7 +154,7 @@ void TokenList::determineCppC()
 int TokenList::appendFileIfNew(const std::string &fileName)
 {
     // Has this file been tokenized already?
-    for (int i = 0; i < mFiles.size(); ++i)
+    for (std::size_t i = 0; i < mFiles.size(); ++i)
         if (Path::sameFileName(mFiles[i], fileName))
             return i;
 

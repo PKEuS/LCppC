@@ -3691,7 +3691,7 @@ const Function * Function::getOverriddenFunctionRecursive(const ::Type* baseType
     return nullptr;
 }
 
-const Variable* Function::getArgumentVar(nonneg int num) const
+const Variable* Function::getArgumentVar(std::size_t num) const
 {
     for (std::list<Variable>::const_iterator i = argumentList.begin(); i != argumentList.end(); ++i) {
         if (i->index() == num)
@@ -4426,7 +4426,7 @@ bool Scope::hasInlineOrLambdaFunction() const
     return false;
 }
 
-void Scope::findFunctionInBase(const std::string & name, nonneg int args, std::vector<const Function *> & matches) const
+void Scope::findFunctionInBase(const std::string & name, std::size_t args, std::vector<const Function *> & matches) const
 {
     if (isClassOrStruct() && definedType && !definedType->derivedFrom.empty()) {
         const std::vector<Type::BaseInfo> &derivedFrom = definedType->derivedFrom;

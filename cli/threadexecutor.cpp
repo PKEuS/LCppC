@@ -503,7 +503,7 @@ void ThreadExecutor::reportErr(const ErrorMessage &msg)
 
 void ThreadExecutor::reportInfo(const ErrorMessage &msg)
 {
-
+    (void)msg;
 }
 
 void ThreadExecutor::bughuntingReport(const std::string  &/*str*/)

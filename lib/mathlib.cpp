@@ -110,7 +110,7 @@ void MathLib::value::promote(const MathLib::value &v)
         }
     } else if (!isFloat()) {
         mIsUnsigned = false;
-        mDoubleValue = mIntValue;
+        mDoubleValue = static_cast<double>(mIntValue);
         mType = MathLib::value::FLOAT;
     }
 }

@@ -1011,7 +1011,7 @@ void TemplateSimplifier::useDefaultArgumentValues(TokenAndName &declaration)
     std::size_t templateParmDepth = 0;
 
     // map type parameter name to index
-    std::map<std::string, unsigned int> typeParameterNames;
+    std::map<std::string, std::size_t> typeParameterNames;
 
     // Scan template declaration..
     for (Token *tok = declaration.token(); tok; tok = tok->next()) {

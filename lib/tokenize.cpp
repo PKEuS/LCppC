@@ -1188,7 +1188,7 @@ void Tokenizer::simplifyTypedef()
                         }
                     } else {
                         if (tok2->strAt(-1) == "::") {
-                            int relativeSpaceInfoSize = spaceInfo.size();
+                            std::size_t relativeSpaceInfoSize = spaceInfo.size();
                             Token * tokBeforeType = tok2->previous();
                             while (relativeSpaceInfoSize != 0 &&
                                    tokBeforeType && tokBeforeType->str() == "::" &&
