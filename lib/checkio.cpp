@@ -101,9 +101,9 @@ static OpenMode getMode(const std::string& str)
 
 struct Filepointer {
     OpenMode mode;
-    nonneg int mode_indent;
+    unsigned int mode_indent;
     enum Operation {NONE, UNIMPORTANT, READ, WRITE, POSITIONING, OPEN, CLOSE, UNKNOWN_OP} lastOperation;
-    nonneg int op_indent;
+    unsigned int op_indent;
     enum AppendMode { UNKNOWN_AM, APPEND, APPEND_EX };
     AppendMode append_mode;
     explicit Filepointer(OpenMode mode_ = UNKNOWN_OM)
@@ -121,7 +121,7 @@ void CheckIO::checkFileUsage()
     const bool printPortability = mSettings->isEnabled(Settings::PORTABILITY);
     const bool printWarnings = mSettings->isEnabled(Settings::WARNING);
 
-    std::map<int, Filepointer> filepointers;
+    std::map<unsigned int, Filepointer> filepointers;
 
     const SymbolDatabase* symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Variable* var : symbolDatabase->variableList()) {
@@ -140,13 +140,13 @@ void CheckIO::checkFileUsage()
     }
 
     for (const Scope * scope : symbolDatabase->functionScopes) {
-        int indent = 0;
+        unsigned int indent = 0;
         for (const Token *tok = scope->bodyStart; tok != scope->bodyEnd; tok = tok->next()) {
             if (tok->str() == "{")
                 indent++;
             else if (tok->str() == "}") {
                 indent--;
-                for (std::map<int, Filepointer>::iterator i = filepointers.begin(); i != filepointers.end(); ++i) {
+                for (std::map<unsigned int, Filepointer>::iterator i = filepointers.begin(); i != filepointers.end(); ++i) {
                     if (indent < i->second.mode_indent) {
                         i->second.mode_indent = 0;
                         i->second.mode = UNKNOWN_OM;
@@ -157,7 +157,7 @@ void CheckIO::checkFileUsage()
                     }
                 }
             } else if (tok->str() == "return" || tok->str() == "continue" || tok->str() == "break" || mSettings->library.isnoreturn(tok)) { // Reset upon return, continue or break
-                for (std::map<int, Filepointer>::iterator i = filepointers.begin(); i != filepointers.end(); ++i) {
+                for (std::map<unsigned int, Filepointer>::iterator i = filepointers.begin(); i != filepointers.end(); ++i) {
                     i->second.mode_indent = 0;
                     i->second.mode = UNKNOWN_OM;
                     i->second.op_indent = 0;
@@ -166,7 +166,7 @@ void CheckIO::checkFileUsage()
             } else if (Token::Match(tok, "%var% =") &&
                        (tok->strAt(2) != "fopen" && tok->strAt(2) != "freopen" && tok->strAt(2) != "tmpfile" &&
                         (windows ? (tok->str() != "_wfopen" && tok->str() != "_wfreopen") : true))) {
-                std::map<int, Filepointer>::iterator i = filepointers.find(tok->varId());
+                std::map<unsigned int, Filepointer>::iterator i = filepointers.find(tok->varId());
                 if (i != filepointers.end()) {
                     i->second.mode = UNKNOWN_OM;
                     i->second.lastOperation = Filepointer::UNKNOWN_OP;
@@ -236,7 +236,7 @@ void CheckIO::checkFileUsage()
                     const Token* const end2 = tok->linkAt(1);
                     if (scope->functionOf && scope->functionOf->isClassOrStruct() && !scope->function->isStatic() && ((tok->strAt(-1) != "::" && tok->strAt(-1) != ".") || tok->strAt(-2) == "this")) {
                         if (!tok->function() || (tok->function()->nestedIn && tok->function()->nestedIn->isClassOrStruct())) {
-                            for (std::map<int, Filepointer>::iterator i = filepointers.begin(); i != filepointers.end(); ++i) {
+                            for (std::map<unsigned int, Filepointer>::iterator i = filepointers.begin(); i != filepointers.end(); ++i) {
                                 const Variable* var = symbolDatabase->getVariableFromVarId(i->first);
                                 if (!var || !(var->isLocal() || var->isGlobal() || var->isStatic())) {
                                     i->second.mode = UNKNOWN_OM;
@@ -326,7 +326,7 @@ void CheckIO::checkFileUsage()
                 }
             }
         }
-        for (std::map<int, Filepointer>::iterator i = filepointers.begin(); i != filepointers.end(); ++i) {
+        for (std::map<unsigned int, Filepointer>::iterator i = filepointers.begin(); i != filepointers.end(); ++i) {
             i->second.op_indent = 0;
             i->second.mode = UNKNOWN_OM;
             i->second.lastOperation = Filepointer::UNKNOWN_OP;
@@ -451,12 +451,12 @@ void CheckIO::invalidScanfError(const Token *tok)
 //    printf("", 1); // Too much arguments
 //---------------------------------------------------------------------------
 
-static bool findFormat(nonneg int arg, const Token *firstArg,
+static bool findFormat(unsigned int arg, const Token *firstArg,
                        const Token **formatStringTok, const Token **formatArgTok)
 {
     const Token* argTok = firstArg;
 
-    for (int i = 0; i < arg && argTok; ++i)
+    for (unsigned int i = 0; i < arg && argTok; ++i)
         argTok = argTok->nextArgument();
 
     if (Token::Match(argTok, "%str% [,)]")) {
@@ -1366,7 +1366,7 @@ CheckIO::ArgumentInfo::ArgumentInfo(const Token * arg, const Settings *settings,
             }
             if (!valuetype->originalTypeName.empty())
                 tempToken->originalName(valuetype->originalTypeName);
-            for (int p = 0; p < valuetype->pointer; p++)
+            for (unsigned int p = 0; p < valuetype->pointer; p++)
                 tempToken->insertToken("*");
             tempToken = const_cast<Token*>(typeToken);
             return;
@@ -1682,8 +1682,8 @@ bool CheckIO::ArgumentInfo::isLibraryType(const Settings *settings) const
 
 void CheckIO::wrongPrintfScanfArgumentsError(const Token* tok,
         const std::string &functionName,
-        nonneg int numFormat,
-        nonneg int numFunction)
+        unsigned int numFormat,
+        unsigned int numFunction)
 {
     const Severity::SeverityType severity = numFormat > numFunction ? Severity::error : Severity::warning;
     if (severity != Severity::error && !mSettings->isEnabled(Settings::WARNING))
@@ -1703,7 +1703,7 @@ void CheckIO::wrongPrintfScanfArgumentsError(const Token* tok,
 }
 
 void CheckIO::wrongPrintfScanfPosixParameterPositionError(const Token* tok, const std::string& functionName,
-        nonneg int index, nonneg int numFunction)
+        unsigned int index, unsigned int numFunction)
 {
     if (!mSettings->isEnabled(Settings::WARNING))
         return;
@@ -1717,7 +1717,7 @@ void CheckIO::wrongPrintfScanfPosixParameterPositionError(const Token* tok, cons
     reportError(tok, Severity::warning, "wrongPrintfScanfParameterPositionError", errmsg.str(), CWE685, false);
 }
 
-void CheckIO::invalidScanfArgTypeError_s(const Token* tok, nonneg int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
+void CheckIO::invalidScanfArgTypeError_s(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
     if (!mSettings->isEnabled(severity))
@@ -1733,7 +1733,7 @@ void CheckIO::invalidScanfArgTypeError_s(const Token* tok, nonneg int numFormat,
     errmsg << ".";
     reportError(tok, severity, "invalidScanfArgType_s", errmsg.str(), CWE686, false);
 }
-void CheckIO::invalidScanfArgTypeError_int(const Token* tok, nonneg int numFormat, const std::string& specifier, const ArgumentInfo* argInfo, bool isUnsigned)
+void CheckIO::invalidScanfArgTypeError_int(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo, bool isUnsigned)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
     if (!mSettings->isEnabled(severity))
@@ -1778,7 +1778,7 @@ void CheckIO::invalidScanfArgTypeError_int(const Token* tok, nonneg int numForma
     errmsg << ".";
     reportError(tok, severity, "invalidScanfArgType_int", errmsg.str(), CWE686, false);
 }
-void CheckIO::invalidScanfArgTypeError_float(const Token* tok, nonneg int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
+void CheckIO::invalidScanfArgTypeError_float(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
     if (!mSettings->isEnabled(severity))
@@ -1797,7 +1797,7 @@ void CheckIO::invalidScanfArgTypeError_float(const Token* tok, nonneg int numFor
     reportError(tok, severity, "invalidScanfArgType_float", errmsg.str(), CWE686, false);
 }
 
-void CheckIO::invalidPrintfArgTypeError_s(const Token* tok, nonneg int numFormat, const ArgumentInfo* argInfo)
+void CheckIO::invalidPrintfArgTypeError_s(const Token* tok, unsigned int numFormat, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
     if (!mSettings->isEnabled(severity))
@@ -1808,7 +1808,7 @@ void CheckIO::invalidPrintfArgTypeError_s(const Token* tok, nonneg int numFormat
     errmsg << ".";
     reportError(tok, severity, "invalidPrintfArgType_s", errmsg.str(), CWE686, false);
 }
-void CheckIO::invalidPrintfArgTypeError_n(const Token* tok, nonneg int numFormat, const ArgumentInfo* argInfo)
+void CheckIO::invalidPrintfArgTypeError_n(const Token* tok, unsigned int numFormat, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
     if (!mSettings->isEnabled(severity))
@@ -1819,7 +1819,7 @@ void CheckIO::invalidPrintfArgTypeError_n(const Token* tok, nonneg int numFormat
     errmsg << ".";
     reportError(tok, severity, "invalidPrintfArgType_n", errmsg.str(), CWE686, false);
 }
-void CheckIO::invalidPrintfArgTypeError_p(const Token* tok, nonneg int numFormat, const ArgumentInfo* argInfo)
+void CheckIO::invalidPrintfArgTypeError_p(const Token* tok, unsigned int numFormat, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
     if (!mSettings->isEnabled(severity))
@@ -1869,7 +1869,7 @@ static void printfFormatType(std::ostream& os, const std::string& specifier, boo
     os << "\'";
 }
 
-void CheckIO::invalidPrintfArgTypeError_uint(const Token* tok, nonneg int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
+void CheckIO::invalidPrintfArgTypeError_uint(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
     if (!mSettings->isEnabled(severity))
@@ -1883,7 +1883,7 @@ void CheckIO::invalidPrintfArgTypeError_uint(const Token* tok, nonneg int numFor
     reportError(tok, severity, "invalidPrintfArgType_uint", errmsg.str(), CWE686, false);
 }
 
-void CheckIO::invalidPrintfArgTypeError_sint(const Token* tok, nonneg int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
+void CheckIO::invalidPrintfArgTypeError_sint(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
     if (!mSettings->isEnabled(severity))
@@ -1896,7 +1896,7 @@ void CheckIO::invalidPrintfArgTypeError_sint(const Token* tok, nonneg int numFor
     errmsg << ".";
     reportError(tok, severity, "invalidPrintfArgType_sint", errmsg.str(), CWE686, false);
 }
-void CheckIO::invalidPrintfArgTypeError_float(const Token* tok, nonneg int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
+void CheckIO::invalidPrintfArgTypeError_float(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
     if (!mSettings->isEnabled(severity))
@@ -1967,7 +1967,7 @@ void CheckIO::argumentType(std::ostream& os, const ArgumentInfo * argInfo)
         os << "Unknown";
 }
 
-void CheckIO::invalidLengthModifierError(const Token* tok, nonneg int numFormat, const std::string& modifier)
+void CheckIO::invalidLengthModifierError(const Token* tok, unsigned int numFormat, const std::string& modifier)
 {
     if (!mSettings->isEnabled(Settings::WARNING))
         return;
@@ -1976,7 +1976,7 @@ void CheckIO::invalidLengthModifierError(const Token* tok, nonneg int numFormat,
     reportError(tok, Severity::warning, "invalidLengthModifierError", errmsg.str(), CWE704, false);
 }
 
-void CheckIO::invalidScanfFormatWidthError(const Token* tok, nonneg int numFormat, int width, const Variable *var, char c)
+void CheckIO::invalidScanfFormatWidthError(const Token* tok, unsigned int numFormat, int width, const Variable *var, char c)
 {
     MathLib::bigint arrlen = 0;
     std::string varname;

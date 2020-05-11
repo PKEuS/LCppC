@@ -53,14 +53,14 @@ namespace {
         VarIdScopeInfo()
             :isExecutable(false), isStructInit(false), isEnum(false), startVarid(0) {
         }
-        VarIdScopeInfo(bool isExecutable, bool isStructInit, bool isEnum, nonneg int startVarid)
+        VarIdScopeInfo(bool isExecutable, bool isStructInit, bool isEnum, unsigned int startVarid)
             :isExecutable(isExecutable), isStructInit(isStructInit), isEnum(isEnum), startVarid(startVarid) {
         }
 
         const bool isExecutable;
         const bool isStructInit;
         const bool isEnum;
-        const nonneg int startVarid;
+        const unsigned int startVarid;
     };
 }
 
@@ -193,7 +193,7 @@ Tokenizer::~Tokenizer()
 // SizeOfType - gives the size of a type
 //---------------------------------------------------------------------------
 
-nonneg int Tokenizer::sizeOfType(const Token *type) const
+unsigned int Tokenizer::sizeOfType(const Token *type) const
 {
     if (!type || type->str().empty())
         return 0;
@@ -414,7 +414,7 @@ namespace {
     };
 }
 
-static Token *splitDefinitionFromTypedef(Token *tok, nonneg int *unnamedCount)
+static Token *splitDefinitionFromTypedef(Token *tok, unsigned int *unnamedCount)
 {
     Token *tok1;
     std::string name;
@@ -1031,7 +1031,7 @@ void Tokenizer::simplifyTypedef()
             bool inMemberFunc = false;
             int memberScope = 0;
             bool globalScope = false;
-            int classLevel = spaceInfo.size();
+            std::size_t classLevel = spaceInfo.size();
 
             for (Token *tok2 = tok; tok2; tok2 = tok2->next()) {
                 if (Settings::terminated())
@@ -1051,7 +1051,7 @@ void Tokenizer::simplifyTypedef()
                             --classLevel;
                             pattern.clear();
 
-                            for (int i = classLevel; i < spaceInfo.size(); ++i)
+                            for (std::size_t i = classLevel; i < spaceInfo.size(); ++i)
                                 pattern += (spaceInfo[i].className + " :: ");
 
                             pattern += typeName->str();
@@ -1103,7 +1103,7 @@ void Tokenizer::simplifyTypedef()
                                 spaceInfo[classLevel].bodyEnd = tok2->link();
                                 ++classLevel;
                                 pattern.clear();
-                                for (int i = classLevel; i < spaceInfo.size(); ++i)
+                                for (std::size_t i = classLevel; i < spaceInfo.size(); ++i)
                                     pattern += spaceInfo[i].className + " :: ";
 
                                 pattern += typeName->str();
@@ -1181,7 +1181,7 @@ void Tokenizer::simplifyTypedef()
                             }
 
                             // remove qualification if present
-                            for (int i = classLevel; i < spaceInfo.size(); ++i) {
+                            for (std::size_t i = classLevel; i < spaceInfo.size(); ++i) {
                                 tok2->deleteNext(2);
                             }
                             simplifyType = true;
@@ -1299,7 +1299,7 @@ void Tokenizer::simplifyTypedef()
                             tok2 = tok2->next();
                         }
 
-                        for (int i = classLevel; i < spaceInfo.size(); ++i) {
+                        for (std::size_t i = classLevel; i < spaceInfo.size(); ++i) {
                             tok2->insertToken(spaceInfo[i].className);
                             tok2 = tok2->next();
                             tok2->insertToken("::");
@@ -3125,7 +3125,7 @@ static bool setVarIdParseDeclaration(const Token **tok, const std::map<std::stri
 
 void Tokenizer::setVarIdStructMembers(Token **tok1,
                                       std::map<int, std::map<std::string, int> >& structMembers,
-                                      nonneg int *varId)
+                                      unsigned int *varId)
 {
     Token *tok = *tok1;
 
@@ -3191,7 +3191,7 @@ void Tokenizer::setVarIdStructMembers(Token **tok1,
 
 void Tokenizer::setVarIdClassDeclaration(const Token * const startToken,
         const VariableMap &variableMap,
-        const nonneg int scopeStartVarId,
+        const unsigned int scopeStartVarId,
         std::map<int, std::map<std::string,int> >& structMembers)
 {
     // end of scope
@@ -3272,7 +3272,7 @@ void Tokenizer::setVarIdClassFunction(const std::string &classname,
                                       const Token * const endToken,
                                       const std::map<std::string, int> &varlist,
                                       std::map<int, std::map<std::string, int> >& structMembers,
-                                      nonneg int *varId_)
+                                      unsigned int *varId_)
 {
     for (Token *tok2 = startToken; tok2 && tok2 != endToken; tok2 = tok2->next()) {
         if (tok2->varId() != 0 || !tok2->isName())
@@ -5717,7 +5717,7 @@ void Tokenizer::simplifyStaticConst()
     // move 'static' before all other qualifiers and types, ...
     for (Token *tok = list.front(); tok; tok = tok->next()) {
         bool continue2 = false;
-        for (int i = 0; i < sizeof(qualifiers)/sizeof(qualifiers[0]); i++) {
+        for (std::size_t i = 0; i < sizeof(qualifiers)/sizeof(qualifiers[0]); i++) {
 
             // Keep searching for a qualifier
             if (!tok->next() || tok->next()->str() != qualifiers[i])
@@ -5727,7 +5727,7 @@ void Tokenizer::simplifyStaticConst()
             Token* leftTok = tok;
             bool behindOther = false;
             for (; leftTok; leftTok = leftTok->previous()) {
-                for (int j = 0; j <= i; j++) {
+                for (std::size_t j = 0; j <= i; j++) {
                     if (leftTok->str() == qualifiers[j]) {
                         behindOther = true;
                         break;
@@ -7756,7 +7756,7 @@ void Tokenizer::simplifyAsm()
         else if (Token::Match(tok, "_asm|__asm")) {
             Token *endasm = tok->next();
             const Token *firstSemiColon = nullptr;
-            int comment = 0;
+            unsigned int comment = 0;
             while (Token::Match(endasm, "%num%|%name%|,|:|;") || (endasm && endasm->linenr() == comment)) {
                 if (Token::Match(endasm, "_asm|__asm|__endasm"))
                     break;
@@ -8533,7 +8533,7 @@ void Tokenizer::printUnknownTypes() const
 
     std::multimap<std::string, const Token *> unknowns;
 
-    for (int i = 1; i <= mVarId; ++i) {
+    for (unsigned int i = 1; i <= mVarId; ++i) {
         const Variable *var = mSymbolDatabase->getVariableFromVarId(i);
         if (!var)
             continue;

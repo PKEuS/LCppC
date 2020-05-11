@@ -538,7 +538,7 @@ bool CheckClass::canNotMove(const Scope *scope)
     return constructor && !(publicAssign || publicCopy || publicMove);
 }
 
-void CheckClass::assignVar(nonneg int varid, const Scope *scope, std::vector<Usage> &usage)
+void CheckClass::assignVar(unsigned int varid, const Scope *scope, std::vector<Usage> &usage)
 {
     int count = 0;
 
@@ -550,7 +550,7 @@ void CheckClass::assignVar(nonneg int varid, const Scope *scope, std::vector<Usa
     }
 }
 
-void CheckClass::initVar(nonneg int varid, const Scope *scope, std::vector<Usage> &usage)
+void CheckClass::initVar(unsigned int varid, const Scope *scope, std::vector<Usage> &usage)
 {
     int count = 0;
 
@@ -1100,7 +1100,7 @@ void CheckClass::privateFunctions()
             bool used = checkFunctionUsage(privateFuncs.front(), scope); // Usage in this class
             // Check in friend classes
             const std::vector<Type::FriendInfo>& friendList = scope->definedType->friendList;
-            for (int i = 0; i < friendList.size() && !used; i++) {
+            for (std::size_t i = 0; i < friendList.size() && !used; i++) {
                 if (friendList[i].type)
                     used = checkFunctionUsage(privateFuncs.front(), friendList[i].type->classScope);
                 else
@@ -1967,7 +1967,7 @@ bool CheckClass::isMemberFunc(const Scope *scope, const Token *tok) const
         for (const Function &func : scope->functionList) {
             if (func.name() == tok->str()) {
                 const Token* tok2 = tok->tokAt(2);
-                int argsPassed = tok2->str() == ")" ? 0 : 1;
+                std::size_t argsPassed = tok2->str() == ")" ? 0 : 1;
                 for (;;) {
                     tok2 = tok2->nextArgument();
                     if (tok2)
@@ -2253,7 +2253,7 @@ void CheckClass::initializerListOrder()
                     }
 
                     // need at least 2 members to have out of order initialization
-                    for (int j = 1; j < vars.size(); j++) {
+                    for (std::size_t j = 1; j < vars.size(); j++) {
                         // check for out of order initialization
                         if (vars[j].var->index() < vars[j - 1].var->index())
                             initializerListError(vars[j].tok,vars[j].var->nameToken(), scope->className, vars[j].var->name());

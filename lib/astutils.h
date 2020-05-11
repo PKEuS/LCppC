@@ -52,7 +52,7 @@ std::vector<const Token*> astFlatten(const Token* tok, const char* op);
 
 bool astHasToken(const Token* root, const Token * tok);
 
-bool astHasVar(const Token * tok, nonneg int varid);
+bool astHasVar(const Token * tok, unsigned int varid);
 
 /** Is expression a 'signed char' if no promotion is used */
 bool astIsSignedChar(const Token *tok);
@@ -108,7 +108,7 @@ const Token* getCondTokFromEnd(const Token* endBlock);
 
 bool precedes(const Token * tok1, const Token * tok2);
 
-bool exprDependsOnThis(const Token* expr, nonneg int depth = 0);
+bool exprDependsOnThis(const Token* expr, unsigned int depth = 0);
 
 bool isSameExpression(bool cpp, bool macro, const Token *tok1, const Token *tok2, const Library& library, bool pure, bool followVar, ErrorPath* errors=nullptr);
 
@@ -155,7 +155,7 @@ const Token * getTokenArgumentFunction(const Token * tok, int& argn);
  * @param settings      program settings
  * @param inconclusive  pointer to output variable which indicates that the answer of the question is inconclusive
  */
-bool isVariableChangedByFunctionCall(const Token *tok, int indirect, nonneg int varid, const Settings *settings, bool *inconclusive);
+bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, unsigned int varid, const Settings *settings, bool *inconclusive);
 
 /** Is variable changed by function call?
  * In case the answer of the question is inconclusive, e.g. because the function declaration is not known
@@ -165,10 +165,10 @@ bool isVariableChangedByFunctionCall(const Token *tok, int indirect, nonneg int 
  * @param settings      program settings
  * @param inconclusive pointer to output variable which indicates that the answer of the question is inconclusive
  */
-bool isVariableChangedByFunctionCall(const Token *tok, int indirect, const Settings *settings, bool *inconclusive);
+bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, const Settings *settings, bool *inconclusive);
 
 /** Is variable changed in block of code? */
-bool isVariableChanged(const Token *start, const Token *end, const nonneg int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
+bool isVariableChanged(const Token *start, const Token *end, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
 
 bool isVariableChanged(const Token *tok, int indirect, const Settings *settings, bool cpp, int depth = 20);
 
@@ -181,11 +181,11 @@ bool isVariablesChanged(const Token* start,
                         const Settings* settings,
                         bool cpp);
 
-const Token* findVariableChanged(const Token *start, const Token *end, int indirect, const nonneg int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
-Token* findVariableChanged(Token *start, const Token *end, int indirect, const nonneg int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
+const Token* findVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
+Token* findVariableChanged(Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
 
 /// If token is an alias if another variable
-bool isAliasOf(const Token *tok, nonneg int varid);
+bool isAliasOf(const Token *tok, unsigned int varid);
 
 bool isAliased(const Variable *var);
 
@@ -193,7 +193,7 @@ bool isAliased(const Variable *var);
  * @param start token which is supposed to be the function/macro name.
  * \return Number of arguments
  */
-int numberOfArguments(const Token *start);
+std::size_t numberOfArguments(const Token *start);
 
 /**
  * Get arguments (AST)

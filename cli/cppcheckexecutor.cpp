@@ -1012,7 +1012,7 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
 static inline std::string ansiToOEM(const std::string &msg, bool doConvert)
 {
     if (doConvert) {
-        const std::size_t msglength = msg.length();
+        const int msglength = static_cast<int>(msg.length());
         // convert ANSI strings to OEM strings in two steps
         std::vector<WCHAR> wcContainer(msglength);
         std::string result(msglength, '\0');

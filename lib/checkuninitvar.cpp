@@ -417,7 +417,7 @@ bool CheckUninitVar::checkScopeForVariable(const Token *tok, const Variable& var
                 return true;
 
             // checking if a not-zero variable is zero => bail out
-            int condVarId = 0;
+            unsigned int condVarId = 0;
             VariableValue condVarValue(0);
             const Token *condVarTok = nullptr;
             if (alwaysFalse)
@@ -911,7 +911,7 @@ bool CheckUninitVar::checkLoopBody(const Token *tok, const Variable& var, const 
     return false;
 }
 
-void CheckUninitVar::checkRhs(const Token *tok, const Variable &var, Alloc alloc, nonneg int number_of_if, const std::string &membervar)
+void CheckUninitVar::checkRhs(const Token *tok, const Variable &var, Alloc alloc, unsigned int number_of_if, const std::string &membervar)
 {
     bool rhs = false;
     int indent = 0;

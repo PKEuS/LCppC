@@ -899,7 +899,7 @@ std::vector<Library::InvalidArgValue> Library::getInvalidArgValues(const std::st
         invalid.push_back(InvalidArgValue{InvalidArgValue::lt, valid[0].op1, std::string()});
     if (valid.back().type == InvalidArgValue::le || valid.back().type == InvalidArgValue::eq)
         invalid.push_back(InvalidArgValue{InvalidArgValue::gt, valid[0].op1, std::string()});
-    for (int i = 0; i + 1 < valid.size(); i++) {
+    for (std::size_t i = 0; i + 1 < valid.size(); i++) {
         const InvalidArgValue &v1 = valid[i];
         const InvalidArgValue &v2 = valid[i + 1];
         if (v1.type == InvalidArgValue::le && v2.type == InvalidArgValue::ge) {

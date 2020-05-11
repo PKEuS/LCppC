@@ -236,7 +236,7 @@ namespace ValueFlow {
         ErrorPath errorPath;
 
         /** For calculated values - varId that calculated value depends on */
-        nonneg int varId;
+        unsigned int varId;
 
         /** value relies on safe checking */
         bool safe;
@@ -321,7 +321,7 @@ namespace ValueFlow {
 
     std::string eitherTheConditionIsRedundant(const Token *condition);
 
-    size_t getSizeOf(const ValueType &vt, const Settings *settings);
+    unsigned int getSizeOf(const ValueType &vt, const Settings *settings);
 }
 
 struct LifetimeToken {

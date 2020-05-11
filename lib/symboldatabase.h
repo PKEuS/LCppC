@@ -228,7 +228,7 @@ class CPPCHECKLIB Variable {
 
 public:
     Variable(const Token *name_, const Token *start_, const Token *end_,
-             nonneg int index_, AccessControl access_, const Type *type_,
+             unsigned int index_, AccessControl access_, const Type *type_,
              const Scope *scope_, const Settings* settings)
         : mNameToken(name_),
           mTypeStartToken(start_),
@@ -243,7 +243,7 @@ public:
     }
 
     Variable(const Token *name_, const std::string &clangType, const Token *start,
-             nonneg int index_, AccessControl access_, const Type *type_,
+             unsigned int index_, AccessControl access_, const Type *type_,
              const Scope *scope_);
 
     ~Variable();
@@ -305,7 +305,7 @@ public:
      * Get declaration ID (varId used for variable in its declaration).
      * @return declaration ID
      */
-    nonneg int declarationId() const {
+    unsigned int declarationId() const {
         // name may not exist for function arguments
         if (mNameToken)
             return mNameToken->varId();
@@ -892,7 +892,7 @@ public:
     const Token *throwArg;            ///< throw token
     const Token *templateDef;         ///< points to 'template <' before function
 
-    static bool argsMatch(const Scope *scope, const Token *first, const Token *second, const std::string &path, nonneg int path_length);
+    static bool argsMatch(const Scope *scope, const Token *first, const Token *second, const std::string &path, unsigned int path_length);
 
     static bool returnsReference(const Function* function, bool unknown = false);
 
@@ -1000,8 +1000,8 @@ public:
     std::list<Variable> varlist;
     const Scope *nestedIn;
     std::list<Scope *> nestedList;
-    nonneg int numConstructors;
-    nonneg int numCopyOrMoveConstructors;
+    unsigned int numConstructors;
+    unsigned int numCopyOrMoveConstructors;
     std::list<UsingInfo> usingList;
     ScopeType type;
     Type* definedType;
@@ -1148,9 +1148,9 @@ class CPPCHECKLIB ValueType {
 public:
     enum Sign { UNKNOWN_SIGN, SIGNED, UNSIGNED } sign;
     enum Type { UNKNOWN_TYPE, NONSTD, RECORD, CONTAINER, ITERATOR, VOID, BOOL, CHAR, SHORT, WCHAR_T, INT, LONG, LONGLONG, UNKNOWN_INT, FLOAT, DOUBLE, LONGDOUBLE } type;
-    nonneg int bits;                    ///< bitfield bitcount
-    nonneg int pointer;                 ///< 0=>not pointer, 1=>*, 2=>**, 3=>***, etc
-    nonneg int constness;               ///< bit 0=data, bit 1=*, bit 2=**
+    unsigned int bits;                    ///< bitfield bitcount
+    unsigned int pointer;                 ///< 0=>not pointer, 1=>*, 2=>**, 3=>***, etc
+    unsigned int constness;               ///< bit 0=data, bit 1=*, bit 2=**
     const Scope *typeScope;               ///< if the type definition is seen this point out the type scope
     const ::Type *smartPointerType;       ///< Smart pointer type
     const Token* smartPointerTypeToken;   ///< Smart pointer type token
@@ -1170,7 +1170,7 @@ public:
           container(nullptr),
           containerTypeToken(nullptr)
     {}
-    ValueType(enum Sign s, enum Type t, nonneg int p)
+    ValueType(enum Sign s, enum Type t, unsigned int p)
         : sign(s),
           type(t),
           bits(0),
@@ -1182,7 +1182,7 @@ public:
           container(nullptr),
           containerTypeToken(nullptr)
     {}
-    ValueType(enum Sign s, enum Type t, nonneg int p, nonneg int c)
+    ValueType(enum Sign s, enum Type t, unsigned int p, unsigned int c)
         : sign(s),
           type(t),
           bits(0),
@@ -1194,7 +1194,7 @@ public:
           container(nullptr),
           containerTypeToken(nullptr)
     {}
-    ValueType(enum Sign s, enum Type t, nonneg int p, nonneg int c, const std::string& otn)
+    ValueType(enum Sign s, enum Type t, unsigned int p, unsigned int c, const std::string& otn)
         : sign(s),
           type(t),
           bits(0),
@@ -1281,7 +1281,7 @@ public:
         return const_cast<Scope *>(this->findScope(tok, const_cast<const Scope *>(startScope)));
     }
 
-    const Variable *getVariableFromVarId(nonneg int varId) const {
+    const Variable *getVariableFromVarId(unsigned int varId) const {
         return mVariableList.at(varId);
     }
 
@@ -1319,7 +1319,7 @@ public:
      * @param type Token which will contain e.g. "int", "*", or string.
      * @return sizeof for given type, or 0 if it can't be calculated.
      */
-    nonneg int sizeOfType(const Token *type) const;
+    unsigned int sizeOfType(const Token *type) const;
 
     /** Set array dimensions when valueflow analysis is completed */
     void setArrayDimensionsUsingValueFlow();
@@ -1356,7 +1356,7 @@ private:
     bool isFunction(const Token *tok, const Scope* outerScope, const Token **funcStart, const Token **argStart, const Token** declEnd) const;
     const Type *findTypeInNested(const Token *startTok, const Scope *startScope) const;
     const Scope *findNamespace(const Token * tok, const Scope * scope) const;
-    Function *findFunctionInScope(const Token *func, const Scope *ns, const std::string & path, nonneg int path_length);
+    Function *findFunctionInScope(const Token *func, const Scope *ns, const std::string & path, unsigned int path_length);
     const Type *findVariableTypeInBase(const Scope *scope, const Token *typeTok) const;
 
     typedef std::map<unsigned int, unsigned int> MemberIdMap;

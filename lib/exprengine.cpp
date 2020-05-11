@@ -212,13 +212,13 @@ namespace {
         }
 
         void print(std::ostream &out) {
-            std::set<std::pair<int,int>> locations;
+            std::set<std::pair<unsigned int, unsigned int>> locations;
             for (auto it : mMap) {
-                locations.insert(std::pair<int,int>(it.first->linenr(), it.first->column()));
+                locations.insert(std::pair<unsigned int, unsigned int>(it.first->linenr(), it.first->column()));
             }
             for (const std::pair<int,int> &loc : locations) {
-                int lineNumber = loc.first;
-                int column = loc.second;
+                unsigned lineNumber = loc.first;
+                unsigned column = loc.second;
                 for (auto &it : mMap) {
                     const Token *tok = it.first;
                     if (lineNumber != tok->linenr())
@@ -296,7 +296,7 @@ namespace {
             , callbacks(callbacks)
             , mTrackExecution(trackExecution)
             , mDataIndex(trackExecution->getNewDataIndex()) {}
-        typedef std::map<nonneg int, ExprEngine::ValuePtr> Memory;
+        typedef std::map<unsigned int, ExprEngine::ValuePtr> Memory;
         Memory memory;
         int * const symbolValueIndex;
         ErrorLogger *errorLogger;
@@ -361,7 +361,7 @@ namespace {
         void functionCall() {
             // Remove values for global variables
             const SymbolDatabase *symbolDatabase = tokenizer->getSymbolDatabase();
-            for (std::map<nonneg int, ExprEngine::ValuePtr>::iterator it = memory.begin(); it != memory.end();) {
+            for (std::map<unsigned int, ExprEngine::ValuePtr>::iterator it = memory.begin(); it != memory.end();) {
                 unsigned int varid = it->first;
                 const Variable *var = symbolDatabase->getVariableFromVarId(varid);
                 if (var && var->isGlobal())
@@ -1388,7 +1388,7 @@ static void checkContract(Data &data, const Token *tok, const Function *function
         solver.add(z3::ite(exprData.getConstraintExpr(data.executeContract(function, executeExpression1)), exprData.context.bool_val(false), exprData.context.bool_val(true)));
 
         bool bailoutValue = false;
-        for (nonneg int i = 0; i < argValues.size(); ++i) {
+        for (unsigned int i = 0; i < argValues.size(); ++i) {
             const Variable *argvar = function->getArgumentVar(i);
             if (!argvar || !argvar->nameToken())
                 continue;

@@ -293,7 +293,7 @@ private:
      * @param scope pointer to variable Scope
      * @param usage reference to usage vector
      */
-    static void assignVar(nonneg int varid, const Scope *scope, std::vector<Usage> &usage);
+    static void assignVar(unsigned int varid, const Scope *scope, std::vector<Usage> &usage);
 
     /**
      * @brief initialize a variable in the varlist
@@ -301,7 +301,7 @@ private:
      * @param scope pointer to variable Scope
      * @param usage reference to usage vector
      */
-    static void initVar(nonneg int varid, const Scope *scope, std::vector<Usage> &usage);
+    static void initVar(unsigned int varid, const Scope *scope, std::vector<Usage> &usage);
 
     /**
      * @brief set all variables in list assigned

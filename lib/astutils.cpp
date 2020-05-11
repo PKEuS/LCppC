@@ -54,7 +54,7 @@ void visitAstNodes(const Token *ast, std::function<ChildrenToVisit(const Token *
     }
 }
 
-static void astFlattenRecursive(const Token *tok, std::vector<const Token *> *result, const char* op, nonneg int depth = 0)
+static void astFlattenRecursive(const Token *tok, std::vector<const Token *> *result, const char* op, unsigned int depth = 0)
 {
     ++depth;
     if (!tok || depth >= 100)
@@ -84,7 +84,7 @@ bool astHasToken(const Token* root, const Token * tok)
     return astHasToken(root->astOperand1(), tok) || astHasToken(root->astOperand2(), tok);
 }
 
-bool astHasVar(const Token * tok, nonneg int varid)
+bool astHasVar(const Token * tok, unsigned int varid)
 {
     if (!tok)
         return false;
@@ -444,7 +444,7 @@ bool precedes(const Token * tok1, const Token * tok2)
     return tok1->index() < tok2->index();
 }
 
-bool isAliasOf(const Token *tok, nonneg int varid)
+bool isAliasOf(const Token *tok, unsigned int varid)
 {
     if (tok->varId() == varid)
         return false;
@@ -461,7 +461,7 @@ bool isAliasOf(const Token *tok, nonneg int varid)
     return false;
 }
 
-static bool isAliased(const Token *startTok, const Token *endTok, nonneg int varid)
+static bool isAliased(const Token *startTok, const Token *endTok, unsigned int varid)
 {
     if (!precedes(startTok, endTok))
         return false;
@@ -486,7 +486,7 @@ bool isAliased(const Variable *var)
     return isAliased(start, var->scope()->bodyEnd, var->declarationId());
 }
 
-bool exprDependsOnThis(const Token* expr, nonneg int depth)
+bool exprDependsOnThis(const Token* expr, unsigned int depth)
 {
     if (!expr)
         return false;
@@ -1161,7 +1161,7 @@ bool isReturnScope(const Token* const endToken, const Library* library, const To
     return false;
 }
 
-bool isVariableChangedByFunctionCall(const Token *tok, int indirect, nonneg int varid, const Settings *settings, bool *inconclusive)
+bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, unsigned int varid, const Settings *settings, bool *inconclusive)
 {
     if (!tok)
         return false;
@@ -1231,7 +1231,7 @@ const Token * getTokenArgumentFunction(const Token * tok, int& argn)
     return tok;
 }
 
-bool isVariableChangedByFunctionCall(const Token *tok, int indirect, const Settings *settings, bool *inconclusive)
+bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, const Settings *settings, bool *inconclusive)
 {
     if (!tok)
         return false;
@@ -1253,7 +1253,7 @@ bool isVariableChangedByFunctionCall(const Token *tok, int indirect, const Setti
     // Constructor call
     if (tok->variable() && tok->variable()->nameToken() == tok) {
         // Find constructor..
-        const int argCount = numberOfArguments(tok);
+        const std::size_t argCount = numberOfArguments(tok);
         const Scope *typeScope = tok->variable()->typeScope();
         if (typeScope) {
             for (const Function &function : typeScope->functionList) {
@@ -1397,12 +1397,12 @@ bool isVariableChanged(const Token *tok, int indirect, const Settings *settings,
     return false;
 }
 
-bool isVariableChanged(const Token *start, const Token *end, const nonneg int varid, bool globalvar, const Settings *settings, bool cpp, int depth)
+bool isVariableChanged(const Token *start, const Token *end, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth)
 {
     return findVariableChanged(start, end, 0, varid, globalvar, settings, cpp, depth) != nullptr;
 }
 
-Token* findVariableChanged(Token *start, const Token *end, int indirect, const nonneg int varid, bool globalvar, const Settings *settings, bool cpp, int depth)
+Token* findVariableChanged(Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth)
 {
     if (!precedes(start, end))
         return nullptr;
@@ -1421,7 +1421,7 @@ Token* findVariableChanged(Token *start, const Token *end, int indirect, const n
     return nullptr;
 }
 
-const Token* findVariableChanged(const Token *start, const Token *end, int indirect, const nonneg int varid, bool globalvar, const Settings *settings, bool cpp, int depth)
+const Token* findVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth)
 {
     return findVariableChanged(const_cast<Token*>(start), end, indirect, varid, globalvar, settings, cpp, depth);
 }
@@ -1467,9 +1467,9 @@ bool isVariablesChanged(const Token* start,
     return false;
 }
 
-int numberOfArguments(const Token *start)
+std::size_t numberOfArguments(const Token *start)
 {
-    int arguments=0;
+    std::size_t arguments=0;
     const Token* const openBracket = start->next();
     if (openBracket && openBracket->str()=="(" && openBracket->next() && openBracket->next()->str()!=")") {
         const Token* argument=openBracket->next();
@@ -2200,7 +2200,7 @@ bool FwdAnalysis::possiblyAliased(const Token *expr, const Token *startToken) co
         if (Token::Match(tok, "%name% (") && !Token::Match(tok, "if|while|for")) {
             // Is argument passed by reference?
             const std::vector<const Token*> args = getArguments(tok);
-            for (int argnr = 0; argnr < args.size(); ++argnr) {
+            for (std::size_t argnr = 0; argnr < args.size(); ++argnr) {
                 if (!Token::Match(args[argnr], "%name%|.|::"))
                     continue;
                 if (tok->function() && tok->function()->getArgumentVar(argnr) && !tok->function()->getArgumentVar(argnr)->isReference() && !tok->function()->isConst())

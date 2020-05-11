@@ -144,7 +144,7 @@ static bool isParameterChanged(const Token *partok)
 /** parse scopes recursively */
 bool CheckCondition::assignIfParseScope(const Token * const assignTok,
                                         const Token * const startTok,
-                                        const nonneg int varid,
+                                        const unsigned int varid,
                                         const bool islocal,
                                         const char bitop,
                                         const MathLib::bigint num)
@@ -519,7 +519,7 @@ void CheckCondition::multiCondition()
     }
 }
 
-void CheckCondition::overlappingElseIfConditionError(const Token *tok, nonneg int line1)
+void CheckCondition::overlappingElseIfConditionError(const Token *tok, unsigned int line1)
 {
     if (diag(tok))
         return;

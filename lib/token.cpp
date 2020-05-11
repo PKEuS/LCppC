@@ -206,7 +206,7 @@ std::string Token::strValue() const
     return ret;
 }
 
-void Token::deleteNext(nonneg int count)
+void Token::deleteNext(unsigned int count)
 {
     while (mNext && count > 0) {
         Token *n = mNext;
@@ -226,7 +226,7 @@ void Token::deleteNext(nonneg int count)
         mTokensFrontBack->back = this;
 }
 
-void Token::deletePrevious(nonneg int count)
+void Token::deletePrevious(unsigned int count)
 {
     while (mPrevious && count > 0) {
         Token *p = mPrevious;
@@ -370,7 +370,7 @@ const std::string &Token::strAt(int index) const
     return tok ? tok->mStr : emptyString;
 }
 
-static int multiComparePercent(const Token *tok, const char*& haystack, nonneg int varid)
+static int multiComparePercent(const Token *tok, const char*& haystack, unsigned int varid)
 {
     ++haystack;
     // Compare only the first character of the string for optimization reasons
@@ -510,7 +510,7 @@ static int multiComparePercent(const Token *tok, const char*& haystack, nonneg i
     return 0xFFFF;
 }
 
-int Token::multiCompare(const Token *tok, const char *haystack, nonneg int varid)
+int Token::multiCompare(const Token *tok, const char *haystack, unsigned int varid)
 {
     const char *needle = tok->str().c_str();
     const char *needlePointer = needle;
@@ -616,7 +616,7 @@ const char *Token::chrInFirstWord(const char *str, char c)
     }
 }
 
-bool Token::Match(const Token *tok, const char pattern[], nonneg int varid)
+bool Token::Match(const Token *tok, const char pattern[], unsigned int varid)
 {
     const char *p = pattern;
     while (*p) {
@@ -703,7 +703,7 @@ bool Token::Match(const Token *tok, const char pattern[], nonneg int varid)
     return true;
 }
 
-nonneg int Token::getStrLength(const Token *tok)
+unsigned int Token::getStrLength(const Token *tok)
 {
     assert(tok != nullptr);
     assert(tok->mTokType == eString);
@@ -732,7 +732,7 @@ nonneg int Token::getStrLength(const Token *tok)
     return len;
 }
 
-nonneg int Token::getStrArraySize(const Token *tok)
+unsigned int Token::getStrArraySize(const Token *tok)
 {
     assert(tok != nullptr);
     assert(tok->tokType() == eString);
@@ -746,10 +746,10 @@ nonneg int Token::getStrArraySize(const Token *tok)
     return sizeofstring;
 }
 
-nonneg int Token::getStrSize(const Token *tok, const Settings *settings)
+unsigned int Token::getStrSize(const Token *tok, const Settings *settings)
 {
     assert(tok != nullptr && tok->tokType() == eString);
-    nonneg int sizeofType = 1;
+    unsigned int sizeofType = 1;
     if (tok->valueType()) {
         ValueType vt(*tok->valueType());
         vt.pointer = 0;
@@ -957,7 +957,7 @@ const Token *Token::findsimplematch(const Token * const startTok, const char pat
     return nullptr;
 }
 
-const Token *Token::findmatch(const Token * const startTok, const char pattern[], const nonneg int varId)
+const Token *Token::findmatch(const Token * const startTok, const char pattern[], const unsigned int varId)
 {
     for (const Token* tok = startTok; tok; tok = tok->next()) {
         if (Token::Match(tok, pattern, varId))
@@ -966,7 +966,7 @@ const Token *Token::findmatch(const Token * const startTok, const char pattern[]
     return nullptr;
 }
 
-const Token *Token::findmatch(const Token * const startTok, const char pattern[], const Token * const end, const nonneg int varId)
+const Token *Token::findmatch(const Token * const startTok, const char pattern[], const Token * const end, const unsigned int varId)
 {
     for (const Token* tok = startTok; tok && tok != end; tok = tok->next()) {
         if (Token::Match(tok, pattern, varId))
@@ -1453,7 +1453,7 @@ std::string Token::expressionString() const
     return stringFromTokenRange(tokens.first, tokens.second);
 }
 
-static void astStringXml(const Token *tok, nonneg int indent, std::ostream &out)
+static void astStringXml(const Token *tok, unsigned int indent, std::ostream &out)
 {
     const std::string strindent(indent, ' ');
 
@@ -1507,15 +1507,15 @@ void Token::printAst(bool verbose, bool xml, std::ostream &out) const
     }
 }
 
-static void indent(std::string &str, const nonneg int indent1, const nonneg int indent2)
+static void indent(std::string &str, const unsigned int indent1, const unsigned int indent2)
 {
-    for (int i = 0; i < indent1; ++i)
+    for (unsigned int i = 0; i < indent1; ++i)
         str += ' ';
-    for (int i = indent1; i < indent2; i += 2)
+    for (unsigned int i = indent1; i < indent2; i += 2)
         str += "| ";
 }
 
-void Token::astStringVerboseRecursive(std::string& ret, const nonneg int indent1, const nonneg int indent2) const
+void Token::astStringVerboseRecursive(std::string& ret, const unsigned int indent1, const unsigned int indent2) const
 {
     if (isExpandedMacro())
         ret += '$';
@@ -1565,7 +1565,7 @@ std::string Token::astStringZ3() const
 
 void Token::printValueFlow(bool xml, std::ostream &out) const
 {
-    int line = 0;
+    unsigned int line = 0;
     if (xml)
         out << "  <valueflow>" << std::endl;
     else
@@ -1754,7 +1754,7 @@ const ValueFlow::Value * Token::getValueGE(const MathLib::bigint val, const Sett
     return ret;
 }
 
-const ValueFlow::Value * Token::getInvalidValue(const Token *ftok, nonneg int argnr, const Settings *settings) const
+const ValueFlow::Value * Token::getInvalidValue(const Token *ftok, unsigned int argnr, const Settings *settings) const
 {
     if (!mImpl->mValues || !settings)
         return nullptr;

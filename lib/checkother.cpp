@@ -1109,14 +1109,14 @@ void CheckOther::commaSeparatedReturnError(const Token *tok)
 //---------------------------------------------------------------------------
 // Check for function parameters that should be passed by const reference
 //---------------------------------------------------------------------------
-static int estimateSize(const Type* type, const Settings* settings, const SymbolDatabase* symbolDatabase, int recursionDepth = 0)
+static unsigned int estimateSize(const Type* type, const Settings* settings, const SymbolDatabase* symbolDatabase, unsigned int recursionDepth = 0)
 {
     if (recursionDepth > 20)
         return 0;
 
-    int cumulatedSize = 0;
+    unsigned int cumulatedSize = 0;
     for (const Variable&var : type->classScope->varlist) {
-        int size = 0;
+        unsigned int size = 0;
         if (var.isStatic())
             continue;
         if (var.isPointer() || var.isReference())
@@ -1129,7 +1129,7 @@ static int estimateSize(const Type* type, const Settings* settings, const Symbol
             size = symbolDatabase->sizeOfType(var.typeStartToken());
 
         if (var.isArray())
-            cumulatedSize += size * var.dimension(0);
+            cumulatedSize += size * (unsigned int)var.dimension(0);
         else
             cumulatedSize += size;
     }
@@ -1289,7 +1289,7 @@ static bool isUnusedVariable(const Variable *var)
     return !Token::findmatch(start->next(), "%varid%", var->scope()->bodyEnd, var->declarationId());
 }
 
-static bool isVariableMutableInInitializer(const Token* start, const Token * end, nonneg int varid)
+static bool isVariableMutableInInitializer(const Token* start, const Token * end, unsigned int varid)
 {
     if (!start)
         return false;
@@ -2284,7 +2284,7 @@ static bool constructorTakesReference(const Scope * const classScope)
 {
     for (const Function &constructor : classScope->functionList) {
         if (constructor.isConstructor()) {
-            for (int argnr = 0U; argnr < constructor.argCount(); argnr++) {
+            for (std::size_t argnr = 0U; argnr < constructor.argCount(); argnr++) {
                 const Variable * const argVar = constructor.getArgumentVar(argnr);
                 if (argVar && argVar->isReference()) {
                     return true;
@@ -2471,7 +2471,7 @@ void CheckOther::checkVarFuncNullUB()
             if (Token::Match(tok,"[(,] NULL [,)]")) {
                 // Locate function name in this function call.
                 const Token *ftok = tok;
-                int argnr = 1;
+                std::size_t argnr = 1;
                 while (ftok && ftok->str() != "(") {
                     if (ftok->str() == ")")
                         ftok = ftok->link();
@@ -2840,7 +2840,7 @@ void CheckOther::checkFuncArgNamesDifferent()
         std::vector<const Token *>  declarations(function->argCount());
         std::vector<const Token *>  definitions(function->argCount());
         const Token * decl = function->argDef->next();
-        for (int j = 0; j < function->argCount(); ++j) {
+        for (std::size_t j = 0; j < function->argCount(); ++j) {
             declarations[j] = nullptr;
             definitions[j] = nullptr;
             // get the definition
@@ -2870,11 +2870,11 @@ void CheckOther::checkFuncArgNamesDifferent()
         // check for different argument order
         if (warning) {
             bool order_different = false;
-            for (int j = 0; j < function->argCount(); ++j) {
+            for (std::size_t j = 0; j < function->argCount(); ++j) {
                 if (!declarations[j] || !definitions[j] || declarations[j]->str() == definitions[j]->str())
                     continue;
 
-                for (int k = 0; k < function->argCount(); ++k) {
+                for (std::size_t k = 0; k < function->argCount(); ++k) {
                     if (j != k && definitions[k] && declarations[j]->str() == definitions[k]->str()) {
                         order_different = true;
                         break;
@@ -2888,7 +2888,7 @@ void CheckOther::checkFuncArgNamesDifferent()
         }
         // check for different argument names
         if (style && inconclusive) {
-            for (int j = 0; j < function->argCount(); ++j) {
+            for (std::size_t j = 0; j < function->argCount(); ++j) {
                 if (declarations[j] && definitions[j] && declarations[j]->str() != definitions[j]->str())
                     funcArgNamesDifferent(function->name(), j, declarations[j], definitions[j]);
             }
@@ -2896,7 +2896,7 @@ void CheckOther::checkFuncArgNamesDifferent()
     }
 }
 
-void CheckOther::funcArgNamesDifferent(const std::string & functionName, nonneg int index,
+void CheckOther::funcArgNamesDifferent(const std::string & functionName, unsigned int index,
                                        const Token* declaration, const Token* definition)
 {
     std::list<const Token *> tokens = { declaration,definition };
@@ -2917,14 +2917,14 @@ void CheckOther::funcArgOrderDifferent(const std::string & functionName,
         definitions.size() ? definitions[0] ? definitions[0] : definition : nullptr
     };
     std::string msg = "$symbol:" + functionName + "\nFunction '$symbol' argument order different: declaration '";
-    for (int i = 0; i < declarations.size(); ++i) {
+    for (std::size_t i = 0; i < declarations.size(); ++i) {
         if (i != 0)
             msg += ", ";
         if (declarations[i])
             msg += declarations[i]->str();
     }
     msg += "' definition '";
-    for (int i = 0; i < definitions.size(); ++i) {
+    for (std::size_t i = 0; i < definitions.size(); ++i) {
         if (i != 0)
             msg += ", ";
         if (definitions[i])
@@ -2934,7 +2934,7 @@ void CheckOther::funcArgOrderDifferent(const std::string & functionName,
     reportError(tokens, Severity::warning, "funcArgOrderDifferent", msg, CWE683, false);
 }
 
-static const Token *findShadowed(const Scope *scope, const std::string &varname, int linenr)
+static const Token *findShadowed(const Scope *scope, const std::string &varname, unsigned int linenr)
 {
     if (!scope)
         return nullptr;

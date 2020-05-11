@@ -77,7 +77,7 @@ public:
     /** parse scopes recursively */
     bool assignIfParseScope(const Token * const assignTok,
                             const Token * const startTok,
-                            const nonneg int varid,
+                            const unsigned int varid,
                             const bool islocal,
                             const char bitop,
                             const MathLib::bigint num);
@@ -137,7 +137,7 @@ private:
                          MathLib::bigint value2,
                          bool result);
     void duplicateConditionError(const Token *tok1, const Token *tok2, ErrorPath errorPath);
-    void overlappingElseIfConditionError(const Token *tok, nonneg int line1);
+    void overlappingElseIfConditionError(const Token *tok, unsigned int line1);
     void oppositeElseIfConditionError(const Token *ifCond, const Token *elseIfCond, ErrorPath errorPath);
 
     void oppositeInnerConditionError(const Token *tok1, const Token* tok2, ErrorPath errorPath);

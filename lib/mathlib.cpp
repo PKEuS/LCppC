@@ -28,7 +28,7 @@
 #include <locale>
 
 
-const int MathLib::bigint_bits = 64;
+const unsigned int MathLib::bigint_bits = 64;
 
 MathLib::value::value(const std::string &s) :
     mIntValue(0), mDoubleValue(0), mIsUnsigned(false)
@@ -595,7 +595,7 @@ static double floatHexToDoubleNumber(const std::string& str)
 double MathLib::toDoubleNumber(const std::string &str)
 {
     if (isCharLiteral(str))
-        return characterLiteralToLongNumber(getCharLiteral(str));
+        return static_cast<double>(characterLiteralToLongNumber(getCharLiteral(str)));
     if (isIntHex(str))
         return static_cast<double>(toLongNumber(str));
     // nullcheck

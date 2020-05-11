@@ -478,7 +478,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
 
         // If there is a syntax error, report it and stop
         for (const simplecpp::Output &output : outputList) {
-            bool err;
+            bool err = true;
             switch (output.type) {
             case simplecpp::Output::ERROR:
             case simplecpp::Output::INCLUDE_NESTED_TOO_DEEPLY:

@@ -434,7 +434,7 @@ void CheckType::checkFloatToIntegerOverflow(const Token *tok, const ValueType *v
         else if ((-f.floatValue) > (1ULL<<62))
             floatToIntegerOverflowError(tok, f);
         else if (mSettings->platformType != Settings::Unspecified) {
-            int bits = 0;
+            unsigned int bits = 0;
             if (vtint->type == ValueType::Type::CHAR)
                 bits = mSettings->char_bit;
             else if (vtint->type == ValueType::Type::SHORT)

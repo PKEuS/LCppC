@@ -6,12 +6,12 @@
 #include <algorithm>
 #include <cassert>
 
-void ProgramMemory::setValue(nonneg int varid, const ValueFlow::Value &value)
+void ProgramMemory::setValue(unsigned int varid, const ValueFlow::Value &value)
 {
     values[varid] = value;
 }
 
-bool ProgramMemory::getIntValue(nonneg int varid, MathLib::bigint* result) const
+bool ProgramMemory::getIntValue(unsigned int varid, MathLib::bigint* result) const
 {
     const ProgramMemory::Map::const_iterator it = values.find(varid);
     const bool found = it != values.end() && it->second.isIntValue();
@@ -20,12 +20,12 @@ bool ProgramMemory::getIntValue(nonneg int varid, MathLib::bigint* result) const
     return found;
 }
 
-void ProgramMemory::setIntValue(nonneg int varid, MathLib::bigint value)
+void ProgramMemory::setIntValue(unsigned int varid, MathLib::bigint value)
 {
     values[varid] = ValueFlow::Value(value);
 }
 
-bool ProgramMemory::getTokValue(nonneg int varid, const Token** result) const
+bool ProgramMemory::getTokValue(unsigned int varid, const Token** result) const
 {
     const ProgramMemory::Map::const_iterator it = values.find(varid);
     const bool found = it != values.end() && it->second.isTokValue();
@@ -34,12 +34,12 @@ bool ProgramMemory::getTokValue(nonneg int varid, const Token** result) const
     return found;
 }
 
-void ProgramMemory::setUnknown(nonneg int varid)
+void ProgramMemory::setUnknown(unsigned int varid)
 {
     values[varid].valueType = ValueFlow::Value::ValueType::UNINIT;
 }
 
-bool ProgramMemory::hasValue(nonneg int varid)
+bool ProgramMemory::hasValue(unsigned int varid)
 {
     return values.find(varid) != values.end();
 }
@@ -272,7 +272,7 @@ void ProgramMemoryState::addState(const Token* tok, const ProgramMemory::Map& va
     fillProgramMemoryFromConditions(pm, tok, nullptr);
     ProgramMemory local;
     for (const auto& p:vars) {
-        nonneg int varid = p.first;
+        unsigned int varid = p.first;
         const ValueFlow::Value &value = p.second;
         pm.setValue(varid, value);
         if (value.varId)
@@ -321,7 +321,7 @@ ProgramMemory getProgramMemory(const Token *tok, const ProgramMemory::Map& vars)
     fillProgramMemoryFromConditions(programMemory, tok, nullptr);
     ProgramMemory state;
     for (const auto& p:vars) {
-        nonneg int varid = p.first;
+        unsigned int varid = p.first;
         const ValueFlow::Value &value = p.second;
         programMemory.setValue(varid, value);
         if (value.varId)
@@ -332,7 +332,7 @@ ProgramMemory getProgramMemory(const Token *tok, const ProgramMemory::Map& vars)
     return programMemory;
 }
 
-ProgramMemory getProgramMemory(const Token *tok, nonneg int varid, const ValueFlow::Value &value)
+ProgramMemory getProgramMemory(const Token *tok, unsigned int varid, const ValueFlow::Value &value)
 {
     ProgramMemory programMemory;
     programMemory.replace(getInitialProgramState(tok, value.tokvalue));

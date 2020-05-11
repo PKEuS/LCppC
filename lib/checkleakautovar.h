@@ -66,7 +66,7 @@ public:
         referenced.clear();
     }
 
-    void erase(nonneg int varid) {
+    void erase(unsigned int varid) {
         alloctype.erase(varid);
         possibleUsage.erase(varid);
         conditionalAlloc.erase(varid);
@@ -119,7 +119,7 @@ private:
     void checkScope(const Token * const startToken,
                     VarInfo *varInfo,
                     std::set<int> notzero,
-                    nonneg int recursiveCount);
+                    unsigned int recursiveCount);
 
     /** Check token inside expression.
     * @param tok token inside expression.

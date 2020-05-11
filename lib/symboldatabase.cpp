@@ -1788,7 +1788,7 @@ void SymbolDatabase::clangSetVariables(const std::vector<const Variable *> &vari
 }
 
 Variable::Variable(const Token *name_, const std::string &clangType, const Token *start,
-                   nonneg int index_, AccessControl access_, const Type *type_,
+                   unsigned int index_, AccessControl access_, const Type *type_,
                    const Scope *scope_)
     : mNameToken(name_),
       mTypeStartToken(start),
@@ -2228,7 +2228,7 @@ static bool usingNamespace(const Scope *scope, const Token *first, const Token *
     return false;
 }
 
-bool Function::argsMatch(const Scope *scope, const Token *first, const Token *second, const std::string &path, nonneg int path_length)
+bool Function::argsMatch(const Scope *scope, const Token *first, const Token *second, const std::string &path, unsigned int path_length)
 {
     const bool isCPP = scope->check->isCPP();
     if (!isCPP) // C does not support overloads
@@ -3805,7 +3805,7 @@ void Scope::addVariable(const Token *token_, const Token *start_, const Token *e
 {
     // keep possible size_t -> int truncation outside emplace_back() to have a single line
     // C4267 VC++ warning instead of several dozens lines
-    const int varIndex = varlist.size();
+    const unsigned int varIndex = static_cast<unsigned int>(varlist.size());
     varlist.emplace_back(token_, start_, end_, varIndex, access_, type_, scope_, settings);
 }
 
@@ -5130,7 +5130,7 @@ const Scope * SymbolDatabase::findNamespace(const Token * tok, const Scope * sco
 
 //---------------------------------------------------------------------------
 
-Function * SymbolDatabase::findFunctionInScope(const Token *func, const Scope *ns, const std::string & path, nonneg int path_length)
+Function * SymbolDatabase::findFunctionInScope(const Token *func, const Scope *ns, const std::string & path, unsigned int path_length)
 {
     const Function * function = nullptr;
     const bool destructor = func->strAt(-1) == "~";
@@ -5197,7 +5197,7 @@ bool SymbolDatabase::isReservedName(const std::string& iName) const
         return c_keywords.find(iName) != c_keywords.cend();
 }
 
-nonneg int SymbolDatabase::sizeOfType(const Token *type) const
+unsigned int SymbolDatabase::sizeOfType(const Token *type) const
 {
     int size = mTokenizer->sizeOfType(type);
 
@@ -5858,8 +5858,8 @@ void SymbolDatabase::setValueTypeInTokenList(bool reportDebugWarnings, Token *to
         } else if (tok->isBoolean()) {
             setValueType(tok, ValueType(ValueType::Sign::UNKNOWN_SIGN, ValueType::Type::BOOL, 0U));
         } else if (tok->tokType() == Token::eChar || tok->tokType() == Token::eString) {
-            nonneg int pointer = tok->tokType() == Token::eChar ? 0U : 1U;
-            nonneg int constness = tok->tokType() == Token::eChar ? 0U : 1U;
+            unsigned int pointer = tok->tokType() == Token::eChar ? 0U : 1U;
+            unsigned int constness = tok->tokType() == Token::eChar ? 0U : 1U;
             ValueType valuetype(ValueType::Sign::UNKNOWN_SIGN, ValueType::Type::CHAR, pointer, constness);
 
             if (mIsCpp && mSettings->standards.cpp >= Standards::CPP20 && tok->isUtf8()) {

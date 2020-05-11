@@ -215,7 +215,7 @@ namespace ExprEngine {
             return "\"" + string + "\"";
         }
 
-        int size() const {
+        std::size_t size() const {
             return string.size();
         }
         const std::string string;

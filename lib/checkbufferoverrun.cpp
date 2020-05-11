@@ -67,7 +67,7 @@ static const ValueFlow::Value *getBufferSizeValue(const Token *tok)
     return it == tokenValues.end() ? nullptr : &*it;
 }
 
-static int getMinFormatStringOutputLength(const std::vector<const Token*> &parameters, nonneg int formatStringArgNr)
+static unsigned int getMinFormatStringOutputLength(const std::vector<const Token*> &parameters, unsigned int formatStringArgNr)
 {
     if (formatStringArgNr <= 0 || formatStringArgNr > parameters.size())
         return 0;
@@ -75,13 +75,13 @@ static int getMinFormatStringOutputLength(const std::vector<const Token*> &param
         return 0;
     const std::string &formatString = parameters[formatStringArgNr - 1]->str();
     bool percentCharFound = false;
-    int outputStringSize = 0;
+    unsigned int outputStringSize = 0;
     bool handleNextParameter = false;
     std::string digits_string;
     bool i_d_x_f_found = false;
-    int parameterLength = 0;
-    int inputArgNr = formatStringArgNr;
-    for (int i = 1; i + 1 < formatString.length(); ++i) {
+    unsigned int parameterLength = 0;
+    unsigned int inputArgNr = formatStringArgNr;
+    for (std::size_t i = 1; i + 1 < formatString.length(); ++i) {
         if (formatString[i] == '\\') {
             if (i < formatString.length() - 1 && formatString[i + 1] == '0')
                 break;
@@ -140,13 +140,13 @@ static int getMinFormatStringOutputLength(const std::vector<const Token*> &param
             outputStringSize++;
 
         if (handleNextParameter) {
-            int tempDigits = std::abs(std::atoi(digits_string.c_str()));
+            unsigned int tempDigits = (unsigned int)std::abs(std::atoi(digits_string.c_str()));
             if (i_d_x_f_found)
-                tempDigits = std::max(tempDigits, 1);
+                tempDigits = std::max(tempDigits, 1U);
 
             if (digits_string.find('.') != std::string::npos) {
                 const std::string endStr = digits_string.substr(digits_string.find('.') + 1);
-                const int maxLen = std::max(std::abs(std::atoi(endStr.c_str())), 1);
+                const unsigned int maxLen = std::max((unsigned int)std::abs(std::atoi(endStr.c_str())), 1U);
 
                 if (formatString[i] == 's') {
                     // For strings, the length after the dot "%.2s" will limit
@@ -214,7 +214,7 @@ static bool getDimensionsEtc(const Token * const arrayToken, const Settings *set
         Dimension dim;
         dim.known = value->isKnown();
         dim.tok = nullptr;
-        const int typeSize = array->valueType()->typeSize(*settings);
+        const MathLib::bigint typeSize = array->valueType()->typeSize(*settings);
         if (typeSize == 0)
             return false;
         dim.num = value->intvalue / typeSize;
@@ -234,7 +234,7 @@ static std::vector<const ValueFlow::Value *> getOverrunIndexValues(const Token *
         bool overflow = false;
         bool allKnown = true;
         std::vector<const ValueFlow::Value *> indexValues;
-        for (int i = 0; i < dimensions.size() && i < indexTokens.size(); ++i) {
+        for (std::size_t i = 0; i < dimensions.size() && i < indexTokens.size(); ++i) {
             const ValueFlow::Value *value = indexTokens[i]->getMaxValue(cond == 1);
             indexValues.push_back(value);
             if (!value)
@@ -581,7 +581,7 @@ void CheckBufferOverrun::bufferOverflow()
             if (!mSettings->library.hasminsize(tok))
                 continue;
             const std::vector<const Token *> args = getArguments(tok);
-            for (int argnr = 0; argnr < args.size(); ++argnr) {
+            for (std::size_t argnr = 0; argnr < args.size(); ++argnr) {
                 if (!args[argnr]->valueType() || args[argnr]->valueType()->pointer == 0)
                     continue;
                 const std::vector<Library::ArgumentChecks::MinSize> *minsizes = mSettings->library.argminsizes(tok, argnr + 1);

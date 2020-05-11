@@ -61,7 +61,7 @@ class CPPCHECKLIB Tokenizer {
     private:
         std::map<std::string, int> mVariableId;
         std::stack<std::list<std::pair<std::string,int> > > mScopeInfo;
-        mutable nonneg int mVarId;
+        mutable unsigned int mVarId;
     public:
         VariableMap();
         void enterScope();
@@ -77,7 +77,7 @@ class CPPCHECKLIB Tokenizer {
         const std::map<std::string,int> &map() const {
             return mVariableId;
         }
-        nonneg int *getVarId() const {
+        unsigned int *getVarId() const {
             return &mVarId;
         }
     };
@@ -190,7 +190,7 @@ public:
      * @param type Token which will contain e.g. "int", "*", or string.
      * @return sizeof for given type, or 0 if it can't be calculated.
      */
-    nonneg int sizeOfType(const Token *type) const;
+    unsigned int sizeOfType(const Token *type) const;
 
     /**
      * Try to determine if function parameter is passed by value by looking
@@ -605,19 +605,19 @@ private:
 
     void setVarIdClassDeclaration(const Token * const startToken,
                                   const VariableMap &variableMap,
-                                  const nonneg int scopeStartVarId,
+                                  const unsigned int scopeStartVarId,
                                   std::map<int, std::map<std::string,int> >& structMembers);
 
     void setVarIdStructMembers(Token **tok1,
                                std::map<int, std::map<std::string, int> >& structMembers,
-                               nonneg int *varId);
+                               unsigned int *varId);
 
     void setVarIdClassFunction(const std::string &classname,
                                Token * const startToken,
                                const Token * const endToken,
                                const std::map<std::string,int> &varlist,
                                std::map<int, std::map<std::string,int> >& structMembers,
-                               nonneg int *varId_);
+                               unsigned int *varId_);
 
     /**
      * Output list of unknown types.
@@ -663,7 +663,7 @@ public:
      * Get variable count.
      * @return number of variables
      */
-    nonneg int varIdCount() const {
+    unsigned int varIdCount() const {
         return mVarId;
     }
 
@@ -733,7 +733,7 @@ private:
     * Get new variable id.
     * @return new variable id
     */
-    nonneg int newVarId() {
+    unsigned int newVarId() {
         return ++mVarId;
     }
 
@@ -759,10 +759,10 @@ private:
     std::map<std::string, int> mTypeSize;
 
     /** variable count */
-    nonneg int mVarId;
+    unsigned int mVarId;
 
     /** unnamed count "Unnamed0", "Unnamed1", "Unnamed2", ... */
-    nonneg int mUnnamedCount;
+    unsigned int mUnnamedCount;
 
     /**
      * was there any templates? templates that are "unused" are

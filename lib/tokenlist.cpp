@@ -151,7 +151,7 @@ void TokenList::determineCppC()
     }
 }
 
-int TokenList::appendFileIfNew(const std::string &fileName)
+std::size_t TokenList::appendFileIfNew(const std::string &fileName)
 {
     // Has this file been tokenized already?
     for (std::size_t i = 0; i < mFiles.size(); ++i)
@@ -186,7 +186,7 @@ void TokenList::deleteTokens(Token *tok)
 // add a token.
 //---------------------------------------------------------------------------
 
-void TokenList::addtoken(std::string str, const nonneg int lineno, const nonneg int fileno, bool split)
+void TokenList::addtoken(std::string str, const unsigned int lineno, const unsigned int fileno, bool split)
 {
     if (str.empty())
         return;
@@ -236,7 +236,7 @@ void TokenList::addtoken(std::string str, const Token *locationTok)
     mTokensFrontBack.back->fileIndex(locationTok->fileIndex());
 }
 
-void TokenList::addtoken(const Token * tok, const nonneg int lineno, const nonneg int fileno)
+void TokenList::addtoken(const Token * tok, const unsigned int lineno, const unsigned int fileno)
 {
     if (tok == nullptr)
         return;
@@ -342,7 +342,7 @@ Token *TokenList::copyTokens(Token *dest, const Token *first, const Token *last,
 // InsertTokens - Copy and insert tokens
 //---------------------------------------------------------------------------
 
-void TokenList::insertTokens(Token *dest, const Token *src, nonneg int n)
+void TokenList::insertTokens(Token *dest, const Token *src, unsigned int n)
 {
     std::stack<Token *> link;
 

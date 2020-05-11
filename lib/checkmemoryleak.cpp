@@ -73,7 +73,7 @@ static const std::set<std::string> call_func_white_list = {
 
 //---------------------------------------------------------------------------
 
-CheckMemoryLeak::AllocType CheckMemoryLeak::getAllocationType(const Token *tok2, nonneg int varid, std::list<const Function*> *callstack) const
+CheckMemoryLeak::AllocType CheckMemoryLeak::getAllocationType(const Token *tok2, unsigned int varid, std::list<const Function*> *callstack) const
 {
     // What we may have...
     //     * var = (char *)malloc(10);
@@ -163,7 +163,7 @@ CheckMemoryLeak::AllocType CheckMemoryLeak::getAllocationType(const Token *tok2,
 }
 
 
-CheckMemoryLeak::AllocType CheckMemoryLeak::getReallocationType(const Token *tok2, nonneg int varid) const
+CheckMemoryLeak::AllocType CheckMemoryLeak::getReallocationType(const Token *tok2, unsigned int varid) const
 {
     // What we may have...
     //     * var = (char *)realloc(..;
@@ -200,7 +200,7 @@ CheckMemoryLeak::AllocType CheckMemoryLeak::getReallocationType(const Token *tok
 }
 
 
-CheckMemoryLeak::AllocType CheckMemoryLeak::getDeallocationType(const Token *tok, nonneg int varid) const
+CheckMemoryLeak::AllocType CheckMemoryLeak::getDeallocationType(const Token *tok, unsigned int varid) const
 {
     if (mTokenizer_->isCPP() && tok->str() == "delete" && tok->astOperand1()) {
         const Token* vartok = tok->astOperand1();
@@ -407,7 +407,7 @@ CheckMemoryLeak::AllocType CheckMemoryLeak::functionReturnType(const Function* f
 }
 
 
-const char *CheckMemoryLeak::functionArgAlloc(const Function *func, nonneg int targetpar, AllocType &allocType) const
+const char *CheckMemoryLeak::functionArgAlloc(const Function *func, unsigned int targetpar, AllocType &allocType) const
 {
     allocType = No;
 
@@ -458,7 +458,7 @@ const char *CheckMemoryLeak::functionArgAlloc(const Function *func, nonneg int t
 }
 
 
-static bool notvar(const Token *tok, nonneg int varid)
+static bool notvar(const Token *tok, unsigned int varid)
 {
     if (!tok)
         return false;
@@ -470,7 +470,7 @@ static bool notvar(const Token *tok, nonneg int varid)
     return vartok && (vartok->varId() == varid);
 }
 
-static bool ifvar(const Token *tok, nonneg int varid, const std::string &comp, const std::string &rhs)
+static bool ifvar(const Token *tok, unsigned int varid, const std::string &comp, const std::string &rhs)
 {
     if (!Token::simpleMatch(tok, "if ("))
         return false;
@@ -497,7 +497,7 @@ bool CheckMemoryLeakInFunction::test_white_list(const std::string &funcname, con
 //     a = malloc(10); a = realloc(a, 100);
 //---------------------------------------------------------------------------
 
-static bool isNoArgument(const SymbolDatabase* symbolDatabase, nonneg int varid)
+static bool isNoArgument(const SymbolDatabase* symbolDatabase, unsigned int varid)
 {
     const Variable* var = symbolDatabase->getVariableFromVarId(varid);
     return var && !var->isArgument();
@@ -816,8 +816,8 @@ void CheckMemoryLeakStructMember::checkStructVariable(const Variable * const var
             if (getAllocationType(tok2->tokAt(4), tok2->tokAt(2)->varId()) == AllocType::No)
                 continue;
 
-            const int structid(variable->declarationId());
-            const int structmemberid(tok2->tokAt(2)->varId());
+            const unsigned int structid(variable->declarationId());
+            const unsigned int structmemberid(tok2->tokAt(2)->varId());
 
             // This struct member is allocated.. check that it is deallocated
             int indentlevel3 = indentlevel2;

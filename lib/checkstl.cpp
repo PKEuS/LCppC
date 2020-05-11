@@ -671,7 +671,7 @@ void CheckStl::mismatchingContainers()
 
             // Group args together by container
             std::map<int, std::vector<ArgIteratorInfo>> containers;
-            for (int argnr = 1; argnr <= args.size(); ++argnr) {
+            for (std::size_t argnr = 1; argnr <= args.size(); ++argnr) {
                 const Library::ArgumentChecks::IteratorInfo *i = mSettings->library.getArgIteratorInfo(ftok, argnr);
                 if (!i)
                     continue;
@@ -770,7 +770,7 @@ void CheckStl::invalidContainer()
                 continue;
             if (!isInvalidMethod(tok))
                 continue;
-            std::set<nonneg int> skipVarIds;
+            std::set<unsigned int> skipVarIds;
             // Skip if the variable is assigned to
             const Token* assignExpr = tok;
             while (assignExpr->astParent()) {
@@ -872,7 +872,7 @@ void CheckStl::invalidContainerLoop()
                 continue;
             if (!astIsContainer(contTok))
                 continue;
-            nonneg int varid = contTok->varId();
+            unsigned int varid = contTok->varId();
             for (const Token* tok2 = blockStart; tok2 != blockEnd; tok2 = tok2->next()) {
                 if (tok2->varId() != varid)
                     continue;
@@ -982,10 +982,10 @@ void CheckStl::stlOutOfBounds()
                 continue;
 
             // variable id for loop variable.
-            const int numId = vartok->varId();
+            const unsigned int numId = vartok->varId();
 
             // variable id for the container variable
-            const int declarationId = containerToken->varId();
+            const unsigned int declarationId = containerToken->varId();
             const std::string &containerName = containerToken->str();
 
             for (const Token *tok3 = scope.bodyStart; tok3 && tok3 != scope.bodyEnd; tok3 = tok3->next()) {
@@ -1084,7 +1084,7 @@ void CheckStl::eraseCheckLoopVar(const Scope &scope, const Variable *var)
         if (Token::simpleMatch(tok->astParent(), "="))
             continue;
         // Iterator is invalid..
-        int indentlevel = 0U;
+        int indentlevel = 0;
         const Token *tok2 = tok->link();
         for (; tok2 != scope.bodyEnd; tok2 = tok2->next()) {
             if (tok2->str() == "{") {
@@ -1092,7 +1092,7 @@ void CheckStl::eraseCheckLoopVar(const Scope &scope, const Variable *var)
                 continue;
             }
             if (tok2->str() == "}") {
-                if (indentlevel > 0U)
+                if (indentlevel > 0)
                     --indentlevel;
                 else if (Token::simpleMatch(tok2, "} else {"))
                     tok2 = tok2->linkAt(2);
@@ -1104,7 +1104,7 @@ void CheckStl::eraseCheckLoopVar(const Scope &scope, const Variable *var)
                 dereferenceErasedError(tok, tok2, tok2->str(), inconclusiveType);
                 break;
             }
-            if (indentlevel == 0U && Token::Match(tok2, "break|return|goto"))
+            if (indentlevel == 0 && Token::Match(tok2, "break|return|goto"))
                 break;
         }
         if (tok2 == scope.bodyEnd)
@@ -1519,7 +1519,7 @@ void CheckStl::missingComparison()
             if (tok2->strAt(2) != tok2->strAt(10))
                 break;
 
-            const int iteratorId(tok2->varId());
+            const unsigned int iteratorId(tok2->varId());
 
             // same iterator
             if (iteratorId == tok2->tokAt(10)->varId())
@@ -1777,7 +1777,7 @@ void CheckStl::string_c_strReturn(const Token* tok)
                 "The conversion from const char* as returned by c_str() to std::string creates an unnecessary string copy. Solve that by directly returning the string.", CWE704, false);
 }
 
-void CheckStl::string_c_strParam(const Token* tok, nonneg int number)
+void CheckStl::string_c_strParam(const Token* tok, unsigned int number)
 {
     std::ostringstream oss;
     oss << "Passing the result of c_str() to a function that takes std::string as argument no. " << number << " is slow and redundant.\n"
@@ -2033,7 +2033,7 @@ static const Token *singleStatement(const Token *start)
     return endStatement;
 }
 
-static const Token *singleAssignInScope(const Token *start, nonneg int varid, bool &input)
+static const Token *singleAssignInScope(const Token *start, unsigned int varid, bool &input)
 {
     const Token *endStatement = singleStatement(start);
     if (!endStatement)
@@ -2049,7 +2049,7 @@ static const Token *singleAssignInScope(const Token *start, nonneg int varid, bo
     return assignTok;
 }
 
-static const Token *singleMemberCallInScope(const Token *start, nonneg int varid, bool &input)
+static const Token *singleMemberCallInScope(const Token *start, unsigned int varid, bool &input)
 {
     if (start->str() != "{")
         return nullptr;
@@ -2071,7 +2071,7 @@ static const Token *singleMemberCallInScope(const Token *start, nonneg int varid
     return dotTok;
 }
 
-static const Token *singleIncrementInScope(const Token *start, nonneg int varid, bool &input)
+static const Token *singleIncrementInScope(const Token *start, unsigned int varid, bool &input)
 {
     if (start->str() != "{")
         return nullptr;
@@ -2086,7 +2086,7 @@ static const Token *singleIncrementInScope(const Token *start, nonneg int varid,
     return varTok;
 }
 
-static const Token *singleConditionalInScope(const Token *start, nonneg int varid)
+static const Token *singleConditionalInScope(const Token *start, unsigned int varid)
 {
     if (start->str() != "{")
         return nullptr;
@@ -2108,7 +2108,7 @@ static const Token *singleConditionalInScope(const Token *start, nonneg int vari
     return bodyTok;
 }
 
-static bool addByOne(const Token *tok, nonneg int varid)
+static bool addByOne(const Token *tok, unsigned int varid)
 {
     if (Token::Match(tok, "+= %any% ;") &&
         tok->tokAt(1)->hasKnownIntValue() &&
@@ -2123,7 +2123,7 @@ static bool addByOne(const Token *tok, nonneg int varid)
     return false;
 }
 
-static bool accumulateBoolLiteral(const Token *tok, nonneg int varid)
+static bool accumulateBoolLiteral(const Token *tok, unsigned int varid)
 {
     if (Token::Match(tok, "%assign% %bool% ;") &&
         tok->tokAt(1)->hasKnownIntValue()) {
@@ -2136,7 +2136,7 @@ static bool accumulateBoolLiteral(const Token *tok, nonneg int varid)
     return false;
 }
 
-static bool accumulateBool(const Token *tok, nonneg int varid)
+static bool accumulateBool(const Token *tok, unsigned int varid)
 {
     // Missing %oreq% so we have to check both manually
     if (Token::simpleMatch(tok, "&=") || Token::simpleMatch(tok, "|=")) {
@@ -2148,7 +2148,7 @@ static bool accumulateBool(const Token *tok, nonneg int varid)
     return false;
 }
 
-static bool hasVarIds(const Token *tok, nonneg int var1, nonneg int var2)
+static bool hasVarIds(const Token *tok, unsigned int var1, unsigned int var2)
 {
     if (tok->astOperand1()->varId() == tok->astOperand2()->varId())
         return false;
@@ -2169,7 +2169,7 @@ static std::string flipMinMax(const std::string &algo)
     return algo;
 }
 
-static std::string minmaxCompare(const Token *condTok, nonneg int loopVar, nonneg int assignVar, bool invert = false)
+static std::string minmaxCompare(const Token *condTok, unsigned int loopVar, unsigned int assignVar, bool invert = false)
 {
     if (!Token::Match(condTok, "<|<=|>=|>"))
         return "std::accumulate";
@@ -2208,7 +2208,7 @@ void CheckStl::useStlAlgorithm()
             bool useLoopVarInAssign;
             const Token *assignTok = singleAssignInScope(bodyTok, loopVar->varId(), useLoopVarInAssign);
             if (assignTok) {
-                int assignVarId = assignTok->astOperand1()->varId();
+                unsigned int assignVarId = assignTok->astOperand1()->varId();
                 std::string algo;
                 if (assignVarId == loopVar->varId()) {
                     if (useLoopVarInAssign)
@@ -2237,7 +2237,7 @@ void CheckStl::useStlAlgorithm()
             const Token *memberAccessTok = singleMemberCallInScope(bodyTok, loopVar->varId(), useLoopVarInMemCall);
             if (memberAccessTok) {
                 const Token *memberCallTok = memberAccessTok->astOperand2();
-                const int contVarId = memberAccessTok->astOperand1()->varId();
+                const unsigned int contVarId = memberAccessTok->astOperand1()->varId();
                 if (contVarId == loopVar->varId())
                     continue;
                 if (memberCallTok->str() == "push_back" ||
@@ -2272,7 +2272,7 @@ void CheckStl::useStlAlgorithm()
                 // Check for single assign
                 assignTok = singleAssignInScope(condBodyTok, loopVar->varId(), useLoopVarInAssign);
                 if (assignTok) {
-                    const int assignVarId = assignTok->astOperand1()->varId();
+                    const unsigned int assignVarId = assignTok->astOperand1()->varId();
                     std::string algo;
                     if (assignVarId == loopVar->varId()) {
                         if (useLoopVarInAssign)
@@ -2295,7 +2295,7 @@ void CheckStl::useStlAlgorithm()
                 memberAccessTok = singleMemberCallInScope(condBodyTok, loopVar->varId(), useLoopVarInMemCall);
                 if (memberAccessTok) {
                     const Token *memberCallTok = memberAccessTok->astOperand2();
-                    const int contVarId = memberAccessTok->astOperand1()->varId();
+                    const unsigned int contVarId = memberAccessTok->astOperand1()->varId();
                     if (contVarId == loopVar->varId())
                         continue;
                     if (memberCallTok->str() == "push_back" ||

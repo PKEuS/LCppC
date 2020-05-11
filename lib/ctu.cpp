@@ -317,7 +317,7 @@ CTU::FileInfo *CTU::getFileInfo(const Tokenizer *tokenizer)
             if (!tok->astOperand1()->function())
                 continue;
             const std::vector<const Token *> args(getArguments(tok->previous()));
-            for (int argnr = 0; argnr < args.size(); ++argnr) {
+            for (std::size_t argnr = 0; argnr < args.size(); ++argnr) {
                 const Token *argtok = args[argnr];
                 if (!argtok)
                     continue;
@@ -398,7 +398,7 @@ CTU::FileInfo *CTU::getFileInfo(const Tokenizer *tokenizer)
         }
 
         // Nested function calls
-        for (int argnr = 0; argnr < function->argCount(); ++argnr) {
+        for (std::size_t argnr = 0; argnr < function->argCount(); ++argnr) {
             const Token *tok;
             const int argnr2 = isCallFunction(&scope, argnr, &tok);
             if (argnr2 > 0) {
@@ -455,7 +455,7 @@ std::list<CTU::FileInfo::UnsafeUsage> CTU::getUnsafeUsage(const Tokenizer *token
         const Function *const function = scope.function;
 
         // "Unsafe" functions unconditionally reads data before it is written..
-        for (int argnr = 0; argnr < function->argCount(); ++argnr) {
+        for (std::size_t argnr = 0; argnr < function->argCount(); ++argnr) {
             for (const std::pair<const Token *, MathLib::bigint> &v : getUnsafeFunction(tokenizer, settings, &scope, argnr, check, isUnsafeUsage)) {
                 const Token *tok = v.first;
                 MathLib::bigint value = v.second;
@@ -468,7 +468,7 @@ std::list<CTU::FileInfo::UnsafeUsage> CTU::getUnsafeUsage(const Tokenizer *token
 }
 
 static bool findPath(const std::string &callId,
-                     nonneg int callArgNr,
+                     unsigned int callArgNr,
                      MathLib::bigint unsafeValue,
                      CTU::FileInfo::InvalidValueType invalidValue,
                      const std::map<std::string, std::list<const CTU::FileInfo::CallBase *>> &callsMap,

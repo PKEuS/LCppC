@@ -11,18 +11,18 @@
 class Token;
 
 struct ProgramMemory {
-    using Map = std::unordered_map<nonneg int, ValueFlow::Value>;
+    using Map = std::unordered_map<unsigned int, ValueFlow::Value>;
     Map values;
 
-    void setValue(nonneg int varid, const ValueFlow::Value &value);
+    void setValue(unsigned int varid, const ValueFlow::Value &value);
 
-    bool getIntValue(nonneg int varid, MathLib::bigint* result) const;
-    void setIntValue(nonneg int varid, MathLib::bigint value);
+    bool getIntValue(unsigned int varid, MathLib::bigint* result) const;
+    void setIntValue(unsigned int varid, MathLib::bigint value);
 
-    void setUnknown(nonneg int varid);
+    void setUnknown(unsigned int varid);
 
-    bool getTokValue(nonneg int varid, const Token** result) const;
-    bool hasValue(nonneg int varid);
+    bool getTokValue(unsigned int varid, const Token** result) const;
+    bool hasValue(unsigned int varid);
 
     void swap(ProgramMemory &pm);
 
@@ -37,7 +37,7 @@ struct ProgramMemory {
 
 struct ProgramMemoryState {
     ProgramMemory state;
-    std::map<nonneg int, const Token*> origins;
+    std::map<unsigned int, const Token*> origins;
 
     void insert(const ProgramMemory &pm, const Token* origin = nullptr);
     void replace(const ProgramMemory &pm, const Token* origin = nullptr);
@@ -74,7 +74,7 @@ bool conditionIsTrue(const Token *condition, const ProgramMemory &programMemory)
 /**
  * Get program memory by looking backwards from given token.
  */
-ProgramMemory getProgramMemory(const Token *tok, nonneg int varid, const ValueFlow::Value &value);
+ProgramMemory getProgramMemory(const Token *tok, unsigned int varid, const ValueFlow::Value &value);
 
 ProgramMemory getProgramMemory(const Token *tok, const ProgramMemory::Map& vars);
 

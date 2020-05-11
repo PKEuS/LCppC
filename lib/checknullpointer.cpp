@@ -61,7 +61,7 @@ void CheckNullPointer::parseFunctionCall(const Token &tok, std::list<const Token
     const std::vector<const Token *> args = getArguments(&tok);
 
     if (library || tok.function() != nullptr) {
-        for (int argnr = 1; argnr <= args.size(); ++argnr) {
+        for (std::size_t argnr = 1; argnr <= args.size(); ++argnr) {
             const Token *param = args[argnr - 1];
             if (library && library->isnullargbad(&tok, argnr) && checkNullpointerFunctionCallPlausibility(tok.function(), argnr))
                 var.push_back(param);
@@ -74,7 +74,7 @@ void CheckNullPointer::parseFunctionCall(const Token &tok, std::list<const Token
     }
 
     if (library && library->formatstr_function(&tok)) {
-        const int formatStringArgNr = library->formatstr_argno(&tok);
+        const std::size_t formatStringArgNr = library->formatstr_argno(&tok);
         if (formatStringArgNr < 0 || formatStringArgNr >= args.size())
             return;
 
@@ -85,7 +85,7 @@ void CheckNullPointer::parseFunctionCall(const Token &tok, std::list<const Token
         if (args[formatStringArgNr]->tokType() != Token::eString)
             return;
         const std::string &formatString = args[formatStringArgNr]->strValue();
-        int argnr = formatStringArgNr + 1;
+        std::size_t argnr = formatStringArgNr + 1;
         const bool scan = library->formatstr_scan(&tok);
 
         bool percent = false;
@@ -370,7 +370,7 @@ void CheckNullPointer::nullConstantDereference()
 
             else if (Token::Match(tok->previous(), "::|. %name% (")) {
                 const std::vector<const Token *> &args = getArguments(tok);
-                for (int argnr = 0; argnr < args.size(); ++argnr) {
+                for (std::size_t argnr = 0; argnr < args.size(); ++argnr) {
                     const Token *argtok = args[argnr];
                     if (!argtok->hasKnownIntValue())
                         continue;

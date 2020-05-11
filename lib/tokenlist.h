@@ -68,14 +68,14 @@ public:
      */
     static void deleteTokens(Token *tok);
 
-    void addtoken(std::string str, const nonneg int lineno, const nonneg int fileno, bool split = false);
+    void addtoken(std::string str, const unsigned int lineno, const unsigned int fileno, bool split = false);
     void addtoken(std::string str, const Token *locationTok);
 
-    void addtoken(const Token *tok, const nonneg int lineno, const nonneg int fileno);
+    void addtoken(const Token *tok, const unsigned int lineno, const unsigned int fileno);
     void addtoken(const Token *tok, const Token *locationTok);
     void addtoken(const Token *tok);
 
-    static void insertTokens(Token *dest, const Token *src, nonneg int n);
+    static void insertTokens(Token *dest, const Token *src, unsigned int n);
 
     /**
      * Copy tokens.
@@ -104,7 +104,7 @@ public:
     void deallocateTokens();
 
     /** append file name if seen the first time; return its index in any case */
-    int appendFileIfNew(const std::string &fileName);
+    std::size_t appendFileIfNew(const std::string &fileName);
 
     /** get first token of list */
     const Token *front() const {

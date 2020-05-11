@@ -117,21 +117,21 @@ private:
     void invalidScanfError(const Token *tok);
     void wrongPrintfScanfArgumentsError(const Token* tok,
                                         const std::string &functionName,
-                                        nonneg int numFormat,
-                                        nonneg int numFunction);
+                                        unsigned int numFormat,
+                                        unsigned int numFunction);
     void wrongPrintfScanfPosixParameterPositionError(const Token* tok, const std::string& functionName,
-            nonneg int index, nonneg int numFunction);
-    void invalidScanfArgTypeError_s(const Token* tok, nonneg int numFormat, const std::string& specifier, const ArgumentInfo* argInfo);
-    void invalidScanfArgTypeError_int(const Token* tok, nonneg int numFormat, const std::string& specifier, const ArgumentInfo* argInfo, bool isUnsigned);
-    void invalidScanfArgTypeError_float(const Token* tok, nonneg int numFormat, const std::string& specifier, const ArgumentInfo* argInfo);
-    void invalidPrintfArgTypeError_s(const Token* tok, nonneg int numFormat, const ArgumentInfo* argInfo);
-    void invalidPrintfArgTypeError_n(const Token* tok, nonneg int numFormat, const ArgumentInfo* argInfo);
-    void invalidPrintfArgTypeError_p(const Token* tok, nonneg int numFormat, const ArgumentInfo* argInfo);
-    void invalidPrintfArgTypeError_uint(const Token* tok, nonneg int numFormat, const std::string& specifier, const ArgumentInfo* argInfo);
-    void invalidPrintfArgTypeError_sint(const Token* tok, nonneg int numFormat, const std::string& specifier, const ArgumentInfo* argInfo);
-    void invalidPrintfArgTypeError_float(const Token* tok, nonneg int numFormat, const std::string& specifier, const ArgumentInfo* argInfo);
-    void invalidLengthModifierError(const Token* tok, nonneg int numFormat, const std::string& modifier);
-    void invalidScanfFormatWidthError(const Token* tok, nonneg int numFormat, int width, const Variable *var, char c);
+            unsigned int index, unsigned int numFunction);
+    void invalidScanfArgTypeError_s(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo);
+    void invalidScanfArgTypeError_int(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo, bool isUnsigned);
+    void invalidScanfArgTypeError_float(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo);
+    void invalidPrintfArgTypeError_s(const Token* tok, unsigned int numFormat, const ArgumentInfo* argInfo);
+    void invalidPrintfArgTypeError_n(const Token* tok, unsigned int numFormat, const ArgumentInfo* argInfo);
+    void invalidPrintfArgTypeError_p(const Token* tok, unsigned int numFormat, const ArgumentInfo* argInfo);
+    void invalidPrintfArgTypeError_uint(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo);
+    void invalidPrintfArgTypeError_sint(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo);
+    void invalidPrintfArgTypeError_float(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo);
+    void invalidLengthModifierError(const Token* tok, unsigned int numFormat, const std::string& modifier);
+    void invalidScanfFormatWidthError(const Token* tok, unsigned int numFormat, int width, const Variable *var, char c);
     static void argumentType(std::ostream & os, const ArgumentInfo * argInfo);
     static Severity::SeverityType getSeverity(const ArgumentInfo *argInfo);
 
