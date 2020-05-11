@@ -112,9 +112,6 @@ public:
     /** Check unused/uninstantiated templates */
     bool checkUnusedTemplates;
 
-    /** Use clang-tidy */
-    bool clangTidy;
-
     /** @brief include paths excluded from checking the configuration */
     std::set<std::string> configExcludePaths;
 
