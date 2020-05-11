@@ -21,7 +21,6 @@
 #include "config.h"
 #include "cppcheck.h"
 #include "cppcheckexecutor.h"
-#include "importproject.h"
 #include "settings.h"
 #include "suppressions.h"
 
@@ -371,11 +370,10 @@ unsigned int ThreadExecutor::check()
     HANDLE *threadHandles = new HANDLE[mSettings.jobs];
 
     mItNextFile = mFiles.begin();
-    mItNextFileSettings = mSettings.project.fileSettings.begin();
 
     mProcessedFiles = 0;
     mProcessedSize = 0;
-    mTotalFiles = mFiles.size() + mSettings.project.fileSettings.size();
+    mTotalFiles = mFiles.size();
     mTotalFileSize = 0;
     for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
         mTotalFileSize += i->second;
@@ -436,7 +434,6 @@ unsigned int __stdcall ThreadExecutor::threadProc(void *args)
 
     ThreadExecutor *threadExecutor = static_cast<ThreadExecutor*>(args);
     std::map<std::string, std::size_t>::const_iterator &itFile = threadExecutor->mItNextFile;
-    std::list<ImportProject::FileSettings>::const_iterator &itFileSettings = threadExecutor->mItNextFileSettings;
 
     // guard static members of CppCheck against concurrent access
     EnterCriticalSection(&threadExecutor->mFileSync);
@@ -445,32 +442,25 @@ unsigned int __stdcall ThreadExecutor::threadProc(void *args)
     fileChecker.settings() = threadExecutor->mSettings;
 
     for (;;) {
-        if (itFile == threadExecutor->mFiles.end() && itFileSettings == threadExecutor->mSettings.project.fileSettings.end()) {
+        if (itFile == threadExecutor->mFiles.end()) {
             LeaveCriticalSection(&threadExecutor->mFileSync);
             break;
         }
 
         std::size_t fileSize = 0;
-        if (itFile != threadExecutor->mFiles.end()) {
-            const std::string &file = itFile->first;
-            fileSize = itFile->second;
-            ++itFile;
+        const std::string &file = itFile->first;
+        fileSize = itFile->second;
+        ++itFile;
 
-            LeaveCriticalSection(&threadExecutor->mFileSync);
+        LeaveCriticalSection(&threadExecutor->mFileSync);
 
-            const std::map<std::string, std::string>::const_iterator fileContent = threadExecutor->mFileContents.find(file);
-            if (fileContent != threadExecutor->mFileContents.end()) {
-                // File content was given as a string
-                result += fileChecker.check(file, fileContent->second);
-            } else {
-                // Read file from a file
-                result += fileChecker.check(file);
-            }
-        } else { // file settings..
-            const ImportProject::FileSettings &fs = *itFileSettings;
-            ++itFileSettings;
-            LeaveCriticalSection(&threadExecutor->mFileSync);
-            result += fileChecker.check(fs);
+        const std::map<std::string, std::string>::const_iterator fileContent = threadExecutor->mFileContents.find(file);
+        if (fileContent != threadExecutor->mFileContents.end()) {
+            // File content was given as a string
+            result += fileChecker.check(file, fileContent->second);
+        } else {
+            // Read file from a file
+            result += fileChecker.check(file);
         }
 
         EnterCriticalSection(&threadExecutor->mFileSync);

@@ -22,7 +22,6 @@
 //---------------------------------------------------------------------------
 
 #include "config.h"
-#include "importproject.h"
 #include "library.h"
 #include "platform.h"
 #include "standards.h"
@@ -102,9 +101,6 @@ public:
 
     /** Check for incomplete info in library files? */
     bool checkLibrary;
-
-    /** @brief List of selected Visual Studio configurations that should be checks */
-    std::list<std::string> checkVsConfigs;
 
     /** @brief check unknown function return values */
     std::set<std::string> checkUnknownFunctionReturn;
@@ -216,8 +212,6 @@ public:
 
     /** @brief Using -E for debugging purposes */
     bool preprocessOnly;
-
-    ImportProject project;
 
     /** @brief Is --quiet given? */
     bool quiet;

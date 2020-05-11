@@ -146,9 +146,6 @@
     <ClCompile Include="..\externals\simplecpp\simplecpp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="importproject.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="platform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -317,9 +314,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\externals\simplecpp\simplecpp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="importproject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="platform.h">

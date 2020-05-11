@@ -275,30 +275,6 @@ unsigned int CppCheck::check(const std::string &path, const std::string &content
     return checkFile(Path::simplifyPath(path), emptyString, iss);
 }
 
-unsigned int CppCheck::check(const ImportProject::FileSettings &fs)
-{
-    CppCheck temp(mErrorLogger, mUseGlobalSuppressions, mExecuteCommand);
-    temp.mSettings = mSettings;
-    if (!temp.mSettings.userDefines.empty())
-        temp.mSettings.userDefines += ';';
-    if (mSettings.clang)
-        temp.mSettings.userDefines += fs.defines;
-    else
-        temp.mSettings.userDefines += fs.cppcheckDefines();
-    temp.mSettings.includePaths = fs.includePaths;
-    temp.mSettings.userUndefs = fs.undefs;
-    if (fs.standard == "c++14")
-        temp.mSettings.standards.cpp = Standards::CPP14;
-    else if (fs.standard == "c++17")
-        temp.mSettings.standards.cpp = Standards::CPP17;
-    else if (fs.standard == "c++20")
-        temp.mSettings.standards.cpp = Standards::CPP20;
-    if (fs.platformType != Settings::Unspecified)
-        temp.mSettings.platform(fs.platformType);
-    std::ifstream fin(fs.filename);
-    return temp.checkFile(Path::simplifyPath(fs.filename), fs.cfg, fin);
-}
-
 unsigned int CppCheck::checkFile(const std::string& filename, const std::string &cfgname, std::istream& fileStream)
 {
     mExitCode = 0;

@@ -199,9 +199,6 @@
     <ClCompile Include="testfunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="testimportproject.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="testplatform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

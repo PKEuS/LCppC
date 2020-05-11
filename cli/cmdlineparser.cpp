@@ -21,7 +21,6 @@
 #include "check.h"
 #include "cppcheckexecutor.h"
 #include "filelister.h"
-#include "importproject.h"
 #include "path.h"
 #include "platform.h"
 #include "settings.h"
@@ -567,73 +566,6 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                     mSettings->plistOutput += '/';
             }
 
-            // --project
-            else if (std::strncmp(argv[i], "--project=", 10) == 0) {
-                mSettings->checkAllConfigurations = false; // Can be overridden with --max-configs or --force
-                const std::string projectFile = argv[i]+10;
-                ImportProject::Type projType = mSettings->project.import(projectFile, mSettings);
-                mSettings->project.projectType = projType;
-                if (projType == ImportProject::Type::CPPCHECK_GUI) {
-                    mPathNames = mSettings->project.guiProject.pathNames;
-                    for (const std::string &lib : mSettings->project.guiProject.libraries)
-                        mSettings->libraries.emplace_back(lib);
-
-                    for (const std::string &ignorePath : mSettings->project.guiProject.excludedPaths)
-                        mIgnoredPaths.emplace_back(ignorePath);
-
-                    const std::string platform(mSettings->project.guiProject.platform);
-
-                    if (platform == "win32A")
-                        mSettings->platform(Settings::Win32A);
-                    else if (platform == "win32W")
-                        mSettings->platform(Settings::Win32W);
-                    else if (platform == "win64")
-                        mSettings->platform(Settings::Win64);
-                    else if (platform == "unix32")
-                        mSettings->platform(Settings::Unix32);
-                    else if (platform == "unix64")
-                        mSettings->platform(Settings::Unix64);
-                    else if (platform == "native")
-                        mSettings->platform(Settings::Native);
-                    else if (platform == "unspecified" || platform == "Unspecified" || platform == "")
-                        ;
-                    else if (!mSettings->loadPlatformFile(argv[0], platform)) {
-                        std::string message("cppcheck: error: unrecognized platform: \"");
-                        message += platform;
-                        message += "\".";
-                        printMessage(message);
-                        return false;
-                    }
-
-                    if (!mSettings->project.guiProject.projectFile.empty())
-                        projType = mSettings->project.import(mSettings->project.guiProject.projectFile, mSettings);
-                }
-                if (projType == ImportProject::Type::VS_SLN || projType == ImportProject::Type::VS_VCXPROJ) {
-                    if (mSettings->project.guiProject.analyzeAllVsConfigs == "false")
-                        mSettings->project.selectOneVsConfig(mSettings->platformType);
-                    if (!CppCheckExecutor::tryLoadLibrary(mSettings->library, argv[0], "windows.cfg")) {
-                        // This shouldn't happen normally.
-                        printMessage("cppcheck: Failed to load 'windows.cfg'. Your Cppcheck installation is broken. Please re-install.");
-                        return false;
-                    }
-                }
-                if (projType == ImportProject::Type::MISSING) {
-                    printMessage("cppcheck: Failed to open project '" + projectFile + "'.");
-                    return false;
-                }
-                if (projType == ImportProject::Type::UNKNOWN) {
-                    printMessage("cppcheck: Failed to load project '" + projectFile + "'. The format is unknown.");
-                    return false;
-                }
-            }
-
-            // --project-configuration
-            else if (std::strncmp(argv[i], "--project-configuration=", 24) == 0) {
-                mVSConfig = argv[i] + 24;
-                if (!mVSConfig.empty() && (mSettings->project.projectType == ImportProject::Type::VS_SLN || mSettings->project.projectType == ImportProject::Type::VS_VCXPROJ))
-                    mSettings->project.ignoreOtherConfigs(mVSConfig);
-            }
-
             // Only print something when there are errors
             else if (std::strcmp(argv[i], "-q") == 0 || std::strcmp(argv[i], "--quiet") == 0)
                 mSettings->quiet = true;
@@ -895,8 +827,6 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
             mSettings->templateLocation = "{file}:{line}:{column}: note: {info}\\n{code}";
     }
 
-    mSettings->project.ignorePaths(mIgnoredPaths);
-
     if (mSettings->force || maxconfigs)
         mSettings->checkAllConfigurations = true;
 
@@ -921,7 +851,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
     }
 
     // Print error only if we have "real" command and expect files
-    if (!mExitAfterPrint && mPathNames.empty() && mSettings->project.fileSettings.empty()) {
+    if (!mExitAfterPrint && mPathNames.empty()) {
         printMessage("cppcheck: No C or C++ source files found.");
         return false;
     }
@@ -1070,17 +1000,6 @@ void CmdLineParser::printHelp()
               "                         is 2. A larger value will mean more errors can be found\n"
               "                         but also means the analysis will be slower.\n"
               "    --output-file=<file> Write results to file, rather than standard error.\n"
-              "    --project=<file>     Run Cppcheck on project. The <file> can be a Visual\n"
-              "                         Studio Solution (*.sln), Visual Studio Project\n"
-              "                         (*.vcxproj), compile database (compile_commands.json),\n"
-              "                         or Borland C++ Builder 6 (*.bpr). The files to analyse,\n"
-              "                         include paths, defines, platform and undefines in\n"
-              "                         the specified file will be used.\n"
-              "    --project-configuration=<config>\n"
-              "                         If used together with a Visual Studio Solution (*.sln)\n"
-              "                         or Visual Studio Project (*.vcxproj) you can limit\n"
-              "                         the configuration cppcheck should check.\n"
-              "                         For example: ""--project-configuration=Release|Win32"""
               "    --max-configs=<limit>\n"
               "                         Maximum number of configurations to check in a file\n"
               "                         before skipping it. Default is '12'. If used together\n"

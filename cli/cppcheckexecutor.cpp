@@ -23,7 +23,6 @@
 #include "config.h"
 #include "cppcheck.h"
 #include "filelister.h"
-#include "importproject.h"
 #include "library.h"
 #include "path.h"
 #include "pathmatch.h"
@@ -159,34 +158,19 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
 #else
     const bool caseSensitive = true;
 #endif
-    if (!mSettings->project.fileSettings.empty() && !mSettings->fileFilter.empty()) {
-        // filter only for the selected filenames from all project files
-        std::list<ImportProject::FileSettings> newList;
-
-        for (const ImportProject::FileSettings &fsetting : settings.project.fileSettings) {
-            if (matchglob(mSettings->fileFilter, fsetting.filename)) {
-                newList.emplace_back(fsetting);
-            }
-        }
-        if (!newList.empty())
-            settings.project.fileSettings = newList;
-        else {
-            std::cout << "cppcheck: error: could not find any files matching the filter." << std::endl;
-            return false;
-        }
-    } else if (!pathnames.empty()) {
+    if (!pathnames.empty()) {
         // Execute recursiveAddFiles() to each given file parameter
         const PathMatch matcher(ignored, caseSensitive);
         for (const std::string &pathname : pathnames)
             FileLister::recursiveAddFiles(mFiles, Path::toNativeSeparators(pathname), mSettings->library.markupExtensions(), matcher);
     }
 
-    if (mFiles.empty() && settings.project.fileSettings.empty()) {
+    if (mFiles.empty()) {
         std::cout << "cppcheck: error: could not find or open any of the paths given." << std::endl;
         if (!ignored.empty())
             std::cout << "cppcheck: Maybe all paths were ignored?" << std::endl;
         return false;
-    } else if (!mSettings->fileFilter.empty() && settings.project.fileSettings.empty()) {
+    } else if (!mSettings->fileFilter.empty()) {
         std::map<std::string, std::size_t> newMap;
         for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i)
             if (matchglob(mSettings->fileFilter, i->first)) {
@@ -899,7 +883,7 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
         std::list<std::string> fileNames;
         for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i)
             fileNames.emplace_back(i->first);
-        AnalyzerInformation::writeFilesTxt(settings.buildDir, fileNames, settings.project.fileSettings);
+        AnalyzerInformation::writeFilesTxt(settings.buildDir, fileNames);
     }
 
     unsigned int returnValue = 0;
@@ -914,25 +898,14 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
 
         std::size_t processedsize = 0;
         unsigned int c = 0;
-        if (settings.project.fileSettings.empty()) {
-            for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
-                if (!mSettings->library.markupFile(i->first)
-                    || !mSettings->library.processMarkupAfterCode(i->first)) {
-                    returnValue += cppcheck.check(i->first);
-                    processedsize += i->second;
-                    if (!settings.quiet)
-                        reportStatus(c + 1, mFiles.size(), processedsize, totalfilesize);
-                    c++;
-                }
-            }
-        } else {
-            // filesettings
-            // check all files of the project
-            for (const ImportProject::FileSettings &fs : settings.project.fileSettings) {
-                returnValue += cppcheck.check(fs);
-                ++c;
+        for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
+            if (!mSettings->library.markupFile(i->first)
+                || !mSettings->library.processMarkupAfterCode(i->first)) {
+                returnValue += cppcheck.check(i->first);
+                processedsize += i->second;
                 if (!settings.quiet)
-                    reportStatus(c, settings.project.fileSettings.size(), c, settings.project.fileSettings.size());
+                    reportStatus(c + 1, mFiles.size(), processedsize, totalfilesize);
+                c++;
             }
         }
 

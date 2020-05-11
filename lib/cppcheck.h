@@ -25,7 +25,6 @@
 #include "check.h"
 #include "config.h"
 #include "errorlogger.h"
-#include "importproject.h"
 #include "settings.h"
 
 #include <cstddef>
@@ -75,7 +74,6 @@ public:
       *  settings()).
       */
     unsigned int check(const std::string &path);
-    unsigned int check(const ImportProject::FileSettings &fs);
 
     /**
       * @brief Check the file.

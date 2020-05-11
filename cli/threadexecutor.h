@@ -33,7 +33,6 @@
 #define THREADING_MODEL_WIN
 #include <windows.h>
 
-#include "importproject.h"
 #endif
 
 class Settings;
@@ -117,7 +116,6 @@ private:
 
     std::map<std::string, std::string> mFileContents;
     std::map<std::string, std::size_t>::const_iterator mItNextFile;
-    std::list<ImportProject::FileSettings>::const_iterator mItNextFileSettings;
     std::size_t mProcessedFiles;
     std::size_t mTotalFiles;
     std::size_t mProcessedSize;

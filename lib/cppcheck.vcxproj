@@ -86,7 +86,6 @@
     <ClCompile Include="pathmatch.cpp" />
     <ClCompile Include="platform.cpp" />
     <ClCompile Include="preprocessor.cpp" />
-    <ClCompile Include="importproject.cpp" />
     <ClCompile Include="programmemory.cpp" />
     <ClCompile Include="settings.cpp" />
     <ClCompile Include="suppressions.cpp" />
@@ -143,7 +142,6 @@
     <ClInclude Include="platform.h" />
     <ClInclude Include="precompiled.h" />
     <ClInclude Include="preprocessor.h" />
-    <ClInclude Include="importproject.h" />
     <ClInclude Include="programmemory.h" />
     <ClInclude Include="settings.h" />
     <ClInclude Include="suppressions.h" />

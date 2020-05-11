@@ -22,7 +22,6 @@
 //---------------------------------------------------------------------------
 
 #include "config.h"
-#include "importproject.h"
 
 #include <fstream>
 #include <list>
@@ -50,7 +49,7 @@ class CPPCHECKLIB AnalyzerInformation {
 public:
     ~AnalyzerInformation();
 
-    static void writeFilesTxt(const std::string &buildDir, const std::list<std::string> &sourcefiles, const std::list<ImportProject::FileSettings> &fileSettings);
+    static void writeFilesTxt(const std::string &buildDir, const std::list<std::string> &sourcefiles);
 
     /** Close current TU.analyzerinfo file */
     void close();
