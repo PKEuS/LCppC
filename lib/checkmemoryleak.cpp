@@ -755,9 +755,6 @@ void CheckMemoryLeakInClass::publicAllocationError(const Token *tok, const std::
 
 void CheckMemoryLeakStructMember::check()
 {
-    if (mSettings->clang)
-        return;
-
     const SymbolDatabase* symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Variable* var : symbolDatabase->variableList()) {
         if (!var || !var->isLocal() || var->isStatic() || var->isReference())

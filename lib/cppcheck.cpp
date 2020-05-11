@@ -19,7 +19,6 @@
 
 #include "check.h"
 #include "checkunusedfunctions.h"
-#include "clangimport.h"
 #include "ctu.h"
 #include "library.h"
 #include "mathlib.h"
@@ -272,123 +271,8 @@ const char * CppCheck::extraVersion()
     return ExtraVersion;
 }
 
-static bool reportClangErrors(std::istream &is, std::function<void(const ErrorMessage&)> reportErr)
-{
-    std::string line;
-    while (std::getline(is, line)) {
-        if (line.empty() || line[0] == ' ' || line[0] == '`' || line[0] == '-')
-            continue;
-
-        std::string::size_type pos3 = line.find(": error: ");
-        if (pos3 == std::string::npos)
-            pos3 = line.find(": fatal error:");
-        if (pos3 == std::string::npos)
-            continue;
-
-        // file:line:column: error: ....
-        const std::string::size_type pos2 = line.rfind(":", pos3 - 1);
-        const std::string::size_type pos1 = line.rfind(":", pos2 - 1);
-
-        if (pos1 >= pos2 || pos2 >= pos3)
-            continue;
-
-        const std::string filename = line.substr(0, pos1);
-        const std::string linenr = line.substr(pos1+1, pos2-pos1-1);
-        const std::string colnr = line.substr(pos2+1, pos3-pos2-1);
-        const std::string msg = line.substr(line.find(":", pos3+1) + 2);
-
-        std::list<ErrorMessage::FileLocation> locationList;
-        ErrorMessage::FileLocation loc;
-        loc.setfile(Path::toNativeSeparators(filename));
-        loc.line = std::atoi(linenr.c_str());
-        loc.column = std::atoi(colnr.c_str());
-        locationList.push_back(loc);
-        ErrorMessage errmsg(locationList,
-                            loc.getfile(),
-                            Severity::error,
-                            msg,
-                            "syntaxError",
-                            false);
-        reportErr(errmsg);
-
-        return true;
-    }
-    return false;
-}
-
 unsigned int CppCheck::check(const std::string &path)
 {
-    if (mSettings.clang) {
-        if (!mSettings.quiet)
-            mErrorLogger.reportOut(std::string("Checking ") + path + "...");
-
-        const std::string lang = Path::isCPP(path) ? "-x c++" : "-x c";
-        const std::string analyzerInfo = mSettings.buildDir.empty() ? std::string() : AnalyzerInformation::getAnalyzerInfoFile(mSettings.buildDir, path, "");
-        const std::string clangcmd = analyzerInfo + ".clang-cmd";
-        const std::string clangStderr = analyzerInfo + ".clang-stderr";
-#ifdef _WIN32
-        const std::string exe = "clang.exe";
-#else
-        const std::string exe = "clang";
-#endif
-
-        std::string flags(lang + " ");
-        if (Path::isCPP(path)) {
-            if (mSettings.standards.cpp == Standards::CPP14)
-                flags += "-std=c++14 ";
-            else if (mSettings.standards.cpp == Standards::CPP17)
-                flags += "-std=c++17 ";
-            else if (mSettings.standards.cpp == Standards::CPP20)
-                flags += "-std=c++20 ";
-        }
-
-        for (const std::string &i: mSettings.includePaths)
-            flags += "-I" + i + " ";
-
-        flags += getDefinesFlags(mSettings.userDefines);
-
-        const std::string args2 = "-fsyntax-only -Xclang -ast-dump -fno-color-diagnostics " + flags + path;
-        const std::string redirect2 = analyzerInfo.empty() ? std::string("2>&1") : ("2> " + clangStderr);
-        if (!mSettings.buildDir.empty()) {
-            std::ofstream fout(clangcmd);
-            fout << exe << " " << args2 << " " << redirect2 << std::endl;
-        }
-
-        std::string output2;
-        if (!mExecuteCommand(exe,split(args2),redirect2,&output2) || output2.find("TranslationUnitDecl") == std::string::npos) {
-            std::cerr << "Failed to execute '" << exe << " " << args2 << " " << redirect2 << "'" << std::endl;
-            return 0;
-        }
-
-        // Ensure there are not syntax errors...
-        if (!mSettings.buildDir.empty()) {
-            std::ifstream fin(clangStderr);
-            auto reportError = [this](const ErrorMessage& errorMessage) {
-                reportErr(errorMessage);
-            };
-            if (reportClangErrors(fin, reportError))
-                return 0;
-        } else {
-            std::istringstream istr(output2);
-            auto reportError = [this](const ErrorMessage& errorMessage) {
-                reportErr(errorMessage);
-            };
-            if (reportClangErrors(istr, reportError))
-                return 0;
-        }
-
-        //std::cout << "Checking Clang ast dump:\n" << result2.second << std::endl;
-        std::istringstream ast(output2);
-        Tokenizer tokenizer(&mSettings, this);
-        tokenizer.list.appendFileIfNew(path);
-        clangimport::parseClangAstDump(&tokenizer, ast);
-        ValueFlow::setValues(&tokenizer.list, const_cast<SymbolDatabase *>(tokenizer.getSymbolDatabase()), this, &mSettings);
-        if (mSettings.debugnormal)
-            tokenizer.printDebugOutput();
-        checkNormalTokens(tokenizer);
-        return mExitCode;
-    }
-
     std::ifstream fin(path);
     return checkFile(Path::simplifyPath(path), emptyString, fin);
 }
@@ -419,10 +303,6 @@ unsigned int CppCheck::check(const ImportProject::FileSettings &fs)
         temp.mSettings.standards.cpp = Standards::CPP20;
     if (fs.platformType != Settings::Unspecified)
         temp.mSettings.platform(fs.platformType);
-    if (mSettings.clang) {
-        temp.mSettings.includePaths.insert(temp.mSettings.includePaths.end(), fs.systemIncludePaths.cbegin(), fs.systemIncludePaths.cend());
-        temp.check(Path::simplifyPath(fs.filename));
-    }
     std::ifstream fin(fs.filename);
     return temp.checkFile(Path::simplifyPath(fs.filename), fs.cfg, fin);
 }
@@ -938,10 +818,6 @@ void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
             Timer timerRunChecks(check->name() + "::runChecks", mSettings.showtime, &s_timerResults);
             check->runChecks(&tokenizer, &mSettings, this);
         }
-
-        if (mSettings.clang)
-            // TODO: Use CTU for Clang analysis
-            return;
 
         // Analyse the tokens..
 

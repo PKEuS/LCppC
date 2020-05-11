@@ -227,9 +227,6 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
             else if (std::strcmp(argv[i], "--check-library") == 0)
                 mSettings->checkLibrary = true;
 
-            else if (std::strcmp(argv[i], "--clang") == 0)
-                mSettings->clang = true;
-
             else if (std::strncmp(argv[i], "--config-exclude=",17) ==0) {
                 mSettings->configExcludePaths.insert(Path::fromNativeSeparators(argv[i] + 17));
             }
@@ -964,7 +961,6 @@ void CmdLineParser::printHelp()
               "                         analysis is disabled by this flag.\n"
               "    --check-library      Show information messages when library files have\n"
               "                         incomplete info.\n"
-              "    --clang              Import Clang AST\n"
               "    --config-exclude=<dir>\n"
               "                         Path (prefix) to be excluded from configuration\n"
               "                         checking. Preprocessor configurations defined in\n"

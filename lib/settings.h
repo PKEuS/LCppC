@@ -112,9 +112,6 @@ public:
     /** Check unused/uninstantiated templates */
     bool checkUnusedTemplates;
 
-    /** Use Clang */
-    bool clang;
-
     /** Use clang-tidy */
     bool clangTidy;
 

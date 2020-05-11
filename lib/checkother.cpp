@@ -866,9 +866,6 @@ void CheckOther::unreachableCodeError(const Token *tok, bool inconclusive)
 //---------------------------------------------------------------------------
 void CheckOther::checkVariableScope()
 {
-    if (mSettings->clang)
-        return;
-
     if (!mSettings->isEnabled(Settings::STYLE))
         return;
 

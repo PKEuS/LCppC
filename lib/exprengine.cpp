@@ -2239,7 +2239,7 @@ void ExprEngine::runChecks(ErrorLogger *errorLogger, const Tokenizer *tokenizer,
         }
         if (tok->astParent()->astOperand2() == tok && value.isEqual(dataBase, 0)) {
             dataBase->addError(tok->linenr());
-            std::list<const Token*> callstack{settings->clang ? tok : tok->astParent()};
+            std::list<const Token*> callstack{tok->astParent()};
             const char * const id = (tok->valueType() && tok->valueType()->isFloat()) ? "bughuntingDivByZeroFloat" : "bughuntingDivByZero";
             const bool bailout = (value.type == ExprEngine::ValueType::BailoutValue);
             ErrorMessage errmsg(callstack, &tokenizer->list, Severity::SeverityType::error, id, "There is division, cannot determine that there can't be a division by zero.", CWE(369), false);

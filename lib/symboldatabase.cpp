@@ -5645,30 +5645,7 @@ static const Token * parsedecl(const Token *type, ValueType * const valuetype, V
             parsedecl(type->type()->typeStart, valuetype, defaultSignedness, settings);
         else if (type->str() == "const")
             valuetype->constness |= (1 << (valuetype->pointer - pointer0));
-        else if (settings->clang && type->str().size() > 2 && type->str().find("::") < type->str().find("<")) {
-            TokenList typeTokens(settings);
-            std::string::size_type pos1 = 0;
-            do {
-                std::string::size_type pos2 = type->str().find("::", pos1);
-                if (pos2 == std::string::npos) {
-                    typeTokens.addtoken(type->str().substr(pos1), 0, 0, false);
-                    break;
-                }
-                typeTokens.addtoken(type->str().substr(pos1, pos2 - pos1), 0, 0, false);
-                typeTokens.addtoken("::", 0, 0, false);
-                pos1 = pos2 + 2;
-            } while (pos1 < type->str().size());
-            const Library::Container *container = settings->library.detectContainer(typeTokens.front());
-            if (container) {
-                valuetype->type = ValueType::Type::CONTAINER;
-                valuetype->container = container;
-            } else {
-                const Scope *scope = type->scope();
-                valuetype->typeScope = scope->check->findScope(typeTokens.front(), scope);
-                if (valuetype->typeScope)
-                    valuetype->type = (scope->type == Scope::ScopeType::eClass) ? ValueType::Type::RECORD : ValueType::Type::NONSTD;
-            }
-        } else if (const Library::Container *container = settings->library.detectContainer(type)) {
+        else if (const Library::Container *container = settings->library.detectContainer(type)) {
             valuetype->type = ValueType::Type::CONTAINER;
             valuetype->container = container;
             while (Token::Match(type, "%name%|::|<")) {
