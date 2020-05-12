@@ -451,28 +451,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
             }
 
             else if (std::strncmp(argv[i], "-l", 2) == 0) {
-                std::string numberString;
-
-                // "-l 3"
-                if (std::strcmp(argv[i], "-l") == 0) {
-                    ++i;
-                    if (i >= argc || argv[i][0] == '-') {
-                        printMessage("cppcheck: argument to '-l' is missing.");
-                        return false;
-                    }
-
-                    numberString = argv[i];
-                }
-
-                // "-l3"
-                else
-                    numberString = argv[i]+2;
-
-                std::istringstream iss(numberString);
-                if (!(iss >> mSettings->loadAverage)) {
-                    printMessage("cppcheck: argument to '-l' is not a number.");
-                    return false;
-                }
+                printMessage("cppcheck: option -l has been removed.");
             }
 
             // Enforce language (--language=, -x)
@@ -981,11 +960,6 @@ void CmdLineParser::printHelp()
               "                         more comments, like: '// cppcheck-suppress warningId'\n"
               "                         on the lines before the warning to suppress.\n"
               "    -j <jobs>            Start <jobs> threads to do the checking simultaneously.\n"
-#ifdef THREADING_MODEL_FORK
-              "    -l <load>            Specifies that no new threads should be started if\n"
-              "                         there are other threads running and the load average is\n"
-              "                         at least <load>.\n"
-#endif
               "    --language=<language>, -x <language>\n"
               "                         Forces cppcheck to check all files as the given\n"
               "                         language. Valid values are: c, c++\n"

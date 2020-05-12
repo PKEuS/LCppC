@@ -188,9 +188,6 @@ public:
     /** Library */
     Library library;
 
-    /** @brief Load average value */
-    unsigned int loadAverage;
-
     /** @brief Maximum number of configurations to check before bailing.
         Default is 12. (--max-configs=N) */
     unsigned int maxConfigs;

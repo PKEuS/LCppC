@@ -451,8 +451,7 @@ private:
 
     void suppressionsSettings() {
         runChecks(&TestSuppressions::checkSuppression);
-        if (ThreadExecutor::isEnabled())
-            runChecks(&TestSuppressions::checkSuppressionThreads);
+        runChecks(&TestSuppressions::checkSuppressionThreads);
     }
 
     void suppressionsMultiFile() {

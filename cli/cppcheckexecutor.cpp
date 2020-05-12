@@ -68,9 +68,9 @@
 
 #if defined(_MSC_VER)
 #define USE_WINDOWS_SEH
+#include <Windows.h>
 #include <DbgHelp.h>
 #include <TCHAR.H>
-#include <Windows.h>
 #include <excpt.h>
 #endif
 
@@ -922,8 +922,6 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
         }
         if (cppcheck.analyseWholeProgram())
             returnValue++;
-    } else if (!ThreadExecutor::isEnabled()) {
-        std::cout << "No thread support yet implemented for this platform." << std::endl;
     } else {
         // Multiple processes
         ThreadExecutor executor(mFiles, settings, *this);
