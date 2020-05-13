@@ -77,8 +77,8 @@ unsigned int ThreadExecutor::check()
 
 void ThreadExecutor::threadProc()
 {
-    CppCheck fileChecker(*this, false, CppCheckExecutor::executeCommand);
-    fileChecker.settings() = mSettings;
+    Settings settings = mSettings; // Create one copy per thread to avoid side effects across threads. Might be unnecessary.
+    CppCheck fileChecker(*this, settings, false, CppCheckExecutor::executeCommand);
 
     for (;;) {
         mFileSync.lock();

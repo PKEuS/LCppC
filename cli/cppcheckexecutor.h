@@ -20,6 +20,7 @@
 #define CPPCHECKEXECUTOR_H
 
 #include "errorlogger.h"
+#include "settings.h"
 
 #include <cstdio>
 #include <ctime>
@@ -29,7 +30,6 @@
 
 class CppCheck;
 class Library;
-class Settings;
 
 /**
  * This class works as an example of how CppCheck can be used in external
@@ -111,6 +111,14 @@ public:
      */
     static bool executeCommand(std::string exe, std::vector<std::string> args, std::string redirect, std::string *output);
 
+    /**
+     * Helper function to supply settings. This can be used for testing.
+     * @return Reference to an Settings instance
+     */
+    Settings& settings() {
+        return mSettings;
+    }
+
 protected:
 
     /**
@@ -129,12 +137,6 @@ protected:
      * @return false when errors are found in the input
      */
     bool parseFromArgs(CppCheck *cppcheck, int argc, const char* const argv[]);
-
-    /**
-     * Helper function to supply settings. This can be used for testing.
-     * @param settings Reference to an Settings instance
-     */
-    void setSettings(const Settings &settings);
 
 private:
 
@@ -163,9 +165,9 @@ private:
     int check_internal(CppCheck& cppcheck, int argc, const char* const argv[]);
 
     /**
-     * Pointer to current settings; set while check() is running.
+     * Settings of this instance
      */
-    const Settings* mSettings;
+    Settings mSettings;
 
     /**
      * Used to filter out duplicate error messages.

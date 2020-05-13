@@ -179,8 +179,8 @@ private:
         // Clear the error log
         errout.str("");
 
-        CppCheck cppCheck(*this, true, nullptr);
-        Settings& settings = cppCheck.settings();
+        Settings settings;
+        CppCheck cppCheck(*this, settings, true, nullptr);
         settings.exitCode = 1;
         settings.inlineSuppressions = true;
         if (suppression == "unusedFunction")
@@ -629,8 +629,8 @@ private:
     void globalSuppressions() { // Testing that Cppcheck::useGlobalSuppressions works (#8515)
         errout.str("");
 
-        CppCheck cppCheck(*this, false, nullptr); // <- do not "use global suppressions". pretend this is a thread that just checks a file.
-        Settings& settings = cppCheck.settings();
+        Settings settings;
+        CppCheck cppCheck(*this, settings, false, nullptr); // <- do not "use global suppressions". pretend this is a thread that just checks a file.
         settings.nomsg.addSuppressionLine("uninitvar");
         settings.exitCode = 1;
 
@@ -661,8 +661,8 @@ private:
         // Clear the error log
         errout.str("");
 
-        CppCheck cppCheck(*this, true, nullptr);
-        Settings& settings = cppCheck.settings();
+        Settings settings;
+        CppCheck cppCheck(*this, settings, true, nullptr);
         settings.addEnabled("style");
         settings.inlineSuppressions = true;
         settings.relativePaths = true;

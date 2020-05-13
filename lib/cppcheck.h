@@ -51,6 +51,7 @@ public:
      * @brief Constructor.
      */
     CppCheck(ErrorLogger &errorLogger,
+             Settings& settings,
              bool useGlobalSuppressions,
              std::function<bool(std::string,std::vector<std::string>,std::string,std::string*)> executeCommand);
 
@@ -92,7 +93,9 @@ public:
      * @brief Get reference to current settings.
      * @return a reference to current settings
      */
-    Settings &settings();
+    Settings& settings() {
+        return mSettings;
+    }
 
     /**
      * @brief Returns current version number as a string.
@@ -193,7 +196,7 @@ private:
     void reportOut(const std::string &outmsg) override;
 
     std::list<std::string> mErrorList;
-    Settings mSettings;
+    Settings& mSettings;
 
     void reportProgress(const std::string &filename, const char stage[], const std::size_t value) override;
 

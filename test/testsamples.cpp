@@ -95,14 +95,6 @@ private:
         }
     }
 
-    class CppCheckExecutor2 : public CppCheckExecutor {
-    public:
-        void settings(const Settings &set) {
-            setSettings(set);
-        }
-
-    };
-
     void runConsoleCodePageTranslationOnWindows() const {
         REDIRECT;
 
@@ -116,14 +108,10 @@ private:
             //      "中文",
         };
 
-        Settings set1;
-        Settings setXML;
-        setXML.xml = true;
-        setXML.xml_version = 2;
-        CppCheckExecutor2 exec;
-        exec.settings(set1);
-        CppCheckExecutor2 execXML;
-        execXML.settings(setXML);
+        CppCheckExecutor exec;
+        CppCheckExecutor execXML;
+        execXML.settings().xml = true;
+        execXML.settings().xml_version = 2;
 
         for (std::vector<std::string>::const_iterator i = msgs.begin(); i != msgs.end(); ++i) {
             CLEAR_REDIRECT_OUTPUT;

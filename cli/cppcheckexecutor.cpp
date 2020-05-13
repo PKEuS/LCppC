@@ -39,7 +39,6 @@
 #include <cstring>
 #include <iostream>
 #include <list>
-#include <memory>
 #include <utility>
 #include <vector>
 
@@ -78,7 +77,7 @@
 /*static*/ FILE* CppCheckExecutor::mExceptionOutput = stdout;
 
 CppCheckExecutor::CppCheckExecutor()
-    : mSettings(nullptr), mLatestProgressOutputTime(0), mErrorOutput(nullptr), mShowAllErrors(false)
+    : mLatestProgressOutputTime(0), mErrorOutput(nullptr), mShowAllErrors(false)
 {
 }
 
@@ -161,7 +160,7 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
         // Execute recursiveAddFiles() to each given file parameter
         const PathMatch matcher(ignored, caseSensitive);
         for (const std::string &pathname : pathnames)
-            FileLister::recursiveAddFiles(mFiles, Path::toNativeSeparators(pathname), mSettings->library.markupExtensions(), matcher);
+            FileLister::recursiveAddFiles(mFiles, Path::toNativeSeparators(pathname), mSettings.library.markupExtensions(), matcher);
     }
 
     if (mFiles.empty()) {
@@ -169,10 +168,10 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
         if (!ignored.empty())
             std::cout << "cppcheck: Maybe all paths were ignored?" << std::endl;
         return false;
-    } else if (!mSettings->fileFilter.empty()) {
+    } else if (!mSettings.fileFilter.empty()) {
         std::map<std::string, std::size_t> newMap;
         for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i)
-            if (matchglob(mSettings->fileFilter, i->first)) {
+            if (matchglob(mSettings.fileFilter, i->first)) {
                 newMap[i->first] = i->second;
             }
         mFiles = newMap;
@@ -193,17 +192,12 @@ int CppCheckExecutor::check(int argc, const char* const argv[])
 
     CheckUnusedFunctions::clear();
 
-    CppCheck cppCheck(*this, true, executeCommand);
-
-    const Settings& settings = cppCheck.settings();
-    mSettings = &settings;
+    CppCheck cppCheck(*this, mSettings, true, executeCommand);
 
     if (!parseFromArgs(&cppCheck, argc, argv)) {
-        mSettings = nullptr;
         return EXIT_FAILURE;
     }
     if (Settings::terminated()) {
-        mSettings = nullptr;
         return EXIT_SUCCESS;
     }
 
@@ -214,13 +208,7 @@ int CppCheckExecutor::check(int argc, const char* const argv[])
     else
         ret = check_internal(cppCheck, argc, argv);
 
-    mSettings = nullptr;
     return ret;
-}
-
-void CppCheckExecutor::setSettings(const Settings &settings)
-{
-    mSettings = &settings;
 }
 
 /**
@@ -828,12 +816,10 @@ int CppCheckExecutor::check_wrapper(CppCheck& cppcheck, int argc, const char* co
  * */
 int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const char* const argv[])
 {
-    Settings& settings = cppcheck.settings();
-    mSettings = &settings;
-    const bool std = tryLoadLibrary(settings.library, argv[0], "std.cfg");
+    const bool std = tryLoadLibrary(mSettings.library, argv[0], "std.cfg");
 
-    for (const std::string &lib : settings.libraries) {
-        if (!tryLoadLibrary(settings.library, argv[0], lib.c_str())) {
+    for (const std::string &lib : mSettings.libraries) {
+        if (!tryLoadLibrary(mSettings.library, argv[0], lib.c_str())) {
             const std::string msg("Failed to load the library " + lib);
             const std::list<ErrorMessage::FileLocation> callstack;
             ErrorMessage errmsg(callstack, emptyString, Severity::information, msg, "failedToLoadCfg", false);
@@ -843,11 +829,11 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
     }
 
     bool posix = true;
-    if (settings.posix())
-        posix = tryLoadLibrary(settings.library, argv[0], "posix.cfg");
+    if (mSettings.posix())
+        posix = tryLoadLibrary(mSettings.library, argv[0], "posix.cfg");
     bool windows = true;
-    if (settings.isWindowsPlatform())
-        windows = tryLoadLibrary(settings.library, argv[0], "windows.cfg");
+    if (mSettings.isWindowsPlatform())
+        windows = tryLoadLibrary(mSettings.library, argv[0], "windows.cfg");
 
     if (!std || !posix || !windows) {
         const std::list<ErrorMessage::FileLocation> callstack;
@@ -867,28 +853,28 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
         return EXIT_FAILURE;
     }
 
-    if (settings.reportProgress)
+    if (mSettings.reportProgress)
         mLatestProgressOutputTime = std::time(nullptr);
 
-    if (!settings.outputFile.empty()) {
-        mErrorOutput = new std::ofstream(settings.outputFile);
+    if (!mSettings.outputFile.empty()) {
+        mErrorOutput = new std::ofstream(mSettings.outputFile);
     }
 
-    if (settings.xml) {
+    if (mSettings.xml) {
         reportErr(ErrorMessage::getXMLHeader());
     }
 
-    if (!settings.buildDir.empty()) {
+    if (!mSettings.buildDir.empty()) {
         std::list<std::string> fileNames;
         for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i)
             fileNames.emplace_back(i->first);
-        AnalyzerInformation::writeFilesTxt(settings.buildDir, fileNames);
+        AnalyzerInformation::writeFilesTxt(mSettings.buildDir, fileNames);
     }
 
     unsigned int returnValue = 0;
-    if (settings.jobs == 1) {
+    if (mSettings.jobs == 1) {
         // Single process
-        settings.jointSuppressionReport = true;
+        mSettings.jointSuppressionReport = true;
 
         std::size_t totalfilesize = 0;
         for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
@@ -898,11 +884,11 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
         std::size_t processedsize = 0;
         unsigned int c = 0;
         for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
-            if (!mSettings->library.markupFile(i->first)
-                || !mSettings->library.processMarkupAfterCode(i->first)) {
+            if (!mSettings.library.markupFile(i->first)
+                || !mSettings.library.processMarkupAfterCode(i->first)) {
                 returnValue += cppcheck.check(i->first);
                 processedsize += i->second;
-                if (!settings.quiet)
+                if (!mSettings.quiet)
                     reportStatus(c + 1, mFiles.size(), processedsize, totalfilesize);
                 c++;
             }
@@ -911,10 +897,10 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
         // second loop to parse all markup files which may not work until all
         // c/cpp files have been parsed and checked
         for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
-            if (mSettings->library.markupFile(i->first) && mSettings->library.processMarkupAfterCode(i->first)) {
+            if (mSettings.library.markupFile(i->first) && mSettings.library.processMarkupAfterCode(i->first)) {
                 returnValue += cppcheck.check(i->first);
                 processedsize += i->second;
-                if (!settings.quiet)
+                if (!mSettings.quiet)
                     reportStatus(c + 1, mFiles.size(), processedsize, totalfilesize);
                 c++;
             }
@@ -923,32 +909,32 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
             returnValue++;
     } else {
         // Multiple processes
-        ThreadExecutor executor(mFiles, settings, *this);
+        ThreadExecutor executor(mFiles, mSettings, *this);
         returnValue = executor.check();
     }
 
-    cppcheck.analyseWholeProgram(mSettings->buildDir, mFiles);
+    cppcheck.analyseWholeProgram(mSettings.buildDir, mFiles);
 
-    if (settings.isEnabled(Settings::INFORMATION) || settings.checkConfiguration) {
+    if (mSettings.isEnabled(Settings::INFORMATION) || mSettings.checkConfiguration) {
         const bool enableUnusedFunctionCheck = cppcheck.isUnusedFunctionCheckEnabled();
 
-        if (settings.jointSuppressionReport) {
+        if (mSettings.jointSuppressionReport) {
             for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
-                const bool err = reportUnmatchedSuppressions(settings.nomsg.getUnmatchedLocalSuppressions(i->first, enableUnusedFunctionCheck));
+                const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(i->first, enableUnusedFunctionCheck));
                 if (err && returnValue == 0)
-                    returnValue = settings.exitCode;
+                    returnValue = mSettings.exitCode;
             }
         }
 
-        const bool err = reportUnmatchedSuppressions(settings.nomsg.getUnmatchedGlobalSuppressions(enableUnusedFunctionCheck));
+        const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedGlobalSuppressions(enableUnusedFunctionCheck));
         if (err && returnValue == 0)
-            returnValue = settings.exitCode;
+            returnValue = mSettings.exitCode;
     }
 
-    if (!settings.checkConfiguration) {
+    if (!mSettings.checkConfiguration) {
         cppcheck.tooManyConfigsError("",0U);
 
-        if (settings.isEnabled(Settings::MISSING_INCLUDE) && (Preprocessor::missingIncludeFlag || Preprocessor::missingSystemIncludeFlag)) {
+        if (mSettings.isEnabled(Settings::MISSING_INCLUDE) && (Preprocessor::missingIncludeFlag || Preprocessor::missingSystemIncludeFlag)) {
             const std::list<ErrorMessage::FileLocation> callStack;
             ErrorMessage msg(callStack,
                              emptyString,
@@ -965,13 +951,12 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
         }
     }
 
-    if (settings.xml) {
+    if (mSettings.xml) {
         reportErr(ErrorMessage::getXMLFooter());
     }
 
-    mSettings = nullptr;
     if (returnValue)
-        return settings.exitCode;
+        return mSettings.exitCode;
     return 0;
 }
 
@@ -1009,7 +994,7 @@ void CppCheckExecutor::reportErr(const std::string &errmsg)
     if (mErrorOutput)
         *mErrorOutput << errmsg << std::endl;
     else {
-        std::cerr << ansiToOEM(errmsg, (mSettings == nullptr) ? true : !mSettings->xml) << std::endl;
+        std::cerr << ansiToOEM(errmsg, !mSettings.xml) << std::endl;
     }
 }
 
@@ -1062,10 +1047,10 @@ void CppCheckExecutor::reportErr(const ErrorMessage &msg)
 {
     if (mShowAllErrors) {
         reportOut(msg.toXML());
-    } else if (mSettings->xml) {
+    } else if (mSettings.xml) {
         reportErr(msg.toXML());
     } else {
-        reportErr(msg.toString(mSettings->verbose, mSettings->templateFormat, mSettings->templateLocation));
+        reportErr(msg.toString(mSettings.verbose, mSettings.templateFormat, mSettings.templateLocation));
     }
 }
 

@@ -231,9 +231,11 @@ static std::string executeAddon(const AddonInfo &addonInfo,
 }
 
 CppCheck::CppCheck(ErrorLogger &errorLogger,
+                   Settings& settings,
                    bool useGlobalSuppressions,
                    std::function<bool(std::string,std::vector<std::string>,std::string,std::string*)> executeCommand)
-    : mErrorLogger(errorLogger)
+    : mSettings(settings)
+    , mErrorLogger(errorLogger)
     , mExitCode(0)
     , mSuppressInternalErrorFound(false)
     , mUseGlobalSuppressions(useGlobalSuppressions)
@@ -1079,10 +1081,6 @@ void CppCheck::executeRules(const std::string &tokenlist, const Tokenizer &token
 #endif
 }
 
-Settings &CppCheck::settings()
-{
-    return mSettings;
-}
 
 void CppCheck::tooManyConfigsError(const std::string &file, const std::size_t numberOfConfigurations)
 {
