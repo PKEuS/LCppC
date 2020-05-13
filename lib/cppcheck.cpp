@@ -31,8 +31,6 @@
 #include "tokenlist.h"
 #include "version.h"
 
-#include "exprengine.h"
-
 #define PICOJSON_USE_INT64
 #include <picojson.h>
 #include <simplecpp.h>
@@ -772,40 +770,36 @@ void CppCheck::checkRawTokens(const Tokenizer &tokenizer)
 
 void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
 {
-    if (mSettings.bugHunting)
-        ExprEngine::runChecks(this, &tokenizer, &mSettings);
-    else {
-        // call all "runChecks" in all registered Check classes
-        for (Check *check : Check::instances()) {
-            if (Settings::terminated())
-                return;
+    // call all "runChecks" in all registered Check classes
+    for (Check *check : Check::instances()) {
+        if (Settings::terminated())
+            return;
 
-            if (Tokenizer::isMaxTime())
-                return;
+        if (Tokenizer::isMaxTime())
+            return;
 
-            Timer timerRunChecks(check->name() + "::runChecks", mSettings.showtime, &s_timerResults);
-            check->runChecks(&tokenizer, &mSettings, this);
-        }
-
-        // Analyse the tokens..
-
-        CTU::FileInfo *fi1 = CTU::getFileInfo(&tokenizer);
-        if (fi1) {
-            mFileInfo.push_back(fi1);
-            mAnalyzerInformation.setFileInfo("ctu", fi1->toString());
-        }
-
-        for (const Check *check : Check::instances()) {
-            Check::FileInfo *fi = check->getFileInfo(&tokenizer, &mSettings);
-            if (fi != nullptr) {
-                mFileInfo.push_back(fi);
-                mAnalyzerInformation.setFileInfo(check->name(), fi->toString());
-            }
-        }
-
-        executeRules("normal", tokenizer);
-        executeRules("simple", tokenizer);
+        Timer timerRunChecks(check->name() + "::runChecks", mSettings.showtime, &s_timerResults);
+        check->runChecks(&tokenizer, &mSettings, this);
     }
+
+    // Analyse the tokens..
+
+    CTU::FileInfo *fi1 = CTU::getFileInfo(&tokenizer);
+    if (fi1) {
+        mFileInfo.push_back(fi1);
+        mAnalyzerInformation.setFileInfo("ctu", fi1->toString());
+    }
+
+    for (const Check *check : Check::instances()) {
+        Check::FileInfo *fi = check->getFileInfo(&tokenizer, &mSettings);
+        if (fi != nullptr) {
+            mFileInfo.push_back(fi);
+            mAnalyzerInformation.setFileInfo(check->name(), fi->toString());
+        }
+    }
+
+    executeRules("normal", tokenizer);
+    executeRules("simple", tokenizer);
 }
 
 //---------------------------------------------------------------------------
@@ -1219,11 +1213,6 @@ void CppCheck::reportInfo(const ErrorMessage &msg)
 void CppCheck::reportStatus(unsigned int /*fileindex*/, unsigned int /*filecount*/, std::size_t /*sizedone*/, std::size_t /*sizetotal*/)
 {
 
-}
-
-void CppCheck::bughuntingReport(const std::string &str)
-{
-    mErrorLogger.bughuntingReport(str);
 }
 
 void CppCheck::getErrorMessages()

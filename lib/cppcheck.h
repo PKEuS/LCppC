@@ -192,8 +192,6 @@ private:
      */
     void reportOut(const std::string &outmsg) override;
 
-    void bughuntingReport(const std::string &str) override;
-
     std::list<std::string> mErrorList;
     Settings mSettings;
 

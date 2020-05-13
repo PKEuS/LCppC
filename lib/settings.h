@@ -79,12 +79,6 @@ public:
     /** @brief Paths used as base for conversion to relative paths. */
     std::vector<std::string> basePaths;
 
-    /** @brief Bug hunting */
-    bool bugHunting;
-
-    /** Filename for bug hunting report */
-    std::string bugHuntingReport;
-
     /** @brief --cppcheck-build-dir */
     std::string buildDir;
 
@@ -113,9 +107,6 @@ public:
 
     /** @brief Are we running from DACA script? */
     bool daca;
-
-    /** @brief Debug bug hunting */
-    bool debugBugHunting;
 
     /** @brief Is --debug-normal given? */
     bool debugnormal;

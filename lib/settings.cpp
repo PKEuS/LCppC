@@ -30,14 +30,12 @@ const char Settings::SafeChecks::XmlExternalVariables[] = "external-variables";
 
 Settings::Settings()
     : mEnabled(0),
-      bugHunting(false),
       checkAllConfigurations(true),
       checkConfiguration(false),
       checkHeaders(true),
       checkLibrary(false),
       checkUnusedTemplates(false),
       daca(false),
-      debugBugHunting(false),
       debugnormal(false),
       debugtemplate(false),
       debugwarnings(false),

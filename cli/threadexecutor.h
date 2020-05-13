@@ -49,7 +49,6 @@ public:
     void reportOut(const std::string &outmsg) override;
     void reportErr(const ErrorMessage &msg) override;
     void reportInfo(const ErrorMessage &msg) override;
-    void bughuntingReport(const std::string &str) override;
 
     /**
      * @brief Add content to a file, to be used in unit testing.

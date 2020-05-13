@@ -81,8 +81,6 @@ public:
      */
     void reportInfo(const ErrorMessage &msg) override;
 
-    void bughuntingReport(const std::string &str) override;
-
     /**
      * Information about how many files have been checked
      *
@@ -193,11 +191,6 @@ private:
      * Error output
      */
     std::ofstream *mErrorOutput;
-
-    /**
-     * Bug hunting report
-     */
-    std::ostream *mBugHuntingReport;
 
     /**
      * Has --errorlist been given?

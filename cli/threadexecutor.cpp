@@ -132,11 +132,6 @@ void ThreadExecutor::reportInfo(const ErrorMessage &msg)
     (void)msg;
 }
 
-void ThreadExecutor::bughuntingReport(const std::string  &/*str*/)
-{
-    // TODO
-}
-
 void ThreadExecutor::report(const ErrorMessage &msg, MessageType msgType)
 {
     if (mSettings.nomsg.isSuppressed(msg.toSuppressionsErrorMessage()))
