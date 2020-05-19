@@ -99,14 +99,11 @@ public:
     /** @brief check unknown function return values */
     std::set<std::string> checkUnknownFunctionReturn;
 
-    /** Check unused/uninstantiated templates */
-    bool checkUnusedTemplates;
-
     /** @brief include paths excluded from checking the configuration */
     std::set<std::string> configExcludePaths;
 
-    /** @brief Are we running from DACA script? */
-    bool daca;
+    /** Check unused/uninstantiated templates */
+    bool checkUnusedTemplates;
 
     /** @brief Is --debug-normal given? */
     bool debugnormal;
@@ -134,6 +131,13 @@ public:
     // argv[0]
     std::string exename;
 
+    /** @brief --file-filter for analyzing special files */
+    std::string fileFilter;
+
+    /** @brief List of include paths, e.g. "my/includes/" which should be used
+        for finding include files inside source files. (-I) */
+    std::list<std::string> includePaths;
+
     /** @brief If errors are found, this value is returned from main().
         Default value is 0. */
     int exitCode;
@@ -146,17 +150,8 @@ public:
      */
     bool experimental;
 
-    /** @brief --file-filter for analyzing special files */
-    std::string fileFilter;
-
     /** @brief Force checking the files with "too many" configurations (--force). */
     bool force;
-
-    std::map<std::string, std::string> functionContracts;
-
-    /** @brief List of include paths, e.g. "my/includes/" which should be used
-        for finding include files inside source files. (-I) */
-    std::list<std::string> includePaths;
 
     /** @brief Inconclusive checks */
     bool inconclusive;

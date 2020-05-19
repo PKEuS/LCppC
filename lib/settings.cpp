@@ -35,7 +35,6 @@ Settings::Settings()
       checkHeaders(true),
       checkLibrary(false),
       checkUnusedTemplates(false),
-      daca(false),
       debugnormal(false),
       debugtemplate(false),
       debugwarnings(false),
