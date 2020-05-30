@@ -242,10 +242,6 @@ public:
         evaluate(settings);
     }
 
-    Variable(const Token *name_, const std::string &clangType, const Token *start,
-             unsigned int index_, AccessControl access_, const Type *type_,
-             const Scope *scope_);
-
     ~Variable();
 
     /**
@@ -971,7 +967,7 @@ private:
         setFlag(fIsVolatile, state);
     }
     void hasTrailingReturnType(bool state) {
-        return setFlag(fHasTrailingReturnType, state);
+        setFlag(fHasTrailingReturnType, state);
     }
 };
 
@@ -1323,8 +1319,6 @@ public:
 
     /** Set array dimensions when valueflow analysis is completed */
     void setArrayDimensionsUsingValueFlow();
-
-    void clangSetVariables(const std::vector<const Variable *> &variableList);
 
 private:
     friend class Scope;

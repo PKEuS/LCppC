@@ -1782,49 +1782,6 @@ void SymbolDatabase::validate() const
     //validateVariables();
 }
 
-void SymbolDatabase::clangSetVariables(const std::vector<const Variable *> &variableList)
-{
-    mVariableList = variableList;
-}
-
-Variable::Variable(const Token *name_, const std::string &clangType, const Token *start,
-                   unsigned int index_, AccessControl access_, const Type *type_,
-                   const Scope *scope_)
-    : mNameToken(name_),
-      mTypeStartToken(start),
-      mTypeEndToken(name_ ? name_->previous() : nullptr),
-      mIndex(index_),
-      mAccess(access_),
-      mFlags(0),
-      mType(type_),
-      mScope(scope_),
-      mValueType(nullptr)
-{
-    if (start && start->str() == "static")
-        setFlag(fIsStatic, true);
-
-    if (endsWith(clangType, " &", 2))
-        setFlag(fIsReference, true);
-
-    std::string::size_type pos = clangType.find("[");
-    if (pos != std::string::npos) {
-        setFlag(fIsArray, true);
-        do {
-            const std::string::size_type pos1 = pos+1;
-            pos = clangType.find("]", pos1);
-            Dimension dim;
-            dim.tok = nullptr;
-            dim.known = pos > pos1;
-            if (pos > pos1)
-                dim.num = MathLib::toLongNumber(clangType.substr(pos1, pos-pos1));
-            else
-                dim.num = 0;
-            mDimensions.push_back(dim);
-            ++pos;
-        } while (pos < clangType.size() && clangType[pos] == '[');
-    }
-}
-
 Variable::~Variable()
 {
     delete mValueType;
