@@ -56,7 +56,7 @@ Settings::Settings()
 {
     severity.setEnabled(Severity::error, true);
     certainty.setEnabled(Certainty::safe, true);
-    checks.setEnabled("missingInclude", false);
+    checks.setEnabled("MissingInclude", false);
     output.setEnabled(Output::findings, true);
 }
 

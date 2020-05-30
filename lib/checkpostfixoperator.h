@@ -71,7 +71,7 @@ private:
     }
 
     static std::string myName() {
-        return "Using postfix operators";
+        return "PostfixOperator";
     }
 
     std::string classInfo() const override {

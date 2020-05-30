@@ -263,7 +263,7 @@ private:
     }
 
     static std::string myName() {
-        return "STL usage";
+        return "STL";
     }
 
     std::string classInfo() const override {

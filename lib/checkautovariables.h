@@ -105,7 +105,7 @@ private:
     }
 
     static std::string myName() {
-        return "Auto Variables";
+        return "AutoVariables";
     }
 
     std::string classInfo() const override {

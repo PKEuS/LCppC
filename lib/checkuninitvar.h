@@ -135,7 +135,7 @@ private:
     }
 
     static std::string myName() {
-        return "Uninitialized variables";
+        return "UninitVar";
     }
 
     std::string classInfo() const override {

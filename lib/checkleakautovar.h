@@ -160,7 +160,7 @@ private:
     }
 
     static std::string myName() {
-        return "Leaks (auto variables)";
+        return "LeaksAutoVar";
     }
 
     std::string classInfo() const override {

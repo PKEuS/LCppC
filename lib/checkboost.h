@@ -69,7 +69,7 @@ private:
     }
 
     static std::string myName() {
-        return "Boost usage";
+        return "Boost";
     }
 
     std::string classInfo() const override {

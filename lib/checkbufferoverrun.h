@@ -142,7 +142,7 @@ private:
 
 
     static std::string myName() {
-        return "Bounds checking";
+        return "BufferOverrun";
     }
 
     std::string classInfo() const override {

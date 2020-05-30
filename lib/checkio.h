@@ -163,7 +163,7 @@ private:
     }
 
     static std::string myName() {
-        return "IO using format string";
+        return "IO";
     }
 
     std::string classInfo() const override {

@@ -345,7 +345,7 @@ void CheckUnusedFunctions::unusedFunctionError(ErrorLogger * const errorLogger,
 
 Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const
 {
-    if (!settings->checks.isEnabled("unusedFunction"))
+    if (!settings->checks.isEnabled(name()))
         return nullptr;
     if (settings->jobs == 1 && settings->buildDir.empty())
         instance.parseTokens(*tokenizer, tokenizer->list.getFiles().front().c_str(), settings);

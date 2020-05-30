@@ -76,11 +76,11 @@ private:
     }
 
     static std::string myName() {
-        return "64-bit portability";
+        return "64BitPortability";
     }
 
     std::string classInfo() const override {
-        return "Check if there is 64-bit portability issues:\n"
+        return "Check if there are 64-bit portability issues:\n"
                "- assign address to/from int/long\n"
                "- casting address from/to integer when returning from function\n";
     }

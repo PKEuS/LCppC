@@ -134,7 +134,7 @@ private:
     }
 
     static std::string myName() {
-        return "Check function usage";
+        return "Functions";
     }
 
     std::string classInfo() const override {

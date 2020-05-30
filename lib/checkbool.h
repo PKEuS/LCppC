@@ -128,7 +128,7 @@ private:
     }
 
     static std::string myName() {
-        return "Boolean";
+        return "Bool";
     }
 
     std::string classInfo() const override {

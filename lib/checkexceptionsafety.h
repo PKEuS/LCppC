@@ -148,7 +148,7 @@ private:
 
     /** Short description of class (for --doc) */
     static std::string myName() {
-        return "Exception Safety";
+        return "ExceptionSafety";
     }
 
     /** wiki formatted description of the class (for --doc) */

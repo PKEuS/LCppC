@@ -923,7 +923,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
     else if ((def || mSettings->preprocessOnly) && !maxconfigs)
         mSettings->maxConfigs = 1U;
 
-    if (mSettings->checks.isEnabled("unusedFunction") && mSettings->jobs > 1) {
+    if (mSettings->checks.isEnabled("UnusedFunction") && mSettings->jobs > 1) {
         printMessage("cppcheck: unusedFunction check can't be used with '-j' option. Disabling unusedFunction check.");
     }
 

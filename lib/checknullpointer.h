@@ -127,7 +127,7 @@ private:
 
     /** Name of check */
     static std::string myName() {
-        return "Null pointer";
+        return "NullPointer";
     }
 
     /** class info in WIKI format. Used by --doc */

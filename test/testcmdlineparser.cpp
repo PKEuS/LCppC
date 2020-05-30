@@ -500,20 +500,20 @@ private:
 
     void disableUnusedFunction() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "--checks=-unusedFunction", "file.cpp"};
+        const char * const argv[] = {"cppcheck", "--checks=-UnusedFunction", "file.cpp"};
         settings = Settings();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT(!settings.checks.isEnabled("unusedFunction"));
-        ASSERT(!settings.checks.isEnabled("missingInclude"));
+        ASSERT(!settings.checks.isEnabled("UnusedFunction"));
+        ASSERT(!settings.checks.isEnabled("MissingInclude"));
     }
 
     void enabledMissingInclude() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "--checks=missingInclude", "file.cpp"};
+        const char * const argv[] = {"cppcheck", "--checks=MissingInclude", "file.cpp"};
         settings = Settings();
         ASSERT(defParser.parseFromArgs(3, argv));
-        ASSERT(settings.checks.isEnabled("unusedFunction"));
-        ASSERT(settings.checks.isEnabled("missingInclude"));
+        ASSERT(settings.checks.isEnabled("UnusedFunction"));
+        ASSERT(settings.checks.isEnabled("MissingInclude"));
     }
 
 #ifdef CHECK_INTERNAL

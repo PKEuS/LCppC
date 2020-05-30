@@ -108,13 +108,13 @@ private:
     }
 
     static std::string myName() {
-        return "cppcheck internal API usage";
+        return "Internal";
     }
 
     std::string classInfo() const override {
         // Don't include these checks on the WIKI where people can read what
         // checks there are. These checks are not intended for users.
-        return "";
+        return "cppcheck internal API usage";
     }
 };
 /// @}

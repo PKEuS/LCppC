@@ -777,6 +777,9 @@ void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
         if (Tokenizer::isMaxTime())
             return;
 
+        if (!mSettings.checks.isEnabled(check->name()))
+            continue;
+
         Timer timerRunChecks(check->name() + "::runChecks", mSettings.showtime, &s_timerResults);
         check->runChecks(&tokenizer, &mSettings, this);
     }
@@ -1255,7 +1258,7 @@ void CppCheck::analyseWholeProgram(const std::string &buildDir, const std::map<s
     (void)files;
     if (buildDir.empty())
         return;
-    if (mSettings.checks.isEnabled("unusedFunction"))
+    if (mSettings.checks.isEnabled("UnusedFunction"))
         CheckUnusedFunctions::analyseWholeProgram(this, buildDir);
     std::list<Check::FileInfo*> fileInfoList;
     CTU::FileInfo ctuFileInfo;
@@ -1313,5 +1316,5 @@ void CppCheck::analyseWholeProgram(const std::string &buildDir, const std::map<s
 
 bool CppCheck::isUnusedFunctionCheckEnabled() const
 {
-    return (mSettings.jobs == 1 && mSettings.checks.isEnabled("unusedFunction"));
+    return (mSettings.jobs == 1 && mSettings.checks.isEnabled("UnusedFunction"));
 }

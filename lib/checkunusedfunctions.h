@@ -92,7 +92,7 @@ private:
                                     const std::string &funcname);
 
     static std::string myName() {
-        return "Unused functions";
+        return "UnusedFunction";
     }
 
     std::string classInfo() const override {

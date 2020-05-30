@@ -214,7 +214,7 @@ private:
      * @return name of class
      */
     static std::string myName() {
-        return "Memory leaks (function variables)";
+        return "MemoryLeakInFunction";
     }
 
     /**
@@ -267,7 +267,7 @@ private:
     }
 
     static std::string myName() {
-        return "Memory leaks (class variables)";
+        return "MemoryLeakInClass";
     }
 
     std::string classInfo() const override {
@@ -306,7 +306,7 @@ private:
     }
 
     static std::string myName() {
-        return "Memory leaks (struct members)";
+        return "MemoryLeakInStruct";
     }
 
     std::string classInfo() const override {
@@ -367,7 +367,7 @@ private:
     }
 
     static std::string myName() {
-        return "Memory leaks (address not taken)";
+        return "MemoryLeakReturnValue";
     }
 
     std::string classInfo() const override {
