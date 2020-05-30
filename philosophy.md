@@ -23,21 +23,6 @@ Reporting issues in Trac:
  - If you see a false positive; report that as a defect.
 
 
-## Bug hunting - Soundy analysis
-
-The goal is to detect nearly all bugs. It will not be possible to detect ALL bugs. For instance if the code is garbage or if the bug happens in a inline assembler code block.
-
-It will not be possible to avoid false alarms completely but we can not be sloppy about false alarms. There are tools that are too noisy. A handful of false alarms for a project is totally fine in this analysis. But 1000's of false alarms for the average project would not be ok.
-
-We want to detect UB. But we will not add checkers that are too noisy.
-
-Reporting issues in Trac:
- - If you see a false negative; report that as a defect.
- - If you see a false positive; report it as an enhancement.
-
-We should try hard to fix false positives however we can't have heuristics that we know will cause important false negatives.
-
-
 ## No configuration
 
 We want that a user can run Cppcheck without explicit -D and -I configuration.
@@ -60,6 +45,3 @@ No C++14 is allowed. A subset of the C++11 is allowed.
 ## Avoid dependencies
 
 We are very careful about dependencies.
-
-
-
