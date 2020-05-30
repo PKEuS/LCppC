@@ -1,16 +1,17 @@
-=========
-Cppcheck
-=========
+===========
+Cppcheck v1
+===========
 
 
 About
 
-    The original name of this program is "C++check" but it was later changed to "cppcheck".
+    This is a fork of the original Cppcheck project, that aims at providing a lean, fast and
+    mature static code analysis tool for C and C++.
 
 Manual
 
-    A manual is available online:
-    http://cppcheck.sourceforge.net/manual.pdf
+    A manual (for mainline cppcheck) is available online. It should be mostly compatible with
+    this version: https://cppcheck.sourceforge.net/manual.pdf
 
 Compiling
 
@@ -22,39 +23,13 @@ Compiling
 
     When building the command line tool, PCRE is optional. It is used if you build with rules.
 
-    For "bug hunting" you need Z3. Installing Z3:
-     * debian: "sudo apt-get install libz3-dev
-     * windows:
-       32-bit: https://github.com/Z3Prover/z3/releases/download/z3-4.8.7/z3-4.8.7-x86-win.zip
-       64-bit: https://github.com/Z3Prover/z3/releases/download/z3-4.8.7/z3-4.8.7-x64-win.zip
-    If you do not want to install z3 in some "system" include/lib paths you can put the files in
-    cppcheck/externals/z3/include and cppcheck/externals/z3/bin
-
     There are multiple compilation choices:
       * qmake - cross platform build tool
-      * cmake - cross platform build tool
       * Windows: Visual Studio
       * Windows: Qt Creator + mingw
       * gnu make
       * g++ 4.6 (or later)
       * clang++
-
-    cmake
-    =====
-        Example, compiling Cppcheck with cmake:
-            mkdir build
-            cd build
-            cmake ..
-            cmake --build .
-
-        If you want to compile the GUI you can use the flag
-        -DBUILD_GUI=ON
-
-        For rules support (requires pcre) use the flag
-        -DHAVE_RULES=ON
-
-        For release builds it is recommended that you use:
-        -DUSE_MATCHCOMPILER=ON
 
     qmake
     =====
@@ -121,4 +96,4 @@ Cross compiling Win32 (CLI) version of Cppcheck in Linux
 
 Webpage
 
-    http://cppcheck.sourceforge.net/
+    https://cppcheck.sourceforge.net/ (webpage of the mainline cppcheck project)

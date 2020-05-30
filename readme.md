@@ -6,24 +6,12 @@
 
 ## About the name
 
-The original name of this program was "C++check", but it was later changed to "Cppcheck".
-
-Despite the name, Cppcheck is designed for both C and C++.
+This is a fork of the original Cppcheck project, that aims at providing a lean, fast and
+mature static code analysis tool for C and C++.
 
 ## Manual
 
-A manual is available [online](http://cppcheck.sourceforge.net/manual.pdf).
-
-## Donate CPU
-
-Cppcheck is a hobby project with limited resources. You can help us by donating CPU (1 core or as many as you like). It is simple:
-
- 1. Download (and extract) Cppcheck source code
- 2. Run script: python cppcheck/tools/donate-cpu.py
-
-The script will analyse debian source code and upload the results to a cppcheck server. We need these results both to improve Cppcheck and to detect regressions.
-
-You can stop the script whenever you like with Ctrl C.
+A manual (for mainline cppcheck) is available online. It should be mostly compatible with this version: https://cppcheck.sourceforge.net/manual.pdf
 
 ## Compiling
 
@@ -35,34 +23,11 @@ When building the command line tool, [PCRE](http://www.pcre.org/) is optional. I
 
 There are multiple compilation choices:
 * qmake - cross platform build tool
-* cmake - cross platform build tool
 * Windows: Visual Studio (VS 2013 and above)
 * Windows: Qt Creator + mingw
 * gnu make
 * g++ 4.6 (or later)
 * clang++
-
-### cmake
-
-Example, compiling Cppcheck with cmake:
-
-```shell
-mkdir build
-cd build
-cmake ..
-cmake --build .
-```
-
-If you want to compile the GUI you can use the flag
--DBUILD_GUI=ON
-
-For rules support (requires pcre) use the flag
--DHAVE_RULES=ON
-
-For release builds it is recommended that you use:
--DUSE_MATCHCOMPILER=ON
-
-Using cmake you can generate project files for Visual Studio, XCode, etc.
 
 ### qmake
 
@@ -150,4 +115,4 @@ mv cppcheck cppcheck.exe
 
 ## Webpage
 
-http://cppcheck.sourceforge.net/
+https://cppcheck.sourceforge.net/ (webpage of the mainline cppcheck project)

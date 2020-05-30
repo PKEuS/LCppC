@@ -3,7 +3,7 @@
 
 It is important that everybody in the Cppcheck team has a consistent idea about how this tool should work.
 
-This is a static analyser tool.
+This is a static analyser tool for C and C++, not a syntax checker and not a style checker.
 
 
 ## Normal analysis - No false positives
