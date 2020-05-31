@@ -26,12 +26,9 @@
 #include "config.h"
 
 #include <list>
-#include <map>
-#include <set>
 #include <string>
 
 class ErrorLogger;
-class Function;
 class Settings;
 class Tokenizer;
 
@@ -46,22 +43,9 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckUnusedFunctions(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
+    CheckUnusedFunctions(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger)
         : Check(myName(), tokenizer, settings, errorLogger) {
     }
-
-    static void clear() {
-        instance.mFunctions.clear();
-        instance.mFunctionCalls.clear();
-    }
-
-    // Parse current tokens and determine..
-    // * Check what functions are used
-    // * What functions are declared
-    void parseTokens(const Tokenizer &tokenizer, const char FileName[], const Settings *settings);
-
-    // Return true if an error is reported.
-    bool check(ErrorLogger * const errorLogger, const Settings& settings);
 
     /** @brief Parse current TU and extract file info */
     Check::FileInfo *getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const override;
@@ -69,27 +53,19 @@ public:
     /** @brief Analyse all file infos for all TU */
     bool analyseWholeProgram(const CTU::FileInfo *ctu, const std::list<Check::FileInfo*> &fileInfo, const Settings& settings, ErrorLogger &errorLogger) override;
 
-    static CheckUnusedFunctions instance;
+private:
 
     std::string analyzerInfo() const;
 
-    /** @brief Combine and analyze all analyzerInfos for all TUs */
-    static void analyseWholeProgram(ErrorLogger * const errorLogger, const std::string &buildDir);
-
-private:
-
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings * /*settings*/) const override {
-        CheckUnusedFunctions::unusedFunctionError(errorLogger, emptyString, 0, "funcName");
+    void getErrorMessages(ErrorLogger *errorLogger, const Settings * settings) const override {
+        CheckUnusedFunctions c(nullptr, settings, errorLogger);
+        c.unusedFunctionError(errorLogger, emptyString, 0, "funcName");
     }
 
-    void runChecks(const Tokenizer * /*tokenizer*/, const Settings * /*settings*/, ErrorLogger * /*errorLogger*/) override {}
+    void runChecks(const Tokenizer * /*tokenizer*/, const Settings * /*settings*/, ErrorLogger * /*errorLogger*/) override {
+    }
 
-    /**
-     * Dummy implementation, just to provide error for --errorlist
-     */
-    static void unusedFunctionError(ErrorLogger * const errorLogger,
-                                    const std::string &filename, unsigned int lineNumber,
-                                    const std::string &funcname);
+    void unusedFunctionError(ErrorLogger* const errorLogger, const std::string &filename, unsigned int lineNumber, const std::string &funcname);
 
     static std::string myName() {
         return "UnusedFunction";
@@ -98,28 +74,6 @@ private:
     std::string classInfo() const override {
         return "Check for functions that are never called\n";
     }
-
-    class CPPCHECKLIB FunctionUsage {
-    public:
-        FunctionUsage() : lineNumber(0), usedSameFile(false), usedOtherFile(false) {
-        }
-
-        std::string filename;
-        unsigned int lineNumber;
-        bool   usedSameFile;
-        bool   usedOtherFile;
-    };
-
-    std::map<std::string, FunctionUsage> mFunctions;
-
-    class CPPCHECKLIB FunctionDecl {
-    public:
-        explicit FunctionDecl(const Function *f);
-        std::string functionName;
-        unsigned int lineNumber;
-    };
-    std::list<FunctionDecl> mFunctionDecl;
-    std::set<std::string> mFunctionCalls;
 };
 /// @}
 //---------------------------------------------------------------------------

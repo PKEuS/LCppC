@@ -190,8 +190,6 @@ int CppCheckExecutor::check(int argc, const char* const argv[])
     Preprocessor::missingIncludeFlag = false;
     Preprocessor::missingSystemIncludeFlag = false;
 
-    CheckUnusedFunctions::clear();
-
     CppCheck cppCheck(*this, mSettings, true, executeCommand);
 
     if (!parseFromArgs(&cppCheck, argc, argv)) {
@@ -905,28 +903,25 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
                 c++;
             }
         }
-        if (cppcheck.analyseWholeProgram())
-            returnValue++;
     } else {
         // Multiple processes
         ThreadExecutor executor(mFiles, mSettings, *this);
         returnValue = executor.check();
     }
 
-    cppcheck.analyseWholeProgram(mSettings.buildDir, mFiles);
+    if (cppcheck.analyseWholeProgram())
+        returnValue++;
 
     if (mSettings.severity.isEnabled(Severity::information) || mSettings.checkConfiguration) {
-        const bool enableUnusedFunctionCheck = cppcheck.isUnusedFunctionCheckEnabled();
-
         if (mSettings.jointSuppressionReport) {
             for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
-                const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(i->first, enableUnusedFunctionCheck));
+                const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(i->first));
                 if (err && returnValue == 0)
                     returnValue = mSettings.exitCode;
             }
         }
 
-        const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedGlobalSuppressions(enableUnusedFunctionCheck));
+        const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedGlobalSuppressions());
         if (err && returnValue == 0)
             returnValue = mSettings.exitCode;
     }

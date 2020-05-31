@@ -757,9 +757,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
             }
 
             // --std
-            else if (std::strcmp(argv[i], "--std=posix") == 0) {
-                printMessage("cppcheck: Option --std=posix is deprecated and will be removed in 2.05.");
-            } else if (std::strcmp(argv[i], "--std=c89") == 0) {
+            else if (std::strcmp(argv[i], "--std=c89") == 0) {
                 mSettings->standards.c = Standards::C89;
             } else if (std::strcmp(argv[i], "--std=c99") == 0) {
                 mSettings->standards.c = Standards::C99;
@@ -922,10 +920,6 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 
     else if ((def || mSettings->preprocessOnly) && !maxconfigs)
         mSettings->maxConfigs = 1U;
-
-    if (mSettings->checks.isEnabled("UnusedFunction") && mSettings->jobs > 1) {
-        printMessage("cppcheck: unusedFunction check can't be used with '-j' option. Disabling unusedFunction check.");
-    }
 
     if (argc <= 1) {
         mShowHelp = true;

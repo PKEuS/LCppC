@@ -79,13 +79,11 @@ private:
 
         // Check for unused functions..
         CheckUnusedFunctions checkUnusedFunctions(&tokenizer, &settings, this);
-        checkUnusedFunctions.parseTokens(tokenizer,  "someFile.c", &settings);
-        // check() returns error if and only if errout is not empty.
-        if (checkUnusedFunctions.check(this, settings)) {
-            ASSERT(errout.str() != "");
-        } else {
-            ASSERT_EQUALS("", errout.str());
-        }
+        Check::FileInfo* fi = checkUnusedFunctions.getFileInfo(&tokenizer, &settings);
+        std::list<Check::FileInfo*> fileInfo(1, fi);
+        checkUnusedFunctions.analyseWholeProgram(nullptr, fileInfo, settings,*this);
+
+        delete fi;
     }
 
     void incondition() {
@@ -376,7 +374,8 @@ private:
 
     void multipleFiles() {
         Tokenizer tokenizer(&settings, this);
-        CheckUnusedFunctions c(&tokenizer, &settings, nullptr);
+        CheckUnusedFunctions checkUnusedFunctions(&tokenizer, &settings, this);
+        std::list<Check::FileInfo*> fileInfo;
 
         // Clear the error buffer..
         errout.str("");
@@ -394,13 +393,19 @@ private:
             std::istringstream istr(code);
             tokenizer2.tokenize(istr, fname.str().c_str());
 
-            c.parseTokens(tokenizer2, "someFile.c", &settings);
+            Check::FileInfo* fi = checkUnusedFunctions.getFileInfo(&tokenizer2, &settings);
+            fileInfo.push_back(fi);
         }
 
         // Check for unused functions..
-        c.check(this, settings);
+        checkUnusedFunctions.analyseWholeProgram(nullptr, fileInfo, settings, *this);
 
-        ASSERT_EQUALS("[test1.cpp:1]: (style) The function 'f' is never used.\n", errout.str());
+        for (auto it = fileInfo.cbegin(); it != fileInfo.cend(); ++it) {
+            delete* it;
+        }
+
+        ASSERT_EQUALS("[test1.cpp:1]: (style) The function 'f' is never used.\n"
+                      "[test2.cpp:1]: (style) The function 'f' is never used.\n", errout.str());
     }
 
     void lineNumber() {

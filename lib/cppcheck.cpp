@@ -595,15 +595,6 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
                 // Check normal tokens
                 checkNormalTokens(mTokenizer);
 
-                // Analyze info..
-                if (!mSettings.buildDir.empty())
-                    checkUnusedFunctions.parseTokens(mTokenizer, filename.c_str(), &mSettings);
-
-                // simplify more if required, skip rest of iteration if failed
-                if (hasRule("simple")) {
-                    std::cout << "Handling of \"simple\" rules was removed in Cppcheck 2.1. Rule is executed on normal token list instead." << std::endl;
-                }
-
             } catch (const simplecpp::Output &o) {
                 // #error etc during preprocessing
                 configurationError.push_back((mCurrentConfig.empty() ? "\'\'" : mCurrentConfig) + " : [" + o.location.file() + ':' + MathLib::toString(o.location.line) + "] " + o.msg);
@@ -634,9 +625,8 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
         }
 
         if (!hasValidConfig && configurations.size() > 1 && mSettings.severity.isEnabled(Severity::information)) {
-            std::string msg;
-            msg = "This file is not analyzed. Cppcheck failed to extract a valid configuration. Use -v for more details.";
-            msg += "\nThis file is not analyzed. Cppcheck failed to extract a valid configuration. The tested configurations have these preprocessor errors:";
+            std::string msg = "This file is not analyzed. Cppcheck failed to extract a valid configuration. Use -v for more details.\n"
+                              "This file is not analyzed. Cppcheck failed to extract a valid configuration. The tested configurations have these preprocessor errors:";
             for (const std::string &s : configurationError)
                 msg += '\n' + s;
 
@@ -717,13 +707,12 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
         mExitCode=1; // e.g. reflect a syntax error
     }
 
-    mAnalyzerInformation.setFileInfo("CheckUnusedFunctions", checkUnusedFunctions.analyzerInfo());
     mAnalyzerInformation.close();
 
     // In jointSuppressionReport mode, unmatched suppressions are
     // collected after all files are processed
     if (!mSettings.jointSuppressionReport && (mSettings.severity.isEnabled(Severity::information) || mSettings.checkConfiguration)) {
-        reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(filename, isUnusedFunctionCheckEnabled()));
+        reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(filename));
     }
 
     mErrorList.clear();
@@ -1258,8 +1247,7 @@ void CppCheck::analyseWholeProgram(const std::string &buildDir, const std::map<s
     (void)files;
     if (buildDir.empty())
         return;
-    if (mSettings.checks.isEnabled("UnusedFunction"))
-        CheckUnusedFunctions::analyseWholeProgram(this, buildDir);
+
     std::list<Check::FileInfo*> fileInfoList;
     CTU::FileInfo ctuFileInfo;
 
@@ -1312,9 +1300,4 @@ void CppCheck::analyseWholeProgram(const std::string &buildDir, const std::map<s
 
     for (Check::FileInfo *fi : fileInfoList)
         delete fi;
-}
-
-bool CppCheck::isUnusedFunctionCheckEnabled() const
-{
-    return (mSettings.jobs == 1 && mSettings.checks.isEnabled("UnusedFunction"));
 }

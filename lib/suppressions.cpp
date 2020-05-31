@@ -365,13 +365,11 @@ void Suppressions::dump(std::ostream & out) const
 
 #include <iostream>
 
-std::list<Suppressions::Suppression> Suppressions::getUnmatchedLocalSuppressions(const std::string &file, const bool unusedFunctionChecking) const
+std::list<Suppressions::Suppression> Suppressions::getUnmatchedLocalSuppressions(const std::string &file) const
 {
     std::list<Suppression> result;
     for (const Suppression &s : mSuppressions) {
         if (s.matched)
-            continue;
-        if (!unusedFunctionChecking && s.errorId == "unusedFunction")
             continue;
         if (file.empty() || !s.isLocal() || s.fileName != file)
             continue;
@@ -380,13 +378,11 @@ std::list<Suppressions::Suppression> Suppressions::getUnmatchedLocalSuppressions
     return result;
 }
 
-std::list<Suppressions::Suppression> Suppressions::getUnmatchedGlobalSuppressions(const bool unusedFunctionChecking) const
+std::list<Suppressions::Suppression> Suppressions::getUnmatchedGlobalSuppressions() const
 {
     std::list<Suppression> result;
     for (const Suppression &s : mSuppressions) {
         if (s.matched)
-            continue;
-        if (!unusedFunctionChecking && s.errorId == "unusedFunction")
             continue;
         if (s.isLocal())
             continue;
