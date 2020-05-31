@@ -31,14 +31,11 @@ HEADERS += $${PWD}/analyzerinfo.h \
            $${PWD}/checkunusedfunctions.h \
            $${PWD}/checkunusedvar.h \
            $${PWD}/checkvaarg.h \
-           $${PWD}/clangimport.h \
            $${PWD}/cppcheck.h \
            $${PWD}/ctu.h \
            $${PWD}/errorlogger.h \
            $${PWD}/errortypes.h \
-           $${PWD}/exprengine.h \
            $${PWD}/forwardanalyzer.h \
-           $${PWD}/importproject.h \
            $${PWD}/library.h \
            $${PWD}/mathlib.h \
            $${PWD}/path.h \
@@ -86,14 +83,11 @@ SOURCES += $${PWD}/analyzerinfo.cpp \
            $${PWD}/checkunusedfunctions.cpp \
            $${PWD}/checkunusedvar.cpp \
            $${PWD}/checkvaarg.cpp \
-           $${PWD}/clangimport.cpp \
            $${PWD}/cppcheck.cpp \
            $${PWD}/ctu.cpp \
            $${PWD}/errorlogger.cpp \
            $${PWD}/errortypes.cpp \
-           $${PWD}/exprengine.cpp \
            $${PWD}/forwardanalyzer.cpp \
-           $${PWD}/importproject.cpp \
            $${PWD}/library.cpp \
            $${PWD}/mathlib.cpp \
            $${PWD}/path.cpp \
