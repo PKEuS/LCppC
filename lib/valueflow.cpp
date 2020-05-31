@@ -2033,34 +2033,6 @@ static void valueFlowBeforeCondition(TokenList *tokenlist, SymbolDatabase *symbo
     }
 }
 
-static void valueFlowAST(Token *tok, unsigned int varid, const ValueFlow::Value &value, const Settings *settings)
-{
-    if (!tok)
-        return;
-    if (tok->varId() == varid)
-        setTokenValue(tok, value, settings);
-    valueFlowAST(tok->astOperand1(), varid, value, settings);
-    if (tok->str() == "&&" && tok->astOperand1() && tok->astOperand1()->getValue(0)) {
-        ProgramMemory pm;
-        pm.setValue(varid,value);
-        if (conditionIsFalse(tok->astOperand1(), pm))
-            return;
-    } else if (tok->str() == "||" && tok->astOperand1()) {
-        const std::list<ValueFlow::Value> &values = tok->astOperand1()->values();
-        const bool nonzero = std::any_of(values.cbegin(), values.cend(),
-        [=](const ValueFlow::Value &v) {
-            return v.intvalue != 0;
-        });
-        if (!nonzero)
-            return;
-        ProgramMemory pm;
-        pm.setValue(varid,value);
-        if (conditionIsTrue(tok->astOperand1(), pm))
-            return;
-    }
-    valueFlowAST(tok->astOperand2(), varid, value, settings);
-}
-
 static bool evalAssignment(ValueFlow::Value &lhsValue, const std::string &assign, const ValueFlow::Value &rhsValue)
 {
     if (lhsValue.isIntValue()) {
