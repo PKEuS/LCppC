@@ -97,7 +97,9 @@ private:
         // TEST_CASE(fileListStdin);  // Disabled since hangs the test run
         TEST_CASE(inlineSuppr);
         TEST_CASE(jobs);
+        TEST_CASE(jobs2);
         TEST_CASE(jobsMissingCount);
+        TEST_CASE(jobsMissingCount2);
         TEST_CASE(jobsInvalid);
         TEST_CASE(maxConfigs);
         TEST_CASE(maxConfigsMissingCount);
@@ -639,9 +641,17 @@ private:
 
     void jobs() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "-j", "3", "file.cpp"};
+        const char* const argv[] = { "cppcheck", "-j", "3", "file.cpp" };
         settings.jobs = 0;
         ASSERT(defParser.parseFromArgs(4, argv));
+        ASSERT_EQUALS(3, settings.jobs);
+    }
+
+    void jobs2() {
+        REDIRECT;
+        const char* const argv[] = { "cppcheck", "-j3", "file.cpp" };
+        settings.jobs = 0;
+        ASSERT(defParser.parseFromArgs(3, argv));
         ASSERT_EQUALS(3, settings.jobs);
     }
 
@@ -649,16 +659,23 @@ private:
         REDIRECT;
         const char * const argv[] = {"cppcheck", "-j", "file.cpp"};
         settings.jobs = 0;
-        // Fails since -j is missing thread count
-        ASSERT_EQUALS(false, defParser.parseFromArgs(3, argv));
+        ASSERT(defParser.parseFromArgs(3, argv));
+        ASSERT_EQUALS(0, settings.jobs);
+    }
+
+    void jobsMissingCount2() {
+        REDIRECT;
+        const char* const argv[] = { "cppcheck", "-j", "e", "file.cpp" };
+        settings.jobs = 0;
+        ASSERT(defParser.parseFromArgs(4, argv));
+        ASSERT_EQUALS(0, settings.jobs);
     }
 
     void jobsInvalid() {
         REDIRECT;
-        const char * const argv[] = {"cppcheck", "-j", "e", "file.cpp"};
+        const char* const argv[] = { "cppcheck", "-je", "file.cpp" };
         settings.jobs = 0;
-        // Fails since invalid count given for -j
-        ASSERT_EQUALS(false, defParser.parseFromArgs(4, argv));
+        ASSERT(!defParser.parseFromArgs(4, argv));
     }
 
     void maxConfigs() {

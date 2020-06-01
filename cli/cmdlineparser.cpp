@@ -536,27 +536,24 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 
             // Checking threads
             else if (std::strncmp(argv[i], "-j", 2) == 0) {
-                std::string numberString;
-
                 // "-j 3"
                 if (std::strcmp(argv[i], "-j") == 0) {
-                    ++i;
-                    if (i >= argc || argv[i][0] == '-') {
-                        printMessage("cppcheck: argument to '-j' is missing.");
-                        return false;
-                    }
+                    mSettings->jobs = 0;
 
-                    numberString = argv[i];
+                    if (i <= argc && argv[i + 1][0] != '-') {
+                        std::istringstream iss(argv[i + 1]);
+                        if (iss >> mSettings->jobs)
+                            ++i;
+                    }
                 }
 
                 // "-j3"
-                else
-                    numberString = argv[i]+2;
-
-                std::istringstream iss(numberString);
-                if (!(iss >> mSettings->jobs)) {
-                    printMessage("cppcheck: argument to '-j' is not a number.");
-                    return false;
+                else {
+                    std::istringstream iss(argv[i] + 2);
+                    if (!(iss >> mSettings->jobs)) {
+                        printMessage("cppcheck: argument to '-j' is not a number.");
+                        return false;
+                    }
                 }
 
                 if (mSettings->jobs > 10000) {
@@ -1059,6 +1056,8 @@ void CmdLineParser::printHelp()
               "                         more comments, like: '// cppcheck-suppress warningId'\n"
               "                         on the lines before the warning to suppress.\n"
               "    -j <jobs>            Start <jobs> threads to do the checking simultaneously.\n"
+              "                         If <jobs> is not specified, the number of threads is\n"
+              "                         chosen automatically.\n"
               "    --language=<language>, -x <language>\n"
               "                         Forces cppcheck to check all files as the given\n"
               "                         language. Valid values are: c, c++\n"

@@ -52,6 +52,10 @@ unsigned int ThreadExecutor::check()
 {
     mItNextCTU = mCTUs.begin();
 
+    std::size_t jobs = mSettings.jobs;
+    if (jobs == 0)
+        jobs = std::thread::hardware_concurrency();
+
     mResult = 0;
 
     mProcessedFiles = 0;
@@ -63,12 +67,12 @@ unsigned int ThreadExecutor::check()
     }
 
     std::vector<std::thread> threadHandles;
-    threadHandles.reserve(mSettings.jobs);
-    for (unsigned int i = 0; i < mSettings.jobs; ++i) {
+    threadHandles.reserve(jobs);
+    for (unsigned int i = 0; i < jobs; ++i) {
         threadHandles.emplace_back(std::bind(&ThreadExecutor::threadProc, this));
     }
 
-    for (unsigned int i = 0; i < mSettings.jobs; ++i) {
+    for (unsigned int i = 0; i < jobs; ++i) {
         threadHandles[i].join();
     }
 
