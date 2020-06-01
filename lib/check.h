@@ -32,8 +32,9 @@ namespace tinyxml2 {
 }
 
 namespace CTU {
-    class FileInfo;
+    class CTUInfo;
 }
+class AnalyzerInformation;
 
 namespace ValueFlow {
     class Value;
@@ -116,9 +117,9 @@ public:
     }
 
     // Return true if an error is reported.
-    virtual bool analyseWholeProgram(const CTU::FileInfo *ctu, const std::list<FileInfo*> &fileInfo, const Settings& /*settings*/, ErrorLogger &/*errorLogger*/) {
+    virtual bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& /*settings*/, ErrorLogger &/*errorLogger*/) {
         (void)ctu;
-        (void)fileInfo;
+        (void)analyzerInformation;
         //(void)settings;
         //(void)errorLogger;
         return false;

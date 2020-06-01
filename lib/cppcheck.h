@@ -74,7 +74,7 @@ public:
       * @note You must set settings before calling this function (by calling
       *  settings()).
       */
-    unsigned int check(const std::string &path);
+    unsigned int check(CTU::CTUInfo* ctu);
 
     /**
       * @brief Check the file.
@@ -132,10 +132,7 @@ public:
     /** Analyse whole program, run this after all TUs has been scanned.
      * Return true if an error is reported.
      */
-    bool analyseWholeProgram();
-
-    /** analyse whole program use .analyzeinfo files */
-    void analyseWholeProgram(const std::string &buildDir, const std::map<std::string, std::size_t> &files);
+    bool analyseWholeProgram(AnalyzerInformation& analyzerInformation);
 
 private:
 
@@ -152,7 +149,7 @@ private:
      * @param fileStream stream the file content can be read from
      * @return number of errors found
      */
-    unsigned int checkFile(const std::string& filename, const std::string &cfgname, std::istream& fileStream);
+    unsigned int checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, std::istream& fileStream);
 
     /**
      * @brief Check raw tokens
@@ -164,7 +161,7 @@ private:
      * @brief Check normal tokens
      * @param tokenizer tokenizer instance
      */
-    void checkNormalTokens(const Tokenizer &tokenizer);
+    void checkNormalTokens(const Tokenizer &tokenizer, CTU::CTUInfo* ctu);
 
     /**
      * @brief Execute rules, if any
@@ -212,11 +209,6 @@ private:
 
     /** Are there too many configs? */
     bool mTooManyConfigs;
-
-    /** File info used for whole program analysis */
-    std::list<Check::FileInfo*> mFileInfo;
-
-    AnalyzerInformation mAnalyzerInformation;
 
     /** Callback for executing a shell command (exe, args, output) */
     std::function<bool(std::string,std::vector<std::string>,std::string,std::string*)> mExecuteCommand;

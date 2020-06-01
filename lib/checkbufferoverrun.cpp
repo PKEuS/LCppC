@@ -22,6 +22,7 @@
 
 #include "checkbufferoverrun.h"
 
+#include "analyzerinfo.h"
 #include "astutils.h"
 #include "errorlogger.h"
 #include "library.h"
@@ -823,33 +824,33 @@ Check::FileInfo * CheckBufferOverrun::loadFileInfoFromXml(const tinyxml2::XMLEle
 }
 
 /** @brief Analyse all file infos for all TU */
-bool CheckBufferOverrun::analyseWholeProgram(const CTU::FileInfo *ctu, const std::list<Check::FileInfo*> &fileInfo, const Settings& settings, ErrorLogger &errorLogger)
+bool CheckBufferOverrun::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger)
 {
     if (!ctu)
         return false;
     bool foundErrors = false;
     (void)settings; // This argument is unused
 
-    const std::map<std::string, std::list<const CTU::FileInfo::CallBase *>> callsMap = ctu->getCallsMap();
+    const std::map<std::string, std::list<const CTU::CTUInfo::CallBase *>> callsMap = ctu->getCallsMap();
 
-    for (Check::FileInfo *fi1 : fileInfo) {
-        const MyFileInfo *fi = dynamic_cast<MyFileInfo*>(fi1);
+    for (CTU::CTUInfo& ctui : analyzerInformation.getCTUs()) {
+        const MyFileInfo* fi = dynamic_cast<MyFileInfo*>(ctui.getCheckInfo(name()));
         if (!fi)
             continue;
-        for (const CTU::FileInfo::UnsafeUsage &unsafeUsage : fi->unsafeArrayIndex)
+        for (const CTU::CTUInfo::UnsafeUsage &unsafeUsage : fi->unsafeArrayIndex)
             foundErrors |= analyseWholeProgram1(ctu, callsMap, unsafeUsage, 1, errorLogger);
-        for (const CTU::FileInfo::UnsafeUsage &unsafeUsage : fi->unsafePointerArith)
+        for (const CTU::CTUInfo::UnsafeUsage &unsafeUsage : fi->unsafePointerArith)
             foundErrors |= analyseWholeProgram1(ctu, callsMap, unsafeUsage, 2, errorLogger);
     }
     return foundErrors;
 }
 
-bool CheckBufferOverrun::analyseWholeProgram1(const CTU::FileInfo *ctu, const std::map<std::string, std::list<const CTU::FileInfo::CallBase *>> &callsMap, const CTU::FileInfo::UnsafeUsage &unsafeUsage, int type, ErrorLogger &errorLogger)
+bool CheckBufferOverrun::analyseWholeProgram1(const CTU::CTUInfo *ctu, const std::map<std::string, std::list<const CTU::CTUInfo::CallBase *>> &callsMap, const CTU::CTUInfo::UnsafeUsage &unsafeUsage, int type, ErrorLogger &errorLogger)
 {
-    const CTU::FileInfo::FunctionCall *functionCall = nullptr;
+    const CTU::CTUInfo::FunctionCall *functionCall = nullptr;
 
     const std::list<ErrorMessage::FileLocation> &locationList =
-        ctu->getErrorPath(CTU::FileInfo::InvalidValueType::bufferOverflow,
+        ctu->getErrorPath(CTU::CTUInfo::InvalidValueType::bufferOverflow,
                           unsafeUsage,
                           callsMap,
                           "Using argument ARG",

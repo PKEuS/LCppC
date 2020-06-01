@@ -21,6 +21,7 @@
 
 #include "config.h"
 #include "errorlogger.h"
+#include "ctu.h"
 
 #include <cstddef>
 #include <list>
@@ -41,7 +42,7 @@ class Settings;
  */
 class ThreadExecutor : public ErrorLogger {
 public:
-    ThreadExecutor(const std::map<std::string, std::size_t> &files, Settings &settings, ErrorLogger &errorLogger);
+    ThreadExecutor(std::list<CTU::CTUInfo>& files, Settings &settings, ErrorLogger &errorLogger);
     ThreadExecutor(const ThreadExecutor &) = delete;
     void operator=(const ThreadExecutor &) = delete;
     unsigned int check();
@@ -60,7 +61,7 @@ public:
     void addFileContent(const std::string &path, const std::string &content);
 
 private:
-    const std::map<std::string, std::size_t> &mFiles;
+    std::list<CTU::CTUInfo>& mCTUs;
     Settings &mSettings;
     ErrorLogger &mErrorLogger;
 
@@ -68,7 +69,7 @@ private:
     enum class MessageType {REPORT_ERROR, REPORT_INFO};
 
     std::map<std::string, std::string> mFileContents;
-    std::map<std::string, std::size_t>::const_iterator mItNextFile;
+    std::list<CTU::CTUInfo>::iterator mItNextCTU;
     std::mutex mFileSync;
 
     std::list<std::string> mErrorList;

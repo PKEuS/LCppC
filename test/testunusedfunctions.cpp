@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "analyzerinfo.h"
 #include "checkunusedfunctions.h"
 #include "platform.h"
 #include "settings.h"
@@ -77,13 +78,15 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        // Check for unused functions..
-        CheckUnusedFunctions checkUnusedFunctions(&tokenizer, &settings, this);
-        Check::FileInfo* fi = checkUnusedFunctions.getFileInfo(&tokenizer, &settings);
-        std::list<Check::FileInfo*> fileInfo(1, fi);
-        checkUnusedFunctions.analyseWholeProgram(nullptr, fileInfo, settings,*this);
+        // Prepare..
+        CheckUnusedFunctions check(&tokenizer, &settings, this);
+        AnalyzerInformation ai;
+        CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
 
-        delete fi;
+        // Check code..
+        Check::FileInfo* fi = check.getFileInfo(&tokenizer, &settings);
+        ctu.addCheckInfo(check.name(), fi);
+        check.analyseWholeProgram(nullptr, ai, settings, *this);
     }
 
     void incondition() {
@@ -372,10 +375,14 @@ private:
         ASSERT_EQUALS("", errout.str());
     }
 
+
+    // Prepare..
+
+    // Check code..
     void multipleFiles() {
         Tokenizer tokenizer(&settings, this);
-        CheckUnusedFunctions checkUnusedFunctions(&tokenizer, &settings, this);
-        std::list<Check::FileInfo*> fileInfo;
+        CheckUnusedFunctions check(&tokenizer, &settings, this);
+        AnalyzerInformation ai;
 
         // Clear the error buffer..
         errout.str("");
@@ -393,16 +400,14 @@ private:
             std::istringstream istr(code);
             tokenizer2.tokenize(istr, fname.str().c_str());
 
-            Check::FileInfo* fi = checkUnusedFunctions.getFileInfo(&tokenizer2, &settings);
-            fileInfo.push_back(fi);
+            CTU::CTUInfo& ctu = ai.addCTU(fname.str(), 0, emptyString);
+
+            Check::FileInfo* fi = check.getFileInfo(&tokenizer2, &settings);
+            ctu.addCheckInfo(check.name(), fi);
         }
 
         // Check for unused functions..
-        checkUnusedFunctions.analyseWholeProgram(nullptr, fileInfo, settings, *this);
-
-        for (auto it = fileInfo.cbegin(); it != fileInfo.cend(); ++it) {
-            delete* it;
-        }
+        check.analyseWholeProgram(nullptr, ai, settings, *this);
 
         ASSERT_EQUALS("[test1.cpp:1]: (style) The function 'f' is never used.\n"
                       "[test2.cpp:1]: (style) The function 'f' is never used.\n", errout.str());

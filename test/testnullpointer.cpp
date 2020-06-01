@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "analyzerinfo.h"
 #include "check.h"
 #include "checknullpointer.h"
 #include "config.h"
@@ -3248,18 +3249,16 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CTU::FileInfo *ctu = CTU::getFileInfo(&tokenizer);
+        // Prepare..
+        CheckNullPointer check(&tokenizer, &settings, this);
+        AnalyzerInformation ai;
+        CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
+        ctu.parseTokens(&tokenizer);
 
         // Check code..
-        std::list<Check::FileInfo*> fileInfo;
-        CheckNullPointer check(&tokenizer, &settings, this);
-        fileInfo.push_back(check.getFileInfo(&tokenizer, &settings));
-        check.analyseWholeProgram(ctu, fileInfo, settings, *this);
-        while (!fileInfo.empty()) {
-            delete fileInfo.back();
-            fileInfo.pop_back();
-        }
-        delete ctu;
+        Check::FileInfo* fi = check.getFileInfo(&tokenizer, &settings);
+        ctu.addCheckInfo(check.name(), fi);
+        check.analyseWholeProgram(&ctu, ai, settings, *this);
     }
 
     void ctu() {

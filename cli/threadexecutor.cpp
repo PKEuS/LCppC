@@ -34,8 +34,8 @@
 #include <functional>
 
 
-ThreadExecutor::ThreadExecutor(const std::map<std::string, std::size_t> &files, Settings &settings, ErrorLogger &errorLogger)
-    : mFiles(files), mSettings(settings), mErrorLogger(errorLogger)
+ThreadExecutor::ThreadExecutor(std::list<CTU::CTUInfo>& files, Settings &settings, ErrorLogger &errorLogger)
+    : mCTUs(files), mSettings(settings), mErrorLogger(errorLogger)
 {
     mProcessedFiles = 0;
     mTotalFiles = 0;
@@ -50,16 +50,16 @@ void ThreadExecutor::addFileContent(const std::string &path, const std::string &
 
 unsigned int ThreadExecutor::check()
 {
-    mItNextFile = mFiles.begin();
+    mItNextCTU = mCTUs.begin();
 
     mResult = 0;
 
     mProcessedFiles = 0;
     mProcessedSize = 0;
-    mTotalFiles = mFiles.size();
+    mTotalFiles = mCTUs.size();
     mTotalFileSize = 0;
-    for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
-        mTotalFileSize += i->second;
+    for (auto i = mCTUs.begin(); i != mCTUs.end(); ++i) {
+        mTotalFileSize += i->filesize;
     }
 
     std::vector<std::thread> threadHandles;
@@ -82,30 +82,28 @@ void ThreadExecutor::threadProc()
 
     for (;;) {
         mFileSync.lock();
-        if (mItNextFile == mFiles.end()) {
+        if (mItNextCTU == mCTUs.end()) {
             mFileSync.unlock();
             break;
         }
 
-        std::size_t fileSize = 0;
-        const std::string &file = mItNextFile->first;
-        fileSize = mItNextFile->second;
-        ++mItNextFile;
+        CTU::CTUInfo* ctu = &*mItNextCTU;
+        ++mItNextCTU;
 
         mFileSync.unlock();
 
-        const std::map<std::string, std::string>::const_iterator fileContent = mFileContents.find(file);
+        const std::map<std::string, std::string>::const_iterator fileContent = mFileContents.find(ctu->sourcefile);
         if (fileContent != mFileContents.end()) {
             // File content was given as a string
-            mResult += fileChecker.check(file, fileContent->second);
+            mResult += fileChecker.check(ctu->sourcefile, fileContent->second);
         } else {
             // Read file from a file
-            mResult += fileChecker.check(file);
+            mResult += fileChecker.check(ctu);
         }
 
         if (mSettings.output.isEnabled(Output::progress)) {
             mReportSync.lock();
-            mProcessedSize += fileSize;
+            mProcessedSize += ctu->filesize;
             mProcessedFiles++;
             CppCheckExecutor::reportStatus(mProcessedFiles, mTotalFiles, mProcessedSize, mTotalFileSize);
             mReportSync.unlock();

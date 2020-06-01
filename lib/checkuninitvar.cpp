@@ -21,6 +21,7 @@
 #include "checkuninitvar.h"
 
 #include "astutils.h"
+#include "analyzerinfo.h"
 #include "checknullpointer.h"   // CheckNullPointer::isPointerDeref
 #include "errorlogger.h"
 #include "library.h"
@@ -1408,7 +1409,7 @@ static bool isVariableUsage(const Check *check, const Token *vartok, MathLib::bi
 
 Check::FileInfo *CheckUninitVar::getFileInfo() const
 {
-    const std::list<CTU::FileInfo::UnsafeUsage> &unsafeUsage = CTU::getUnsafeUsage(mTokenizer, mSettings, this, ::isVariableUsage);
+    const std::list<CTU::CTUInfo::UnsafeUsage> &unsafeUsage = CTU::getUnsafeUsage(mTokenizer, mSettings, this, ::isVariableUsage);
     if (unsafeUsage.empty())
         return nullptr;
 
@@ -1419,7 +1420,7 @@ Check::FileInfo *CheckUninitVar::getFileInfo() const
 
 Check::FileInfo * CheckUninitVar::loadFileInfoFromXml(const tinyxml2::XMLElement *xmlElement) const
 {
-    const std::list<CTU::FileInfo::UnsafeUsage> &unsafeUsage = CTU::loadUnsafeUsageListFromXml(xmlElement);
+    const std::list<CTU::CTUInfo::UnsafeUsage> &unsafeUsage = CTU::loadUnsafeUsageListFromXml(xmlElement);
     if (unsafeUsage.empty())
         return nullptr;
 
@@ -1428,24 +1429,24 @@ Check::FileInfo * CheckUninitVar::loadFileInfoFromXml(const tinyxml2::XMLElement
     return fileInfo;
 }
 
-bool CheckUninitVar::analyseWholeProgram(const CTU::FileInfo *ctu, const std::list<Check::FileInfo*> &fileInfo, const Settings& settings, ErrorLogger &errorLogger)
+bool CheckUninitVar::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger)
 {
     if (!ctu)
         return false;
     bool foundErrors = false;
     (void)settings; // This argument is unused
 
-    const std::map<std::string, std::list<const CTU::FileInfo::CallBase *>> callsMap = ctu->getCallsMap();
+    const std::map<std::string, std::list<const CTU::CTUInfo::CallBase *>> callsMap = ctu->getCallsMap();
 
-    for (Check::FileInfo *fi1 : fileInfo) {
-        const MyFileInfo *fi = dynamic_cast<MyFileInfo*>(fi1);
+    for (CTU::CTUInfo& ctui : analyzerInformation.getCTUs()) {
+        const MyFileInfo *fi = dynamic_cast<MyFileInfo*>(ctui.getCheckInfo(name()));
         if (!fi)
             continue;
-        for (const CTU::FileInfo::UnsafeUsage &unsafeUsage : fi->unsafeUsage) {
-            const CTU::FileInfo::FunctionCall *functionCall = nullptr;
+        for (const CTU::CTUInfo::UnsafeUsage &unsafeUsage : fi->unsafeUsage) {
+            const CTU::CTUInfo::FunctionCall *functionCall = nullptr;
 
             const std::list<ErrorMessage::FileLocation> &locationList =
-                ctu->getErrorPath(CTU::FileInfo::InvalidValueType::uninit,
+                ctu->getErrorPath(CTU::CTUInfo::InvalidValueType::uninit,
                                   unsafeUsage,
                                   callsMap,
                                   "Using argument ARG",

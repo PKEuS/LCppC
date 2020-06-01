@@ -91,7 +91,7 @@ public:
     class MyFileInfo : public Check::FileInfo {
     public:
         /** function arguments that data are unconditionally read */
-        std::list<CTU::FileInfo::UnsafeUsage> unsafeUsage;
+        std::list<CTU::CTUInfo::UnsafeUsage> unsafeUsage;
 
         /** Convert MyFileInfo data into xml string */
         std::string toString() const override;
@@ -103,7 +103,7 @@ public:
     Check::FileInfo * loadFileInfoFromXml(const tinyxml2::XMLElement *xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::FileInfo *ctu, const std::list<Check::FileInfo*> &fileInfo, const Settings& settings, ErrorLogger &errorLogger) override;
+    bool analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger) override;
 
     void uninitstringError(const Token *tok, const std::string &varname, bool strncpy_);
     void uninitdataError(const Token *tok, const std::string &varname);

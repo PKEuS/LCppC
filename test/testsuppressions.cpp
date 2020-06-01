@@ -196,8 +196,8 @@ private:
         for (std::map<std::string, std::string>::const_iterator file = files.begin(); file != files.end(); ++file) {
             exitCode |= cppCheck.check(file->first, file->second);
         }
-        if (suppression == "unusedFunction" && cppCheck.analyseWholeProgram())
-            exitCode |= settings.exitCode;
+        //if (suppression == "unusedFunction" && cppCheck.analyseWholeProgram())
+        //    exitCode |= settings.exitCode;
 
         reportSuppressions(settings, files);
 
@@ -208,8 +208,8 @@ private:
         errout.str("");
         output.str("");
 
-        std::map<std::string, std::size_t> files;
-        files["test.cpp"] = 1;
+        std::list<CTU::CTUInfo> filemap;
+        filemap.emplace_back("test.cpp", 1, emptyString);
 
         Settings settings;
         settings.jobs = 1;
@@ -218,15 +218,15 @@ private:
         if (!suppression.empty()) {
             EXPECT_EQ("", settings.nomsg.addSuppressionLine(suppression));
         }
-        ThreadExecutor executor(files, settings, *this);
-        for (std::map<std::string, std::size_t>::const_iterator i = files.begin(); i != files.end(); ++i)
-            executor.addFileContent(i->first, code);
+        ThreadExecutor executor(filemap, settings, *this);
+        for (std::list<CTU::CTUInfo>::const_iterator i = filemap.begin(); i != filemap.end(); ++i)
+            executor.addFileContent(i->sourcefile, code);
 
         const unsigned int exitCode = executor.check();
 
         std::map<std::string, std::string> files_for_report;
-        for (std::map<std::string, std::size_t>::const_iterator file = files.begin(); file != files.end(); ++file)
-            files_for_report[file->first] = "";
+        for (std::list<CTU::CTUInfo>::const_iterator file = filemap.begin(); file != filemap.end(); ++file)
+            files_for_report[file->sourcefile] = "";
 
         reportSuppressions(settings, files_for_report);
 

@@ -42,17 +42,17 @@ private:
         errout.str("");
         output.str("");
 
-        std::map<std::string, std::size_t> filemap;
+        std::list<CTU::CTUInfo> filemap;
         for (int i = 1; i <= files; ++i) {
             std::ostringstream oss;
             oss << "file_" << i << ".cpp";
-            filemap[oss.str()] = 1;
+            filemap.emplace_back(oss.str(), 1, emptyString);
         }
 
         settings.jobs = jobs;
         ThreadExecutor executor(filemap, settings, *this);
-        for (std::map<std::string, std::size_t>::const_iterator i = filemap.begin(); i != filemap.end(); ++i)
-            executor.addFileContent(i->first, data);
+        for (std::list<CTU::CTUInfo>::const_iterator i = filemap.begin(); i != filemap.end(); ++i)
+            executor.addFileContent(i->sourcefile, data);
 
         ASSERT_EQUALS(result, executor.check());
     }

@@ -20,6 +20,7 @@
 //---------------------------------------------------------------------------
 #include "checkunusedfunctions.h"
 
+#include "analyzerinfo.h"
 #include "astutils.h"
 #include "errorlogger.h"
 #include "library.h"
@@ -282,14 +283,14 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
     return fi;
 }
 
-bool CheckUnusedFunctions::analyseWholeProgram(const CTU::FileInfo* ctu, const std::list<Check::FileInfo*>& fileInfo, const Settings& settings, ErrorLogger& errorLogger)
+bool CheckUnusedFunctions::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger)
 {
     if (!settings.severity.isEnabled(Severity::style))
         return false;
 
     bool errors = false;
-    for (auto it = fileInfo.cbegin(); it != fileInfo.cend(); ++it) {
-        CUF_FileInfo* fi = dynamic_cast<CUF_FileInfo*>(*it);
+    for (auto it = analyzerInformation.getCTUs().begin(); it != analyzerInformation.getCTUs().end(); ++it) {
+        CUF_FileInfo* fi = dynamic_cast<CUF_FileInfo*>(it->getCheckInfo(name()));
         if (!fi)
             continue;
 
@@ -301,8 +302,8 @@ bool CheckUnusedFunctions::analyseWholeProgram(const CTU::FileInfo* ctu, const s
                 continue;
 
             // Collect usages from other files
-            for (auto it3 = fileInfo.cbegin(); !func.usedOtherFile && it3 != fileInfo.cend(); ++it3) {
-                CUF_FileInfo* fi2 = dynamic_cast<CUF_FileInfo*>(*it3);
+            for (auto it3 = analyzerInformation.getCTUs().cbegin(); !func.usedOtherFile && it3 != analyzerInformation.getCTUs().cend(); ++it3) {
+                CUF_FileInfo* fi2 = dynamic_cast<CUF_FileInfo*>(it3->getCheckInfo(name()));
                 if (!fi2 || fi == fi2)
                     continue;
                 for (std::map<std::string, CUF_FileInfo::FunctionUsage>::const_iterator it4 = fi2->mFunctions.begin(); !func.usedOtherFile && it4 != fi2->mFunctions.end(); ++it4) {

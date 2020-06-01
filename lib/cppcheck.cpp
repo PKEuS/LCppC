@@ -246,10 +246,6 @@ CppCheck::CppCheck(ErrorLogger &errorLogger,
 
 CppCheck::~CppCheck()
 {
-    while (!mFileInfo.empty()) {
-        delete mFileInfo.back();
-        mFileInfo.pop_back();
-    }
     s_timerResults.showResults(mSettings.showtime);
 }
 
@@ -263,32 +259,33 @@ const char * CppCheck::extraVersion()
     return ExtraVersion;
 }
 
-unsigned int CppCheck::check(const std::string &path)
+unsigned int CppCheck::check(CTU::CTUInfo* ctu)
 {
-    std::ifstream fin(path);
-    return checkFile(Path::simplifyPath(path), emptyString, fin);
+    std::ifstream fin(ctu->sourcefile);
+    return checkCTU(ctu, emptyString, fin);
 }
 
 unsigned int CppCheck::check(const std::string &path, const std::string &content)
 {
+    CTU::CTUInfo ctu(Path::simplifyPath(path), content.size(), emptyString);
     std::istringstream iss(content);
-    return checkFile(Path::simplifyPath(path), emptyString, iss);
+    return checkCTU(&ctu, emptyString, iss);
 }
 
-unsigned int CppCheck::checkFile(const std::string& filename, const std::string &cfgname, std::istream& fileStream)
+unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, std::istream& fileStream)
 {
     mExitCode = 0;
     mSuppressInternalErrorFound = false;
 
     // only show debug warnings for accepted C/C++ source files
-    if (!Path::acceptFile(filename))
+    if (!Path::acceptFile(ctu->sourcefile))
         mSettings.debugwarnings = false;
 
     if (Settings::terminated())
         return mExitCode;
 
     if (mSettings.output.isEnabled(Output::status)) {
-        std::string fixedpath = Path::simplifyPath(filename);
+        std::string fixedpath = Path::simplifyPath(ctu->sourcefile);
         fixedpath = Path::toNativeSeparators(fixedpath);
         mErrorLogger.reportOut(std::string("Checking ") + fixedpath + ' ' + cfgname + std::string("..."));
 
@@ -322,7 +319,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
 
         simplecpp::OutputList outputList;
         std::vector<std::string> files;
-        simplecpp::TokenList tokens1(fileStream, files, filename, &outputList);
+        simplecpp::TokenList tokens1(fileStream, files, ctu->sourcefile, &outputList);
 
         // If there is a syntax error, report it and stop
         for (const simplecpp::Output &output : outputList) {
@@ -362,10 +359,10 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
 
         if (!mSettings.plistOutput.empty()) {
             std::string filename2;
-            if (filename.find('/') != std::string::npos)
-                filename2 = filename.substr(filename.rfind('/') + 1);
+            if (ctu->sourcefile.find('/') != std::string::npos)
+                filename2 = ctu->sourcefile.substr(ctu->sourcefile.rfind('/') + 1);
             else
-                filename2 = filename;
+                filename2 = ctu->sourcefile;
             filename2 = mSettings.plistOutput + filename2.substr(0, filename2.find('.')) + ".plist";
             plistFile.open(filename2);
             plistFile << ErrorLogger::plistHeader(version(), files);
@@ -378,9 +375,9 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
             if (!mSettings.dumpFile.empty())
                 dumpFile = mSettings.dumpFile;
             else if (!mSettings.dump && !mSettings.buildDir.empty())
-                dumpFile = AnalyzerInformation::getAnalyzerInfoFile(mSettings.buildDir, filename, "") + ".dump";
+                dumpFile = AnalyzerInformation::getAnalyzerInfoFile(mSettings.buildDir, ctu->sourcefile, "") + ".dump";
             else
-                dumpFile = filename + ".dump";
+                dumpFile = ctu->sourcefile + ".dump";
 
             fdump.open(dumpFile);
             if (fdump.is_open()) {
@@ -427,7 +424,8 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
             toolinfo << mSettings.userDefines;
             mSettings.nomsg.dump(toolinfo);
 
-            // Calculate checksum so it can be compared with old checksum / future checksums
+            /// TODO
+            /*// Calculate checksum so it can be compared with old checksum / future checksums
             const unsigned int checksum = preprocessor.calculateChecksum(tokens1, toolinfo.str());
             std::list<ErrorMessage> errors;
             if (!mAnalyzerInformation.analyzeFile(mSettings.buildDir, filename, cfgname, checksum, &errors)) {
@@ -436,7 +434,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
                     errors.pop_front();
                 }
                 return mExitCode;  // known results => no need to reanalyze file
-            }
+            }*/
         }
 
         // Get directives
@@ -480,7 +478,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
 
         if (!mSettings.force && configurations.size() > mSettings.maxConfigs) {
             if (mSettings.severity.isEnabled(Severity::information)) {
-                tooManyConfigsError(Path::toNativeSeparators(filename),configurations.size());
+                tooManyConfigsError(Path::toNativeSeparators(ctu->sourcefile),configurations.size());
             } else {
                 mTooManyConfigs = true;
             }
@@ -547,7 +545,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
 
                 // If only errors are printed, print filename after the check
                 if (mSettings.output.isEnabled(Output::status) && (!mCurrentConfig.empty() || checkCount > 1)) {
-                    std::string fixedpath = Path::simplifyPath(filename);
+                    std::string fixedpath = Path::simplifyPath(ctu->sourcefile);
                     fixedpath = Path::toNativeSeparators(fixedpath);
                     mErrorLogger.reportOut("Checking " + fixedpath + ": " + mCurrentConfig + "...");
                 }
@@ -586,14 +584,14 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
                     const unsigned long long checksum = mTokenizer.list.calculateChecksum();
                     if (checksums.find(checksum) != checksums.end()) {
                         if (mSettings.debugwarnings)
-                            purgedConfigurationMessage(filename, mCurrentConfig);
+                            purgedConfigurationMessage(ctu->sourcefile, mCurrentConfig);
                         continue;
                     }
                     checksums.insert(checksum);
                 }
 
                 // Check normal tokens
-                checkNormalTokens(mTokenizer);
+                checkNormalTokens(mTokenizer, ctu);
 
             } catch (const simplecpp::Output &o) {
                 // #error etc during preprocessing
@@ -608,7 +606,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
                     locationList.push_back(loc);
                 } else {
                     ErrorMessage::FileLocation loc(mTokenizer.list.getSourceFilePath(), 0, 0);
-                    ErrorMessage::FileLocation loc2(filename, 0, 0);
+                    ErrorMessage::FileLocation loc2(ctu->sourcefile, 0, 0);
                     locationList.push_back(loc2);
                     locationList.push_back(loc);
                 }
@@ -632,7 +630,7 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
 
             std::list<ErrorMessage::FileLocation> locationList;
             ErrorMessage::FileLocation loc;
-            loc.setfile(Path::toNativeSeparators(filename));
+            loc.setfile(Path::toNativeSeparators(ctu->sourcefile));
             locationList.push_back(loc);
             ErrorMessage errmsg(locationList,
                                 loc.getfile(),
@@ -699,20 +697,21 @@ unsigned int CppCheck::checkFile(const std::string& filename, const std::string 
         }
 
     } catch (const std::runtime_error &e) {
-        internalError(filename, e.what());
+        internalError(ctu->sourcefile, e.what());
     } catch (const std::bad_alloc &e) {
-        internalError(filename, e.what());
+        internalError(ctu->sourcefile, e.what());
     } catch (const InternalError &e) {
-        internalError(filename, e.errorMessage);
+        internalError(ctu->sourcefile, e.errorMessage);
         mExitCode=1; // e.g. reflect a syntax error
     }
 
-    mAnalyzerInformation.close();
+    /// TODO
+    //mAnalyzerInformation.close();
 
     // In jointSuppressionReport mode, unmatched suppressions are
     // collected after all files are processed
     if (!mSettings.jointSuppressionReport && (mSettings.severity.isEnabled(Severity::information) || mSettings.checkConfiguration)) {
-        reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(filename));
+        reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(ctu->sourcefile));
     }
 
     mErrorList.clear();
@@ -756,8 +755,15 @@ void CppCheck::checkRawTokens(const Tokenizer &tokenizer)
 // CppCheck - A function that checks a normal token list
 //---------------------------------------------------------------------------
 
-void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
+void CppCheck::checkNormalTokens(const Tokenizer &tokenizer, CTU::CTUInfo* ctu)
 {
+    // Analyse the tokens..
+    for (const Check *check : Check::instances()) {
+        Check::FileInfo *fi = check->getFileInfo(&tokenizer, &mSettings);
+        if (fi != nullptr)
+            ctu->addCheckInfo(check->name(), fi);
+    }
+
     // call all "runChecks" in all registered Check classes
     for (Check *check : Check::instances()) {
         if (Settings::terminated())
@@ -771,22 +777,6 @@ void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
 
         Timer timerRunChecks(check->name() + "::runChecks", mSettings.showtime, &s_timerResults);
         check->runChecks(&tokenizer, &mSettings, this);
-    }
-
-    // Analyse the tokens..
-
-    CTU::FileInfo *fi1 = CTU::getFileInfo(&tokenizer);
-    if (fi1) {
-        mFileInfo.push_back(fi1);
-        mAnalyzerInformation.setFileInfo("ctu", fi1->toString());
-    }
-
-    for (const Check *check : Check::instances()) {
-        Check::FileInfo *fi = check->getFileInfo(&tokenizer, &mSettings);
-        if (fi != nullptr) {
-            mFileInfo.push_back(fi);
-            mAnalyzerInformation.setFileInfo(check->name(), fi->toString());
-        }
     }
 
     executeRules("normal", tokenizer);
@@ -1174,7 +1164,8 @@ void CppCheck::reportErr(const ErrorMessage &msg)
     mErrorList.push_back(errmsg);
 
     mErrorLogger.reportErr(msg);
-    mAnalyzerInformation.reportErr(msg, mSettings.verbose);
+    /// TODO
+    ///mAnalyzerInformation.reportErr(msg, mSettings.verbose);
     if (!mSettings.plistOutput.empty() && plistFile.is_open()) {
         plistFile << ErrorLogger::plistData(msg);
     }
@@ -1223,81 +1214,19 @@ void CppCheck::getErrorMessages()
     Preprocessor::getErrorMessages(this, &s);
 }
 
-bool CppCheck::analyseWholeProgram()
+bool CppCheck::analyseWholeProgram(AnalyzerInformation& analyzerInformation)
 {
     bool errors = false;
+
     // Init CTU
     CTU::maxCtuDepth = mSettings.maxCtuDepth;
     // Analyse the tokens
-    CTU::FileInfo ctu;
-    for (const Check::FileInfo *fi : mFileInfo) {
-        const CTU::FileInfo *fi2 = dynamic_cast<const CTU::FileInfo *>(fi);
-        if (fi2) {
-            ctu.functionCalls.insert(ctu.functionCalls.end(), fi2->functionCalls.begin(), fi2->functionCalls.end());
-            ctu.nestedCalls.insert(ctu.nestedCalls.end(), fi2->nestedCalls.begin(), fi2->nestedCalls.end());
-        }
+    CTU::CTUInfo combinedCTU(emptyString, 0, emptyString); /// TODO: Remove this
+    for (auto it = analyzerInformation.getCTUs().cbegin(); it != analyzerInformation.getCTUs().cend(); ++it) {
+        combinedCTU.functionCalls.insert(combinedCTU.functionCalls.end(), it->functionCalls.begin(), it->functionCalls.end());
+        combinedCTU.nestedCalls.insert(combinedCTU.nestedCalls.end(), it->nestedCalls.begin(), it->nestedCalls.end());
     }
     for (Check *check : Check::instances())
-        errors |= check->analyseWholeProgram(&ctu, mFileInfo, mSettings, *this);  // TODO: ctu
+        errors |= check->analyseWholeProgram(&combinedCTU, analyzerInformation, mSettings, *this);  // TODO: ctu*/
     return errors && (mExitCode > 0);
-}
-
-void CppCheck::analyseWholeProgram(const std::string &buildDir, const std::map<std::string, std::size_t> &files)
-{
-    (void)files;
-    if (buildDir.empty())
-        return;
-
-    std::list<Check::FileInfo*> fileInfoList;
-    CTU::FileInfo ctuFileInfo;
-
-    // Load all analyzer info data..
-    const std::string filesTxt(buildDir + "/files.txt");
-    std::ifstream fin(filesTxt);
-    std::string filesTxtLine;
-    while (std::getline(fin, filesTxtLine)) {
-        const std::string::size_type firstColon = filesTxtLine.find(':');
-        if (firstColon == std::string::npos)
-            continue;
-        const std::string::size_type lastColon = filesTxtLine.rfind(':');
-        if (firstColon == lastColon)
-            continue;
-        const std::string xmlfile = buildDir + '/' + filesTxtLine.substr(0,firstColon);
-        //const std::string sourcefile = filesTxtLine.substr(lastColon+1);
-
-        tinyxml2::XMLDocument doc;
-        const tinyxml2::XMLError error = doc.LoadFile(xmlfile.c_str());
-        if (error != tinyxml2::XML_SUCCESS)
-            continue;
-
-        const tinyxml2::XMLElement * const rootNode = doc.FirstChildElement();
-        if (rootNode == nullptr)
-            continue;
-
-        for (const tinyxml2::XMLElement *e = rootNode->FirstChildElement(); e; e = e->NextSiblingElement()) {
-            if (std::strcmp(e->Name(), "FileInfo") != 0)
-                continue;
-            const char *checkClassAttr = e->Attribute("check");
-            if (!checkClassAttr)
-                continue;
-            if (std::strcmp(checkClassAttr, "ctu") == 0) {
-                ctuFileInfo.loadFromXml(e);
-                continue;
-            }
-            for (Check *check : Check::instances()) {
-                if (checkClassAttr == check->name())
-                    fileInfoList.push_back(check->loadFileInfoFromXml(e));
-            }
-        }
-    }
-
-    // Set CTU max depth
-    CTU::maxCtuDepth = mSettings.maxCtuDepth;
-
-    // Analyse the tokens
-    for (Check *check : Check::instances())
-        check->analyseWholeProgram(&ctuFileInfo, fileInfoList, mSettings, *this);
-
-    for (Check::FileInfo *fi : fileInfoList)
-        delete fi;
 }

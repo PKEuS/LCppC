@@ -92,7 +92,7 @@ public:
     Check::FileInfo *getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::FileInfo *ctu, const std::list<Check::FileInfo*> &fileInfo, const Settings& settings, ErrorLogger &errorLogger) override;
+    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger) override;
 
 private:
 
@@ -124,10 +124,10 @@ private:
     class MyFileInfo : public Check::FileInfo {
     public:
         /** unsafe array index usage */
-        std::list<CTU::FileInfo::UnsafeUsage> unsafeArrayIndex;
+        std::list<CTU::CTUInfo::UnsafeUsage> unsafeArrayIndex;
 
         /** unsafe pointer arithmetics */
-        std::list<CTU::FileInfo::UnsafeUsage> unsafePointerArith;
+        std::list<CTU::CTUInfo::UnsafeUsage> unsafePointerArith;
 
         /** Convert MyFileInfo data into xml string */
         std::string toString() const override;
@@ -138,7 +138,7 @@ private:
     static bool isCtuUnsafePointerArith(const Check *check, const Token *argtok, MathLib::bigint *offset);
 
     Check::FileInfo * loadFileInfoFromXml(const tinyxml2::XMLElement *xmlElement) const override;
-    bool analyseWholeProgram1(const CTU::FileInfo *ctu, const std::map<std::string, std::list<const CTU::FileInfo::CallBase *>> &callsMap, const CTU::FileInfo::UnsafeUsage &unsafeUsage, int type, ErrorLogger &errorLogger);
+    bool analyseWholeProgram1(const CTU::CTUInfo *ctu, const std::map<std::string, std::list<const CTU::CTUInfo::CallBase *>> &callsMap, const CTU::CTUInfo::UnsafeUsage &unsafeUsage, int type, ErrorLogger &errorLogger);
 
 
     static std::string myName() {

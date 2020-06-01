@@ -21,6 +21,7 @@
 
 #include "errorlogger.h"
 #include "settings.h"
+#include "analyzerinfo.h"
 
 #include <cstdio>
 #include <ctime>
@@ -177,7 +178,7 @@ private:
     /**
      * Filename associated with size of file
      */
-    std::map<std::string, std::size_t> mFiles;
+    AnalyzerInformation mAnalyzerInformation;
 
     /**
      * Report progress time

@@ -17,6 +17,7 @@
  */
 
 #include "check.h"
+#include "analyzerinfo.h"
 #include "settings.h"
 #include "testsuite.h"
 #include "token.h"
@@ -284,9 +285,22 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
 
-        // call all "runChecks" in all registered Check classes
+        // Prepare whole program analysis
+        AnalyzerInformation ai;
+        CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
+        ctu.parseTokens(&tokenizer);
+
+        // call all "runChecks" and "getFileInfo" in all registered Check classes
         for (std::list<Check *>::const_iterator it = Check::instances().begin(); it != Check::instances().end(); ++it) {
             (*it)->runChecks(&tokenizer, &settings, this);
+            Check::FileInfo* fi = (*it)->getFileInfo(&tokenizer, &settings);
+            if (fi != nullptr)
+                ctu.addCheckInfo((*it)->name(), fi);
+        }
+
+        // Run whole program analysis
+        for (std::list<Check*>::const_iterator it = Check::instances().begin(); it != Check::instances().end(); ++it) {
+            (*it)->analyseWholeProgram(&ctu, ai, settings, *this);
         }
 
         return tokenizer.tokens()->stringifyList(false, false, false, true, false, nullptr, nullptr);

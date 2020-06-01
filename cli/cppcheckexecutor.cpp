@@ -156,31 +156,32 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
 #else
     const bool caseSensitive = true;
 #endif
+    std::map<std::string, std::size_t> files;
     if (!pathnames.empty()) {
         // Execute recursiveAddFiles() to each given file parameter
         const PathMatch matcher(ignored, caseSensitive);
         for (const std::string &pathname : pathnames)
-            FileLister::recursiveAddFiles(mFiles, Path::toNativeSeparators(pathname), mSettings.library.markupExtensions(), matcher);
+            FileLister::recursiveAddFiles(files, Path::toNativeSeparators(pathname), mSettings.library.markupExtensions(), matcher);
     }
 
-    if (mFiles.empty()) {
+    if (files.empty()) {
         std::cout << "cppcheck: error: could not find or open any of the paths given." << std::endl;
         if (!ignored.empty())
             std::cout << "cppcheck: Maybe all paths were ignored?" << std::endl;
         return false;
     } else if (!mSettings.fileFilter.empty()) {
         std::map<std::string, std::size_t> newMap;
-        for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i)
-            if (matchglob(mSettings.fileFilter, i->first)) {
+        for (std::map<std::string, std::size_t>::const_iterator i = files.begin(); i != files.end(); ++i)
+            if (!matchglob(mSettings.fileFilter, i->first)) {
                 newMap[i->first] = i->second;
             }
-        mFiles = newMap;
-        if (mFiles.empty()) {
+        files = newMap;
+        if (files.empty()) {
             std::cout << "cppcheck: error: could not find any files matching the filter." << std::endl;
             return false;
         }
-
     }
+    mAnalyzerInformation.createCTUs(settings.buildDir, files);
 
     return true;
 }
@@ -862,60 +863,53 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
         reportErr(ErrorMessage::getXMLHeader());
     }
 
-    if (!mSettings.buildDir.empty()) {
-        std::list<std::string> fileNames;
-        for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i)
-            fileNames.emplace_back(i->first);
-        AnalyzerInformation::writeFilesTxt(mSettings.buildDir, fileNames);
-    }
-
     unsigned int returnValue = 0;
     if (mSettings.jobs == 1) {
         // Single process
         mSettings.jointSuppressionReport = true;
 
         std::size_t totalfilesize = 0;
-        for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
-            totalfilesize += i->second;
+        for (auto i = mAnalyzerInformation.getCTUs().cbegin(); i != mAnalyzerInformation.getCTUs().cend(); ++i) {
+            totalfilesize += i->filesize;
         }
 
         std::size_t processedsize = 0;
         unsigned int c = 0;
-        for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
-            if (!mSettings.library.markupFile(i->first)
-                || !mSettings.library.processMarkupAfterCode(i->first)) {
-                returnValue += cppcheck.check(i->first);
-                processedsize += i->second;
+        for (auto i = mAnalyzerInformation.getCTUs().begin(); i != mAnalyzerInformation.getCTUs().end(); ++i) {
+            if (!mSettings.library.markupFile(i->sourcefile)
+                || !mSettings.library.processMarkupAfterCode(i->sourcefile)) {
+                returnValue += cppcheck.check(&*i);
+                processedsize += i->filesize;
                 if (mSettings.output.isEnabled(Output::progress))
-                    reportStatus(c + 1, mFiles.size(), processedsize, totalfilesize);
+                    reportStatus(c + 1, mAnalyzerInformation.getCTUs().size(), processedsize, totalfilesize);
                 c++;
             }
         }
 
         // second loop to parse all markup files which may not work until all
         // c/cpp files have been parsed and checked
-        for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
-            if (mSettings.library.markupFile(i->first) && mSettings.library.processMarkupAfterCode(i->first)) {
-                returnValue += cppcheck.check(i->first);
-                processedsize += i->second;
+        for (auto i = mAnalyzerInformation.getCTUs().begin(); i != mAnalyzerInformation.getCTUs().end(); ++i) {
+            if (mSettings.library.markupFile(i->sourcefile) && mSettings.library.processMarkupAfterCode(i->sourcefile)) {
+                returnValue += cppcheck.check(&*i);
+                processedsize += i->filesize;
                 if (mSettings.output.isEnabled(Output::progress))
-                    reportStatus(c + 1, mFiles.size(), processedsize, totalfilesize);
+                    reportStatus(c + 1, mAnalyzerInformation.getCTUs().size(), processedsize, totalfilesize);
                 c++;
             }
         }
     } else {
         // Multiple processes
-        ThreadExecutor executor(mFiles, mSettings, *this);
+        ThreadExecutor executor(mAnalyzerInformation.getCTUs(), mSettings, *this);
         returnValue = executor.check();
     }
 
-    if (cppcheck.analyseWholeProgram())
+    if (cppcheck.analyseWholeProgram(mAnalyzerInformation))
         returnValue++;
 
     if (mSettings.severity.isEnabled(Severity::information) || mSettings.checkConfiguration) {
         if (mSettings.jointSuppressionReport) {
-            for (std::map<std::string, std::size_t>::const_iterator i = mFiles.begin(); i != mFiles.end(); ++i) {
-                const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(i->first));
+            for (auto i = mAnalyzerInformation.getCTUs().begin(); i != mAnalyzerInformation.getCTUs().end(); ++i) {
+                const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(i->sourcefile));
                 if (err && returnValue == 0)
                     returnValue = mSettings.exitCode;
             }

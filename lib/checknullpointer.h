@@ -102,7 +102,7 @@ public:
     class MyFileInfo : public Check::FileInfo {
     public:
         /** function arguments that are dereferenced without checking if they are null */
-        std::list<CTU::FileInfo::UnsafeUsage> unsafeUsage;
+        std::list<CTU::CTUInfo::UnsafeUsage> unsafeUsage;
 
         /** Convert MyFileInfo data into xml string */
         std::string toString() const override;
@@ -114,7 +114,7 @@ public:
     Check::FileInfo * loadFileInfoFromXml(const tinyxml2::XMLElement *xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::FileInfo *ctu, const std::list<Check::FileInfo*> &fileInfo, const Settings& settings, ErrorLogger &errorLogger) override;
+    bool analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger) override;
 
 private:
     /** Get error messages. Used by --errorlist */

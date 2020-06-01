@@ -20,6 +20,7 @@
 //---------------------------------------------------------------------------
 #include "checknullpointer.h"
 
+#include "analyzerinfo.h"
 #include "astutils.h"
 #include "errorlogger.h"
 #include "library.h"
@@ -552,7 +553,7 @@ static bool isUnsafeUsage(const Check *check, const Token *vartok, MathLib::bigi
 Check::FileInfo *CheckNullPointer::getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const
 {
     CheckNullPointer check(tokenizer, settings, nullptr);
-    const std::list<CTU::FileInfo::UnsafeUsage> &unsafeUsage = CTU::getUnsafeUsage(tokenizer, settings, &check, ::isUnsafeUsage);
+    const std::list<CTU::CTUInfo::UnsafeUsage> &unsafeUsage = CTU::getUnsafeUsage(tokenizer, settings, &check, ::isUnsafeUsage);
     if (unsafeUsage.empty())
         return nullptr;
 
@@ -563,7 +564,7 @@ Check::FileInfo *CheckNullPointer::getFileInfo(const Tokenizer *tokenizer, const
 
 Check::FileInfo * CheckNullPointer::loadFileInfoFromXml(const tinyxml2::XMLElement *xmlElement) const
 {
-    const std::list<CTU::FileInfo::UnsafeUsage> &unsafeUsage = CTU::loadUnsafeUsageListFromXml(xmlElement);
+    const std::list<CTU::CTUInfo::UnsafeUsage> &unsafeUsage = CTU::loadUnsafeUsageListFromXml(xmlElement);
     if (unsafeUsage.empty())
         return nullptr;
 
@@ -572,26 +573,26 @@ Check::FileInfo * CheckNullPointer::loadFileInfoFromXml(const tinyxml2::XMLEleme
     return fileInfo;
 }
 
-bool CheckNullPointer::analyseWholeProgram(const CTU::FileInfo *ctu, const std::list<Check::FileInfo*> &fileInfo, const Settings& settings, ErrorLogger &errorLogger)
+bool CheckNullPointer::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger)
 {
     if (!ctu)
         return false;
     bool foundErrors = false;
     (void)settings; // This argument is unused
 
-    const std::map<std::string, std::list<const CTU::FileInfo::CallBase *>> callsMap = ctu->getCallsMap();
+    const std::map<std::string, std::list<const CTU::CTUInfo::CallBase *>> callsMap = ctu->getCallsMap();
 
-    for (Check::FileInfo *fi1 : fileInfo) {
-        const MyFileInfo *fi = dynamic_cast<MyFileInfo*>(fi1);
+    for (CTU::CTUInfo& ctui : analyzerInformation.getCTUs()) {
+        const MyFileInfo* fi = dynamic_cast<MyFileInfo*>(ctui.getCheckInfo(name()));
         if (!fi)
             continue;
-        for (const CTU::FileInfo::UnsafeUsage &unsafeUsage : fi->unsafeUsage) {
+        for (const CTU::CTUInfo::UnsafeUsage &unsafeUsage : fi->unsafeUsage) {
             for (int warning = 0; warning <= 1; warning++) {
                 if (warning == 1 && !settings.severity.isEnabled(Severity::warning))
                     break;
 
                 const std::list<ErrorMessage::FileLocation> &locationList =
-                    ctu->getErrorPath(CTU::FileInfo::InvalidValueType::null,
+                    ctu->getErrorPath(CTU::CTUInfo::InvalidValueType::null,
                                       unsafeUsage,
                                       callsMap,
                                       "Dereferencing argument ARG that is null",

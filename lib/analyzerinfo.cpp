@@ -44,22 +44,18 @@ static std::string getFilename(const std::string &fullpath)
     return fullpath.substr(pos1,pos2);
 }
 
-void AnalyzerInformation::writeFilesTxt(const std::string &buildDir, const std::list<std::string> &sourcefiles)
+void AnalyzerInformation::createCTUs(const std::string &buildDir, const std::map<std::string, std::size_t>& sourcefiles)
 {
     std::map<std::string, unsigned int> fileCount;
 
     const std::string filesTxt(buildDir + "/files.txt");
     std::ofstream fout(filesTxt);
-    for (const std::string &f : sourcefiles) {
-        const std::string afile = getFilename(f);
-        fout << afile << ".a" << (++fileCount[afile]) << "::" << Path::simplifyPath(Path::fromNativeSeparators(f)) << '\n';
+    for (auto it = sourcefiles.cbegin(); it != sourcefiles.cend(); ++it) {
+        const std::string afile = getFilename(it->first) + ".a" + std::to_string(++fileCount[it->first]);
+        fout << afile << "::" << Path::simplifyPath(Path::fromNativeSeparators(it->first)) << '\n';
+
+        mFileInfo.emplace_back(it->first, it->second, afile);
     }
-
-    std::ofstream fc(buildDir + "/__temp__.c");
-    fc << "int x;\n";
-
-    std::ofstream fcpp(buildDir + "/__temp__.cpp");
-    fcpp << "int x;\n";
 }
 
 void AnalyzerInformation::close()
@@ -150,10 +146,4 @@ void AnalyzerInformation::reportErr(const ErrorMessage &msg, bool /*verbose*/)
 {
     if (mOutputStream.is_open())
         mOutputStream << msg.toXML() << '\n';
-}
-
-void AnalyzerInformation::setFileInfo(const std::string &check, const std::string &fileInfo)
-{
-    if (mOutputStream.is_open() && !fileInfo.empty())
-        mOutputStream << "  <FileInfo check=\"" << check << "\">\n" << fileInfo << "  </FileInfo>\n";
 }

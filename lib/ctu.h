@@ -36,11 +36,11 @@ class Function;
 
 /** @brief Whole program analysis (ctu=Cross Translation Unit) */
 namespace CTU {
-    class CPPCHECKLIB FileInfo : public Check::FileInfo {
+    class CPPCHECKLIB CTUInfo {
     public:
         enum class InvalidValueType { null, uninit, bufferOverflow };
 
-        std::string toString() const override;
+        std::string toString() const;
 
         struct Location {
             Location() = default;
@@ -110,6 +110,20 @@ namespace CTU {
             unsigned int myArgNr;
         };
 
+        CTUInfo(const std::string& sourcefile_, std::size_t filesize_, const std::string& analyzerfile_)
+            : sourcefile(sourcefile_)
+            , analyzerfile(analyzerfile_)
+            , filesize(filesize_) {
+        }
+        ~CTUInfo();
+        void addCheckInfo(const std::string& check, Check::FileInfo* fileInfo);
+        void CTU::CTUInfo::parseTokens(const Tokenizer* tokenizer);
+        Check::FileInfo* getCheckInfo(const std::string& check) const;
+
+        std::string sourcefile;
+        std::string analyzerfile;
+        std::size_t filesize;
+
         std::list<FunctionCall> functionCalls;
         std::list<NestedCall> nestedCalls;
 
@@ -122,20 +136,19 @@ namespace CTU {
                 const char info[],
                 const FunctionCall * * const functionCallPtr,
                 bool warning) const;
+
+        std::map<std::string, Check::FileInfo*> mCheckInfo;
     };
 
     extern int maxCtuDepth;
 
-    CPPCHECKLIB std::string toString(const std::list<FileInfo::UnsafeUsage> &unsafeUsage);
+    CPPCHECKLIB std::string toString(const std::list<CTUInfo::UnsafeUsage> &unsafeUsage);
 
     CPPCHECKLIB std::string getFunctionId(const Tokenizer *tokenizer, const Function *function);
 
-    /** @brief Parse current TU and extract file info */
-    CPPCHECKLIB FileInfo *getFileInfo(const Tokenizer *tokenizer);
+    CPPCHECKLIB std::list<CTUInfo::UnsafeUsage> getUnsafeUsage(const Tokenizer *tokenizer, const Settings *settings, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *value));
 
-    CPPCHECKLIB std::list<FileInfo::UnsafeUsage> getUnsafeUsage(const Tokenizer *tokenizer, const Settings *settings, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *value));
-
-    CPPCHECKLIB std::list<FileInfo::UnsafeUsage> loadUnsafeUsageListFromXml(const tinyxml2::XMLElement *xmlElement);
+    CPPCHECKLIB std::list<CTUInfo::UnsafeUsage> loadUnsafeUsageListFromXml(const tinyxml2::XMLElement *xmlElement);
 }
 
 /// @}

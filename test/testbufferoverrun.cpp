@@ -17,6 +17,7 @@
  */
 
 
+#include "analyzerinfo.h"
 #include "check.h"
 #include "checkbufferoverrun.h"
 #include "config.h"
@@ -4214,18 +4215,16 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CTU::FileInfo *ctu = CTU::getFileInfo(&tokenizer);
+        // Prepare..
+        CheckBufferOverrun check(&tokenizer, &settings0, this);
+        AnalyzerInformation ai;
+        CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
+        ctu.parseTokens(&tokenizer);
 
         // Check code..
-        std::list<Check::FileInfo*> fileInfo;
-        CheckBufferOverrun check(&tokenizer, &settings0, this);
-        fileInfo.push_back(check.getFileInfo(&tokenizer, &settings0));
-        check.analyseWholeProgram(ctu, fileInfo, settings0, *this);
-        while (!fileInfo.empty()) {
-            delete fileInfo.back();
-            fileInfo.pop_back();
-        }
-        delete ctu;
+        Check::FileInfo *fi = check.getFileInfo(&tokenizer, &settings0);
+        ctu.addCheckInfo(check.name(), fi);
+        check.analyseWholeProgram(&ctu, ai, settings0, *this);
     }
 
     void ctu_malloc() {
