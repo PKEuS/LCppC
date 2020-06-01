@@ -92,6 +92,9 @@ void CheckUnusedFunctions::unusedFunctionError(ErrorLogger * const errorLogger,
 
 Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const
 {
+    if (!settings->severity.isEnabled(Severity::style))
+        return nullptr;
+
     CUF_FileInfo* fi = new CUF_FileInfo;
 
     const std::string& FileName = tokenizer->list.getFiles().front();
@@ -130,7 +133,6 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
         }
         // Multiple files => filename = "+"
         else if (usage.filename != tokenizer->list.getSourceFilePath()) {
-            //func.filename = "+";
             usage.usedOtherFile |= usage.usedSameFile;
         }
     }
@@ -167,7 +169,7 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
                     else if (markupVarToken->next()->str() == "(") {
                         CUF_FileInfo::FunctionUsage& func = fi->mFunctions[markupVarToken->str()];
                         func.filename = tokenizer->list.getSourceFilePath();
-                        if (func.filename.empty() || func.filename == "+")
+                        if (func.filename.empty())
                             func.usedOtherFile = true;
                         else
                             func.usedSameFile = true;
@@ -271,7 +273,7 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
             CUF_FileInfo::FunctionUsage& func = fi->mFunctions[funcname->str()];
             const std::string& called_from_file = tokenizer->list.getSourceFilePath();
 
-            if (func.filename.empty() || func.filename == "+" || func.filename != called_from_file)
+            if (func.filename.empty() || func.filename != called_from_file)
                 func.usedOtherFile = true;
             else
                 func.usedSameFile = true;
@@ -282,6 +284,9 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
 
 bool CheckUnusedFunctions::analyseWholeProgram(const CTU::FileInfo* ctu, const std::list<Check::FileInfo*>& fileInfo, const Settings& settings, ErrorLogger& errorLogger)
 {
+    if (!settings.severity.isEnabled(Severity::style))
+        return false;
+
     bool errors = false;
     for (auto it = fileInfo.cbegin(); it != fileInfo.cend(); ++it) {
         CUF_FileInfo* fi = dynamic_cast<CUF_FileInfo*>(*it);
@@ -315,10 +320,7 @@ bool CheckUnusedFunctions::analyseWholeProgram(const CTU::FileInfo* ctu, const s
             if (!func.usedSameFile) {
                 if (it2->second.isOperator)
                     continue;
-                std::string filename;
-                if (func.filename != "+")
-                    filename = func.filename;
-                unusedFunctionError(&errorLogger, filename, func.lineNumber, it2->first);
+                unusedFunctionError(&errorLogger, func.filename, func.lineNumber, it2->first);
                 errors = true;
             } else {
                 /** @todo add error message "function is only used in <file> it can be static" */
