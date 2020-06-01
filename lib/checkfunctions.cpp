@@ -141,7 +141,7 @@ void CheckFunctions::invalidFunctionUsage()
     }
 }
 
-void CheckFunctions::invalidFunctionArgError(const Token *tok, const std::string &functionName, int argnr, const ValueFlow::Value *invalidValue, const std::string &validstr)
+void CheckFunctions::invalidFunctionArgError(const Token *tok, const std::string &functionName, std::size_t argnr, const ValueFlow::Value *invalidValue, const std::string &validstr)
 {
     std::ostringstream errmsg;
     errmsg << "$symbol:" << functionName << '\n';

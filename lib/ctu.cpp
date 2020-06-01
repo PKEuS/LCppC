@@ -169,7 +169,7 @@ static std::string readAttrString(const tinyxml2::XMLElement *e, const char *att
     return value ? value : "";
 }
 
-static long long readAttrInt(const tinyxml2::XMLElement *e, const char *attr, bool *error)
+static int readAttrInt(const tinyxml2::XMLElement *e, const char *attr, bool *error)
 {
     const char *value = e->Attribute(attr);
     if (!value && error)
@@ -268,7 +268,7 @@ std::list<CTU::CTUInfo::UnsafeUsage> CTU::loadUnsafeUsageListFromXml(const tinyx
     return ret;
 }
 
-static int isCallFunction(const Scope *scope, int argnr, const Token **tok)
+static int isCallFunction(const Scope *scope, std::size_t argnr, const Token **tok)
 {
     const Variable * const argvar = scope->function->getArgumentVar(argnr);
     if (!argvar->isPointer())
@@ -409,7 +409,7 @@ void CTU::CTUInfo::parseTokens(const Tokenizer *tokenizer)
     }
 }
 
-static std::list<std::pair<const Token *, MathLib::bigint>> getUnsafeFunction(const Tokenizer *tokenizer, const Settings *settings, const Scope *scope, int argnr, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *value))
+static std::list<std::pair<const Token *, MathLib::bigint>> getUnsafeFunction(const Tokenizer *tokenizer, const Settings *settings, const Scope *scope, std::size_t argnr, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *value))
 {
     std::list<std::pair<const Token *, MathLib::bigint>> ret;
     const Variable * const argvar = scope->function->getArgumentVar(argnr);
@@ -455,7 +455,7 @@ std::list<CTU::CTUInfo::UnsafeUsage> CTU::getUnsafeUsage(const Tokenizer *tokeni
             for (const std::pair<const Token *, MathLib::bigint> &v : getUnsafeFunction(tokenizer, settings, &scope, argnr, check, isUnsafeUsage)) {
                 const Token *tok = v.first;
                 MathLib::bigint value = v.second;
-                unsafeUsage.emplace_back(CTU::getFunctionId(tokenizer, function), argnr+1, tok->str(), CTU::CTUInfo::Location(tokenizer,tok), value);
+                unsafeUsage.emplace_back(CTU::getFunctionId(tokenizer, function), static_cast<unsigned int>(argnr+1), tok->str(), CTU::CTUInfo::Location(tokenizer,tok), value);
             }
         }
     }

@@ -105,7 +105,7 @@ public:
     void checkLibraryMatchFunctions();
 
 private:
-    void invalidFunctionArgError(const Token *tok, const std::string &functionName, int argnr, const ValueFlow::Value *invalidValue, const std::string &validstr);
+    void invalidFunctionArgError(const Token *tok, const std::string &functionName, std::size_t argnr, const ValueFlow::Value *invalidValue, const std::string &validstr);
     void invalidFunctionArgBoolError(const Token *tok, const std::string &functionName, int argnr);
     void invalidFunctionArgStrError(const Token *tok, const std::string &functionName, unsigned int argnr);
     void ignoredReturnValueError(const Token* tok, const std::string& function);

@@ -316,7 +316,7 @@ static ValueFlow::Value castValue(ValueFlow::Value value, const ValueType::Sign 
     if (value.isFloatValue()) {
         value.valueType = ValueFlow::Value::INT;
         if (value.floatValue >= std::numeric_limits<int>::min() && value.floatValue <= std::numeric_limits<int>::max()) {
-            value.intvalue = value.floatValue;
+            value.intvalue = static_cast<long long>(value.floatValue);
         } else { // don't perform UB
             value.intvalue = 0;
         }
@@ -3849,7 +3849,7 @@ static std::list<ValueFlow::Value> truncateValues(std::list<ValueFlow::Value> va
 
     for (ValueFlow::Value &value : values) {
         if (value.isFloatValue()) {
-            value.intvalue = value.floatValue;
+            value.intvalue = static_cast<long long>(value.floatValue);
             value.valueType = ValueFlow::Value::INT;
         }
 
