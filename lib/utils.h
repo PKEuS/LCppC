@@ -106,18 +106,4 @@ CPPCHECKLIB bool matchglob(const std::string& pattern, const std::string& name);
 
 #define UNUSED(x) (void)(x)
 
-#if defined(__has_feature)
-#if __has_feature(address_sanitizer)
-#define ASAN 1
-#endif
-#endif
-
-#ifndef ASAN
-#ifdef  __SANITIZE_ADDRESS__
-#define ASAN 1
-#else
-#define ASAN 0
-#endif
-#endif
-
 #endif
