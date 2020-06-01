@@ -306,11 +306,6 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, s
         }
     }
 
-    if (plistFile.is_open()) {
-        plistFile << ErrorLogger::plistFooter();
-        plistFile.close();
-    }
-
     CheckUnusedFunctions checkUnusedFunctions(nullptr, nullptr, nullptr);
 
     try {
@@ -356,17 +351,6 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, s
 
         if (!preprocessor.loadFiles(tokens1, files))
             return mExitCode;
-
-        if (!mSettings.plistOutput.empty()) {
-            std::string filename2;
-            if (ctu->sourcefile.find('/') != std::string::npos)
-                filename2 = ctu->sourcefile.substr(ctu->sourcefile.rfind('/') + 1);
-            else
-                filename2 = ctu->sourcefile;
-            filename2 = mSettings.plistOutput + filename2.substr(0, filename2.find('.')) + ".plist";
-            plistFile.open(filename2);
-            plistFile << ErrorLogger::plistHeader(version(), files);
-        }
 
         // write dump file xml prolog
         std::ofstream fdump;
@@ -1166,9 +1150,6 @@ void CppCheck::reportErr(const ErrorMessage &msg)
     mErrorLogger.reportErr(msg);
     /// TODO
     ///mAnalyzerInformation.reportErr(msg, mSettings.verbose);
-    if (!mSettings.plistOutput.empty() && plistFile.is_open()) {
-        plistFile << ErrorLogger::plistData(msg);
-    }
 }
 
 void CppCheck::reportOut(const std::string &outmsg)

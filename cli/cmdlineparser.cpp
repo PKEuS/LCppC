@@ -653,15 +653,6 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                 }
             }
 
-            // Write results in results.plist
-            else if (std::strncmp(argv[i], "--plist-output=", 15) == 0) {
-                mSettings->plistOutput = Path::simplifyPath(Path::fromNativeSeparators(argv[i] + 15));
-                if (mSettings->plistOutput.empty())
-                    mSettings->plistOutput = "./";
-                else if (!endsWith(mSettings->plistOutput,'/'))
-                    mSettings->plistOutput += '/';
-            }
-
             // Output relative paths
             else if (std::strcmp(argv[i], "-rp") == 0 || std::strcmp(argv[i], "--relative-paths") == 0)
                 mSettings->relativePaths = true;
@@ -1124,8 +1115,6 @@ void CmdLineParser::printHelp()
               "                                 further assumptions.\n"
               "                          * unspecified\n"
               "                                 Unknown type sizes\n"
-              "    --plist-output=<path>\n"
-              "                         Generate Clang-plist output files in folder.\n"
               "    -rp, --relative-paths\n"
               "    -rp=<paths>, --relative-paths=<paths>\n"
               "                         Use relative paths in output. When given, <paths> are\n"

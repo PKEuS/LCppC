@@ -242,9 +242,6 @@ public:
     /** @brief write results (--output-file=&lt;file&gt;) */
     std::string outputFile;
 
-    /** @brief plist output (--plist-output=&lt;dir&gt;) */
-    std::string plistOutput;
-
     /** @brief Using -E for debugging purposes */
     bool preprocessOnly;
 

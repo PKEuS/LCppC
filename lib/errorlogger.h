@@ -26,7 +26,6 @@
 #include "suppressions.h"
 
 #include <cstddef>
-#include <fstream>
 #include <list>
 #include <string>
 #include <utility>
@@ -244,15 +243,9 @@ private:
  */
 class CPPCHECKLIB ErrorLogger {
 protected:
-    std::ofstream plistFile;
 public:
     ErrorLogger() { }
-    virtual ~ErrorLogger() {
-        if (plistFile.is_open()) {
-            plistFile << ErrorLogger::plistFooter();
-            plistFile.close();
-        }
-    }
+    virtual ~ErrorLogger() {}
 
     /**
      * Information about progress is directed here.
@@ -305,14 +298,6 @@ public:
      * @return The output string containing XML entities
      */
     static std::string toxml(const std::string &str);
-
-    static std::string plistHeader(const std::string &version, const std::vector<std::string> &files);
-    static std::string plistData(const ErrorMessage &msg);
-    static const char *plistFooter() {
-        return " </array>\r\n"
-               "</dict>\r\n"
-               "</plist>";
-    }
 };
 
 /** Replace substring. Example replaceStr("1,NR,3", "NR", "2") => "1,2,3" */
