@@ -42,7 +42,7 @@
 #include <stdexcept>
 #include <vector>
 #include <memory>
-#include <iostream> // <- TEMPORARY
+#include <fstream> // <- TEMPORARY
 #include <cstdio>
 
 #ifdef HAVE_RULES

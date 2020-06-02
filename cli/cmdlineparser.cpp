@@ -26,7 +26,6 @@
 #include "settings.h"
 #include "standards.h"
 #include "suppressions.h"
-#include "threadexecutor.h" // Threading model
 #include "timer.h"
 #include "utils.h"
 
@@ -34,6 +33,7 @@
 #include <cstdio>
 #include <cstdlib> // EXIT_FAILURE
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <list>
 #include <set>
