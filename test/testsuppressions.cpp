@@ -194,7 +194,8 @@ private:
 
         unsigned int exitCode = 0;
         for (std::map<std::string, std::string>::const_iterator file = files.begin(); file != files.end(); ++file) {
-            exitCode |= cppCheck.check(file->first, file->second);
+            CTU::CTUInfo ctu(file->first, 0, emptyString);
+            exitCode |= cppCheck.check(&ctu, file->second);
         }
         //if (suppression == "unusedFunction" && cppCheck.analyseWholeProgram())
         //    exitCode |= settings.exitCode;
@@ -635,7 +636,8 @@ private:
         settings.exitCode = 1;
 
         const char code[] = "int f() { int a; return a; }";
-        ASSERT_EQUALS(0, cppCheck.check("test.c", code)); // <- no unsuppressed error is seen
+        CTU::CTUInfo ctu("test.c", 0, emptyString);
+        ASSERT_EQUALS(0, cppCheck.check(&ctu, code)); // <- no unsuppressed error is seen
         ASSERT_EQUALS("[test.c:1]: (error) Uninitialized variable: a\n", errout.str()); // <- report error so ThreadExecutor can suppress it and make sure the global suppression is matched.
     }
 
@@ -678,7 +680,8 @@ private:
             "    // cppcheck-suppress unusedStructMember\n"
             "    int y;\n"
             "};";
-        cppCheck.check("/somewhere/test.cpp", code);
+        CTU::CTUInfo ctu("/somewhere/test.cpp", 0, emptyString);
+        cppCheck.check(&ctu, code);
         ASSERT_EQUALS("",errout.str());
     }
 

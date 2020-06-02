@@ -236,6 +236,7 @@ CppCheck::CppCheck(ErrorLogger &errorLogger,
                    std::function<bool(std::string,std::vector<std::string>,std::string,std::string*)> executeCommand)
     : mSettings(settings)
     , mErrorLogger(errorLogger)
+    , mCTU(nullptr)
     , mExitCode(0)
     , mSuppressInternalErrorFound(false)
     , mUseGlobalSuppressions(useGlobalSuppressions)
@@ -262,18 +263,18 @@ const char * CppCheck::extraVersion()
 unsigned int CppCheck::check(CTU::CTUInfo* ctu)
 {
     std::ifstream fin(ctu->sourcefile);
-    return checkCTU(ctu, emptyString, fin);
+    return checkCTU(ctu, fin);
 }
 
-unsigned int CppCheck::check(const std::string &path, const std::string &content)
+unsigned int CppCheck::check(CTU::CTUInfo* ctu, const std::string &content)
 {
-    CTU::CTUInfo ctu(Path::simplifyPath(path), content.size(), emptyString);
     std::istringstream iss(content);
-    return checkCTU(&ctu, emptyString, iss);
+    return checkCTU(ctu, iss);
 }
 
-unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, std::istream& fileStream)
+unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
 {
+    mCTU = ctu;
     mExitCode = 0;
     mSuppressInternalErrorFound = false;
 
@@ -287,7 +288,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, s
     if (mSettings.output.isEnabled(Output::status)) {
         std::string fixedpath = Path::simplifyPath(ctu->sourcefile);
         fixedpath = Path::toNativeSeparators(fixedpath);
-        mErrorLogger.reportOut(std::string("Checking ") + fixedpath + ' ' + cfgname + std::string("..."));
+        mErrorLogger.reportOut(std::string("Checking ") + fixedpath + std::string("..."));
 
         if (mSettings.verbose) {
             mErrorLogger.reportOut("Defines:" + mSettings.userDefines);
@@ -305,8 +306,6 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, s
             mErrorLogger.reportOut(std::string("Platform:") + mSettings.platformString());
         }
     }
-
-    CheckUnusedFunctions checkUnusedFunctions(nullptr, nullptr, nullptr);
 
     try {
         Preprocessor preprocessor(mSettings, this);
@@ -359,7 +358,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, s
             if (!mSettings.dumpFile.empty())
                 dumpFile = mSettings.dumpFile;
             else if (!mSettings.dump && !mSettings.buildDir.empty())
-                dumpFile = AnalyzerInformation::getAnalyzerInfoFile(mSettings.buildDir, ctu->sourcefile, "") + ".dump";
+                dumpFile = ctu->analyzerfile + ".dump";
             else
                 dumpFile = ctu->sourcefile + ".dump";
 
@@ -408,17 +407,13 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, s
             toolinfo << mSettings.userDefines;
             mSettings.nomsg.dump(toolinfo);
 
-            /// TODO
-            /*// Calculate checksum so it can be compared with old checksum / future checksums
-            const unsigned int checksum = preprocessor.calculateChecksum(tokens1, toolinfo.str());
-            std::list<ErrorMessage> errors;
-            if (!mAnalyzerInformation.analyzeFile(mSettings.buildDir, filename, cfgname, checksum, &errors)) {
-                while (!errors.empty()) {
-                    reportErr(errors.front());
-                    errors.pop_front();
-                }
+            // Calculate checksum so it can be compared with old checksum / future checksums
+            const uint32_t checksum = preprocessor.calculateChecksum(tokens1, toolinfo.str());
+            if (ctu->tryLoadFromFile(checksum)) {
+                for (auto it = ctu->mErrors.cbegin(); it != ctu->mErrors.cend(); ++it)
+                    reportErr(*it);
                 return mExitCode;  // known results => no need to reanalyze file
-            }*/
+            }
         }
 
         // Get directives
@@ -468,7 +463,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, s
             }
         }
 
-        std::set<unsigned long long> checksums;
+        std::set<uint64_t> checksums;
         unsigned int checkCount = 0;
         bool hasValidConfig = false;
         std::list<std::string> configurationError;
@@ -565,7 +560,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, s
 
                 // Skip if we already met the same simplified token list
                 if (mSettings.force || mSettings.maxConfigs > 1) {
-                    const unsigned long long checksum = mTokenizer.list.calculateChecksum();
+                    const uint64_t checksum = mTokenizer.list.calculateChecksum();
                     if (checksums.find(checksum) != checksums.end()) {
                         if (mSettings.debugwarnings)
                             purgedConfigurationMessage(ctu->sourcefile, mCurrentConfig);
@@ -575,7 +570,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, s
                 }
 
                 // Check normal tokens
-                checkNormalTokens(mTokenizer, ctu);
+                checkNormalTokens(mTokenizer);
 
             } catch (const simplecpp::Output &o) {
                 // #error etc during preprocessing
@@ -680,6 +675,8 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, s
             std::remove(dumpFile.c_str());
         }
 
+        if (!mSettings.buildDir.empty())
+            ctu->writeFile();
     } catch (const std::runtime_error &e) {
         internalError(ctu->sourcefile, e.what());
     } catch (const std::bad_alloc &e) {
@@ -688,9 +685,6 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, s
         internalError(ctu->sourcefile, e.errorMessage);
         mExitCode=1; // e.g. reflect a syntax error
     }
-
-    /// TODO
-    //mAnalyzerInformation.close();
 
     // In jointSuppressionReport mode, unmatched suppressions are
     // collected after all files are processed
@@ -739,13 +733,13 @@ void CppCheck::checkRawTokens(const Tokenizer &tokenizer)
 // CppCheck - A function that checks a normal token list
 //---------------------------------------------------------------------------
 
-void CppCheck::checkNormalTokens(const Tokenizer &tokenizer, CTU::CTUInfo* ctu)
+void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
 {
     // Analyse the tokens..
     for (const Check *check : Check::instances()) {
         Check::FileInfo *fi = check->getFileInfo(&tokenizer, &mSettings);
         if (fi != nullptr)
-            ctu->addCheckInfo(check->name(), fi);
+            mCTU->addCheckInfo(check->name(), fi);
     }
 
     // call all "runChecks" in all registered Check classes
@@ -1148,8 +1142,8 @@ void CppCheck::reportErr(const ErrorMessage &msg)
     mErrorList.push_back(errmsg);
 
     mErrorLogger.reportErr(msg);
-    /// TODO
-    ///mAnalyzerInformation.reportErr(msg, mSettings.verbose);
+    if (mCTU)
+        mCTU->reportErr(msg);
 }
 
 void CppCheck::reportOut(const std::string &outmsg)

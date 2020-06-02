@@ -52,7 +52,7 @@ unsigned int ThreadExecutor::check()
 {
     mItNextCTU = mCTUs.begin();
 
-    std::size_t jobs = mSettings.jobs;
+    unsigned int jobs = mSettings.jobs;
     if (jobs == 0)
         jobs = std::thread::hardware_concurrency();
 
@@ -97,9 +97,9 @@ void ThreadExecutor::threadProc()
         mFileSync.unlock();
 
         const std::map<std::string, std::string>::const_iterator fileContent = mFileContents.find(ctu->sourcefile);
-        if (fileContent != mFileContents.end()) {
+        if (fileContent != mFileContents.cend()) {
             // File content was given as a string
-            mResult += fileChecker.check(ctu->sourcefile, fileContent->second);
+            mResult += fileChecker.check(ctu, fileContent->second);
         } else {
             // Read file from a file
             mResult += fileChecker.check(ctu);

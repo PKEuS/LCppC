@@ -69,7 +69,7 @@ public:
     /**
       * @brief Check the file.
       * This function checks one given file for errors.
-      * @param path Path to the file to check.
+      * @param ctu CTU to be checked.
       * @return amount of errors found or 0 if none were found.
       * @note You must set settings before calling this function (by calling
       *  settings()).
@@ -81,13 +81,13 @@ public:
       * This function checks one "virtual" file. The file is not read from
       * the disk but the content is given in @p content. In errors the @p path
       * is used as a filename.
-      * @param path Path to the file to check.
+      * @param ctu CTU to be checked.
       * @param content File content as a string.
       * @return amount of errors found or 0 if none were found.
       * @note You must set settings before calling this function (by calling
       *  settings()).
       */
-    unsigned int check(const std::string &path, const std::string &content);
+    unsigned int check(CTU::CTUInfo* ctu, const std::string &content);
 
     /**
      * @brief Get reference to current settings.
@@ -144,12 +144,11 @@ private:
 
     /**
      * @brief Check a file using stream
-     * @param filename file name
-     * @param cfgname  cfg name
+     * @param ctu compile time unit
      * @param fileStream stream the file content can be read from
      * @return number of errors found
      */
-    unsigned int checkCTU(CTU::CTUInfo* ctu, const std::string &cfgname, std::istream& fileStream);
+    unsigned int checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream);
 
     /**
      * @brief Check raw tokens
@@ -161,7 +160,7 @@ private:
      * @brief Check normal tokens
      * @param tokenizer tokenizer instance
      */
-    void checkNormalTokens(const Tokenizer &tokenizer, CTU::CTUInfo* ctu);
+    void checkNormalTokens(const Tokenizer &tokenizer);
 
     /**
      * @brief Execute rules, if any
@@ -197,6 +196,8 @@ private:
     void reportInfo(const ErrorMessage &msg) override;
 
     ErrorLogger &mErrorLogger;
+
+    CTU::CTUInfo* mCTU;
 
     /** @brief Current preprocessor configuration */
     std::string mCurrentConfig;

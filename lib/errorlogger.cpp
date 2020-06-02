@@ -448,6 +448,48 @@ std::string ErrorMessage::toXML() const
     return printer.CStr();
 }
 
+tinyxml2::XMLElement* ErrorMessage::toXMLElement(tinyxml2::XMLDocument* const doc) const
+{
+    tinyxml2::XMLElement* errmsg = doc->NewElement("error");
+    errmsg->SetAttribute("id", id.c_str());
+    errmsg->SetAttribute("severity", Severity::toString(severity).c_str());
+    errmsg->SetAttribute("msg", fixInvalidChars(mShortMessage).c_str());
+    errmsg->SetAttribute("verbose", fixInvalidChars(mVerboseMessage).c_str());
+    if (cwe.id)
+        errmsg->SetAttribute("cwe", cwe.id);
+    if (certainty == Certainty::inconclusive)
+        errmsg->SetAttribute("certainty", "inconclusive");
+    else if (certainty == Certainty::experimental)
+        errmsg->SetAttribute("certainty", "experimental");
+
+    for (std::list<FileLocation>::const_reverse_iterator it = callStack.rbegin(); it != callStack.rend(); ++it) {
+        tinyxml2::XMLElement* location = doc->NewElement("location");
+        if (!file0.empty() && (*it).getfile() != file0)
+            location->SetAttribute("file0", Path::toNativeSeparators(file0).c_str());
+        location->SetAttribute("file", (*it).getfile().c_str());
+        location->SetAttribute("line", std::max((*it).line, 0));
+        location->SetAttribute("column", (*it).column);
+        if (!it->getinfo().empty())
+            location->SetAttribute("info", fixInvalidChars(it->getinfo()).c_str());
+        errmsg->InsertEndChild(location);
+    }
+    for (std::string::size_type pos = 0; pos < mSymbolNames.size();) {
+        const std::string::size_type pos2 = mSymbolNames.find('\n', pos);
+        std::string symbolName;
+        if (pos2 == std::string::npos) {
+            symbolName = mSymbolNames.substr(pos);
+            pos = pos2;
+        } else {
+            symbolName = mSymbolNames.substr(pos, pos2 - pos);
+            pos = pos2 + 1;
+        }
+        tinyxml2::XMLElement* symbol = doc->NewElement("symbol");
+        symbol->SetText(symbolName.c_str());
+        errmsg->InsertEndChild(symbol);
+    }
+    return errmsg;
+}
+
 void ErrorMessage::findAndReplace(std::string &source, const std::string &searchFor, const std::string &replaceWith)
 {
     std::string::size_type index = 0;

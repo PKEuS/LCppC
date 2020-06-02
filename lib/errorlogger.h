@@ -48,6 +48,7 @@ class TokenList;
 
 namespace tinyxml2 {
     class XMLElement;
+    class XMLDocument;
 }
 
 /// @addtogroup Core
@@ -161,6 +162,7 @@ public:
      * Format the error message in XML format
      */
     std::string toXML() const;
+    tinyxml2::XMLElement* toXMLElement(tinyxml2::XMLDocument* const doc) const;
 
     static std::string getXMLHeader();
     static std::string getXMLFooter();

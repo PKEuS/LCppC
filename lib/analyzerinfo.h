@@ -24,8 +24,8 @@
 #include "config.h"
 #include "ctu.h"
 
-#include <fstream>
 #include <list>
+#include <map>
 #include <string>
 
 class ErrorMessage;
@@ -48,18 +48,11 @@ class ErrorMessage;
 */
 class CPPCHECKLIB AnalyzerInformation {
 public:
-    ~AnalyzerInformation();
-
     void createCTUs(const std::string &buildDir, const std::map<std::string, std::size_t>& sourcefiles);
     CTU::CTUInfo& addCTU(const std::string& sourcefile, std::size_t filesize, const std::string& analyzerfile) {
         return mFileInfo.emplace_back(sourcefile, filesize, analyzerfile);
     }
 
-    /** Close current TU.analyzerinfo file */
-    void close();
-    bool analyzeFile(const std::string &buildDir, const std::string &sourcefile, const std::string &cfg, unsigned long long checksum, std::list<ErrorMessage> *errors);
-    void reportErr(const ErrorMessage &msg, bool verbose);
-    static std::string getAnalyzerInfoFile(const std::string &buildDir, const std::string &sourcefile, const std::string &cfg);
     std::list<CTU::CTUInfo>& getCTUs() {
         return mFileInfo;
     }
@@ -67,9 +60,6 @@ public:
 private:
     /** File info used for whole program analysis */
     std::list<CTU::CTUInfo> mFileInfo;
-
-    std::ofstream mOutputStream;
-    std::string mAnalyzerInfoFile;
 };
 
 /// @}

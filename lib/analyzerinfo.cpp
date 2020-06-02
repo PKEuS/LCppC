@@ -20,17 +20,12 @@
 
 #include "errorlogger.h"
 #include "path.h"
-#include "utils.h"
 
-#include <tinyxml2.h>
+#include <cstdio>
 #include <cstring>
 #include <map>
-#include <sstream>
+#include <fstream>
 
-AnalyzerInformation::~AnalyzerInformation()
-{
-    close();
-}
 
 static std::string getFilename(const std::string &fullpath)
 {
@@ -46,104 +41,55 @@ static std::string getFilename(const std::string &fullpath)
 
 void AnalyzerInformation::createCTUs(const std::string &buildDir, const std::map<std::string, std::size_t>& sourcefiles)
 {
-    std::map<std::string, unsigned int> fileCount;
+    if (buildDir.empty()) {
+        for (auto it = sourcefiles.cbegin(); it != sourcefiles.cend(); ++it)
+            mFileInfo.emplace_back(it->first, it->second, emptyString);
+        return;
+    }
 
     const std::string filesTxt(buildDir + "/files.txt");
+    std::map<std::string, unsigned int> fileCount;
+
+    // Read existing files.txt
+    std::map<std::string, std::string> existingFiles;
+    std::ifstream fin(filesTxt);
+    std::string filesTxtLine;
+    while (std::getline(fin, filesTxtLine)) {
+        const std::string::size_type firstColon = filesTxtLine.find(':');
+        if (firstColon == std::string::npos)
+            continue;
+
+        const std::string::size_type lastColon = filesTxtLine.find(':', firstColon+1);
+        if (lastColon == std::string::npos)
+            continue;
+
+        std::string filename = filesTxtLine.substr(0, firstColon);
+        existingFiles[filesTxtLine.substr(lastColon+1)] = filename;
+        ++fileCount[filename.substr(0, filename.rfind('.'))];
+    }
+    fin.close();
+
+    // Create new files.txt
     std::ofstream fout(filesTxt);
     for (auto it = sourcefiles.cbegin(); it != sourcefiles.cend(); ++it) {
-        const std::string afile = getFilename(it->first) + ".a" + std::to_string(++fileCount[it->first]);
-        fout << afile << "::" << Path::simplifyPath(Path::fromNativeSeparators(it->first)) << '\n';
-
-        mFileInfo.emplace_back(it->first, it->second, afile);
-    }
-}
-
-void AnalyzerInformation::close()
-{
-    mAnalyzerInfoFile.clear();
-    if (mOutputStream.is_open()) {
-        mOutputStream << "</analyzerinfo>\n";
-        mOutputStream.close();
-    }
-}
-
-static bool skipAnalysis(const std::string &analyzerInfoFile, unsigned long long checksum, std::list<ErrorMessage> *errors)
-{
-    tinyxml2::XMLDocument doc;
-    const tinyxml2::XMLError error = doc.LoadFile(analyzerInfoFile.c_str());
-    if (error != tinyxml2::XML_SUCCESS)
-        return false;
-
-    const tinyxml2::XMLElement * const rootNode = doc.FirstChildElement();
-    if (rootNode == nullptr)
-        return false;
-
-    const char *attr = rootNode->Attribute("checksum");
-    if (!attr || attr != std::to_string(checksum))
-        return false;
-
-    for (const tinyxml2::XMLElement *e = rootNode->FirstChildElement(); e; e = e->NextSiblingElement()) {
-        if (std::strcmp(e->Name(), "error") == 0)
-            errors->emplace_back(e);
-    }
-
-    return true;
-}
-
-std::string AnalyzerInformation::getAnalyzerInfoFile(const std::string &buildDir, const std::string &sourcefile, const std::string &cfg)
-{
-    const std::string files(buildDir + "/files.txt");
-    std::ifstream fin(files);
-    if (fin.is_open()) {
-        std::string line;
-        const std::string end(':' + cfg + ':' + sourcefile);
-        while (std::getline(fin,line)) {
-            if (line.size() <= end.size() + 2U)
-                continue;
-            if (!endsWith(line, end.c_str(), end.size()))
-                continue;
-            std::ostringstream ostr;
-            ostr << buildDir << '/' << line.substr(0,line.find(':'));
-            return ostr.str();
+        const std::string path = Path::simplifyPath(Path::fromNativeSeparators(it->first));
+        bool existing = existingFiles.find(path) != existingFiles.cend();
+        std::string afile;
+        if (existing) {
+            afile = existingFiles[path];
+            existingFiles.erase(path);
+        } else {
+            const std::string filename = getFilename(it->first);
+            afile = filename + ".a" + std::to_string(++fileCount[filename]);
         }
+
+        fout << afile << "::" << path << '\n';
+        mFileInfo.emplace_back(it->first, it->second, buildDir + '/' + afile);
+        mFileInfo.back().analyzerfileExists = existing;
     }
 
-    std::string filename = Path::fromNativeSeparators(buildDir);
-    if (!endsWith(filename, '/'))
-        filename += '/';
-    const std::string::size_type pos = sourcefile.rfind('/');
-    if (pos == std::string::npos)
-        filename += sourcefile;
-    else
-        filename += sourcefile.substr(pos+1);
-    filename += ".analyzerinfo";
-    return filename;
-}
-
-bool AnalyzerInformation::analyzeFile(const std::string &buildDir, const std::string &sourcefile, const std::string &cfg, unsigned long long checksum, std::list<ErrorMessage> *errors)
-{
-    if (buildDir.empty() || sourcefile.empty())
-        return true;
-    close();
-
-    mAnalyzerInfoFile = AnalyzerInformation::getAnalyzerInfoFile(buildDir,sourcefile,cfg);
-
-    if (skipAnalysis(mAnalyzerInfoFile, checksum, errors))
-        return false;
-
-    mOutputStream.open(mAnalyzerInfoFile);
-    if (mOutputStream.is_open()) {
-        mOutputStream << "<?xml version=\"1.0\"?>\n";
-        mOutputStream << "<analyzerinfo checksum=\"" << checksum << "\">\n";
-    } else {
-        mAnalyzerInfoFile.clear();
+    // Remove stale analyzer files
+    for (auto it = existingFiles.cbegin(); it != existingFiles.cend(); ++it) {
+        std::remove(it->second.c_str());
     }
-
-    return true;
-}
-
-void AnalyzerInformation::reportErr(const ErrorMessage &msg, bool /*verbose*/)
-{
-    if (mOutputStream.is_open())
-        mOutputStream << msg.toXML() << '\n';
 }

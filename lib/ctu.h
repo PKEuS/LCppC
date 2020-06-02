@@ -27,6 +27,7 @@
 #include "valueflow.h"
 
 #include <map>
+#include <list>
 
 class Function;
 
@@ -119,10 +120,17 @@ namespace CTU {
         void addCheckInfo(const std::string& check, Check::FileInfo* fileInfo);
         void CTU::CTUInfo::parseTokens(const Tokenizer* tokenizer);
         Check::FileInfo* getCheckInfo(const std::string& check) const;
+        void reportErr(const ErrorMessage& msg);
+        bool tryLoadFromFile(uint32_t checksum);
+        void writeFile();
 
         std::string sourcefile;
         std::string analyzerfile;
+        bool analyzerfileExists;
         std::size_t filesize;
+        uint32_t mChecksum;
+
+        std::list<ErrorMessage> mErrors;
 
         std::list<FunctionCall> functionCalls;
         std::list<NestedCall> nestedCalls;

@@ -579,3 +579,58 @@ Check::FileInfo* CTU::CTUInfo::getCheckInfo(const std::string& check) const
         return it->second;
     return nullptr;
 }
+
+void CTU::CTUInfo::reportErr(const ErrorMessage& msg)
+{
+    mErrors.push_back(msg);
+}
+
+bool CTU::CTUInfo::tryLoadFromFile(uint32_t checksum)
+{
+    mChecksum = checksum;
+    if (sourcefile.empty() || !analyzerfileExists)
+        return false;
+
+    tinyxml2::XMLDocument doc;
+    const tinyxml2::XMLError error = doc.LoadFile(analyzerfile.c_str());
+    if (error != tinyxml2::XML_SUCCESS)
+        return false;
+
+    const tinyxml2::XMLElement* const rootNode = doc.FirstChildElement();
+    if (rootNode == nullptr)
+        return false;
+
+    const char* attr = rootNode->Attribute("checksum");
+    if (!attr || attr != std::to_string(checksum))
+        return false;
+
+    // Take errors from cache file
+    for (const tinyxml2::XMLElement* e = rootNode->FirstChildElement(); e; e = e->NextSiblingElement()) {
+        if (std::strcmp(e->Name(), "error") == 0)
+            mErrors.emplace_back(e);
+    }
+
+    // Load known information from cache file
+    /// TODO
+    return true;
+}
+
+void CTU::CTUInfo::writeFile()
+{
+    if (sourcefile.empty())
+        return;
+
+    tinyxml2::XMLDocument doc;
+    doc.InsertFirstChild(doc.NewDeclaration());
+
+    tinyxml2::XMLElement* root = doc.NewElement("analyzerinfo");
+    doc.InsertEndChild(root);
+    root->SetAttribute("checksum", mChecksum);
+
+    for (auto e = mErrors.cbegin(); e != mErrors.cend(); ++e) {
+        tinyxml2::XMLElement* error = e->toXMLElement(&doc);
+        root->InsertEndChild(error);
+    }
+
+    doc.SaveFile(analyzerfile.c_str());
+}

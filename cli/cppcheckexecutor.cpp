@@ -181,6 +181,7 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
             return false;
         }
     }
+
     mAnalyzerInformation.createCTUs(settings.buildDir, files);
 
     return true;
