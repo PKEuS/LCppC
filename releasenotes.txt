@@ -1,0 +1,126 @@
+=============================
+Lean Cppcheck - Release Notes
+=============================
+
+Version 1.0 - tbd
+-----------------
+
+This first release of Lean Cppcheck contains lots of breaking changes compared to Cppcheck 2.0.
+Future releases of Lean Cppcheck are expected to be compatible with Lean Cppcheck 1.0.
+
+Breaking Changes (compared to Cppcheck 2.0):
+
+ - The command line interface was changed to offer a consistent and flexible configuration.
+
+    - New options (details see below):
+      --certainty=, --checks=, --severity=, --ouput=
+
+    - Replaced options:
+      --enable=, --inconclusive, -q, --report-progress
+
+    - Removed options:
+       --clang, -l, --project=, --project-configuration=, --plist-output=
+
+    - Default ouput format was changed back to single line messages.
+      This involves that --template= does no longer has a template "cppcheck1",
+      but "cppcheck2" instead to get the message format of official Cppcheck 2.0.
+
+    - Progress and status reports and are disabled by default.
+      This is equivalent to setting -q in Cppcheck. These messages can be enabled
+      again with --output=status,progress.
+
+ - A modern C++ compiler and std::thread support is now required. The code is tested against:
+   Clang 8.0.1, GCC xyz, Visual Studio 2019
+
+
+Removed Features:
+
+ - Clang and Clang-tidy integration.
+
+ - Project files support 
+   This drops the import of foreign project files and cppcheck projects. The latter might be added back in a future release.
+
+ - "Bughunting" mode introduced in Cppcheck 2.0.
+
+ - Capability to output .plist files.
+ 
+ - CMake makefiles were removed.
+
+ - GUI is not maintained in Lean Cppcheck and can not be considered part of this release. It might be added back in a future release.
+   Cppcheck 2.0 GUI is not compatible to Lean Cppcheck.
+
+ - Continouus integration (Travis, Appveyor, IRC bots) is no longer maintained and was removed.
+
+ - xcode project was removed (also in Cppcheck 2.1)
+
+ - Limiting CPU load with -l has been removed (was unix only)
+
+
+New Features:
+
+ - Command line interface received a major upgrade with the following new features:
+
+    - Option groups (--option=) with a flexible syntax to add and remove options.
+
+    - New option --checks= to enable/disable particular checks
+      For example: --checks=-all,UnusedFunction enables only unused function checking
+
+    - New option --severity= to enable/disable checks with given message severities
+      It mostly replaces --enable=, but with consistent behaviour now
+
+    - New option --output= to control type of information displayed
+      For example: --output=progress,status enables progress reports and checking status
+
+    - New option --certainty= replacing --inconclusive, with the additional capability to enable experimental checks
+
+    - Option -j can be used without a number. The number of threads is then determined automatically.
+
+ - New Check: Detect modulo of one (also in Cppcheck 2.1)
+
+
+Improvements:
+
+ - Major reduction of memory consumption when checking large files (also in Cppcheck 2.1)
+
+ - Major performance improvements (mostly also in Cppcheck 2.1)
+
+ - Reimplemented mulithreading support based on std::thread (platform independant)
+
+ - Reimplemented unused function checking: Now compatible with multithreading.
+
+ - Reimplemented whole program analysis and result caching. Both are working fine now.
+ 
+ - Improved accuracy of ValueFlow analysis (also in Cppcheck 2.1)
+
+ - Improved wxwidgets.cfg and windows.cfg (also in Cppcheck 2.1)
+
+
+Bugfixes:
+
+ - Fixed AST in some scenarios (also in Cppcheck 2.1)
+
+ - Unit tests were broken in a subtle way since 2018 (also in Cppcheck 2.1)
+
+ - Lots of other bugs were fixed
+
+
+Improved Build Systems:
+
+ - Makefile (generated with dmake):
+    - Takes parameter DEBUG=yes to compile with debug CXXFLAGS, otherwise create optimized build.
+    - Optimize with -O2 -march=native -mtune=native.
+    - Create debug builds with -Og.
+    - Turned on many warnings again.
+
+ - Visual Studio:
+    - Much faster build due to improved precompiled headers (also in Cppcheck 2.1)
+    - Turned on many warnings again.
+
+
+-----------------------------
+
+
+Cppcheck 2.0 and earlier
+------------------------
+
+- See official Cppcheck project: http://cppcheck.net/

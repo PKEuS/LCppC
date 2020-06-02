@@ -1,8 +1,8 @@
-# **Cppcheck** 
+# **Lean Cppcheck** 
 
-|GitHub Actions|Linux Build Status|Windows Build Status|OSS-Fuzz|Coverity Scan Build Status|License|
-|:-:|:--:|:--:|:--:|:--:|:-:|
-|[![Github Action Status](https://github.com/danmar/cppcheck/workflows/CI/badge.svg)](https://github.com/danmar/cppcheck/actions?query=workflow%3ACI)|[![Linux Build Status](https://img.shields.io/travis/danmar/cppcheck/master.svg?label=Linux%20build)](https://travis-ci.org/danmar/cppcheck)|[![Windows Build Status](https://img.shields.io/appveyor/ci/danmar/cppcheck/master.svg?label=Windows%20build)](https://ci.appveyor.com/project/danmar/cppcheck/branch/master)|[![OSS-Fuzz](https://oss-fuzz-build-logs.storage.googleapis.com/badges/cppcheck.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:cppcheck)|[![Coverity Scan Build Status](https://img.shields.io/coverity/scan/512.svg)](https://scan.coverity.com/projects/512)|[![License](https://img.shields.io/badge/license-GPL3.0-blue.svg)](https://opensource.org/licenses/GPL-3.0) 
+|License|
+|:-:|
+|[![License](https://img.shields.io/badge/license-GPL3.0-blue.svg)](https://opensource.org/licenses/GPL-3.0) 
 
 ## About the name
 
@@ -11,11 +11,11 @@ mature static code analysis tool for C and C++.
 
 ## Manual
 
-A manual (for mainline cppcheck) is available online. It should be mostly compatible with this version: https://cppcheck.sourceforge.net/manual.pdf
+A manual (for mainline cppcheck) is available online. It should be mostly compatible with this Lean Cppcheck: https://cppcheck.sourceforge.net/manual.pdf
 
 ## Compiling
 
-Any C++11 compiler should work. For compilers with partial C++11 support it may work. If your compiler has the C++11 features that are available in Visual Studio 2013 / GCC 4.6 then it will work.
+Any modern C++ compiler should work. If your compiler has the C++11 features that are available in Visual Studio 2019 / GCC 10 then it will work.
 
 To build the GUI, you need Qt.
 
@@ -23,11 +23,10 @@ When building the command line tool, [PCRE](http://www.pcre.org/) is optional. I
 
 There are multiple compilation choices:
 * qmake - cross platform build tool
-* Windows: Visual Studio (VS 2013 and above)
+* Windows: Visual Studio
 * Windows: Qt Creator + mingw
-* gnu make
-* g++ 4.6 (or later)
-* clang++
+* Linux/BSD: GNU Make with g++ or clang++
+* Linux/BSD: gcc++ or clang++ directly
 
 ### qmake
 
@@ -58,6 +57,11 @@ Simple, unoptimized build (no dependencies):
 make
 ```
 
+Debug build:
+
+```shell
+make DEBUG=yes
+
 The recommended release build is:
 
 ```shell
@@ -75,8 +79,8 @@ Flags:
 3.  `HAVE_RULES=yes`
     Enable rules (PCRE is required if this is used)
 
-4.  `CXXFLAGS="-O2 -DNDEBUG -Wall -Wno-sign-compare -Wno-unused-function"`
-    Enables most compiler optimizations, disables cppcheck-internal debugging code and enables basic compiler warnings.
+4.  `DEBUG=yes`
+    Use debug configuration.
 
 ### g++ (for experts)
 

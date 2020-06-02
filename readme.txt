@@ -1,6 +1,6 @@
-===========
-Cppcheck v1
-===========
+=============
+Lean Cppcheck
+=============
 
 
 About
@@ -10,14 +10,13 @@ About
 
 Manual
 
-    A manual (for mainline cppcheck) is available online. It should be mostly compatible with
-    this version: https://cppcheck.sourceforge.net/manual.pdf
+    A manual (for Cppcheck) is available online. It should be mostly compatible with Lean
+    Cppcheck: http://cppcheck.sourceforge.net/manual.pdf
 
 Compiling
 
-    Any C++11 compiler should work. For compilers with partial C++11 support it may work. If
-    your compiler has the C++11 features that are available in Visual Studio 2013 / GCC 4.6
-    then it will work.
+    Any modern C++ compiler should work. If your compiler has the C++11 features that are
+    available in Visual Studio 2019 / GCC 10 then it will work.
 
     To build the GUI, you need Qt.
 
@@ -27,9 +26,8 @@ Compiling
       * qmake - cross platform build tool
       * Windows: Visual Studio
       * Windows: Qt Creator + mingw
-      * gnu make
-      * g++ 4.6 (or later)
-      * clang++
+      * Linux/BSD: GNU Make with g++ or clang++
+      * Linux/BSD: gcc++ or clang++ directly
 
     qmake
     =====
@@ -54,16 +52,20 @@ Compiling
         The PCRE dll is needed to build the CLI. It can be downloaded here:
             http://software-download.name/pcre-library-windows/
 
-    gnu make
+    GNU Make
     ========
         Simple build (no dependencies):
             make
+
+        Debug build:
+            make DEBUG=yes
 
         The recommended release build is:
             make MATCHCOMPILER=yes FILESDIR=/usr/share/cppcheck HAVE_RULES=yes
 
         Flags:
         MATCHCOMPILER=yes               : Python is used to optimise cppcheck at compile time
+        DEBUG=yes                       : Use debug configuration
         FILESDIR=/usr/share/cppcheck    : Specify folder where cppcheck files are installed
         HAVE_RULES=yes                  : Enable rules (pcre is required if this is used)
 
@@ -96,4 +98,4 @@ Cross compiling Win32 (CLI) version of Cppcheck in Linux
 
 Webpage
 
-    https://cppcheck.sourceforge.net/ (webpage of the mainline cppcheck project)
+    http://cppcheck.sourceforge.net/ (webpage of the mainline cppcheck project)
