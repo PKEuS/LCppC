@@ -638,12 +638,12 @@ void simplecpp::TokenList::readfile(std::istream &istr, const std::string &filen
                 currentToken.erase(currentToken.size() - endOfRawString.size(), endOfRawString.size() - 1U);
                 currentToken = escapeString(currentToken);
                 currentToken.insert(0, prefix);
-                back()->setstr(currentToken);
                 location.adjust(currentToken);
                 if (currentToken.find_first_of("\r\n") == std::string::npos)
                     location.col += 2 + 2 * delim.size();
                 else
                     location.col += 1 + delim.size();
+                back()->setstr(std::move(currentToken));
 
                 continue;
             }
@@ -741,7 +741,7 @@ static bool isFloatSuffix(const simplecpp::Token *tok)
 
 void simplecpp::TokenList::combineOperators()
 {
-    std::stack<bool> executableScope;
+    std::stack<bool, std::vector<bool>> executableScope;
     executableScope.push(false);
     for (Token *tok = front(); tok; tok = tok->next) {
         if (tok->op == '{') {
@@ -1371,7 +1371,8 @@ namespace simplecpp {
 
         /** base class for errors */
         struct Error {
-            Error(const Location &loc, const std::string &s) : location(loc), what(s) {}
+            template<typename T>
+            Error(const Location &loc, T&& s) : location(loc), what(s) {}
             Location location;
             std::string what;
         };
@@ -1387,8 +1388,9 @@ namespace simplecpp {
         };
     private:
         /** Create new token where Token::macro is set for replaced tokens */
-        Token *newMacroToken(const TokenString &str, const Location &loc, bool replaced) const {
-            Token *tok = new Token(str,loc);
+        template<typename T>
+        Token *newMacroToken(T&& str, const Location &loc, bool replaced) const {
+            Token *tok = new Token(std::move(str), loc);
             if (replaced)
                 tok->macro = nameTokDef->str();
             return tok;

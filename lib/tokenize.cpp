@@ -7276,7 +7276,7 @@ void Tokenizer::simplifyStructDecl()
     int count = 0;
 
     // Skip simplification of unions in class definition
-    std::stack<bool> skip; // true = in function, false = not in function
+    std::stack<bool, std::vector<bool>> skip; // true = in function, false = not in function
     skip.push(false);
 
     // Add names for anonymous structs

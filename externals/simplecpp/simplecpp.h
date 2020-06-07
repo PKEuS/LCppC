@@ -96,7 +96,8 @@ namespace simplecpp {
      */
     class SIMPLECPP_LIB Token {
     public:
-        Token(const TokenString &s, const Location &loc) :
+        template<typename T>
+        Token(T&& s, const Location &loc) :
             location(loc), previous(NULL), next(NULL), string(s) {
             flags();
         }
@@ -116,7 +117,8 @@ namespace simplecpp {
         const TokenString& str() const {
             return string;
         }
-        void setstr(const std::string &s) {
+        template<typename T>
+        void setstr(T&& s) {
             string = s;
             flags();
         }
