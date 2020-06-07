@@ -120,7 +120,6 @@ private:
         TEST_CASE(simplifyTypedef81); // ticket #2603
         TEST_CASE(simplifyTypedef82); // ticket #2403
         TEST_CASE(simplifyTypedef83); // ticket #2620
-        TEST_CASE(simplifyTypedef84); // ticket #2630
         TEST_CASE(simplifyTypedef85); // ticket #2651
         TEST_CASE(simplifyTypedef86); // ticket #2581
         TEST_CASE(simplifyTypedef87); // ticket #2651
@@ -132,7 +131,6 @@ private:
         TEST_CASE(simplifyTypedef93); // ticket #2738
         TEST_CASE(simplifyTypedef94); // ticket #1982
         TEST_CASE(simplifyTypedef95); // ticket #2844
-        TEST_CASE(simplifyTypedef96); // ticket #2886
         TEST_CASE(simplifyTypedef97); // ticket #2983 (segmentation fault)
         TEST_CASE(simplifyTypedef99); // ticket #2999
         TEST_CASE(simplifyTypedef100); // ticket #3000
@@ -611,7 +609,7 @@ private:
     void simplifyTypedef20() {
         // ticket #1284
         const char code[] = "typedef jobject invoke_t (jobject, Proxy *, Method *, JArray< jobject > *);";
-        ASSERT_EQUALS(";", tok(code));
+        ASSERT_EQUALS("", tok(code));
     }
 
     void simplifyTypedef21() {
@@ -1880,20 +1878,9 @@ private:
         ASSERT_EQUALS(expected, tok(code));
     }
 
-    void simplifyTypedef84() { // ticket #2630 (segmentation fault)
-        const char code1[] = "typedef y x () x";
-        ASSERT_THROW(checkSimplifyTypedef(code1), InternalError);
-
-        const char code2[] = "typedef struct template <>";
-        ASSERT_THROW(checkSimplifyTypedef(code2), InternalError);
-
-        const char code3[] = "typedef ::<>";
-        ASSERT_THROW(checkSimplifyTypedef(code3), InternalError);
-    }
-
     void simplifyTypedef85() { // ticket #2651
         const char code[] = "typedef FOO ((BAR)(void, int, const int, int*));";
-        const char expected[] = ";";
+        const char expected[] = "";
         ASSERT_EQUALS(expected, tok(code));
         ASSERT_EQUALS("", errout.str());
     }
@@ -1917,14 +1904,14 @@ private:
 
     void simplifyTypedef87() { // ticket #2651
         const char code[] = "typedef FOO (*(*BAR)(void, int, const int, int*));";
-        const char expected[] = ";";
+        const char expected[] = "";
         ASSERT_EQUALS(expected, tok(code));
         ASSERT_EQUALS("", errout.str());
     }
 
     void simplifyTypedef88() { // ticket #2675
         const char code[] = "typedef short int (*x)(...);";
-        const char expected[] = ";";
+        const char expected[] = "";
         ASSERT_EQUALS(expected, tok(code));
         ASSERT_EQUALS("", errout.str());
     }
@@ -2124,11 +2111,6 @@ private:
         ASSERT_EQUALS("", errout.str());
     }
 
-    void simplifyTypedef96() { // ticket #2886 (segmentation fault)
-        const char code[] = "typedef struct x { }";
-        ASSERT_THROW(tok(code), InternalError);
-    }
-
     void simplifyTypedef97() { // ticket #2983 (segmentation fault)
         const char code[] = "typedef x y\n"
                             "(A); y";
@@ -2187,7 +2169,7 @@ private:
 
     void simplifyTypedef104() { // ticket #3070
         const char code[] = "typedef int (*in_func) (void FAR *, unsigned char FAR * FAR *);";
-        ASSERT_EQUALS(";", tok(code));
+        ASSERT_EQUALS("", tok(code));
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -2322,7 +2304,7 @@ private:
         // #5614
         const char code5614[]     = "typedef typename T::U V;\n"
                                     "typedef typename T::W (V::*Fn)();\n";
-        const char expected5614[] = ";";
+        const char expected5614[] = "";
         ASSERT_EQUALS(expected5614, tok(code5614));
     }
 

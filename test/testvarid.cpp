@@ -456,7 +456,7 @@ private:
         const std::string actual = tokenize(
                                        "typedef int INT32;\n", "test.c");
 
-        const char expected[] = "1: ;\n";
+        const char expected[] = "1: \n";
 
         ASSERT_EQUALS(expected, actual);
     }

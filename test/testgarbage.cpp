@@ -79,6 +79,7 @@ private:
         TEST_CASE(garbageCode26);
         TEST_CASE(garbageCode27);
         TEST_CASE(garbageCode28);
+        TEST_CASE(garbageCode29); // #2630, #2886
         TEST_CASE(garbageCode30); // #5867
         TEST_CASE(garbageCode31); // #6539
         TEST_CASE(garbageCode33); // #6613
@@ -596,6 +597,16 @@ private:
                   "  int a;\n"
                   "  R1 () : a { }\n"
                   "};\n");
+    }
+
+    void garbageCode29() {
+        // ticket #2630 (segmentation fault)
+        checkCode("typedef y x () x");
+        ASSERT_THROW(checkCode("typedef struct template <>"), InternalError);
+        ASSERT_THROW(checkCode("typedef ::<>"), InternalError);
+
+        // #2886
+        checkCode("typedef struct x { }");
     }
 
     void garbageCode30() {
