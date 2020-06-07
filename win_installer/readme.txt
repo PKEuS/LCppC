@@ -7,7 +7,7 @@ http://wixtoolset.org/
 You'll need:
  - WiX
  - MSBuild (coming with Visual Studio)
- - VS 2015 CRT merge module
+ - VS 2019 CRT merge module
 
 Configuring
 -----------
@@ -32,7 +32,8 @@ Before building the installer make sure all the components are build:
 And that runtime files are available:
   - Qt runtimes:
       Qt5Core.dll, Qt5PrintSupport.dll, Qt5Widgets.dll, Qt5Gui.dll and platforms/qwindows.dll
-  - MS CRT merge module (Microsoft_VC140_CRT_x86.msm or Microsoft_VC140_CRT_x64.msm)
+  - MS CRT merge module (Microsoft_VC142_CRT_x86.msm or Microsoft_VC142_CRT_x64.msm), located in
+      C:\Program Files (x86)\Common Files\Merge Modules
 
 Build installer by giving this command line in VS command prompt (or run
 vcvars32.bat in DOS prompt first to setup environment):

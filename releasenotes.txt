@@ -2,8 +2,8 @@
 Lean Cppcheck - Release Notes
 =============================
 
-Version 1.0 - tbd
------------------
+Version 1.0 - 14th June 2020 (planned)
+----------------------------
 
 This first release of Lean Cppcheck contains lots of breaking changes compared to Cppcheck 2.0.
 Future releases of Lean Cppcheck are expected to be compatible with Lean Cppcheck 1.0.
@@ -75,6 +75,8 @@ New Features:
 
     - Option -j can be used without a number. The number of threads is then determined automatically.
 
+ - New Check: Detect iterator mismatch when inserting/erasing from container (also in Cppcheck 2.1)
+
  - New Check: Detect modulo of one (also in Cppcheck 2.1)
 
 
@@ -82,7 +84,7 @@ Improvements:
 
  - Major reduction of memory consumption when checking large files (also in Cppcheck 2.1)
 
- - Major performance improvements (mostly also in Cppcheck 2.1)
+ - Major performance improvements (partially also in Cppcheck 2.1)
 
  - Reimplemented mulithreading support based on std::thread (platform independant)
 
