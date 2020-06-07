@@ -738,8 +738,9 @@ void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
     // Analyse the tokens..
     for (const Check *check : Check::instances()) {
         Check::FileInfo *fi = check->getFileInfo(&tokenizer, &mSettings);
-        if (fi != nullptr)
+        if (fi != nullptr) {
             mCTU->addCheckInfo(check->name(), fi);
+        }
     }
 
     // call all "runChecks" in all registered Check classes
@@ -1201,7 +1202,7 @@ bool CppCheck::analyseWholeProgram(AnalyzerInformation& analyzerInformation)
         combinedCTU.functionCalls.insert(combinedCTU.functionCalls.end(), it->functionCalls.begin(), it->functionCalls.end());
         combinedCTU.nestedCalls.insert(combinedCTU.nestedCalls.end(), it->nestedCalls.begin(), it->nestedCalls.end());
     }
-    for (Check *check : Check::instances())
-        errors |= check->analyseWholeProgram(&combinedCTU, analyzerInformation, mSettings, *this);  // TODO: ctu*/
+    for (Check* check : Check::instances())
+        errors |= check->analyseWholeProgram(&combinedCTU, analyzerInformation, mSettings, *this);
     return errors && (mExitCode > 0);
 }

@@ -23,8 +23,9 @@
 #include "testsuite.h"
 #include "tokenize.h"
 
-#include <ostream>
+#include <sstream>
 #include <string>
+#include <tinyxml2.h>
 
 class TestUnusedFunctions : public TestFixture {
 public:
@@ -65,6 +66,8 @@ private:
         TEST_CASE(ignore_declaration); // ignore declaration
 
         TEST_CASE(operatorOverload);
+
+        TEST_CASE(buildfile);
     }
 
     void check(const char code[], Settings::PlatformType platform = Settings::Native) {
@@ -491,6 +494,33 @@ private:
               "    return malloc(s);\n"
               "}");
         ASSERT_EQUALS("", errout.str());
+    }
+
+    void buildfile() {
+        // Tokenize..
+        Tokenizer tokenizer(&settings, this);
+        std::istringstream istr(
+            "void foo() {}\n"
+            "void bar() { foo(); }\n"
+            "int main() { foo(); }\n");
+        tokenizer.tokenize(istr, "test.cpp");
+
+        // Prepare..
+        CheckUnusedFunctions check(&tokenizer, &settings, this);
+        AnalyzerInformation ai;
+        CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
+
+        // Check code..
+        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings);
+        tinyxml2::XMLDocument doc;
+        tinyxml2::XMLElement* e = fi1->toXMLElement(&doc);
+        delete fi1;
+
+        Check::FileInfo* fi2 = check.loadFileInfoFromXml(e);
+        ctu.addCheckInfo(check.name(), fi2);
+        check.analyseWholeProgram(nullptr, ai, settings, *this);
+
+        ASSERT_EQUALS("[test.cpp:2]: (style) The function 'bar' is never used.\n", errout.str());
     }
 
 };

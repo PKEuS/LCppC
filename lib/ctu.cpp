@@ -604,14 +604,21 @@ bool CTU::CTUInfo::tryLoadFromFile(uint32_t checksum)
     if (!attr || attr != std::to_string(checksum))
         return false;
 
-    // Take errors from cache file
+    // Take errors and other known information from cache file
     for (const tinyxml2::XMLElement* e = rootNode->FirstChildElement(); e; e = e->NextSiblingElement()) {
         if (std::strcmp(e->Name(), "error") == 0)
             mErrors.emplace_back(e);
+        else {
+            for (Check* check : Check::instances()) {
+                if (check->name() == e->Name()) {
+                    Check::FileInfo* fi = check->loadFileInfoFromXml(e);
+                    addCheckInfo(check->name(), fi);
+                    break;
+                }
+            }
+        }
     }
 
-    // Load known information from cache file
-    /// TODO
     return true;
 }
 
@@ -630,6 +637,12 @@ void CTU::CTUInfo::writeFile()
     for (auto e = mErrors.cbegin(); e != mErrors.cend(); ++e) {
         tinyxml2::XMLElement* error = e->toXMLElement(&doc);
         root->InsertEndChild(error);
+    }
+
+    for (auto ci = mCheckInfo.cbegin(); ci != mCheckInfo.cend(); ++ci) {
+        tinyxml2::XMLElement* checkinfo = ci->second->toXMLElement(&doc);
+        if (checkinfo)
+            root->InsertEndChild(checkinfo);
     }
 
     doc.SaveFile(analyzerfile.c_str());

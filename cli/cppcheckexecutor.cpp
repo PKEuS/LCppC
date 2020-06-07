@@ -89,8 +89,7 @@ CppCheckExecutor::~CppCheckExecutor()
 
 bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* const argv[])
 {
-    Settings& settings = cppcheck->settings();
-    CmdLineParser parser(&settings);
+    CmdLineParser parser(&mSettings);
     const bool success = parser.parseFromArgs(argc, argv);
 
     if (success) {
@@ -120,17 +119,17 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
 
     // Check that all include paths exist
     {
-        for (std::list<std::string>::iterator iter = settings.includePaths.begin();
-             iter != settings.includePaths.end();
+        for (std::list<std::string>::iterator iter = mSettings.includePaths.begin();
+             iter != mSettings.includePaths.end();
             ) {
             const std::string path(Path::toNativeSeparators(*iter));
             if (FileLister::isDirectory(path))
                 ++iter;
             else {
                 // If the include path is not found, warn user and remove the non-existing path from the list.
-                if (settings.severity.isEnabled(Severity::information))
+                if (mSettings.severity.isEnabled(Severity::information))
                     std::cout << "(information) Couldn't find path given by -I '" << path << '\'' << std::endl;
-                iter = settings.includePaths.erase(iter);
+                iter = mSettings.includePaths.erase(iter);
             }
         }
     }
@@ -183,7 +182,7 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
         }
     }
 
-    mAnalyzerInformation.createCTUs(settings.buildDir, files);
+    mAnalyzerInformation.createCTUs(mSettings.buildDir, files);
 
     return true;
 }

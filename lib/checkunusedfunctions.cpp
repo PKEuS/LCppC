@@ -34,7 +34,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
-#include <sstream>
 #include <utility>
 #include <map>
 //---------------------------------------------------------------------------
@@ -68,6 +67,41 @@ public:
     };
 
     std::map<std::string, FunctionUsage> mFunctions;
+
+    void fromXMLElement(const tinyxml2::XMLElement* elem) {
+        for (const tinyxml2::XMLElement* e = elem->FirstChildElement(); e; e = e->NextSiblingElement()) {
+            if (std::strcmp(e->Name(), "function") == 0) {
+                const char* name = e->Attribute("name");
+                if (!name)
+                    continue;
+
+                FunctionUsage& fu = mFunctions[name];
+                const char* filename = e->Attribute("filename");
+                if (filename)
+                    fu.filename = filename;
+                fu.lineNumber = e->UnsignedAttribute("lineNumber");
+                fu.usedSameFile = e->BoolAttribute("usedSameFile");
+                fu.usedOtherFile = e->BoolAttribute("usedOtherFile");
+                fu.isOperator = e->BoolAttribute("isOperator");
+            }
+        }
+    }
+private:
+    tinyxml2::XMLElement* toXMLElement(tinyxml2::XMLDocument* doc) const override {
+        tinyxml2::XMLElement* root = doc->NewElement(instance.name().c_str());
+
+        for (auto fu = mFunctions.cbegin(); fu != mFunctions.cend(); ++fu) {
+            tinyxml2::XMLElement* entry = doc->NewElement("function");
+            entry->SetAttribute("name", fu->first.c_str());
+            entry->SetAttribute("filename", fu->second.filename.c_str());
+            entry->SetAttribute("lineNumber", fu->second.lineNumber);
+            entry->SetAttribute("usedSameFile", fu->second.usedSameFile);
+            entry->SetAttribute("usedOtherFile", fu->second.usedOtherFile);
+            entry->SetAttribute("isOperator", fu->second.isOperator);
+            root->InsertEndChild(entry);
+        }
+        return root;
+    }
 };
 
 
@@ -89,6 +123,13 @@ void CheckUnusedFunctions::unusedFunctionError(ErrorLogger * const errorLogger,
         errorLogger->reportErr(errmsg);
     else
         reportError(errmsg);
+}
+
+Check::FileInfo* CheckUnusedFunctions::loadFileInfoFromXml(const tinyxml2::XMLElement* xmlElement) const
+{
+    CUF_FileInfo* fi = new CUF_FileInfo;
+    fi->fromXMLElement(xmlElement);
+    return fi;
 }
 
 Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const
@@ -141,6 +182,9 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
     // Function usage..
     const Token* lambdaEndToken = nullptr;
     for (const Token* tok = tokenizer->tokens(); tok; tok = tok->next()) {
+
+        if (tok->scope()->type == Scope::eEnum)
+            continue;
 
         if (tok == lambdaEndToken)
             lambdaEndToken = nullptr;
@@ -208,7 +252,7 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
                 propToken = propToken->next();
                 while (propToken && propToken->str() != ")") {
                     const std::string& value = propToken->str();
-                    if (!value.empty()) {
+                    if (!value.empty() && fi->mFunctions.find(value) != fi->mFunctions.end()) {
                         fi->mFunctions[value].usedOtherFile = true;
                         break;
                     }
@@ -234,7 +278,8 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
                 }
                 if (index == argIndex) {
                     value = value.substr(1, value.length() - 2);
-                    fi->mFunctions[value].usedOtherFile = true;
+                    if (fi->mFunctions.find(value) != fi->mFunctions.end())
+                        fi->mFunctions[value].usedOtherFile = true;
                 }
             }
         }
@@ -259,6 +304,9 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
         }
 
         if (!funcname)
+            continue;
+
+        if (!funcname->isName() || funcname->isKeyword())
             continue;
 
         // funcname ( => Assert that the end parentheses isn't followed by {
@@ -335,18 +383,4 @@ bool CheckUnusedFunctions::analyseWholeProgram(const CTU::CTUInfo* ctu, Analyzer
         }
     }
     return errors;
-}
-
-std::string CheckUnusedFunctions::analyzerInfo() const
-{
-    std::ostringstream ret;
-    /*for (const CUF_FileInfo::FunctionDecl &functionDecl : mFunctionDecl) {
-        ret << "    <functiondecl"
-            << " functionName=\"" << ErrorLogger::toxml(functionDecl.functionName) << '\"'
-            << " lineNumber=\"" << functionDecl.lineNumber << "\"/>\n";
-    }
-    for (const std::string &fc : mFunctionCalls) {
-        ret << "    <functioncall functionName=\"" << ErrorLogger::toxml(fc) << "\"/>\n";
-    }*/
-    return ret.str();
 }

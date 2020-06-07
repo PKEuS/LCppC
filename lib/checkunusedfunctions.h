@@ -50,12 +50,12 @@ public:
     /** @brief Parse current TU and extract file info */
     Check::FileInfo *getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const override;
 
+    Check::FileInfo* loadFileInfoFromXml(const tinyxml2::XMLElement* xmlElement) const override;
+
     /** @brief Analyse all file infos for all TU */
     bool analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger) override;
 
 private:
-
-    std::string analyzerInfo() const;
 
     void getErrorMessages(ErrorLogger *errorLogger, const Settings * settings) const override {
         CheckUnusedFunctions c(nullptr, settings, errorLogger);
