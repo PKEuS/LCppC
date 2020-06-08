@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+ 
 #pragma once
 #include "config.h"
 #include "check.h"
@@ -25,3 +25,4 @@
 #include "valueflow.h"
 #include "symboldatabase.h"
 #include "settings.h"
+#include <tinyxml2.h>

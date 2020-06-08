@@ -40,6 +40,10 @@ static std::string objfile(std::string cppfile)
     cppfile.erase(cppfile.rfind('.'));
     return builddir(cppfile + ".o");
 }
+static std::string pchfile(const std::string& cppfile)
+{
+    return (cppfile + ".gch");
+}
 
 static std::string objfiles(const std::vector<std::string> &files)
 {
@@ -113,7 +117,7 @@ static void getDeps(const std::string &filename, std::vector<std::string> &depfi
     }
 }
 
-static void compilefiles(std::ostream &fout, const std::vector<std::string> &files, const std::string &args)
+static void compilefiles(std::ostream &fout, const std::vector<std::string> &files, const std::string &args, bool pch)
 {
     for (const std::string &file : files) {
         bool external(file.compare(0,10,"externals/") == 0);
@@ -123,8 +127,20 @@ static void compilefiles(std::ostream &fout, const std::vector<std::string> &fil
         std::sort(depfiles.begin(), depfiles.end());
         for (const std::string &depfile : depfiles)
             fout << " " << depfile;
-        fout << "\n\t$(CXX) " << args << " $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS)" << (external?" -w":"") << " $(UNDEF_STRICT_ANSI) -c -o " << objfile(file) << " " << builddir(file) << "\n\n";
+        fout << " lib/precompiled.h.gch";
+        fout << "\n\t$(CXX) " << args << " $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) " << (pch?"$(CXXFLAGS_PCH) ":"") << (external?" -w ":"") << "$(UNDEF_STRICT_ANSI) -c -o " << objfile(file) << " " << builddir(file) << "\n\n";
     }
+}
+
+static void compilePCH(std::ostream &fout, const std::string& file, const std::string &args)
+{
+    fout << pchfile(file) << ": ";
+    std::vector<std::string> depfiles;
+    getDeps(file, depfiles);
+    std::sort(depfiles.begin(), depfiles.end());
+    for (const std::string &depfile : depfiles)
+        fout << " " << depfile;
+    fout << "\n\t$(CXX) " << args << " $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH_HEADER) $(UNDEF_STRICT_ANSI) " << file << "\n\n";
 }
 
 static void getCppFiles(std::vector<std::string> &files, const std::string &path, bool recursive)
@@ -311,14 +327,18 @@ int main()
          << "endif # COMSPEC\n"
          << "\n";
 
-    // skip "-D_GLIBCXX_DEBUG" if clang, since it breaks the build
+    // Makefile settings..
+    makeConditionalVariable(fout, "CXXFLAGS", "-std=c++17 -pedantic -Wall -Wextra");
+
     makeConditionalVariable(fout, "CXX", "g++");
+
+    // skip "-D_GLIBCXX_DEBUG" if clang, since it breaks the build
     fout << "ifeq (clang++, $(findstring clang++,$(CXX)))\n"
          << "    CPPCHK_GLIBCXX_DEBUG=\n"
          << "endif\n";
 
-    // Makefile settings..
-    makeConditionalVariable(fout, "CXXFLAGS", "-std=c++17 -pedantic -Wall -Wextra");
+    fout << "CXXFLAGS_PCH_HEADER=-x c++-header\n"
+         << "CXXFLAGS_PCH=-include lib/precompiled.h\n";
 
     // Debug/Release mode
     fout <<
@@ -376,7 +396,7 @@ int main()
     fout << "generate_cfg_tests: tools/generate_cfg_tests.o $(EXTOBJ)\n";
     fout << "\tg++ -isystem externals/tinyxml -o generate_cfg_tests tools/generate_cfg_tests.o $(EXTOBJ)\n";
     fout << "clean:\n";
-    fout << "\trm -f build/*.o lib/*.o cli/*.o test/*.o tools/*.o externals/*/*.o testrunner dmake cppcheck cppcheck.exe cppcheck.1\n\n";
+    fout << "\trm -f build/*.o lib/*.o lib/*.gch cli/*.o test/*.o tools/*.o externals/*/*.o testrunner dmake cppcheck cppcheck.exe cppcheck.1\n\n";
     fout << "man:\tman/cppcheck.1\n\n";
     fout << "man/cppcheck.1:\t$(MAN_SOURCE)\n\n";
     fout << "\t$(XP) $(DB2MAN) $(MAN_SOURCE)\n\n";
@@ -453,11 +473,12 @@ int main()
 
     fout << "\n###### Build\n\n";
 
-    compilefiles(fout, libfiles, "${INCLUDE_FOR_LIB}");
-    compilefiles(fout, clifiles, "${INCLUDE_FOR_CLI}");
-    compilefiles(fout, testfiles, "${INCLUDE_FOR_TEST}");
-    compilefiles(fout, extfiles, "");
-    compilefiles(fout, toolsfiles, "${INCLUDE_FOR_LIB}");
+    compilePCH(fout, "lib/precompiled.h", "${INCLUDE_FOR_LIB}");
+    compilefiles(fout, libfiles, "${INCLUDE_FOR_LIB}", true);
+    compilefiles(fout, clifiles, "${INCLUDE_FOR_CLI}", true);
+    compilefiles(fout, testfiles, "${INCLUDE_FOR_TEST}", true);
+    compilefiles(fout, extfiles, "", false);
+    compilefiles(fout, toolsfiles, "${INCLUDE_FOR_LIB}", true);
 
     return 0;
 }

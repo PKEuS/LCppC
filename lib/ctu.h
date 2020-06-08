@@ -118,7 +118,7 @@ namespace CTU {
         }
         ~CTUInfo();
         void addCheckInfo(const std::string& check, Check::FileInfo* fileInfo);
-        void CTU::CTUInfo::parseTokens(const Tokenizer* tokenizer);
+        void parseTokens(const Tokenizer* tokenizer);
         Check::FileInfo* getCheckInfo(const std::string& check) const;
         void reportErr(const ErrorMessage& msg);
         bool tryLoadFromFile(uint32_t checksum);

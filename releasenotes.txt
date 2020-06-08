@@ -112,6 +112,7 @@ Improved Build Systems:
     - Takes parameter DEBUG=yes to compile with debug CXXFLAGS, otherwise create optimized build.
     - Optimize with -O2 -march=native -mtune=native.
     - Create debug builds with -Og.
+    - Use a precompiled header file
     - Turned on many warnings again.
 
  - Visual Studio:
