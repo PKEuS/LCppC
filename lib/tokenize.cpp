@@ -2395,13 +2395,18 @@ void Tokenizer::createTokens(simplecpp::TokenList&& tokenList)
     list.createTokens(std::move(tokenList));
 }
 
-bool Tokenizer::simplifyTokens1(const std::string &configuration)
+bool Tokenizer::simplifyTokens0(const std::string& configuration)
 {
+    mConfiguration = configuration;
+
     // Fill the map mTypeSize..
     fillTypeSizes();
 
-    mConfiguration = configuration;
+    return simplifyTokenList0();
+}
 
+bool Tokenizer::simplifyTokens1()
+{
     if (!simplifyTokenList1(list.getFiles().front().c_str()))
         return false;
 
@@ -2449,7 +2454,9 @@ bool Tokenizer::tokenize(std::istream &code,
     if (!createTokens(code, FileName))
         return false;
 
-    return simplifyTokens1(configuration);
+    if (!simplifyTokens0(configuration))
+        return false;
+    return simplifyTokens1();
 }
 //---------------------------------------------------------------------------
 
@@ -4171,13 +4178,13 @@ void Tokenizer::sizeofAddParentheses()
     }
 }
 
-bool Tokenizer::simplifyTokenList1(const char FileName[])
+bool Tokenizer::simplifyTokenList0()
 {
     if (Settings::terminated())
         return false;
 
     // if MACRO
-    for (Token *tok = list.front(); tok; tok = tok->next()) {
+    for (Token* tok = list.front(); tok; tok = tok->next()) {
         if (Token::Match(tok, "if|for|while|BOOST_FOREACH %name% (")) {
             if (Token::simpleMatch(tok, "for each")) {
                 // 'for each ( )' -> 'asm ( )'
@@ -4206,24 +4213,15 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
 
     createLinks();
 
+    // remove calling conventions __cdecl, __stdcall..
+    simplifyCallingConvention();
+
     reportUnknownMacros();
 
     simplifyHeaders();
 
     // Remove __asm..
     simplifyAsm();
-
-    // foo < bar < >> => foo < bar < > >
-    if (isCPP())
-        mTemplateSimplifier->fixAngleBrackets();
-
-    // Bail out if code is garbage
-    if (mTimerResults) {
-        Timer t("Tokenizer::tokenize::findGarbageCode", mSettings->showtime, mTimerResults);
-        findGarbageCode();
-    } else {
-        findGarbageCode();
-    }
 
     checkConfiguration();
 
@@ -4237,6 +4235,26 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
                 syntaxError(tok->next());
             }
         }
+    }
+
+    return true;
+}
+
+bool Tokenizer::simplifyTokenList1(const char FileName[])
+{
+    if (Settings::terminated())
+        return false;
+
+    // foo < bar < >> => foo < bar < > >
+    if (isCPP())
+        mTemplateSimplifier->fixAngleBrackets();
+
+    // Bail out if code is garbage
+    if (mTimerResults) {
+        Timer t("Tokenizer::tokenize::findGarbageCode", mSettings->showtime, mTimerResults);
+        findGarbageCode();
+    } else {
+        findGarbageCode();
     }
 
     if (Settings::terminated())
@@ -4346,9 +4364,6 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
 
     if (Settings::terminated())
         return false;
-
-    // remove calling conventions __cdecl, __stdcall..
-    simplifyCallingConvention();
 
     addSemicolonAfterUnknownMacro();
 
@@ -7511,7 +7526,7 @@ void Tokenizer::simplifyAttribute()
                 if (!tok->next()->link()->next())
                     syntaxError(tok);
 
-                if (tok->next()->link()->next()->str() == "void") // __attribute__((destructor)) void func() {}
+                if (tok->next()->link()->next()->str() == "void" && tok->next()->link()->next()->next()) // __attribute__((destructor)) void func() {}
                     tok->next()->link()->next()->next()->isAttributeDestructor(true);
                 else if (tok->next()->link()->next()->str() == ";" && tok->linkAt(-1) && tok->previous()->link()->previous()) // void func() __attribute__((destructor));
                     tok->previous()->link()->previous()->isAttributeDestructor(true);

@@ -113,7 +113,8 @@ public:
     bool createTokens(std::istream &code, const std::string& FileName);
     void createTokens(simplecpp::TokenList&& tokenList);
 
-    bool simplifyTokens1(const std::string &configuration);
+    bool simplifyTokens0(const std::string& configuration);
+    bool simplifyTokens1();
     /**
      * Tokenize code
      * @param code input stream for code, e.g.
@@ -153,6 +154,7 @@ public:
     * @return false if there is an error that requires aborting
     * the checking of this file.
     */
+    bool simplifyTokenList0();
     bool simplifyTokenList1(const char FileName[]);
 
     /**

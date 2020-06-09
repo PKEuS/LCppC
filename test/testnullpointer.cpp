@@ -167,7 +167,8 @@ private:
         // Tokenizer..
         Tokenizer tokenizer(&settings, this);
         tokenizer.createTokens(std::move(tokens2));
-        tokenizer.simplifyTokens1("");
+        tokenizer.simplifyTokens0("");
+        tokenizer.simplifyTokens1();
 
         // Check for null pointer dereferences..
         CheckNullPointer checkNullPointer;

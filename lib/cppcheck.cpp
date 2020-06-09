@@ -463,7 +463,8 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
             }
         }
 
-        std::set<uint64_t> checksums;
+        std::set<uint64_t> checksums0;
+        std::set<uint64_t> checksums1;
         unsigned int checkCount = 0;
         bool hasValidConfig = false;
         std::list<std::string> configurationError;
@@ -540,11 +541,26 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 checkRawTokens(mTokenizer);
 
                 // Simplify tokens into normal form, skip rest of iteration if failed
-                Timer timer2("Tokenizer::simplifyTokens1", mSettings.showtime, &s_timerResults);
-                bool result = mTokenizer.simplifyTokens1(mCurrentConfig);
-                timer2.stop();
-                if (!result)
+                Timer timer2("Tokenizer::simplifyTokens0", mSettings.showtime, &s_timerResults);
+                if (!mTokenizer.simplifyTokens0(mCurrentConfig))
                     continue;
+                timer2.stop();
+
+                // Skip if we already met the same token list
+                if (mSettings.force || mSettings.maxConfigs > 1) {
+                    const uint64_t checksum = mTokenizer.list.calculateChecksum();
+                    if (checksums0.find(checksum) != checksums0.end()) {
+                        if (mSettings.debugwarnings)
+                            purgedConfigurationMessage(ctu->sourcefile, mCurrentConfig);
+                        continue;
+                    }
+                    checksums0.insert(checksum);
+                }
+
+                Timer timer3("Tokenizer::simplifyTokens1", mSettings.showtime, &s_timerResults);
+                if (!mTokenizer.simplifyTokens1())
+                    continue;
+                timer3.stop();
 
                 // dump xml if --dump
                 if ((mSettings.dump || !mSettings.addons.empty()) && fdump.is_open()) {
@@ -561,12 +577,12 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 // Skip if we already met the same simplified token list
                 if (mSettings.force || mSettings.maxConfigs > 1) {
                     const uint64_t checksum = mTokenizer.list.calculateChecksum();
-                    if (checksums.find(checksum) != checksums.end()) {
+                    if (checksums1.find(checksum) != checksums1.end()) {
                         if (mSettings.debugwarnings)
                             purgedConfigurationMessage(ctu->sourcefile, mCurrentConfig);
                         continue;
                     }
-                    checksums.insert(checksum);
+                    checksums1.insert(checksum);
                 }
 
                 // Check normal tokens

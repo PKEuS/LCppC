@@ -139,7 +139,8 @@ private:
         // Tokenizer..
         Tokenizer tokenizer(&settings0, this);
         tokenizer.createTokens(std::move(tokens2));
-        tokenizer.simplifyTokens1("");
+        tokenizer.simplifyTokens0("");
+        tokenizer.simplifyTokens1();
 
         // Run checks..
         CheckCondition checkCondition;
