@@ -114,6 +114,9 @@ struct ForwardTraversal {
             return Progress::Break;
         if (action.isInvalid())
             return Progress::Break;
+        if (action.isWrite() && !action.isRead())
+            // Analysis of this write will continue separately
+            return Progress::Break;
         return Progress::Continue;
     }
 
@@ -296,7 +299,7 @@ struct ForwardTraversal {
                     if (!condTok->hasKnownIntValue()) {
                         if (!analyzer->lowerToPossible())
                             return Progress::Break;
-                    } else if (condTok->values().front().intvalue == !inElse) {
+                    } else if (condTok->values().front().intvalue == inElse) {
                         return Progress::Break;
                     }
                     analyzer->assume(condTok, !inElse, tok);
