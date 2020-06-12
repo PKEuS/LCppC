@@ -58,92 +58,51 @@ CTU::CTUInfo::Location::Location(const Tokenizer *tokenizer, const Token *tok)
 {
 }
 
-std::string CTU::CTUInfo::toString() const
+tinyxml2::XMLElement* CTU::CTUInfo::FunctionCall::toXMLElement(tinyxml2::XMLDocument* doc) const
 {
-    std::ostringstream out;
-
-    // Function calls..
-    for (const CTU::CTUInfo::FunctionCall &functionCall : functionCalls) {
-        out << functionCall.toXmlString();
-    }
-
-    // Nested calls..
-    for (const CTU::CTUInfo::NestedCall &nestedCall : nestedCalls) {
-        out << nestedCall.toXmlString() << "\n";
-    }
-
-    return out.str();
-}
-
-std::string CTU::CTUInfo::CallBase::toBaseXmlString() const
-{
-    std::ostringstream out;
-    out << " " << ATTR_CALL_ID << "=\"" << callId << "\""
-        << " " << ATTR_CALL_FUNCNAME << "=\"" << callFunctionName << "\""
-        << " " << ATTR_CALL_ARGNR << "=\"" << callArgNr << "\""
-        << " " << ATTR_LOC_FILENAME << "=\"" << location.fileName << "\""
-        << " " << ATTR_LOC_LINENR << "=\"" << location.lineNumber << "\""
-        << " " << ATTR_LOC_COLUMN << "=\"" << location.column << "\"";
-    return out.str();
-}
-
-std::string CTU::CTUInfo::FunctionCall::toXmlString() const
-{
-    std::ostringstream out;
-    out << "<function-call"
-        << toBaseXmlString()
-        << " " << ATTR_CALL_ARGEXPR << "=\"" << callArgumentExpression << "\""
-        << " " << ATTR_CALL_ARGVALUETYPE << "=\"" << callValueType << "\""
-        << " " << ATTR_CALL_ARGVALUE << "=\"" << callArgValue << "\"";
+    tinyxml2::XMLElement* entry = doc->NewElement("function-call");
+    entry->SetAttribute(ATTR_CALL_ID, callId.c_str());
+    entry->SetAttribute(ATTR_CALL_FUNCNAME, callFunctionName.c_str());
+    entry->SetAttribute(ATTR_CALL_ARGNR, callArgNr);
+    entry->SetAttribute(ATTR_LOC_FILENAME, location.fileName.c_str());
+    entry->SetAttribute(ATTR_LOC_LINENR, location.lineNumber);
+    entry->SetAttribute(ATTR_LOC_COLUMN, location.column);
+    entry->SetAttribute(ATTR_CALL_ARGEXPR, callArgumentExpression.c_str());
+    entry->SetAttribute(ATTR_MY_ARGNR, callValueType);
+    entry->SetAttribute(ATTR_CALL_ARGVALUE, callArgValue);
     if (warning)
-        out << " " << ATTR_WARNING << "=\"true\"";
-    if (callValuePath.empty())
-        out << "/>";
-    else {
-        out << ">\n";
-        for (const ErrorMessage::FileLocation &loc : callValuePath)
-            out << "  <path"
-                << " " << ATTR_LOC_FILENAME << "=\"" << loc.getfile() << "\""
-                << " " << ATTR_LOC_LINENR << "=\"" << loc.line << "\""
-                << " " << ATTR_LOC_COLUMN << "=\"" << loc.column << "\""
-                << " " << ATTR_INFO << "=\"" << loc.getinfo() << "\"/>\n";
-        out << "</function-call>";
+        entry->SetAttribute(ATTR_WARNING, true);
+
+    for (const ErrorMessage::FileLocation &loc : callValuePath) {
+        tinyxml2::XMLElement* path = doc->NewElement("path");
+        entry->SetAttribute(ATTR_LOC_FILENAME, loc.getfile().c_str());
+        entry->SetAttribute(ATTR_LOC_LINENR, loc.line);
+        entry->SetAttribute(ATTR_LOC_COLUMN, loc.column);
+        entry->SetAttribute(ATTR_INFO, loc.getinfo().c_str());
+        entry->InsertEndChild(path);
     }
-    return out.str();
+    return entry;
 }
 
-std::string CTU::CTUInfo::NestedCall::toXmlString() const
+tinyxml2::XMLElement* CTU::CTUInfo::NestedCall::toXMLElement(tinyxml2::XMLDocument* doc) const
 {
-    std::ostringstream out;
-    out << "<function-call"
-        << toBaseXmlString()
-        << " " << ATTR_MY_ID << "=\"" << myId << "\""
-        << " " << ATTR_MY_ARGNR << "=\"" << myArgNr << "\""
-        << "/>";
-    return out.str();
+    tinyxml2::XMLElement* entry = doc->NewElement("function-call");
+    entry->SetAttribute(ATTR_MY_ID, myId.c_str());
+    entry->SetAttribute(ATTR_MY_ARGNR, myArgNr);
+    return entry;
 }
 
-std::string CTU::CTUInfo::UnsafeUsage::toString() const
+tinyxml2::XMLElement* CTU::CTUInfo::UnsafeUsage::toXMLElement(tinyxml2::XMLDocument* doc) const
 {
-    std::ostringstream out;
-    out << "    <unsafe-usage"
-        << " " << ATTR_MY_ID << "=\"" << myId << '\"'
-        << " " << ATTR_MY_ARGNR << "=\"" << myArgNr << '\"'
-        << " " << ATTR_MY_ARGNAME << "=\"" << myArgumentName << '\"'
-        << " " << ATTR_LOC_FILENAME << "=\"" << location.fileName << '\"'
-        << " " << ATTR_LOC_LINENR << "=\"" << location.lineNumber << '\"'
-        << " " << ATTR_LOC_COLUMN << "=\"" << location.column << '\"'
-        << " " << ATTR_VALUE << "=\"" << value << "\""
-        << "/>\n";
-    return out.str();
-}
-
-std::string CTU::toString(const std::list<CTU::CTUInfo::UnsafeUsage> &unsafeUsage)
-{
-    std::ostringstream ret;
-    for (const CTU::CTUInfo::UnsafeUsage &u : unsafeUsage)
-        ret << u.toString();
-    return ret.str();
+    tinyxml2::XMLElement* entry = doc->NewElement("unsafe-usage");
+    entry->SetAttribute(ATTR_MY_ID, myId.c_str());
+    entry->SetAttribute(ATTR_MY_ARGNR, myArgNr);
+    entry->SetAttribute(ATTR_MY_ARGNAME, myArgumentName.c_str());
+    entry->SetAttribute(ATTR_LOC_FILENAME, location.fileName.c_str());
+    entry->SetAttribute(ATTR_LOC_LINENR, location.lineNumber);
+    entry->SetAttribute(ATTR_LOC_COLUMN, location.column);
+    entry->SetAttribute(ATTR_VALUE, value);
+    return entry;
 }
 
 CTU::CTUInfo::CallBase::CallBase(const Tokenizer *tokenizer, const Token *callToken)

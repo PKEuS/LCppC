@@ -101,9 +101,6 @@ public:
     public:
         FileInfo() {}
         virtual ~FileInfo() {}
-        virtual std::string toString() const {
-            return std::string();
-        }
         virtual tinyxml2::XMLElement* toXMLElement(tinyxml2::XMLDocument* doc) const {
             (void)doc;
             return nullptr;

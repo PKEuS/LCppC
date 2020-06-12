@@ -1390,31 +1390,39 @@ void CheckUninitVar::valueFlowUninit()
     }
 }
 
-std::string CheckUninitVar::MyFileInfo::toString() const
-{
-    return CTU::toString(unsafeUsage);
-}
 
-Check::FileInfo *CheckUninitVar::getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const
-{
-    const CheckUninitVar checker(tokenizer, settings, nullptr);
-    return checker.getFileInfo();
-}
+/* data for multifile checking */
+class CUV_FileInfo : public Check::FileInfo {
+public:
+    /** function arguments that data are unconditionally read */
+    std::list<CTU::CTUInfo::UnsafeUsage> unsafeUsage;
 
-static bool isVariableUsage(const Check *check, const Token *vartok, MathLib::bigint *value)
+    /** Convert MyFileInfo data into xml string */
+    tinyxml2::XMLElement* toXMLElement(tinyxml2::XMLDocument* doc) const override {
+        tinyxml2::XMLElement* root = doc->NewElement(instance.name().c_str());
+
+        for (const CTU::CTUInfo::UnsafeUsage& u : unsafeUsage) {
+            root->InsertEndChild(u.toXMLElement(doc));
+        }
+        return root;
+    }
+};
+
+static bool isVariableUsage(const Check* check, const Token* vartok, MathLib::bigint* value)
 {
     (void)value;
-    const CheckUninitVar *c = dynamic_cast<const CheckUninitVar *>(check);
+    const CheckUninitVar* c = dynamic_cast<const CheckUninitVar*>(check);
     return c && c->isVariableUsage(vartok, true, CheckUninitVar::Alloc::ARRAY);
 }
 
-Check::FileInfo *CheckUninitVar::getFileInfo() const
+Check::FileInfo* CheckUninitVar::getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const
 {
-    const std::list<CTU::CTUInfo::UnsafeUsage> &unsafeUsage = CTU::getUnsafeUsage(mTokenizer, mSettings, this, ::isVariableUsage);
+    CheckUninitVar check(tokenizer, settings, mErrorLogger);
+    const std::list<CTU::CTUInfo::UnsafeUsage>& unsafeUsage = CTU::getUnsafeUsage(tokenizer, settings, &check, ::isVariableUsage);
     if (unsafeUsage.empty())
         return nullptr;
 
-    MyFileInfo *fileInfo = new MyFileInfo;
+    CUV_FileInfo* fileInfo = new CUV_FileInfo;
     fileInfo->unsafeUsage = unsafeUsage;
     return fileInfo;
 }
@@ -1425,7 +1433,7 @@ Check::FileInfo * CheckUninitVar::loadFileInfoFromXml(const tinyxml2::XMLElement
     if (unsafeUsage.empty())
         return nullptr;
 
-    MyFileInfo *fileInfo = new MyFileInfo;
+    CUV_FileInfo*fileInfo = new CUV_FileInfo;
     fileInfo->unsafeUsage = unsafeUsage;
     return fileInfo;
 }
@@ -1440,7 +1448,7 @@ bool CheckUninitVar::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInform
     const std::map<std::string, std::list<const CTU::CTUInfo::CallBase *>> callsMap = ctu->getCallsMap();
 
     for (CTU::CTUInfo& ctui : analyzerInformation.getCTUs()) {
-        const MyFileInfo *fi = dynamic_cast<MyFileInfo*>(ctui.getCheckInfo(name()));
+        const CUV_FileInfo*fi = dynamic_cast<CUV_FileInfo*>(ctui.getCheckInfo(name()));
         if (!fi)
             continue;
         for (const CTU::CTUInfo::UnsafeUsage &unsafeUsage : fi->unsafeUsage) {

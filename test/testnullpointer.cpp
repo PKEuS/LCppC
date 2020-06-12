@@ -27,6 +27,7 @@
 #include "token.h"
 #include "tokenize.h"
 
+#include <tinyxml2.h>
 #include <simplecpp.h>
 #include <list>
 #include <map>
@@ -3257,8 +3258,15 @@ private:
         ctu.parseTokens(&tokenizer);
 
         // Check code..
-        Check::FileInfo* fi = check.getFileInfo(&tokenizer, &settings);
-        ctu.addCheckInfo(check.name(), fi);
+        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings);
+        if (!fi1)
+            return;
+        tinyxml2::XMLDocument doc;
+        tinyxml2::XMLElement* e = fi1->toXMLElement(&doc);
+        delete fi1;
+
+        Check::FileInfo* fi2 = check.loadFileInfoFromXml(e);
+        ctu.addCheckInfo(check.name(), fi2);
         check.analyseWholeProgram(&ctu, ai, settings, *this);
     }
 

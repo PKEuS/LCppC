@@ -744,15 +744,34 @@ void CheckBufferOverrun::bufferNotZeroTerminatedError(const Token *tok, const st
 // CTU..
 //---------------------------------------------------------------------------
 
-std::string CheckBufferOverrun::MyFileInfo::toString() const
-{
-    std::string xml;
-    if (!unsafeArrayIndex.empty())
-        xml = "    <array-index>\n" + CTU::toString(unsafeArrayIndex) + "    </array-index>\n";
-    if (!unsafePointerArith.empty())
-        xml += "    <pointer-arith>\n" + CTU::toString(unsafePointerArith) + "    </pointer-arith>\n";
-    return xml;
-}
+/** data for multifile checking */
+class CBO_FileInfo : public Check::FileInfo {
+public:
+    /** unsafe array index usage */
+    std::list<CTU::CTUInfo::UnsafeUsage> unsafeArrayIndex;
+
+    /** unsafe pointer arithmetics */
+    std::list<CTU::CTUInfo::UnsafeUsage> unsafePointerArith;
+
+    /** Convert MyFileInfo data into xml string */
+    tinyxml2::XMLElement* toXMLElement(tinyxml2::XMLDocument* doc) const override {
+        tinyxml2::XMLElement* root = doc->NewElement(instance.name().c_str());
+
+        tinyxml2::XMLElement* arr = doc->NewElement("array-index");
+        for (const CTU::CTUInfo::UnsafeUsage& u : unsafeArrayIndex) {
+            arr->InsertEndChild(u.toXMLElement(doc));
+        }
+        root->InsertEndChild(arr);
+
+        tinyxml2::XMLElement* ptr = doc->NewElement("pointer-arith");
+        for (const CTU::CTUInfo::UnsafeUsage& u : unsafePointerArith) {
+            ptr->InsertEndChild(u.toXMLElement(doc));
+        }
+        root->InsertEndChild(ptr);
+
+        return root;
+    }
+};
 
 bool CheckBufferOverrun::isCtuUnsafeBufferUsage(const Check *check, const Token *argtok, MathLib::bigint *offset, int type)
 {
@@ -792,7 +811,7 @@ bool CheckBufferOverrun::isCtuUnsafePointerArith(const Check *check, const Token
 Check::FileInfo *CheckBufferOverrun::getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const
 {
     CheckBufferOverrun checkBufferOverrun(tokenizer, settings, nullptr);
-    MyFileInfo *fileInfo = new MyFileInfo;
+    CBO_FileInfo*fileInfo = new CBO_FileInfo;
     fileInfo->unsafeArrayIndex = CTU::getUnsafeUsage(tokenizer, settings, &checkBufferOverrun, isCtuUnsafeArrayIndex);
     fileInfo->unsafePointerArith = CTU::getUnsafeUsage(tokenizer, settings, &checkBufferOverrun, isCtuUnsafePointerArith);
     if (fileInfo->unsafeArrayIndex.empty() && fileInfo->unsafePointerArith.empty()) {
@@ -807,7 +826,7 @@ Check::FileInfo * CheckBufferOverrun::loadFileInfoFromXml(const tinyxml2::XMLEle
     const std::string arrayIndex("array-index");
     const std::string pointerArith("pointer-arith");
 
-    MyFileInfo *fileInfo = new MyFileInfo;
+    CBO_FileInfo*fileInfo = new CBO_FileInfo;
     for (const tinyxml2::XMLElement *e = xmlElement->FirstChildElement(); e; e = e->NextSiblingElement()) {
         if (e->Name() == arrayIndex)
             fileInfo->unsafeArrayIndex = CTU::loadUnsafeUsageListFromXml(e);
@@ -834,7 +853,7 @@ bool CheckBufferOverrun::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerIn
     const std::map<std::string, std::list<const CTU::CTUInfo::CallBase *>> callsMap = ctu->getCallsMap();
 
     for (CTU::CTUInfo& ctui : analyzerInformation.getCTUs()) {
-        const MyFileInfo* fi = dynamic_cast<MyFileInfo*>(ctui.getCheckInfo(name()));
+        const CBO_FileInfo* fi = dynamic_cast<CBO_FileInfo*>(ctui.getCheckInfo(name()));
         if (!fi)
             continue;
         for (const CTU::CTUInfo::UnsafeUsage &unsafeUsage : fi->unsafeArrayIndex)

@@ -87,20 +87,10 @@ public:
     /** ValueFlow-based checking for uninitialized variables */
     void valueFlowUninit();
 
-    /* data for multifile checking */
-    class MyFileInfo : public Check::FileInfo {
-    public:
-        /** function arguments that data are unconditionally read */
-        std::list<CTU::CTUInfo::UnsafeUsage> unsafeUsage;
-
-        /** Convert MyFileInfo data into xml string */
-        std::string toString() const override;
-    };
-
     /** @brief Parse current TU and extract file info */
-    Check::FileInfo *getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const override;
+    Check::FileInfo* getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const override;
 
-    Check::FileInfo * loadFileInfoFromXml(const tinyxml2::XMLElement *xmlElement) const override;
+    Check::FileInfo* loadFileInfoFromXml(const tinyxml2::XMLElement *xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
     bool analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger) override;
@@ -121,8 +111,6 @@ public:
     void uninitStructMemberError(const Token *tok, const std::string &membername);
 
 private:
-    Check::FileInfo *getFileInfo() const;
-    bool isUnsafeFunction(const Scope *scope, int argnr, const Token **tok) const;
 
     void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
         CheckUninitVar c(nullptr, settings, errorLogger);

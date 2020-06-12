@@ -41,8 +41,6 @@ namespace CTU {
     public:
         enum class InvalidValueType { null, uninit, bufferOverflow };
 
-        std::string toString() const;
-
         struct Location {
             Location() = default;
             Location(const Tokenizer *tokenizer, const Token *tok);
@@ -60,7 +58,7 @@ namespace CTU {
             std::string myArgumentName;
             Location location;
             MathLib::bigint value;
-            std::string toString() const;
+            tinyxml2::XMLElement* toXMLElement(tinyxml2::XMLDocument* doc) const;
         };
 
         class CallBase {
@@ -76,7 +74,6 @@ namespace CTU {
             std::string callFunctionName;
             Location location;
         protected:
-            std::string toBaseXmlString() const;
             bool loadBaseFromXml(const tinyxml2::XMLElement *xmlElement);
         };
 
@@ -88,7 +85,7 @@ namespace CTU {
             std::vector<ErrorMessage::FileLocation> callValuePath;
             bool warning;
 
-            std::string toXmlString() const;
+            tinyxml2::XMLElement* toXMLElement(tinyxml2::XMLDocument* doc) const;
             bool loadFromXml(const tinyxml2::XMLElement *xmlElement);
         };
 
@@ -104,7 +101,7 @@ namespace CTU {
 
             NestedCall(const Tokenizer *tokenizer, const Function *myFunction, const Token *callToken);
 
-            std::string toXmlString() const;
+            tinyxml2::XMLElement* toXMLElement(tinyxml2::XMLDocument* doc) const;
             bool loadFromXml(const tinyxml2::XMLElement *xmlElement);
 
             std::string myId;
@@ -149,8 +146,6 @@ namespace CTU {
     };
 
     extern int maxCtuDepth;
-
-    CPPCHECKLIB std::string toString(const std::list<CTUInfo::UnsafeUsage> &unsafeUsage);
 
     CPPCHECKLIB std::string getFunctionId(const Tokenizer *tokenizer, const Function *function);
 

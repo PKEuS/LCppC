@@ -4263,8 +4263,15 @@ private:
         ctu.parseTokens(&tokenizer);
 
         // Check code..
-        Check::FileInfo *fi = check.getFileInfo(&tokenizer, &settings0);
-        ctu.addCheckInfo(check.name(), fi);
+        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings0);
+        if (!fi1)
+            return;
+        tinyxml2::XMLDocument doc;
+        tinyxml2::XMLElement* e = fi1->toXMLElement(&doc);
+        delete fi1;
+
+        Check::FileInfo* fi2 = check.loadFileInfoFromXml(e);
+        ctu.addCheckInfo(check.name(), fi2);
         check.analyseWholeProgram(&ctu, ai, settings0, *this);
     }
 
