@@ -334,7 +334,11 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
             }
 
             if (err) {
-                const ErrorMessage::FileLocation loc1(output.location.file(), output.location.line, output.location.col);
+                std::string file = Path::fromNativeSeparators(output.location.file());
+                if (mSettings.relativePaths)
+                    file = Path::getRelativePath(file, mSettings.basePaths);
+
+                const ErrorMessage::FileLocation loc1(file, output.location.line, output.location.col);
                 std::list<ErrorMessage::FileLocation> callstack(1, loc1);
 
                 ErrorMessage errmsg(callstack,
