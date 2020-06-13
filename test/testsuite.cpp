@@ -103,11 +103,9 @@ bool TestFixture::prepareTest(const char testname[])
     return false;
 }
 
-std::string TestFixture::getLocationStr(const char * const filename, const unsigned int linenr) const
+void TestFixture::outputLocationStr(const char * const filename, const unsigned int linenr) const
 {
-    std::ostringstream ret;
-    ret << filename << ':' << linenr << '(' << classname << "::" << mTestname << ')';
-    return ret.str();
+    errmsg << filename << ':' << linenr << '(' << classname << "::" << mTestname << ')';
 }
 
 static std::string writestr(const std::string &str, bool gccStyle = false)
@@ -138,7 +136,8 @@ bool TestFixture::assert_(const char * const filename, const unsigned int linenr
 {
     if (!condition) {
         ++fails_counter;
-        errmsg << getLocationStr(filename, linenr) << ": Assertion failed." << std::endl << "_____" << std::endl;
+        outputLocationStr(filename, linenr);
+        errmsg << ": Assertion failed." << std::endl << "_____" << std::endl;
     }
     return condition;
 }
@@ -147,7 +146,8 @@ bool TestFixture::assertEquals(const char * const filename, const unsigned int l
 {
     if (expected != actual) {
         ++fails_counter;
-        errmsg << getLocationStr(filename, linenr) << ": Assertion failed. " << std::endl
+        outputLocationStr(filename, linenr);
+        errmsg << ": Assertion failed. " << std::endl
                << "Expected: " <<  std::endl
                << writestr(expected)  << std::endl
                << "Actual: " << std::endl
@@ -230,7 +230,8 @@ void TestFixture::todoAssertEquals(const char * const filename, const unsigned i
                                    const std::string &actual) const
 {
     if (wanted == actual) {
-        errmsg << getLocationStr(filename, linenr) << ": Assertion succeeded unexpectedly. "
+        outputLocationStr(filename, linenr);
+        errmsg << ": Assertion succeeded unexpectedly. "
                << "Result: " << writestr(wanted, true)  << std::endl << "_____" << std::endl;
 
         ++succeeded_todos_counter;
@@ -239,6 +240,15 @@ void TestFixture::todoAssertEquals(const char * const filename, const unsigned i
         ++todos_counter;
     }
 }
+
+void TestFixture::todoAssertEquals(const char* const filename, const unsigned int linenr,
+                                   const char wanted[],
+                                   const char current[],
+                                   const std::string& actual) const
+{
+    todoAssertEquals(filename, linenr, std::string(wanted), std::string(current), actual);
+}
+
 
 void TestFixture::todoAssertEquals(const char * const filename, const unsigned int linenr, const long long wanted, const long long current, const long long actual) const
 {
@@ -252,7 +262,8 @@ void TestFixture::todoAssertEquals(const char * const filename, const unsigned i
 void TestFixture::assertThrow(const char * const filename, const unsigned int linenr) const
 {
     ++fails_counter;
-    errmsg << getLocationStr(filename, linenr) << ": Assertion succeeded. "
+    outputLocationStr(filename, linenr);
+    errmsg << ": Assertion succeeded. "
            << "The expected exception was thrown" << std::endl << "_____" << std::endl;
 
 }
@@ -260,7 +271,8 @@ void TestFixture::assertThrow(const char * const filename, const unsigned int li
 void TestFixture::assertThrowFail(const char * const filename, const unsigned int linenr) const
 {
     ++fails_counter;
-    errmsg << getLocationStr(filename, linenr) << ": Assertion failed. "
+    outputLocationStr(filename, linenr);
+    errmsg << ": Assertion failed. "
            << "The expected exception was not thrown"  << std::endl << "_____" << std::endl;
 
 }
@@ -268,7 +280,8 @@ void TestFixture::assertThrowFail(const char * const filename, const unsigned in
 void TestFixture::assertNoThrowFail(const char * const filename, const unsigned int linenr) const
 {
     ++fails_counter;
-    errmsg << getLocationStr(filename, linenr) << ": Assertion failed. "
+    outputLocationStr(filename, linenr);
+    errmsg << ": Assertion failed. "
            << "Unexpected exception was thrown"  << std::endl << "_____" << std::endl;
 
 }
