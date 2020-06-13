@@ -212,13 +212,13 @@ simplecpp::TokenList::TokenList(std::istream &istr, std::vector<std::string> &fi
     readfile(istr,filename,outputList);
 }
 
-simplecpp::TokenList::TokenList(const TokenList &other) : frontToken(NULL), backToken(NULL), files(other.files)
+simplecpp::TokenList::TokenList(const TokenList &other) noexcept : frontToken(NULL), backToken(NULL), files(other.files)
 {
     *this = other;
 }
 
 #if __cplusplus >= 201103L
-simplecpp::TokenList::TokenList(TokenList &&other) : frontToken(NULL), backToken(NULL), files(other.files)
+simplecpp::TokenList::TokenList(TokenList &&other) noexcept : frontToken(NULL), backToken(NULL), files(other.files)
 {
     *this = std::move(other);
 }
@@ -229,7 +229,7 @@ simplecpp::TokenList::~TokenList()
     clear();
 }
 
-simplecpp::TokenList &simplecpp::TokenList::operator=(const TokenList &other)
+simplecpp::TokenList &simplecpp::TokenList::operator=(const TokenList &other) noexcept
 {
     if (this != &other) {
         clear();
@@ -241,7 +241,7 @@ simplecpp::TokenList &simplecpp::TokenList::operator=(const TokenList &other)
 }
 
 #if __cplusplus >= 201103L
-simplecpp::TokenList &simplecpp::TokenList::operator=(TokenList &&other)
+simplecpp::TokenList &simplecpp::TokenList::operator=(TokenList &&other) noexcept
 {
     if (this != &other) {
         clear();
@@ -1224,8 +1224,7 @@ namespace simplecpp {
         }
 
         Macro(const std::string &name, const std::string &value, std::vector<std::string> &f) : nameTokDef(NULL), files(f), tokenListDefine(f), valueDefinedInCode_(false) {
-            const std::string def(name + ' ' + value);
-            std::istringstream istr(def);
+            std::istringstream istr(name + ' ' + value);
             tokenListDefine.readfile(istr);
             if (!parseDefine(tokenListDefine.cfront()))
                 throw std::runtime_error("bad macro syntax. macroname=" + name + " value=" + value);
