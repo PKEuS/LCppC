@@ -194,7 +194,7 @@ private:
         // char *p1 = a + 10;  // OK
         // char *p2 = a + 11   // UB
         TEST_CASE(pointer_out_of_bounds_1);
-        // TODO TEST_CASE(pointer_out_of_bounds_2);
+        TEST_CASE(pointer_out_of_bounds_2);
         TEST_CASE(pointer_out_of_bounds_3);
         TEST_CASE(pointer_out_of_bounds_4);
         // TODO TEST_CASE(pointer_out_of_bounds_sub);
@@ -2149,7 +2149,7 @@ private:
               "  int *p = a;\n"
               "  p[20] = 0;\n"
               "}");
-        // TODO pointer ASSERT_EQUALS("[test.cpp:3] -> [test.cpp:4]: (error) Array 'a[10]' accessed at index 20, which is out of bounds.\n", errout.str());
+        TODO_ASSERT_EQUALS("[test.cpp:3] -> [test.cpp:4]: (error) Array 'a[10]' accessed at index 20, which is out of bounds.\n", "", errout.str());
 
         {
             // address of
@@ -2158,7 +2158,7 @@ private:
                   "  int *p = a;\n"
                   "  p[10] = 0;\n"
                   "}");
-            // TODO pointer ASSERT_EQUALS("[test.cpp:3] -> [test.cpp:4]: (error) Array 'a[10]' accessed at index 10, which is out of bounds.\n", errout.str());
+            TODO_ASSERT_EQUALS("[test.cpp:3] -> [test.cpp:4]: (error) Array 'a[10]' accessed at index 10, which is out of bounds.\n", "", errout.str());
 
             check("void f() {\n"
                   "  int a[10];\n"
@@ -2193,7 +2193,7 @@ private:
               "  a += 4;\n"
               "  a[-1] = 0;\n"
               "}");
-        // TODO ASSERT_EQUALS("", errout.str());
+        TODO_ASSERT_EQUALS("", "[test.cpp:3]: (error) Array 'a[10]' accessed at index -1, which is out of bounds.\n", errout.str());
     }
 
     void array_index_enum_array() { // #8439
@@ -2882,7 +2882,7 @@ private:
               "    p += 100;\n"
               "    free(p);"
               "}");
-        ASSERT_EQUALS("[test.cpp:3]: (portability) Undefined behaviour, pointer arithmetic 'p+100' is out of bounds.\n", errout.str());
+        TODO_ASSERT_EQUALS("[test.cpp:3]: (portability) Undefined behaviour, pointer arithmetic 'p+100' is out of bounds.\n", "", errout.str());
 
         check("void f() {\n"
               "    char *p = malloc(10);\n"
@@ -2890,7 +2890,7 @@ private:
               "    *p = 0;\n"
               "    free(p);"
               "}");
-        ASSERT_EQUALS("[test.cpp:4]: (error) p is out of bounds.\n", errout.str());
+        TODO_ASSERT_EQUALS("[test.cpp:4]: (error) p is out of bounds.\n", "", errout.str());
 
         check("void f() {\n"
               "    char *p = malloc(10);\n"
@@ -3353,7 +3353,8 @@ private:
               "    char s[10];\n"
               "    mymemset(s, 0, '*');\n"
               "}", settings);
-        // TODO ASSERT_EQUALS("[test.cpp:3]: (warning) The size argument is given as a char constant.\n", errout.str());
+        TODO_ASSERT_EQUALS("[test.cpp:3]: (warning) The size argument is given as a char constant.\n"
+                           "[test.cpp:3]: (error) Buffer is accessed out of bounds: s\n", "[test.cpp:3]: (error) Buffer is accessed out of bounds: s\n", errout.str());
 
         // ticket #836
         check("void f(void) {\n"
@@ -3558,7 +3559,7 @@ private:
               "    char *str = new char[5];\n"
               "    mysprintf(str, \"abcde\");\n"
               "}", settings);
-        // TODO ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds.\n", errout.str());
+        TODO_ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds.\n", "", errout.str());
 
         check("void f(int condition) {\n"
               "    char str[5];\n"
@@ -3584,13 +3585,13 @@ private:
               "  char *a = new char(30);\n"
               "  mysprintf(a, \"a\");\n"
               "}", settings);
-        // TODO ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds.\n", errout.str());
+        TODO_ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds.\n", "", errout.str());
 
         check("void f(char value) {\n"
               "  char *a = new char(value);\n"
               "  mysprintf(a, \"a\");\n"
               "}", settings);
-        // TODO ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds.\n", errout.str());
+        TODO_ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds.\n", "", errout.str());
 
         // This is out of bounds if 'sizeof(ABC)' is 1 (No padding)
         check("struct Foo { char a[1]; };\n"
@@ -3598,7 +3599,7 @@ private:
               "  struct Foo *x = malloc(sizeof(Foo));\n"
               "  mysprintf(x.a, \"aa\");\n"
               "}", settings);
-        // TODO ASSERT_EQUALS("", errout.str());
+        ASSERT_EQUALS("", errout.str()); // TODO: Inconclusive error?
 
         check("struct Foo { char a[1]; };\n"
               "void f() {\n"
