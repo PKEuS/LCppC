@@ -1,6 +1,7 @@
 *.bak
 *.gcno
 *.o
+*.gch
 *.pyc
 cppcheck
 cppcheck.exe

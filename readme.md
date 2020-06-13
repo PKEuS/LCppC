@@ -15,7 +15,7 @@ A manual (for mainline cppcheck) is available online. It should be mostly compat
 
 ## Compiling
 
-Any modern C++ compiler should work. If your compiler has the C++11 features that are available in Visual Studio 2019 / GCC 10 then it will work.
+Any modern C++ compiler should work. If your compiler has the C++11 features that are available in Visual Studio 2019 / Clang 8 / GCC 8 then it will work.
 
 To build the GUI, you need Qt.
 

@@ -69,7 +69,7 @@ tinyxml2::XMLElement* CTU::CTUInfo::FunctionCall::toXMLElement(tinyxml2::XMLDocu
     entry->SetAttribute(ATTR_LOC_COLUMN, location.column);
     entry->SetAttribute(ATTR_CALL_ARGEXPR, callArgumentExpression.c_str());
     entry->SetAttribute(ATTR_MY_ARGNR, callValueType);
-    entry->SetAttribute(ATTR_CALL_ARGVALUE, callArgValue);
+    entry->SetAttribute(ATTR_CALL_ARGVALUE, (int64_t)callArgValue);
     if (warning)
         entry->SetAttribute(ATTR_WARNING, true);
 
@@ -101,7 +101,7 @@ tinyxml2::XMLElement* CTU::CTUInfo::UnsafeUsage::toXMLElement(tinyxml2::XMLDocum
     entry->SetAttribute(ATTR_LOC_FILENAME, location.fileName.c_str());
     entry->SetAttribute(ATTR_LOC_LINENR, location.lineNumber);
     entry->SetAttribute(ATTR_LOC_COLUMN, location.column);
-    entry->SetAttribute(ATTR_VALUE, value);
+    entry->SetAttribute(ATTR_VALUE, (int64_t)value);
     return entry;
 }
 

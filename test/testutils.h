@@ -21,6 +21,7 @@
 
 #include "settings.h"
 #include "tokenize.h"
+#include "errorlogger.h"
 
 class Token;
 

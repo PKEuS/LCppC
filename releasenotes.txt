@@ -23,14 +23,14 @@ Breaking Changes (compared to Cppcheck 2.0):
 
     - Default ouput format was changed back to single line messages.
       This involves that --template= does no longer has a template "cppcheck1",
-      but "cppcheck2" instead to get the message format of official Cppcheck 2.0.
+      but "cppcheck2" instead to get the message format of Cppcheck 2.0.
 
     - Progress and status reports and are disabled by default.
       This is equivalent to setting -q in Cppcheck. These messages can be enabled
       again with --output=status,progress.
 
  - A modern C++ compiler and std::thread support is now required. The code is tested against:
-   Clang 8.0.1, GCC xyz, Visual Studio 2019
+   Clang 8, GCC 8, Visual Studio 2019
 
 
 Removed Features:
@@ -90,7 +90,7 @@ Improvements:
 
  - Reimplemented unused function checking: Now compatible with multithreading.
 
- - Reimplemented whole program analysis and result caching. Both are working fine now.
+ - Reimplemented whole program analysis and result caching. Both should work now.
  
  - Improved accuracy of ValueFlow analysis (also in Cppcheck 2.1)
 
@@ -101,7 +101,7 @@ Bugfixes:
 
  - Fixed AST in some scenarios (also in Cppcheck 2.1)
 
- - Unit tests were broken in a subtle way since 2018 (also in Cppcheck 2.1)
+ - Fixed test suite been broken in a subtle way since 2018 (also in Cppcheck 2.1)
 
  - Lots of other bugs were fixed
 
