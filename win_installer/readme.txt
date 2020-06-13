@@ -1,7 +1,7 @@
 The Wix Installer for Windows
 =============================
 
-cppcheck Windows installer is created with WiX:
+LCppC Windows installer is created with WiX:
 http://wixtoolset.org/
 
 You'll need:
@@ -13,7 +13,7 @@ Configuring
 -----------
 
 Installer configuration is done in file config.wxi. Depending how you build
-cppcheck you may need to alter the paths for binaries.
+LCppC you may need to alter the paths for binaries.
 
 Product version and other info
 ------------------------------

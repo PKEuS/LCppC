@@ -1,12 +1,12 @@
-=============================
-Lean Cppcheck - Release Notes
-=============================
+=====================
+LCppC - Release Notes
+=====================
 
 Version 1.0 - 14th June 2020 (planned)
 ----------------------------
 
-This first release of Lean Cppcheck contains lots of breaking changes compared to Cppcheck 2.0.
-Future releases of Lean Cppcheck are expected to be compatible with Lean Cppcheck 1.0.
+This first release of LCppC contains lots of breaking changes compared to Cppcheck 2.0.
+Future releases of LCppC are expected to be compatible with LCppC 1.0.
 
 Breaking Changes (compared to Cppcheck 2.0):
 
@@ -46,8 +46,8 @@ Removed Features:
  
  - CMake makefiles were removed.
 
- - GUI is not maintained in Lean Cppcheck and can not be considered part of this release. It might be added back in a future release.
-   Cppcheck 2.0 GUI is not compatible to Lean Cppcheck.
+ - GUI is not maintained in LCppC and can not be considered part of this release. It might be added back in a future release.
+   Cppcheck 2.0 GUI is not compatible to LCppC.
 
  - Continouus integration (Travis, Appveyor, IRC bots) is no longer maintained and was removed.
 

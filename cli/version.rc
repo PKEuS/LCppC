@@ -24,7 +24,7 @@ BEGIN
             VALUE "FileVersion", CPPCHECK_VERSION_STRING
             VALUE "InternalName", PROGRAMNAME
             VALUE "LegalCopyright", LEGALCOPYRIGHT
-            VALUE "OriginalFilename", "cppcheck.exe"
+            VALUE "OriginalFilename", "lcppc.exe"
             VALUE "ProductName", PROGRAMNAME
             VALUE "ProductVersion", CPPCHECK_VERSION_STRING
         END

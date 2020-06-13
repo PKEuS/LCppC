@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Generate Makefile for cppcheck
+// Generate Makefile for LCppC
 
 #include <algorithm>
 #include <fstream>
@@ -378,16 +378,16 @@ int main()
 
     fout << ".PHONY: run-dmake tags\n\n";
     fout << "\n###### Targets\n\n";
-    fout << "cppcheck: $(LIBOBJ) $(CLIOBJ) $(EXTOBJ)\n";
+    fout << "lcppc: $(LIBOBJ) $(CLIOBJ) $(EXTOBJ)\n";
     fout << "\t$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ $(LIBS) $(LDFLAGS) $(RDYNAMIC)\n\n";
-    fout << "all:\tcppcheck testrunner\n\n";
+    fout << "all:\tlcppc testrunner\n\n";
     fout << "testrunner: $(TESTOBJ) $(LIBOBJ) $(EXTOBJ) cli/threadexecutor.o cli/cmdlineparser.o cli/cppcheckexecutor.o cli/filelister.o\n";
     fout << "\t$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ $(LIBS) $(LDFLAGS) $(RDYNAMIC)\n\n";
     fout << "test:\tall\n";
     fout << "\t./testrunner\n\n";
     fout << "check:\tall\n";
     fout << "\t./testrunner -q\n\n";
-    fout << "checkcfg:\tcppcheck validateCFG\n";
+    fout << "checkcfg:\tlcppc validateCFG\n";
     fout << "\t./test/cfg/runtests.sh\n\n";
     fout << "dmake:\ttools/dmake.o cli/filelister.o $(libcppdir)/pathmatch.o $(libcppdir)/path.o $(libcppdir)/utils.o externals/simplecpp/simplecpp.o\n";
     fout << "\t$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)\n\n";
@@ -396,15 +396,15 @@ int main()
     fout << "generate_cfg_tests: tools/generate_cfg_tests.o $(EXTOBJ)\n";
     fout << "\tg++ -isystem externals/tinyxml -o generate_cfg_tests tools/generate_cfg_tests.o $(EXTOBJ)\n";
     fout << "clean:\n";
-    fout << "\trm -f build/*.o lib/*.o lib/*.gch cli/*.o test/*.o tools/*.o externals/*/*.o testrunner dmake cppcheck cppcheck.exe cppcheck.1\n\n";
+    fout << "\trm -f build/*.o lib/*.o lib/*.gch cli/*.o test/*.o tools/*.o externals/*/*.o testrunner dmake lcppc lcppc.exe lcppc.1\n\n";
     fout << "man:\tman/cppcheck.1\n\n";
     fout << "man/cppcheck.1:\t$(MAN_SOURCE)\n\n";
     fout << "\t$(XP) $(DB2MAN) $(MAN_SOURCE)\n\n";
     fout << "tags:\n";
     fout << "\tctags -R --exclude=doxyoutput --exclude=test/cfg --exclude=test/synthetic cli externals gui lib test\n\n";
-    fout << "install: cppcheck\n";
+    fout << "install: lcppc\n";
     fout << "\tinstall -d ${BIN}\n";
-    fout << "\tinstall cppcheck ${BIN}\n";
+    fout << "\tinstall lcppc ${BIN}\n";
     fout << "\tinstall htmlreport/cppcheck-htmlreport ${BIN}\n";
     fout << "ifdef FILESDIR\n";
     fout << "\tinstall -d ${DESTDIR}${FILESDIR}\n";
@@ -455,10 +455,10 @@ int main()
     fout << "\txmllint --noout --relaxng platforms/cppcheck-platforms.rng $<\n";
     fout << "validatePlatforms: ${PlatformFilesCHECKED}\n\n";
     fout << "# Validate XML output (to detect regressions)\n";
-    fout << "/tmp/errorlist.xml: cppcheck\n";
-    fout << "\t./cppcheck --errorlist >$@\n";
-    fout << "/tmp/example.xml: cppcheck\n";
-    fout << "\t./cppcheck --xml --enable=all --inconclusive --max-configs=1 samples 2>/tmp/example.xml\n";
+    fout << "/tmp/errorlist.xml: lcppc\n";
+    fout << "\t./lcppc --errorlist >$@\n";
+    fout << "/tmp/example.xml: lcppc\n";
+    fout << "\t./lcppc --xml --enable=all --inconclusive --max-configs=1 samples 2>/tmp/example.xml\n";
     fout << "createXMLExamples:/tmp/errorlist.xml /tmp/example.xml\n";
     fout << ".PHONY: validateXML\n";
     fout << "validateXML: createXMLExamples\n";

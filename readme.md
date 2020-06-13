@@ -1,4 +1,4 @@
-# **Lean Cppcheck** 
+# **LCppC - Lean Cppcheck** 
 
 |License|
 |:-:|
@@ -11,7 +11,7 @@ mature static code analysis tool for C and C++.
 
 ## Manual
 
-A manual (for mainline cppcheck) is available online. It should be mostly compatible with this Lean Cppcheck: https://cppcheck.sourceforge.net/manual.pdf
+A manual (for mainline cppcheck) is available online. It should be mostly compatible with LCppC: https://cppcheck.sourceforge.net/manual.pdf
 
 ## Compiling
 

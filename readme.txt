@@ -1,17 +1,17 @@
-=============
-Lean Cppcheck
-=============
+=====================
+LCppC - Lean Cppcheck
+=====================
 
 
 About
 
-    This is a fork of the original Cppcheck project, that aims at providing a lean, fast and
+    This is a fork of the Cppcheck project, that aims at providing a lean, fast and
     mature static code analysis tool for C and C++.
 
 Manual
 
-    A manual (for Cppcheck) is available online. It should be mostly compatible with Lean
-    Cppcheck: http://cppcheck.sourceforge.net/manual.pdf
+    A manual (for Cppcheck) is available online. It should be mostly compatible with LCppC:
+    http://cppcheck.sourceforge.net/manual.pdf
 
 Compiling
 
