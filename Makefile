@@ -272,10 +272,10 @@ TESTOBJ =     test/options.o \
 
 ###### Targets
 
-cppcheck: $(LIBOBJ) $(CLIOBJ) $(EXTOBJ)
+lcppc: $(LIBOBJ) $(CLIOBJ) $(EXTOBJ)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ $(LIBS) $(LDFLAGS) $(RDYNAMIC)
 
-all:	cppcheck testrunner
+all:	lcppc testrunner
 
 testrunner: $(TESTOBJ) $(LIBOBJ) $(EXTOBJ) cli/threadexecutor.o cli/cmdlineparser.o cli/cppcheckexecutor.o cli/filelister.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ $(LIBS) $(LDFLAGS) $(RDYNAMIC)
@@ -286,7 +286,7 @@ test:	all
 check:	all
 	./testrunner -q
 
-checkcfg:	cppcheck validateCFG
+checkcfg:	lcppc validateCFG
 	./test/cfg/runtests.sh
 
 dmake:	tools/dmake.o cli/filelister.o $(libcppdir)/pathmatch.o $(libcppdir)/path.o $(libcppdir)/utils.o externals/simplecpp/simplecpp.o
@@ -298,7 +298,7 @@ run-dmake: dmake
 generate_cfg_tests: tools/generate_cfg_tests.o $(EXTOBJ)
 	g++ -isystem externals/tinyxml -o generate_cfg_tests tools/generate_cfg_tests.o $(EXTOBJ)
 clean:
-	rm -f build/*.o lib/*.o lib/*.gch cli/*.o test/*.o tools/*.o externals/*/*.o testrunner dmake cppcheck cppcheck.exe cppcheck.1
+	rm -f build/*.o lib/*.o lib/*.gch cli/*.o test/*.o tools/*.o externals/*/*.o testrunner dmake lcppc lcppc.exe lcppc.1
 
 man:	man/cppcheck.1
 
@@ -309,9 +309,9 @@ man/cppcheck.1:	$(MAN_SOURCE)
 tags:
 	ctags -R --exclude=doxyoutput --exclude=test/cfg --exclude=test/synthetic cli externals gui lib test
 
-install: cppcheck
+install: lcppc
 	install -d ${BIN}
-	install cppcheck ${BIN}
+	install lcppc ${BIN}
 	install htmlreport/cppcheck-htmlreport ${BIN}
 ifdef FILESDIR
 	install -d ${DESTDIR}${FILESDIR}
@@ -365,10 +365,10 @@ PlatformFilesCHECKED := $(patsubst %.xml,%.checked,$(PlatformFiles))
 validatePlatforms: ${PlatformFilesCHECKED}
 
 # Validate XML output (to detect regressions)
-/tmp/errorlist.xml: cppcheck
-	./cppcheck --errorlist >$@
-/tmp/example.xml: cppcheck
-	./cppcheck --xml --enable=all --inconclusive --max-configs=1 samples 2>/tmp/example.xml
+/tmp/errorlist.xml: lcppc
+	./lcppc --errorlist >$@
+/tmp/example.xml: lcppc
+	./lcppc --xml --enable=all --inconclusive --max-configs=1 samples 2>/tmp/example.xml
 createXMLExamples:/tmp/errorlist.xml /tmp/example.xml
 .PHONY: validateXML
 validateXML: createXMLExamples
@@ -540,7 +540,7 @@ $(libcppdir)/utils.o: lib/utils.cpp lib/config.h lib/utils.h lib/precompiled.h.g
 $(libcppdir)/valueflow.o: lib/valueflow.cpp lib/astutils.h lib/config.h lib/errorlogger.h lib/errortypes.h lib/forwardanalyzer.h lib/library.h lib/mathlib.h lib/path.h lib/platform.h lib/programmemory.h lib/settings.h lib/standards.h lib/suppressions.h lib/symboldatabase.h lib/templatesimplifier.h lib/timer.h lib/token.h lib/tokenlist.h lib/utils.h lib/valueflow.h lib/valueptr.h lib/precompiled.h.gch
 	$(CXX) ${INCLUDE_FOR_LIB} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH) $(UNDEF_STRICT_ANSI) -c -o $(libcppdir)/valueflow.o $(libcppdir)/valueflow.cpp
 
-cli/cmdlineparser.o: cli/cmdlineparser.cpp cli/cmdlineparser.h cli/cppcheckexecutor.h cli/filelister.h externals/tinyxml/tinyxml2.h lib/analyzerinfo.h lib/check.h lib/config.h lib/ctu.h lib/errorlogger.h lib/errortypes.h lib/library.h lib/mathlib.h lib/path.h lib/platform.h lib/settings.h lib/standards.h lib/suppressions.h lib/timer.h lib/utils.h lib/valueflow.h lib/precompiled.h.gch
+cli/cmdlineparser.o: cli/cmdlineparser.cpp cli/cmdlineparser.h cli/cppcheckexecutor.h cli/filelister.h externals/tinyxml/tinyxml2.h lib/analyzerinfo.h lib/check.h lib/config.h lib/ctu.h lib/errorlogger.h lib/errortypes.h lib/library.h lib/mathlib.h lib/path.h lib/platform.h lib/settings.h lib/standards.h lib/suppressions.h lib/timer.h lib/utils.h lib/valueflow.h lib/version.h lib/precompiled.h.gch
 	$(CXX) ${INCLUDE_FOR_CLI} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH) $(UNDEF_STRICT_ANSI) -c -o cli/cmdlineparser.o cli/cmdlineparser.cpp
 
 cli/cppcheckexecutor.o: cli/cppcheckexecutor.cpp cli/cmdlineparser.h cli/cppcheckexecutor.h cli/filelister.h cli/threadexecutor.h externals/simplecpp/simplecpp.h lib/analyzerinfo.h lib/check.h lib/checkunusedfunctions.h lib/config.h lib/cppcheck.h lib/ctu.h lib/errorlogger.h lib/errortypes.h lib/library.h lib/mathlib.h lib/path.h lib/pathmatch.h lib/platform.h lib/preprocessor.h lib/settings.h lib/standards.h lib/suppressions.h lib/timer.h lib/utils.h lib/valueflow.h lib/precompiled.h.gch
