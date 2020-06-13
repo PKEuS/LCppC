@@ -454,7 +454,7 @@ private:
                                "{\n"
                                "    printf(\"var.struct1.a = %d\", var.struct1.a);\n"
                                "    return 1;\n"
-                               "}\n");
+                               "}");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -2119,7 +2119,7 @@ private:
         functionVariableUsage("Padding fun() {\n"
                               "  Distance d = DISTANCE;\n"
                               "  return (Padding){ d, d, d, d };\n"
-                              "}\n");
+                              "}");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -2164,7 +2164,7 @@ private:
         functionVariableUsage("void fun() {\n"
                               "  int x;\n"
                               "  while (c) { x=10; }\n"
-                              "}\n");
+                              "}");
         ASSERT_EQUALS("[test.cpp:3]: (style) Variable 'x' is assigned a value that is never used.\n", errout.str());
 
         functionVariableUsage("void dostuff(int x);\n"
@@ -2174,7 +2174,7 @@ private:
                               "    dostuff(x);\n"
                               "    if (y) { x=10; break; }\n"
                               "  }\n"
-                              "}\n");
+                              "}");
         ASSERT_EQUALS("[test.cpp:6]: (style) Variable 'x' is assigned a value that is never used.\n", errout.str());
 
         functionVariableUsage("void dostuff(int &x);\n"
@@ -2184,7 +2184,7 @@ private:
                               "    dostuff(x);\n"
                               "    if (y) { x=10; break; }\n"
                               "  }\n"
-                              "}\n");
+                              "}");
         ASSERT_EQUALS("", errout.str()); // TODO : in this special case we can ignore that x is aliased. x is local and there are no function calls after the assignment
 
         functionVariableUsage("void fun() {\n"
@@ -2193,13 +2193,13 @@ private:
                               "    dostuff(x);\n"
                               "    x = 10;\n"
                               "  }\n"
-                              "}\n");
+                              "}");
         ASSERT_EQUALS("", errout.str());
 
         functionVariableUsage("void fun() {\n"
                               "  int x = 0;\n"
                               "  while (x < 10) { x = x + 1; }\n"
-                              "}\n");
+                              "}");
         ASSERT_EQUALS("", errout.str());
 
         functionVariableUsage("void fun()\n"
@@ -4388,7 +4388,7 @@ private:
                               "    goto label;\n"
                               " }\n"
                               " return false;\n"
-                              "}\n");
+                              "}");
         ASSERT_EQUALS("[test.cpp:5]: (style) Variable 'X' is assigned a value that is never used.\n", errout.str());
 
         // #4558
@@ -4640,8 +4640,7 @@ private:
             " static int fpUnread{0};\n"
             " const int var{fpUnread++};\n"
             " return var;\n"
-            "}\n"
-        );
+            "}");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -4649,15 +4648,13 @@ private:
         functionVariableUsage(
             "void fun(Value value) {\n"
             " value[10] = 123;\n"
-            "}\n"
-        );
+            "}");
         ASSERT_EQUALS("", errout.str());
 
         functionVariableUsage(
             "void fun(std::string s) {\n"
             " s[10] = 123;\n"
-            "}\n"
-        );
+            "}");
         // TODO This works on command line.. load std.cfg? ASSERT_EQUALS("error", errout.str());
 
         functionVariableUsage(
@@ -4730,8 +4727,7 @@ private:
             "        else\n"
             "            (*pos).second = number;\n"
             "    }\n"
-            "};\n"
-        );
+            "};");
         ASSERT_EQUALS("", errout.str());
     }
 

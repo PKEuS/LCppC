@@ -535,7 +535,7 @@ private:
 
         code = "void f(int i) {\n"
                "    X x;\n"
-               "    y = g(std::move(x), \n"
+               "    y = g(std::move(x),\n"
                "          x.size());\n"
                "}";
         ASSERT_EQUALS(false, testValueOfX(code, 4U, ValueFlow::Value::MoveKind::MovedVariable));
@@ -1454,7 +1454,7 @@ private:
                 "\n"
                 "out:\n"
                 "    if (abc) {}\n"
-                "}\n");
+                "}");
         ASSERT_EQUALS_WITHOUT_LINENUMBERS(
             "[test.cpp:2]: (debug) valueflow.cpp:1035:valueFlowReverse bailout: assignment of abc\n"
             "[test.cpp:8]: (debug) valueflow.cpp:1131:valueFlowReverse bailout: variable abc stopping on goto label\n"
@@ -2332,7 +2332,7 @@ private:
         // protected usage with &&
         code = "void f(const Token* x) {\n"
                "    if (x) {}\n"
-               "    for (; x && \n"
+               "    for (; x &&\n"
                "         x->str() != y; x = x->next()) {}\n"
                "}";
         ASSERT_EQUALS(true, testValueOfX(code, 3U, 0));
@@ -2340,7 +2340,7 @@ private:
 
         code = "void f(const Token* x) {\n"
                "    if (x) {}\n"
-               "    if (x && \n"
+               "    if (x &&\n"
                "        x->str() != y) {}\n"
                "}";
         ASSERT_EQUALS(true, testValueOfX(code, 3U, 0));
@@ -2545,9 +2545,9 @@ private:
 
         code = "void f(int i) {\n"
                "    int x = 0;\n"
-               "    if (i == 0) \n"
+               "    if (i == 0)\n"
                "        x = 1;\n"
-               "    else if (!x && i == 1) \n"
+               "    else if (!x && i == 1)\n"
                "        int b = x;\n"
                "}\n";
         ASSERT_EQUALS(true, testValueOfXKnown(code, 5U, 0));
@@ -3938,7 +3938,7 @@ private:
 
         code = "void f(int i, int j, bool a) {\n"
                "    if (i != j) {}\n"
-               "    if (i == j) return; \n"
+               "    if (i == j) return;\n"
                "}\n";
         ASSERT_EQUALS(false, valueOfTok(code, "!=").intvalue == 1);
 
@@ -3970,7 +3970,7 @@ private:
         code = "void f(int i, int j, bool a) {\n"
                "    bool x = (i != j);\n"
                "    bool b = x;\n"
-               "    if (i != j) return; \n"
+               "    if (i != j) return;\n"
                "}\n";
         ASSERT_EQUALS(false, testValueOfXKnown(code, 3U, 0));
 

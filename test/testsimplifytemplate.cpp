@@ -2421,7 +2421,7 @@ private:
     void template102() { // #9005
         const char code[] = "namespace ns {\n"
                             "template <class T>\n"
-                            "struct is_floating_point \n"
+                            "struct is_floating_point\n"
                             ": std::integral_constant<bool, std::is_floating_point<T>::value || true>\n"
                             "{};\n"
                             "}\n"
@@ -4074,11 +4074,11 @@ private:
 
     void syntax_error_templates_1() {
         // ok code.. using ">" for a comparison
-        tok("x<y>z> xyz;\n");
+        tok("x<y>z> xyz;");
         ASSERT_EQUALS("", errout.str());
 
         // ok code
-        tok("template<class T> operator<(T a, T b) { }\n");
+        tok("template<class T> operator<(T a, T b) { }");
         ASSERT_EQUALS("", errout.str());
 
         // ok code (ticket #1984)
@@ -4115,7 +4115,7 @@ private:
             "    }\n"
             "private:\n"
             "    A a;\n"
-            "};\n");
+            "};");
         ASSERT_EQUALS("", errout.str());
     }
 

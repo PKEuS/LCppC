@@ -229,7 +229,7 @@ private:
               "        free(buf);\n"
               "    else\n"
               "        free(new_buf);\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -243,7 +243,7 @@ private:
               "    }\n"
               "    free(pData);\n"
               "    return true;\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -255,7 +255,7 @@ private:
               "    if (!m_buf) {\n"
               "        m_buf = origBuf;\n"
               "    }\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -263,7 +263,7 @@ private:
         check("void foo()\n"
               "{\n"
               "    x = realloc(x,100);\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -273,7 +273,7 @@ private:
               "    pa = pb = malloc(10);\n"
               "    pa = realloc(pa, 20);"
               "    exit();\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -284,7 +284,7 @@ private:
               "    if (!p)\n"
               "        error();\n"
               "    usep(p);\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -316,7 +316,7 @@ private:
               "    if (!p)\n"
               "        error();\n"
               "    usep(p);\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -327,7 +327,7 @@ private:
               "    if( m_options == NULL )\n"
               "        return false;\n"
               "    return true;\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("[test.cpp:3]: (error) Common realloc mistake: \'m_options\' nulled but not freed upon failure\n", errout.str());
     }
 
@@ -337,7 +337,7 @@ private:
               "  if (zLine) {\n"
               "    free(zLine);\n"
               "  }\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -1529,7 +1529,7 @@ private:
               "  data_ = new char[42];\n"
               "  delete data_;\n"
               "  data_ = 0;\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("[test.cpp:17]: (warning) Possible leak in public function. The pointer 'data_' is not deallocated before it is allocated.\n"
                       "[test.cpp:18]: (error) Mismatching allocation and deallocation: Foo::data_\n", errout.str());
 
@@ -1552,7 +1552,7 @@ private:
               "  data_ = new char[42];\n"
               "  delete data_;\n"
               "  data_ = 0;\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("[test.cpp:17]: (warning) Possible leak in public function. The pointer 'data_' is not deallocated before it is allocated.\n"
                       "[test.cpp:18]: (error) Mismatching allocation and deallocation: Foo::data_\n", errout.str());
     }
@@ -2390,18 +2390,18 @@ private:
     void resourceLeak() {
         check("void foo() {\n"
               "  fopen(\"file.txt\", \"r\");\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("[test.cpp:2]: (error) Return value of allocation function 'fopen' is not stored.\n", errout.str());
 
         check("void foo() {\n"
               "  FILE f* = fopen(\"file.txt\", \"r\");\n"
               "  freopen(\"file.txt\", \"r\", f);\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("[test.cpp:3]: (error) Return value of allocation function 'freopen' is not stored.\n", errout.str());
 
         check("void foo() {\n"
               "  freopen(\"file.txt\", \"r\", stdin);\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("struct Holder {\n"
@@ -2411,7 +2411,7 @@ private:
               "};\n"
               "void foo() {\n"
               "  Holder h ( fopen(\"file.txt\", \"r\"));\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("struct Holder {\n"
@@ -2421,7 +2421,7 @@ private:
               "};\n"
               "void foo() {\n"
               "  Holder ( fopen(\"file.txt\", \"r\"));\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("struct Holder {\n"
@@ -2431,7 +2431,7 @@ private:
               "};\n"
               "void foo() {\n"
               "  Holder h { fopen(\"file.txt\", \"r\")};\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("struct Holder {\n"
@@ -2441,7 +2441,7 @@ private:
               "};\n"
               "void foo() {\n"
               "  Holder h = fopen(\"file.txt\", \"r\");\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("struct Holder {\n"
@@ -2451,7 +2451,7 @@ private:
               "};\n"
               "void foo() {\n"
               "  Holder { fopen(\"file.txt\", \"r\")};\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("struct Holder {\n"
@@ -2461,7 +2461,7 @@ private:
               "};\n"
               "void foo() {\n"
               "  Holder { 0, fopen(\"file.txt\", \"r\")};\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
     }
 

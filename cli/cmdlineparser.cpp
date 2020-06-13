@@ -1125,7 +1125,7 @@ void CmdLineParser::printHelp()
               "                         files that are on a lower level in the directory tree.\n"
 #ifdef HAVE_RULES
               "    --rule=<rule>        Match regular expression.\n"
-              "    --rule-file=<file>   Use given rule file. For more information, see: \n"
+              "    --rule-file=<file>   Use given rule file. For more information, see:\n"
               "                         http://sourceforge.net/projects/cppcheck/files/Articles/\n"
 #endif
               "    --std=<id>           Set standard.\n"

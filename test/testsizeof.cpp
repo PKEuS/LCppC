@@ -224,7 +224,7 @@ private:
               "        Y = sizeof(f(g() << h())) == sizeof(A),\n"
               "        Z = X & Y\n"
               "    };\n"
-              "};\n");
+              "};");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -232,8 +232,7 @@ private:
         check("void f() {\n"
               "    int a[10];\n"
               "    std::cout << sizeof(a) / sizeof(int) << std::endl;\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
@@ -241,8 +240,7 @@ private:
               "    unsigned int b = 2;\n"
               "    int c[(a+b)];\n"
               "    std::cout << sizeof(c) / sizeof(int) << std::endl;\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
@@ -250,8 +248,7 @@ private:
               "    unsigned int b[] = { 0 };\n"
               "    int c[a[b[0]]];\n"
               "    std::cout << sizeof(c) / sizeof(int) << std::endl;\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("", errout.str());
 
 
@@ -260,42 +257,36 @@ private:
               "    unsigned int b = 2;\n"
               "    int c[(a[0]+b)];\n"
               "    std::cout << sizeof(c) / sizeof(int) << std::endl;\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
               "    int a[] = { 1, 2, 3 };\n"
               "    std::cout << sizeof(a) / sizeof(int) << std::endl;\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
               "    int a[3] = { 1, 2, 3 };\n"
               "    std::cout << sizeof(a) / sizeof(int) << std::endl;\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("void f( int a[]) {\n"
               "    std::cout << sizeof(a) / sizeof(int) << std::endl;\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("[test.cpp:2]: (warning) Using 'sizeof' on array given as "
                       "function argument returns size of a pointer.\n", errout.str());
 
         check("void f( int a[]) {\n"
               "    std::cout << sizeof a / sizeof(int) << std::endl;\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("[test.cpp:2]: (warning) Using 'sizeof' on array given as "
                       "function argument returns size of a pointer.\n", errout.str());
 
         check("void f( int a[3] ) {\n"
               "    std::cout << sizeof(a) / sizeof(int) << std::endl;\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("[test.cpp:2]: (warning) Using 'sizeof' on array given as "
                       "function argument returns size of a pointer.\n", errout.str());
 
@@ -303,22 +294,19 @@ private:
               "int f2(Fixname& f2v) {\n"
               "  int i = sizeof(f2v);\n"
               "  printf(\"sizeof f2v %d\", i);\n"
-              "   }\n"
-             );
+              "   }");
         ASSERT_EQUALS("", errout.str());
 
         check("void f(int *p) {\n"
               "    p[0] = 0;\n"
               "    int unused = sizeof(p);\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
               "    char p[] = \"test\";\n"
               "    int unused = sizeof(p);\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         // ticket #2495
@@ -332,38 +320,33 @@ private:
               "      {1,0,1},\n"
               "    };\n"
               "    const int COL_MAX=sizeof(col)/sizeof(col[0]);\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         // ticket #155
         check("void f() {\n"
               "    char buff1[1024*64],buff2[sizeof(buff1)*2];\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         // ticket #2510
         check("void f( int a[], int b) {\n"
               "    std::cout << sizeof(a) / sizeof(int) << std::endl;\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("[test.cpp:2]: (warning) Using 'sizeof' on array given as "
                       "function argument returns size of a pointer.\n", errout.str());
 
         // ticket #2510
         check("void f( int a[3] , int b[2] ) {\n"
               "    std::cout << sizeof(a) / sizeof(int) << std::endl;\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("[test.cpp:2]: (warning) Using 'sizeof' on array given as "
                       "function argument returns size of a pointer.\n", errout.str());
 
         // ticket #2510
         check("void f() {\n"
               "    char buff1[1024*64],buff2[sizeof(buff1)*(2+1)];\n"
-              "}\n"
-             );
+              "}");
         ASSERT_EQUALS("", errout.str());
 
     }
@@ -371,22 +354,22 @@ private:
     void sizeofForNumericParameter() {
         check("void f() {\n"
               "    std::cout << sizeof(10) << std::endl;\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("[test.cpp:2]: (warning) Suspicious usage of 'sizeof' with a numeric constant as parameter.\n", errout.str());
 
         check("void f() {\n"
               "    std::cout << sizeof(-10) << std::endl;\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("[test.cpp:2]: (warning) Suspicious usage of 'sizeof' with a numeric constant as parameter.\n", errout.str());
 
         check("void f() {\n"
               "    std::cout << sizeof 10  << std::endl;\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("[test.cpp:2]: (warning) Suspicious usage of 'sizeof' with a numeric constant as parameter.\n", errout.str());
 
         check("void f() {\n"
               "    std::cout << sizeof -10  << std::endl;\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("[test.cpp:2]: (warning) Suspicious usage of 'sizeof' with a numeric constant as parameter.\n", errout.str());
     }
 
@@ -851,7 +834,7 @@ private:
               "  char x = *((char*)(foo.data+1));\n"
               "  foo.data++;\n"
               "  return x;\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("[test.cpp:5]: (portability) 'foo.data' is of type 'void *'. When using void pointers in calculations, the behaviour is undefined.\n"
                       "[test.cpp:6]: (portability) 'foo.data' is of type 'void *'. When using void pointers in calculations, the behaviour is undefined.\n", errout.str());
 
@@ -875,7 +858,7 @@ private:
               "};\n"
               "void f4(struct BOO* boo) {\n"
               "  char c = *((char*)boo->data.data + 1);\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         check("struct FOO {\n"
@@ -883,7 +866,7 @@ private:
               "};\n"
               "char f(struct FOO* foo) {\n"
               "  *(foo[1].data + 1) = 0;\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("[test.cpp:5]: (portability) 'foo[1].data' is of type 'void *'. When using void pointers in calculations, the behaviour is undefined.\n", errout.str());
 
         check("struct FOO {\n"
@@ -896,7 +879,7 @@ private:
 
         // #6050 arithmetic on void**
         check("void* array[10];\n"
-              "void** b = array + 3;\n");
+              "void** b = array + 3;");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -905,7 +888,7 @@ private:
         check("char strncat ();\n"
               "int main () {\n"
               "  return strncat ();\n"
-              "}\n");
+              "}");
     }
 
 };

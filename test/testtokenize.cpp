@@ -1355,7 +1355,7 @@ private:
                                           "{}\n"), InternalError);
 
         tokenizeAndStringify("void foo(int, int)\n"
-                             "{}\n");
+                             "{}");
         ASSERT_EQUALS("", errout.str());
 
         // #3848 - Don't hang

@@ -417,7 +417,7 @@ private:
               "}\n"
               "class A::B {"
               "  B() { A a; a.f(); }\n"
-              "}\n");
+              "}");
         ASSERT_EQUALS("", errout.str());
     }
 
