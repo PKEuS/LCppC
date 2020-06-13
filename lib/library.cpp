@@ -806,8 +806,7 @@ Library::Error Library::loadFunction(const tinyxml2::XMLElement * const node, co
                     const char* str = argnode->Attribute("type");
                     ac.iteratorInfo.first = str ? (std::strcmp(str, "first") == 0) : false;
                     ac.iteratorInfo.last = str ? (std::strcmp(str, "last") == 0) : false;
-                    str = argnode->Attribute("container");
-                    ac.iteratorInfo.container = str ? std::atoi(str) : 0;
+                    ac.iteratorInfo.container = argnode->IntAttribute("container");
                 }
 
                 else

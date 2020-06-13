@@ -181,13 +181,11 @@ ErrorMessage::ErrorMessage(const tinyxml2::XMLElement * const errmsg)
         if (std::strcmp(e->Name(),"location")==0) {
             const char *strfile = e->Attribute("file");
             const char *strinfo = e->Attribute("info");
-            const char *strline = e->Attribute("line");
-            const char *strcolumn = e->Attribute("column");
 
             const char *file = strfile ? strfile : unknown;
             const char *info = strinfo ? strinfo : "";
-            const int line = strline ? std::atoi(strline) : 0;
-            const int column = strcolumn ? std::atoi(strcolumn) : 0;
+            const int line = e->IntAttribute("line");
+            const int column = e->IntAttribute("column");
             callStack.emplace_back(file, info, line, column);
         }
     }

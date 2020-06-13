@@ -128,12 +128,20 @@ static std::string readAttrString(const tinyxml2::XMLElement *e, const char *att
     return value ? value : "";
 }
 
-static int readAttrInt(const tinyxml2::XMLElement *e, const char *attr, bool *error)
+static int64_t readAttrInt64(const tinyxml2::XMLElement *e, const char *attr, bool *error)
 {
-    const char *value = e->Attribute(attr);
-    if (!value && error)
+    int64_t value = 0;
+    if (e->QueryInt64Attribute(attr, &value) == tinyxml2::XML_WRONG_ATTRIBUTE_TYPE)
         *error = true;
-    return value ? std::atoi(value) : 0;
+    return value;
+}
+
+static unsigned int readAttrUInt(const tinyxml2::XMLElement* e, const char* attr, bool* error)
+{
+    unsigned int value = 0;
+    if (e->QueryUnsignedAttribute(attr, &value) == tinyxml2::XML_WRONG_ATTRIBUTE_TYPE)
+        *error = true;
+    return value;
 }
 
 bool CTU::CTUInfo::CallBase::loadBaseFromXml(const tinyxml2::XMLElement *xmlElement)
@@ -141,10 +149,10 @@ bool CTU::CTUInfo::CallBase::loadBaseFromXml(const tinyxml2::XMLElement *xmlElem
     bool error = false;
     callId = readAttrString(xmlElement, ATTR_CALL_ID, &error);
     callFunctionName = readAttrString(xmlElement, ATTR_CALL_FUNCNAME, &error);
-    callArgNr = readAttrInt(xmlElement, ATTR_CALL_ARGNR, &error);
+    callArgNr = readAttrUInt(xmlElement, ATTR_CALL_ARGNR, &error);
     location.fileName = readAttrString(xmlElement, ATTR_LOC_FILENAME, &error);
-    location.lineNumber = readAttrInt(xmlElement, ATTR_LOC_LINENR, &error);
-    location.column = readAttrInt(xmlElement, ATTR_LOC_COLUMN, &error);
+    location.lineNumber = readAttrUInt(xmlElement, ATTR_LOC_LINENR, &error);
+    location.column = readAttrUInt(xmlElement, ATTR_LOC_COLUMN, &error);
     return !error;
 }
 
@@ -154,8 +162,8 @@ bool CTU::CTUInfo::FunctionCall::loadFromXml(const tinyxml2::XMLElement *xmlElem
         return false;
     bool error=false;
     callArgumentExpression = readAttrString(xmlElement, ATTR_CALL_ARGEXPR, &error);
-    callValueType = (ValueFlow::Value::ValueType)readAttrInt(xmlElement, ATTR_CALL_ARGVALUETYPE, &error);
-    callArgValue = readAttrInt(xmlElement, ATTR_CALL_ARGVALUE, &error);
+    callValueType = (ValueFlow::Value::ValueType)readAttrUInt(xmlElement, ATTR_CALL_ARGVALUETYPE, &error);
+    callArgValue = readAttrInt64(xmlElement, ATTR_CALL_ARGVALUE, &error);
     const char *w = xmlElement->Attribute(ATTR_WARNING);
     warning = w && std::strcmp(w, "true") == 0;
     for (const tinyxml2::XMLElement *e2 = xmlElement->FirstChildElement(); !error && e2; e2 = e2->NextSiblingElement()) {
@@ -163,8 +171,8 @@ bool CTU::CTUInfo::FunctionCall::loadFromXml(const tinyxml2::XMLElement *xmlElem
             continue;
         ErrorMessage::FileLocation loc;
         loc.setfile(readAttrString(e2, ATTR_LOC_FILENAME, &error));
-        loc.line = readAttrInt(e2, ATTR_LOC_LINENR, &error);
-        loc.column = readAttrInt(e2, ATTR_LOC_COLUMN, &error);
+        loc.line = readAttrInt64(e2, ATTR_LOC_LINENR, &error);
+        loc.column = readAttrUInt(e2, ATTR_LOC_COLUMN, &error);
         loc.setinfo(readAttrString(e2, ATTR_INFO, &error));
     }
     return !error;
@@ -176,7 +184,7 @@ bool CTU::CTUInfo::NestedCall::loadFromXml(const tinyxml2::XMLElement *xmlElemen
         return false;
     bool error = false;
     myId = readAttrString(xmlElement, ATTR_MY_ID, &error);
-    myArgNr = readAttrInt(xmlElement, ATTR_MY_ARGNR, &error);
+    myArgNr = readAttrUInt(xmlElement, ATTR_MY_ARGNR, &error);
     return !error;
 }
 
@@ -214,12 +222,12 @@ std::list<CTU::CTUInfo::UnsafeUsage> CTU::loadUnsafeUsageListFromXml(const tinyx
         bool error = false;
         CTUInfo::UnsafeUsage unsafeUsage;
         unsafeUsage.myId = readAttrString(e, ATTR_MY_ID, &error);
-        unsafeUsage.myArgNr = readAttrInt(e, ATTR_MY_ARGNR, &error);
+        unsafeUsage.myArgNr = readAttrUInt(e, ATTR_MY_ARGNR, &error);
         unsafeUsage.myArgumentName = readAttrString(e, ATTR_MY_ARGNAME, &error);
         unsafeUsage.location.fileName = readAttrString(e, ATTR_LOC_FILENAME, &error);
-        unsafeUsage.location.lineNumber = readAttrInt(e, ATTR_LOC_LINENR, &error);
-        unsafeUsage.location.column = readAttrInt(e, ATTR_LOC_COLUMN, &error);
-        unsafeUsage.value = readAttrInt(e, ATTR_VALUE, &error);
+        unsafeUsage.location.lineNumber = readAttrUInt(e, ATTR_LOC_LINENR, &error);
+        unsafeUsage.location.column = readAttrUInt(e, ATTR_LOC_COLUMN, &error);
+        unsafeUsage.value = readAttrInt64(e, ATTR_VALUE, &error);
 
         if (!error)
             ret.push_back(unsafeUsage);
