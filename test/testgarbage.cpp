@@ -36,13 +36,8 @@ private:
 
     void run() override {
         settings.debugwarnings = true;
-        settings.severity.enable(Severity::style);
-        settings.severity.enable(Severity::warning);
-        settings.severity.enable(Severity::portability);
-        settings.severity.enable(Severity::performance);
-        settings.severity.enable(Severity::information);
-        settings.certainty.enable(Certainty::inconclusive);
-        settings.certainty.enable(Certainty::experimental);
+        settings.severity.setEnabledAll(true);
+        settings.certainty.setEnabledAll(true);
 
         // don't freak out when the syntax is wrong
 
@@ -1759,14 +1754,12 @@ private:
 
     void cliCode() {
         // #8913
-        /*
         ASSERT_THROW(checkCode("public ref class LibCecSharp : public CecCallbackMethods {\n"
                                "array<CecAdapter ^> ^ FindAdapters(String ^ path) {}\n"
                                "bool GetDeviceInformation(String ^ port, LibCECConfiguration ^configuration, uint32_t timeoutMs) {\n"
                                "bool bReturn(false);\n"
                                "}\n"
-                               "};\n"), InternalError);
-                               */
+                               "};"), InternalError);
     }
 
     void enumTrailingComma() {
