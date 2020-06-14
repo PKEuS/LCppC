@@ -19,7 +19,7 @@
 
 /**
  *
- * @mainpage Lean Cppcheck
+ * @mainpage LCppC
  * @version 1.0
  *
  * @section overview_sec Overview
