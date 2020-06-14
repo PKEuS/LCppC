@@ -318,7 +318,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                 // open this file and read every input file (1 file name per line)
                 const std::string cfgExcludesFile(23 + argv[i]);
                 if (!addPathsToSet(cfgExcludesFile, &mSettings->configExcludePaths)) {
-                    printMessage("Cppcheck: unable to open config excludes file at '" + cfgExcludesFile + "'");
+                    printMessage(PROGRAMNAME ": unable to open config excludes file at '" + cfgExcludesFile + "'");
                     return false;
                 }
             }
@@ -526,7 +526,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                 // open this file and read every input file (1 file name per line)
                 const std::string includesFile(16 + argv[i]);
                 if (!addIncludePathsToList(includesFile, &mSettings->includePaths)) {
-                    printMessage("Cppcheck: unable to open includes file at '" + includesFile + "'");
+                    printMessage(PROGRAMNAME ": unable to open includes file at '" + includesFile + "'");
                     return false;
                 }
             }
@@ -992,7 +992,7 @@ void CmdLineParser::printHelp()
               "                         files have the extension .dump and contain ast,\n"
               "                         tokenlist, symboldatabase, valueflow.\n"
               "    -D<ID>               Define preprocessor symbol. Unless --max-configs or\n"
-              "                         --force is used, Cppcheck will only check the given\n"
+              "                         --force is used, " PROGRAMNAME " will only check the given\n"
               "                         configuration when -D is used.\n"
               "                         Example: '-DDEBUG=1 -D__cplusplus'.\n"
               "    -U<ID>               Undefine preprocessor symbol. Use -U to explicitly\n"
@@ -1061,10 +1061,10 @@ void CmdLineParser::printHelp()
               "                         Forces " PROGRAMNAME " to check all files as the given\n"
               "                         language. Valid values are: c, c++\n"
               "    --library=<cfg>      Load file <cfg> that contains information about types\n"
-              "                         and functions. With such information Cppcheck\n"
+              "                         and functions. With such information " PROGRAMNAME "\n"
               "                         understands your code better and therefore you\n"
               "                         get better results. The std.cfg file that is\n"
-              "                         distributed with Cppcheck is loaded automatically.\n"
+              "                         distributed with " PROGRAMNAME " is loaded automatically.\n"
               "                         For more information about library files, read the\n"
               "                         manual.\n"
               "    --max-ctu-depth=N    Max depth in whole program analysis. The default value\n"
