@@ -2,7 +2,15 @@
 LCppC - Release Notes
 =====================
 
-Version 1.0 - 14th June 2020 (planned)
+Version 1.1 - August 2020 (planned)
+----------------------------
+
+The focus of this release will be bringing back useful checks that got lost in recent
+years of Cppcheck development - besides fixing bugs from the first release.
+
+
+-----------------------------
+Version 1.0 - 14th June 2020
 ----------------------------
 
 This first release of LCppC contains lots of breaking changes compared to Cppcheck 2.0.
@@ -25,7 +33,7 @@ Breaking Changes (compared to Cppcheck 2.0):
       This involves that --template= does no longer has a template "cppcheck1",
       but "cppcheck2" instead to get the message format of Cppcheck 2.0.
 
-    - Progress and status reports and are disabled by default.
+    - Progress and status reports are disabled by default.
       This is equivalent to setting -q in Cppcheck. These messages can be enabled
       again with --output=status,progress.
 
@@ -120,9 +128,7 @@ Improved Build Systems:
     - Turned on many warnings again.
 
 
------------------------------
-
-
+------------------------
 Cppcheck 2.0 and earlier
 ------------------------
 
