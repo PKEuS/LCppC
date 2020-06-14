@@ -70,7 +70,7 @@ static const ValueFlow::Value *getBufferSizeValue(const Token *tok)
 
 static unsigned int getMinFormatStringOutputLength(const std::vector<const Token*> &parameters, unsigned int formatStringArgNr)
 {
-    if (formatStringArgNr <= 0 || formatStringArgNr > parameters.size())
+    if (formatStringArgNr == 0 || formatStringArgNr > parameters.size())
         return 0;
     if (parameters[formatStringArgNr - 1]->tokType() != Token::eString)
         return 0;
