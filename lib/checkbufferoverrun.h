@@ -76,6 +76,7 @@ public:
         checkBufferOverrun.arrayIndexThenCheck();
         checkBufferOverrun.stringNotZeroTerminated();
         checkBufferOverrun.objectIndex();
+        checkBufferOverrun.negativeArraySize();
     }
 
     void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
@@ -86,6 +87,9 @@ public:
         c.arrayIndexThenCheckError(nullptr, "i");
         c.bufferOverflowError(nullptr, nullptr);
         c.objectIndexError(nullptr, nullptr, true);
+        c.negativeMemoryAllocationSizeError(nullptr);
+        c.negativeArraySizeError(nullptr);
+        c.negativeMemoryAllocationSizeError(nullptr);
     }
 
     /** @brief Parse current TU and extract file info */
@@ -115,6 +119,10 @@ private:
     void terminateStrncpyError(const Token *tok, const std::string &varname);
     void bufferNotZeroTerminatedError(const Token *tok, const std::string &varname, const std::string &function);
 
+    void negativeArraySize();
+    void negativeArraySizeError(const Token* tok);
+    void negativeMemoryAllocationSizeError(const Token* tok); // provide a negative value to memory allocation function
+
     void objectIndex();
     void objectIndexError(const Token *tok, const ValueFlow::Value *v, bool known);
 
@@ -140,7 +148,8 @@ private:
                "- Buffer overflow\n"
                "- Dangerous usage of strncat()\n"
                "- Using array index before checking it\n"
-               "- Partial string write that leads to buffer that is not zero terminated.\n";
+               "- Partial string write that leads to buffer that is not zero terminated.\n"
+               "- Allocating memory with a negative size\n";
     }
 };
 /// @}

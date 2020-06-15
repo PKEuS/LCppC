@@ -80,6 +80,8 @@ private:
         // memset..
         TEST_CASE(memsetZeroBytes);
         TEST_CASE(memsetInvalid2ndParam);
+
+        TEST_CASE(negativeMemoryAllocationSizeError); // #389
     }
 
     void check(const char code[], const char filename[]="test.cpp", const Settings* settings_=nullptr) {
@@ -1323,6 +1325,23 @@ private:
               "    memset(is, 1.0f + i, 40);\n"
               "}");
         ASSERT_EQUALS("[test.cpp:4]: (portability) The 2nd memset() argument '1.0f+i' is a float, its representation is implementation defined.\n", errout.str());
+    }
+
+    void negativeMemoryAllocationSizeError() { // #389
+        check("void f() {\n"
+              "   int *a;\n"
+              "   a = malloc( -10 );\n"
+              "   free(a);\n"
+              "}");
+        ASSERT_EQUALS("[test.cpp:3]: (error) Invalid malloc() argument nr 1. The value is -10 but the valid values are '0:'.\n", errout.str());
+
+        check("void f() {\n"
+              "   int *a;\n"
+              "   a = alloca( -10 );\n"
+              "   free(a);\n"
+              "}");
+        ASSERT_EQUALS("[test.cpp:3]: (warning) Obsolete function 'alloca' called.\n"
+                      "[test.cpp:3]: (error) Invalid alloca() argument nr 1. The value is -10 but the valid values are '0:'.\n", errout.str());
     }
 };
 

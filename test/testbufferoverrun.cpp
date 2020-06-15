@@ -250,7 +250,7 @@ private:
 
         // TODO TEST_CASE(bufferNotZeroTerminated);
 
-        // TODO TEST_CASE(negativeMemoryAllocationSizeError) // #389
+        TEST_CASE(negativeMemoryAllocationSizeError); // #389
         TEST_CASE(negativeArraySize);
 
         TEST_CASE(pointerAddition1);
@@ -4197,30 +4197,6 @@ private:
               "   delete [] a;\n"
               "}");
         ASSERT_EQUALS("[test.cpp:4]: (error) Memory allocation size is negative.\n", errout.str());
-
-        check("void f()\n"
-              "{\n"
-              "   int *a;\n"
-              "   a = malloc( -10 );\n"
-              "   free(a);\n"
-              "}");
-        ASSERT_EQUALS("[test.cpp:4]: (error) Memory allocation size is negative.\n", errout.str());
-
-        check("void f()\n"
-              "{\n"
-              "   int *a;\n"
-              "   a = malloc( -10);\n"
-              "   free(a);\n"
-              "}");
-        ASSERT_EQUALS("[test.cpp:4]: (error) Memory allocation size is negative.\n", errout.str());
-
-        check("void f()\n"
-              "{\n"
-              "   int *a;\n"
-              "   a = alloca( -10 );\n"
-              "   free(a);\n"
-              "}");
-        ASSERT_EQUALS("[test.cpp:4]: (error) Memory allocation size is negative.\n", errout.str());
     }
 
     void negativeArraySize() {
@@ -4228,7 +4204,7 @@ private:
               "   int a[sz];\n"
               "}\n"
               "void x() { f(-100); }");
-        TODO_ASSERT_EQUALS("[test.cpp:2]: (error) Declaration of array 'a' with negative size is undefined behaviour\n", "", errout.str());
+        ASSERT_EQUALS("[test.cpp:2]: (error) Declaration of array 'a' with negative size is undefined behaviour\n", errout.str());
 
         // don't warn for constant sizes -> this is a compiler error so this is used for static assertions for instance
         check("int x, y;\n"
