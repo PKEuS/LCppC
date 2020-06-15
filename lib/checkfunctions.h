@@ -73,7 +73,7 @@ public:
         checkFunctions.invalidFunctionUsage();
         checkFunctions.checkMathFunctions();
         checkFunctions.memsetZeroBytes();
-        checkFunctions.memsetInvalid2ndParam();
+        checkFunctions.memsetInvalid2nd3rdParam();
     }
 
     /** Check for functions that should not be used */
@@ -98,8 +98,8 @@ public:
     /** @brief %Check for filling zero bytes with memset() */
     void memsetZeroBytes();
 
-    /** @brief %Check for invalid 2nd parameter of memset() */
-    void memsetInvalid2ndParam();
+    /** @brief %Check for invalid 2nd or 3rd parameter of memset() */
+    void memsetInvalid2nd3rdParam();
 
     /** @brief --check-library: warn for unconfigured function calls */
     void checkLibraryMatchFunctions();
@@ -114,6 +114,8 @@ private:
     void memsetZeroBytesError(const Token *tok);
     void memsetFloatError(const Token *tok, const std::string &var_value);
     void memsetValueOutOfRangeError(const Token *tok, const std::string &value);
+    void memsetSizeArgumentAsCharLiteralError(const Token* tok);
+    void memsetSizeArgumentAsCharError(const Token* tok);
 
     void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
         CheckFunctions c(nullptr, settings, errorLogger);
@@ -131,6 +133,8 @@ private:
         c.memsetZeroBytesError(nullptr);
         c.memsetFloatError(nullptr,  "varname");
         c.memsetValueOutOfRangeError(nullptr,  "varname");
+        c.memsetSizeArgumentAsCharLiteralError(nullptr);
+        c.memsetSizeArgumentAsCharError(nullptr);
     }
 
     static std::string myName() {
@@ -144,7 +148,8 @@ private:
                "- Warn if a function is called whose usage is discouraged\n"
                "- memset() third argument is zero\n"
                "- memset() with a value out of range as the 2nd parameter\n"
-               "- memset() with a float as the 2nd parameter\n";
+               "- memset() with a float as the 2nd parameter\n"
+               "- memset() with a char as the 3nd parameter\n";
     }
 };
 /// @}
