@@ -217,6 +217,48 @@ In Linux you can use for instance the `bear` (build ear) utility to generate a c
 
     bear make
 
+# Preprocessor Settings
+
+If you use `--project` then Cppcheck will use the preprocessor settings from the imported project. Otherwise you'll probably want to configure the include paths, defines, etc.
+
+## Defined and not defined
+
+Here is a file that has 2 preprocessor configurations (with A defined and without A defined):
+
+    #ifdef A
+        x = y;
+    #else
+        x = z;
+    #endif
+
+By default Cppcheck will check all preprocessor configurations (except those that have #error in them). So the above code will by default be analyzed both with `A` defined and without `A` defined.
+
+You can use `-D` and/or `-U` to change this. When you use `-D`, cppcheck will by default only check the given configuration and nothing else. This is how compilers work. But you can use `--force` or `--max-configs` to override the number of configurations.
+
+Check all configurations:
+
+    cppcheck file.c
+
+Only check the configuration A:
+
+    cppcheck -DA file.c
+
+Check all configurations when macro A is defined
+
+    cppcheck -DA --force file.c
+
+Another useful flag might be `-U`. It tells Cppcheck that a macro is not defined. Example usage:
+
+    cppcheck -UX file.c
+
+## Include paths
+
+To add an include path, use `-I`, followed by the path.
+
+Cppcheck's preprocessor basically handles includes like any other preprocessor. However, while other preprocessors stop working when they encounter a missing header, cppcheck will just print an information message and continues parsing the code.
+
+The purpose of this behaviour is that cppcheck is meant to work without necessarily seeing the entire code. Actually, it is recommended to not give all include paths. While it is useful for cppcheck to see the declaration of a class when checking the implementation of its members, passing standard library headers is highly discouraged because it will result in worse results and longer checking time. For such cases, .cfg files (see below) are the better way to provide information about the implementation of functions and types to cppcheck.
+
 # Platform
 
 You should use a platform configuration that match your target.
@@ -245,49 +287,19 @@ You can also create your own custom platform configuration in a XML file. Here i
       </sizeof>
     </platform>
 
-# Preprocessor Settings
+# C/C++ Standard
 
-If you use `--project` then Cppcheck will use the preprocessor settings from the imported project. Otherwise you'll probably want to configure the include paths, defines, etc.
+Cppcheck assumes that the code is compatible with the latest C/C++ standard but you can override this.
 
-## Defines
-
-Here is a file that has 2 preprocessor configurations (with A defined and without A defined):
-
-    #ifdef A
-        x = y;
-    #else
-        x = z;
-    #endif
-
-By default Cppcheck will check all preprocessor configurations (except those that have #error in them). So the above code will by default be analyzed both with `A` defined and without `A` defined.
-
-You can use `-D` to change this. When you use `-D`, cppcheck will by default only check the given configuration and nothing else. This is how compilers work. But you can use `--force` or `--max-configs` to override the number of configurations.
-
-Check all configurations:
-
-    cppcheck file.c
-
-Only check the configuration A:
-
-    cppcheck -DA file.c
-
-Check all configurations when macro A is defined
-
-    cppcheck -DA --force file.c
-
-Another useful flag might be `-U`. It tells Cppcheck that a macro is not defined. Example usage:
-
-    cppcheck -UX file.c
-
-That will mean that X is not defined. Cppcheck will not check what happens when X is defined.
-
-## Include paths
-
-To add an include path, use `-I`, followed by the path.
-
-Cppcheck's preprocessor basically handles includes like any other preprocessor. However, while other preprocessors stop working when they encounter a missing header, cppcheck will just print an information message and continues parsing the code.
-
-The purpose of this behaviour is that cppcheck is meant to work without necessarily seeing the entire code. Actually, it is recommended to not give all include paths. While it is useful for cppcheck to see the declaration of a class when checking the implementation of its members, passing standard library headers is highly discouraged because it will result in worse results and longer checking time. For such cases, .cfg files (see below) are the better way to provide information about the implementation of functions and types to cppcheck.
+The available options are:
+  * c89: C code is C89 compatible
+  * c99: C code is C99 compatible
+  * c11: C code is C11 compatible (default)
+  * c++03: C++ code is C++03 compatible
+  * c++11: C++ code is C++11 compatible
+  * c++14: C++ code is C++14 compatible
+  * c++17: C++ code is C++17 compatible
+  * c++20: C++ code is C++20 compatible (default)
 
 # Suppressions
 
@@ -710,23 +722,23 @@ Cppcheck is distributed with a few addons which are listed below.
 
 ### cert.py
 
-[cert.py](https://github.com/danmar/cppcheck/blob/master/addons/cert.py) checks for compliance with the safe programming standard [SEI CERT](http://www.cert.org/secure-coding/).
+[cert.py](https://github.com/danmar/cppcheck/blob/main/addons/cert.py) checks for compliance with the safe programming standard [SEI CERT](http://www.cert.org/secure-coding/).
 
 ### misra.py
 
-[misra.py](https://github.com/danmar/cppcheck/blob/master/addons/misra.py) is used to verify compliance with MISRA C 2012 - a proprietary set of guidelines to avoid such questionable code, developed for embedded systems.
+[misra.py](https://github.com/danmar/cppcheck/blob/main/addons/misra.py) is used to verify compliance with MISRA C 2012 - a proprietary set of guidelines to avoid such questionable code, developed for embedded systems.
 
-Since this standard is proprietary, cppcheck does not display error text by specifying only the number of violated rules (for example, [c2012-21.3]). If you want to display full texts for violated rules, you will need to create a text file containing MISRA rules, which you will have to pass when calling the script with `--rule-texts` key. Some examples of rule texts files available in [tests directory](https://github.com/danmar/cppcheck/blob/master/addons/test/misra/).
+Since this standard is proprietary, cppcheck does not display error text by specifying only the number of violated rules (for example, [c2012-21.3]). If you want to display full texts for violated rules, you will need to create a text file containing MISRA rules, which you will have to pass when calling the script with `--rule-texts` key. Some examples of rule texts files available in [tests directory](https://github.com/danmar/cppcheck/blob/main/addons/test/misra/).
 
 You can also suppress some unwanted rules using `--suppress-rules` option. Suppressed rules should be set as comma-separated listed, for example: `--suppress-rules 21.1,18.7`. The full list of supported rules is available on [Cppcheck](http://cppcheck.sourceforge.net/misra.php) home page.
 
 ### y2038.py
 
-[y2038.py](https://github.com/danmar/cppcheck/blob/master/addons/y2038.py) checks Linux system for [year 2038 problem](https://en.wikipedia.org/wiki/Year_2038_problem) safety. This required [modified environment](https://github.com/3adev/y2038). See complete description [here](https://github.com/danmar/cppcheck/blob/master/addons/doc/y2038.txt).
+[y2038.py](https://github.com/danmar/cppcheck/blob/main/addons/y2038.py) checks Linux system for [year 2038 problem](https://en.wikipedia.org/wiki/Year_2038_problem) safety. This required [modified environment](https://github.com/3adev/y2038). See complete description [here](https://github.com/danmar/cppcheck/blob/main/addons/doc/y2038.txt).
 
 ### threadsafety.py
 
-[threadsafety.py](https://github.com/danmar/cppcheck/blob/master/addons/threadsafety.py) analyse Cppcheck dump files to locate thread safety issues like static local objects used by multiple threads.
+[threadsafety.py](https://github.com/danmar/cppcheck/blob/main/addons/threadsafety.py) analyse Cppcheck dump files to locate thread safety issues like static local objects used by multiple threads.
 
 ## Running Addons
 
@@ -860,7 +872,7 @@ There are two ways:
 
 ## Incomplete analysis
 
-The data flow analysis can analyze simple functions completely but complex functions are not analyzed completely (yet). The data flow analysis will be continously improved in the future but it will never be perfect.
+The data flow analysis can analyze simple functions completely but complex functions are not analyzed completely (yet). The data flow analysis will be continuously improved in the future but it will never be perfect.
 
 It is likely that you will get false alarms caused by incomplete data flow analysis. Unfortunately it is unlikely that such false alarms can be fixed by contracts.
 
