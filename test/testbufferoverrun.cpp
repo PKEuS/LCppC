@@ -55,8 +55,25 @@ private:
         tokenizer.tokenize(istr, filename);
 
         // Check for buffer overruns..
-        CheckBufferOverrun checkBufferOverrun;
-        checkBufferOverrun.runChecks(&tokenizer, &settings0, this);
+        CheckBufferOverrun check;
+        check.runChecks(&tokenizer, &settings0, this);
+
+        // Prepare..
+        AnalyzerInformation ai;
+        CTU::CTUInfo& ctu = ai.addCTU(filename, 0, emptyString);
+        ctu.parseTokens(&tokenizer);
+
+        // Check code..
+        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings0);
+        if (!fi1)
+            return;
+        tinyxml2::XMLDocument doc;
+        tinyxml2::XMLElement* e = fi1->toXMLElement(&doc);
+        delete fi1;
+
+        Check::FileInfo* fi2 = check.loadFileInfoFromXml(e);
+        ctu.addCheckInfo(check.name(), fi2);
+        check.analyseWholeProgram(&ctu, ai, settings0, *this);
     }
 
     void check(const char code[], const Settings &settings, const char filename[] = "test.cpp") {
@@ -1039,7 +1056,7 @@ private:
               "    unknown_type_t delay[3];\n"
               "};\n"
               "\n"
-              "void x(unknown_type_t *delay, const int *net) {\n"
+              "void x(unknown_type_t *delay, const int net) {\n"
               "    delay[4] = 0;\n"
               "}\n"
               "\n"
@@ -1047,7 +1064,7 @@ private:
               "    struct s1 obj;\n"
               "    x(obj.delay, 123);\n"
               "}");
-        // TODO CTU ASSERT_EQUALS("[test.cpp:11] -> [test.cpp:6]: (error) Array 'obj.delay[3]' accessed at index 4, which is out of bounds.\n", errout.str());
+        TODO_ASSERT_EQUALS("[test.cpp:11] -> [test.cpp:6]: (error) Array 'obj.delay[3]' accessed at index 4, which is out of bounds.\n", "", errout.str());
 
         check("struct s1 {\n"
               "    float a[0];\n"
@@ -2031,7 +2048,7 @@ private:
               "    char x[2];\n"
               "    f1(x);\n"
               "}");
-        // TODO CTU ASSERT_EQUALS("[test.cpp:6] -> [test.cpp:2]: (error) Array 'x[2]' accessed at index 4, which is out of bounds.\n", errout.str());
+        ASSERT_EQUALS("[test.cpp:6] -> [test.cpp:2]: (error) Array index out of bounds; 'buf' buffer size is 2 and it is accessed at offset 4.\n", errout.str());
     }
 
     void array_index_string_literal() {
@@ -2668,7 +2685,7 @@ private:
               "    char a[10];\n"
               "    f1(a);"
               "}");
-        TODO_ASSERT_EQUALS("[test.cpp:8] -> [test.cpp:3]: (error) Array 'a[10]' accessed at index 100, which is out of bounds.\n", "", errout.str());
+        ASSERT_EQUALS("[test.cpp:8] -> [test.cpp:3]: (error) Array index out of bounds; 's' buffer size is 10 and it is accessed at offset 100.\n", errout.str());
     }
 
     void buffer_overrun_function_array_argument() {
@@ -3505,7 +3522,7 @@ private:
               "    char buf[5];\n"
               "    a(buf);"
               "}", settings);
-        // TODO CTU ASSERT_EQUALS("[test.cpp:4] -> [test.cpp:1]: (error) Buffer is accessed out of bounds: buf\n", errout.str());
+        TODO_ASSERT_EQUALS("[test.cpp:4] -> [test.cpp:1]: (error) Buffer is accessed out of bounds: buf\n", "", errout.str());
     }
 
     void minsize_strlen() {
@@ -4221,162 +4238,134 @@ private:
         ASSERT_EQUALS("[test.cpp:3]: (portability) Undefined behaviour, pointer arithmetic 'arr+20' is out of bounds.\n", errout.str());
     }
 
-    void ctu(const char code[]) {
-        // Clear the error buffer..
-        errout.str("");
-
-        // Tokenize..
-        Tokenizer tokenizer(&settings0, this);
-        std::istringstream istr(code);
-        tokenizer.tokenize(istr, "test.cpp");
-
-        // Prepare..
-        CheckBufferOverrun check(&tokenizer, &settings0, this);
-        AnalyzerInformation ai;
-        CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
-        ctu.parseTokens(&tokenizer);
-
-        // Check code..
-        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings0);
-        if (!fi1)
-            return;
-        tinyxml2::XMLDocument doc;
-        tinyxml2::XMLElement* e = fi1->toXMLElement(&doc);
-        delete fi1;
-
-        Check::FileInfo* fi2 = check.loadFileInfoFromXml(e);
-        ctu.addCheckInfo(check.name(), fi2);
-        check.analyseWholeProgram(&ctu, ai, settings0, *this);
-    }
-
     void ctu_malloc() {
-        ctu("void dostuff(char *p) {\n"
-            "  p[-3] = 0;\n"
-            "}\n"
-            "\n"
-            "int main() {\n"
-            "  char *s = malloc(4);\n"
-            "  dostuff(s);\n"
-            "}");
+        check("void dostuff(char *p) {\n"
+              "  p[-3] = 0;\n"
+              "}\n"
+              "\n"
+              "int main() {\n"
+              "  char *s = malloc(4);\n"
+              "  dostuff(s);\n"
+              "}");
         ASSERT_EQUALS("[test.cpp:6] -> [test.cpp:7] -> [test.cpp:2]: (error) Array index out of bounds; buffer 'p' is accessed at offset -3.\n", errout.str());
 
-        ctu("void dostuff(char *p) {\n"
-            "  p[4] = 0;\n"
-            "}\n"
-            "\n"
-            "int main() {\n"
-            "  char *s = malloc(4);\n"
-            "  dostuff(s);\n"
-            "}");
+        check("void dostuff(char *p) {\n"
+              "  p[4] = 0;\n"
+              "}\n"
+              "\n"
+              "int main() {\n"
+              "  char *s = malloc(4);\n"
+              "  dostuff(s);\n"
+              "}");
         ASSERT_EQUALS("[test.cpp:6] -> [test.cpp:7] -> [test.cpp:2]: (error) Array index out of bounds; 'p' buffer size is 4 and it is accessed at offset 4.\n", errout.str());
     }
 
     void ctu_array() {
-        ctu("void dostuff(char *p) {\n"
-            "    p[10] = 0;\n"
-            "}\n"
-            "int main() {\n"
-            "  char str[4];\n"
-            "  dostuff(str);\n"
-            "}");
+        check("void dostuff(char *p) {\n"
+              "    p[10] = 0;\n"
+              "}\n"
+              "int main() {\n"
+              "  char str[4];\n"
+              "  dostuff(str);\n"
+              "}");
         ASSERT_EQUALS("[test.cpp:6] -> [test.cpp:2]: (error) Array index out of bounds; 'p' buffer size is 4 and it is accessed at offset 10.\n", errout.str());
 
-        ctu("static void memclr( char *data )\n"
-            "{\n"
-            "    data[10] = 0;\n"
-            "}\n"
-            "\n"
-            "static void f()\n"
-            "{\n"
-            "    char str[5];\n"
-            "    memclr( str );\n"
-            "}");
+        check("static void memclr( char *data )\n"
+              "{\n"
+              "    data[10] = 0;\n"
+              "}\n"
+              "\n"
+              "static void f()\n"
+              "{\n"
+              "    char str[5];\n"
+              "    memclr( str );\n"
+              "}");
         ASSERT_EQUALS("[test.cpp:9] -> [test.cpp:3]: (error) Array index out of bounds; 'data' buffer size is 5 and it is accessed at offset 10.\n", errout.str());
 
-        ctu("static void memclr( int i, char *data )\n"
-            "{\n"
-            "    data[10] = 0;\n"
-            "}\n"
-            "\n"
-            "static void f()\n"
-            "{\n"
-            "    char str[5];\n"
-            "    memclr( 0, str );\n"
-            "}");
+        check("static void memclr( int i, char *data )\n"
+              "{\n"
+              "    data[10] = 0;\n"
+              "}\n"
+              "\n"
+              "static void f()\n"
+              "{\n"
+              "    char str[5];\n"
+              "    memclr( 0, str );\n"
+              "}");
         ASSERT_EQUALS("[test.cpp:9] -> [test.cpp:3]: (error) Array index out of bounds; 'data' buffer size is 5 and it is accessed at offset 10.\n", errout.str());
 
-        ctu("static void memclr( int i, char *data )\n"
-            "{\n"
-            "    data[i] = 0;\n"
-            "}\n"
-            "\n"
-            "static void f()\n"
-            "{\n"
-            "    char str[5];\n"
-            "    memclr( 10, str );\n"
-            "}");
+        check("static void memclr( int i, char *data )\n"
+              "{\n"
+              "    data[i] = 0;\n"
+              "}\n"
+              "\n"
+              "static void f()\n"
+              "{\n"
+              "    char str[5];\n"
+              "    memclr( 10, str );\n"
+              "}");
         TODO_ASSERT_EQUALS("[test.cpp:9] -> [test.cpp:3]: (possible error) Array index out of bounds.\n",
                            "", errout.str());
 
         // This is not an error
-        ctu("static void memclr( char *data, int size )\n"
-            "{\n"
-            "    if( size > 10 )"
-            "      data[10] = 0;\n"
-            "}\n"
-            "\n"
-            "static void f()\n"
-            "{\n"
-            "    char str[5];\n"
-            "    memclr( str, 5 );\n"
-            "}");
+        check("static void memclr( char *data, int size )\n"
+              "{\n"
+              "    if( size > 10 )"
+              "      data[10] = 0;\n"
+              "}\n"
+              "\n"
+              "static void f()\n"
+              "{\n"
+              "    char str[5];\n"
+              "    memclr( str, 5 );\n"
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         // #2097
-        ctu("void foo(int *p)\n"
-            "{\n"
-            "    --p;\n"
-            "    p[2] = 0;\n"
-            "}\n"
-            "\n"
-            "void bar()\n"
-            "{\n"
-            "    int p[3];\n"
-            "    foo(p+1);\n"
-            "}");
+        check("void foo(int *p)\n"
+              "{\n"
+              "    --p;\n"
+              "    p[2] = 0;\n"
+              "}\n"
+              "\n"
+              "void bar()\n"
+              "{\n"
+              "    int p[3];\n"
+              "    foo(p+1);\n"
+              "}");
         ASSERT_EQUALS("", errout.str());
 
         // #9112
-        ctu("static void get_mac_address(const u8 *strbuf)\n"
-            "{\n"
-            "    (strbuf[2]);\n"
-            "}\n"
-            "\n"
-            "static void program_mac_address(u32 mem_base)\n"
-            "{\n"
-            "    u8 macstrbuf[17] = { 0 };\n"
-            "    get_mac_address(macstrbuf);\n"
-            "}");
+        check("static void get_mac_address(const u8 *strbuf)\n"
+              "{\n"
+              "    (strbuf[2]);\n"
+              "}\n"
+              "\n"
+              "static void program_mac_address(u32 mem_base)\n"
+              "{\n"
+              "    u8 macstrbuf[17] = { 0 };\n"
+              "    get_mac_address(macstrbuf);\n"
+              "}");
         ASSERT_EQUALS("", errout.str());
     }
 
     void ctu_variable() {
-        ctu("void dostuff(int *p) {\n"
-            "    p[10] = 0;\n"
-            "}\n"
-            "int main() {\n"
-            "  int x = 4;\n"
-            "  dostuff(&x);\n"
-            "}");
+        check("void dostuff(int *p) {\n"
+              "    p[10] = 0;\n"
+              "}\n"
+              "int main() {\n"
+              "  int x = 4;\n"
+              "  dostuff(&x);\n"
+              "}");
         ASSERT_EQUALS("[test.cpp:6] -> [test.cpp:2]: (error) Array index out of bounds; 'p' buffer size is 4 and it is accessed at offset 40.\n", errout.str());
     }
 
     void ctu_arithmetic() {
-        ctu("void dostuff(int *p) { x = p + 10; }\n"
-            "int main() {\n"
-            "  int x[3];\n"
-            "  dostuff(x);\n"
-            "}");
+        check("void dostuff(int *p) { x = p + 10; }\n"
+              "int main() {\n"
+              "  int x[3];\n"
+              "  dostuff(x);\n"
+              "}");
         ASSERT_EQUALS("[test.cpp:4] -> [test.cpp:1]: (error) Pointer arithmetic overflow; 'p' buffer size is 12\n", errout.str());
     }
 
