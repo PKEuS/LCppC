@@ -756,6 +756,7 @@ void CppCheck::checkRawTokens(const Tokenizer &tokenizer)
 void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
 {
     // Analyse the tokens..
+    mCTU->parseTokens(&tokenizer);
     for (const Check *check : Check::instances()) {
         Check::FileInfo *fi = check->getFileInfo(&tokenizer, &mSettings);
         if (fi != nullptr) {

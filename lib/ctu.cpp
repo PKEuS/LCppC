@@ -86,7 +86,7 @@ tinyxml2::XMLElement* CTU::CTUInfo::FunctionCall::toXMLElement(tinyxml2::XMLDocu
 
 tinyxml2::XMLElement* CTU::CTUInfo::NestedCall::toXMLElement(tinyxml2::XMLDocument* doc) const
 {
-    tinyxml2::XMLElement* entry = doc->NewElement("function-call");
+    tinyxml2::XMLElement* entry = doc->NewElement("nested-call");
     entry->SetAttribute(ATTR_MY_ID, myId.c_str());
     entry->SetAttribute(ATTR_MY_ARGNR, myArgNr);
     return entry;
@@ -602,6 +602,15 @@ void CTU::CTUInfo::writeFile()
     root->SetAttribute("checksum", mChecksum);
 
     for (auto e = mErrors.cbegin(); e != mErrors.cend(); ++e) {
+        tinyxml2::XMLElement* error = e->toXMLElement(&doc);
+        root->InsertEndChild(error);
+    }
+
+    for (auto e = functionCalls.cbegin(); e != functionCalls.cend(); ++e) {
+        tinyxml2::XMLElement* error = e->toXMLElement(&doc);
+        root->InsertEndChild(error);
+    }
+    for (auto e = nestedCalls.cbegin(); e != nestedCalls.cend(); ++e) {
         tinyxml2::XMLElement* error = e->toXMLElement(&doc);
         root->InsertEndChild(error);
     }
