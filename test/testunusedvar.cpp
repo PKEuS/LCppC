@@ -4655,7 +4655,7 @@ private:
             "void fun(std::string s) {\n"
             " s[10] = 123;\n"
             "}");
-        // TODO This works on command line.. load std.cfg? ASSERT_EQUALS("error", errout.str());
+        ASSERT_EQUALS("[test.cpp:2]: (style) Variable 's[10]' is assigned a value that is never used.\n", errout.str());
 
         functionVariableUsage(
             "void fun(short data[2]) {\n"
