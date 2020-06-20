@@ -5653,6 +5653,22 @@ static const Token * parsedecl(const Token *type, ValueType * const valuetype, V
                 type = type->next();
             }
             continue;
+        } else if (const Library::Container* container = settings->library.detectContainer(type, true)) {
+            valuetype->type = ValueType::Type::ITERATOR;
+            valuetype->container = container;
+            while (Token::Match(type, "%name%|::|<")) {
+                if (type->str() == "<" && type->link()) {
+                    if (container->type_templateArgNo >= 0) {
+                        const Token* templateType = type->next();
+                        for (int j = 0; templateType && j < container->type_templateArgNo; j++)
+                            templateType = templateType->nextTemplateArgument();
+                        valuetype->containerTypeToken = templateType;
+                    }
+                    type = type->link();
+                }
+                type = type->next();
+            }
+            continue;
         } else if (settings->library.isSmartPointer(type)) {
             const Token* argTok = Token::findsimplematch(type, "<");
             if (!argTok)
@@ -5914,11 +5930,19 @@ void SymbolDatabase::setValueTypeInTokenList(bool reportDebugWarnings, Token *to
                     const Token *typeStartToken = tok->astOperand1();
                     while (typeStartToken && typeStartToken->str() == "::")
                         typeStartToken = typeStartToken->astOperand1();
-                    if (const Library::Container *c = mSettings->library.detectContainer(typeStartToken)) {
+                    if (const Library::Container* c = mSettings->library.detectContainer(typeStartToken)) {
                         ValueType vt;
                         vt.pointer = 0;
                         vt.container = c;
                         vt.type = ValueType::Type::CONTAINER;
+                        setValueType(tok, vt);
+                        continue;
+                    }
+                    if (const Library::Container* c = mSettings->library.detectContainer(typeStartToken, true)) {
+                        ValueType vt;
+                        vt.pointer = 0;
+                        vt.container = c;
+                        vt.type = ValueType::Type::ITERATOR;
                         setValueType(tok, vt);
                         continue;
                     }
@@ -5997,11 +6021,19 @@ void SymbolDatabase::setValueTypeInTokenList(bool reportDebugWarnings, Token *to
             const Token *typeTok = tok->next();
             if (Token::Match(typeTok, "( std| ::| nothrow )"))
                 typeTok = typeTok->link()->next();
-            if (const Library::Container *c = mSettings->library.detectContainer(typeTok)) {
+            if (const Library::Container* c = mSettings->library.detectContainer(typeTok)) {
                 ValueType vt;
                 vt.pointer = 1;
                 vt.container = c;
                 vt.type = ValueType::Type::CONTAINER;
+                setValueType(tok, vt);
+                continue;
+            }
+            if (const Library::Container* c = mSettings->library.detectContainer(typeTok, true)) {
+                ValueType vt;
+                vt.pointer = 1;
+                vt.container = c;
+                vt.type = ValueType::Type::ITERATOR;
                 setValueType(tok, vt);
                 continue;
             }
