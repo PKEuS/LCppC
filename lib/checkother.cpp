@@ -2434,9 +2434,11 @@ void CheckOther::checkIncompleteArrayFill()
                     continue;
 
                 if (MathLib::toLongNumber(tok->linkAt(1)->strAt(-1)) == var->dimension(0)) {
-                    int size = mTokenizer->sizeOfType(var->typeStartToken());
+                    unsigned int size = mTokenizer->sizeOfType(var->typeStartToken());
                     if (size == 0 && var->valueType()->pointer)
                         size = mSettings->sizeof_pointer;
+                    else if (size == 0 && var->type())
+                        size = estimateSize(var->type(), mSettings, symbolDatabase);
                     if ((size != 1 && size != 100 && size != 0) || var->isPointer()) {
                         if (printWarning)
                             incompleteArrayFillError(tok, var->name(), tok->str(), false);
