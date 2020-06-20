@@ -842,8 +842,8 @@ void TemplateSimplifier::getTemplateInstantiations()
             if (tok->strAt(1) == "(") {
                 std::string fullName = qualification + (qualification.empty() ? "" : " :: ") + tok->str();
                 // get all declarations with this name
-                for (auto pos = functionNameMap.lower_bound(tok->str());
-                     pos != functionNameMap.upper_bound(tok->str()); ++pos) {
+                auto range = functionNameMap.equal_range(tok->str());
+                for (auto pos = range.first; pos != range.second; ++pos) {
                     // look for declaration with same qualification
                     if (pos->second->fullName() == fullName) {
                         // make sure it is a single argument function
