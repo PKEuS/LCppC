@@ -134,7 +134,7 @@ private:
     static bool isCtuUnsafeArrayIndex(const Check *check, const Token *argtok, MathLib::bigint *offset);
     static bool isCtuUnsafePointerArith(const Check *check, const Token *argtok, MathLib::bigint *offset);
 
-    bool analyseWholeProgram1(const CTU::CTUInfo *ctu, const std::map<std::string, std::list<const CTU::CTUInfo::CallBase *>> &callsMap, const CTU::CTUInfo::UnsafeUsage &unsafeUsage, int type, ErrorLogger &errorLogger);
+    bool analyseWholeProgram1(const CTU::CTUInfo *ctu, const std::map<std::string, std::vector<const CTU::CTUInfo::CallBase *>> &callsMap, const CTU::CTUInfo::UnsafeUsage &unsafeUsage, int type, ErrorLogger &errorLogger);
 
 
     static std::string myName() {

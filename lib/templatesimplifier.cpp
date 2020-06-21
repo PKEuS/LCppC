@@ -1000,7 +1000,7 @@ void TemplateSimplifier::useDefaultArgumentValues(TokenAndName &declaration)
     // template parameters with default value has syntax such as:
     //     x = y
     // this list will contain all the '=' tokens for such arguments
-    std::list<Token *> eq;
+    std::vector<Token *> eq;
     // and this set the position of parameters with a default value
     std::set<std::size_t> defaultedArgPos;
 
@@ -1100,7 +1100,7 @@ void TemplateSimplifier::useDefaultArgumentValues(TokenAndName &declaration)
 
         if (tok && tok->str() == ">") {
             tok = tok->previous();
-            std::list<Token *>::const_iterator it = eq.begin();
+            std::vector<Token *>::const_iterator it = eq.begin();
             for (std::size_t i = (templatepar - eq.size()); it != eq.end() && i < usedpar; ++i)
                 ++it;
             int count = 0;
@@ -2854,7 +2854,7 @@ bool TemplateSimplifier::matchSpecialization(
 
 std::string TemplateSimplifier::getNewName(
     Token *tok2,
-    std::list<std::string> &typeStringsUsedInTemplateInstantiation)
+    std::vector<std::string> &typeStringsUsedInTemplateInstantiation)
 {
     std::string typeForNewName;
     unsigned int indentlevel = 0;
@@ -2989,7 +2989,7 @@ bool TemplateSimplifier::simplifyTemplateInstantiations(
 
         // New type..
         mTypesUsedInTemplateInstantiation.clear();
-        std::list<std::string> typeStringsUsedInTemplateInstantiation;
+        std::vector<std::string> typeStringsUsedInTemplateInstantiation;
         std::string typeForNewName = getNewName(tok2, typeStringsUsedInTemplateInstantiation);
 
         if ((typeForNewName.empty() && !templateDeclaration.isVariadic()) ||
@@ -3058,7 +3058,7 @@ bool TemplateSimplifier::simplifyTemplateInstantiations(
 
         // New type..
         mTypesUsedInTemplateInstantiation.clear();
-        std::list<std::string> typeStringsUsedInTemplateInstantiation;
+        std::vector<std::string> typeStringsUsedInTemplateInstantiation;
         std::string typeForNewName = getNewName(tok2, typeStringsUsedInTemplateInstantiation);
 
         if (typeForNewName.empty()) {
@@ -3088,9 +3088,9 @@ bool TemplateSimplifier::simplifyTemplateInstantiations(
     return instantiated;
 }
 
-static bool matchTemplateParameters(const Token *nameTok, const std::list<std::string> &strings)
+static bool matchTemplateParameters(const Token *nameTok, const std::vector<std::string> &strings)
 {
-    std::list<std::string>::const_iterator it = strings.begin();
+    std::vector<std::string>::const_iterator it = strings.begin();
     const Token *tok = nameTok->tokAt(2);
     while (tok && it != strings.end() && *it == tok->str()) {
         tok = tok->next();
@@ -3101,7 +3101,7 @@ static bool matchTemplateParameters(const Token *nameTok, const std::list<std::s
 
 void TemplateSimplifier::replaceTemplateUsage(
     const TokenAndName &instantiation,
-    const std::list<std::string> &typeStringsUsedInTemplateInstantiation,
+    const std::vector<std::string> &typeStringsUsedInTemplateInstantiation,
     const std::string &newName)
 {
     std::list< std::pair<Token *, Token *> > removeTokens;

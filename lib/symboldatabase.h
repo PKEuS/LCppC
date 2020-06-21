@@ -997,7 +997,7 @@ public:
     std::multimap<std::string, const Function *> functionMap;
     std::list<Variable> varlist;
     const Scope *nestedIn;
-    std::list<Scope *> nestedList;
+    std::vector<Scope *> nestedList;
     unsigned int numConstructors;
     unsigned int numCopyOrMoveConstructors;
     std::list<UsingInfo> usingList;

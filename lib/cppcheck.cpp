@@ -471,7 +471,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
         std::set<uint64_t> checksums1;
         unsigned int checkCount = 0;
         bool hasValidConfig = false;
-        std::list<std::string> configurationError;
+        std::vector<std::string> configurationError;
         for (const std::string &currCfg : configurations) {
             // bail out if terminated
             if (Settings::terminated())

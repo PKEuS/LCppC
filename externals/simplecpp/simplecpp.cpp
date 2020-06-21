@@ -2366,7 +2366,7 @@ static std::string openHeader(std::ifstream &f, const simplecpp::DUI &dui, const
         }
     }
 
-    for (std::list<std::string>::const_iterator it = dui.includePaths.begin(); it != dui.includePaths.end(); ++it) {
+    for (std::vector<std::string>::const_iterator it = dui.includePaths.begin(); it != dui.includePaths.end(); ++it) {
         std::string s = *it;
         if (!s.empty() && s[s.size()-1U]!='/' && s[s.size()-1U]!='\\')
             s += '/';
@@ -2401,7 +2401,7 @@ static std::string getFileName(const std::map<std::string, simplecpp::TokenList 
         }
     }
 
-    for (std::list<std::string>::const_iterator it = dui.includePaths.begin(); it != dui.includePaths.end(); ++it) {
+    for (std::vector<std::string>::const_iterator it = dui.includePaths.begin(); it != dui.includePaths.end(); ++it) {
         std::string s = *it;
         if (!s.empty() && s[s.size()-1U]!='/' && s[s.size()-1U]!='\\')
             s += '/';
@@ -2426,7 +2426,7 @@ std::map<std::string, simplecpp::TokenList*> simplecpp::load(const simplecpp::To
     std::list<const Token *> filelist;
 
     // -include files
-    for (std::list<std::string>::const_iterator it = dui.includes.begin(); it != dui.includes.end(); ++it) {
+    for (std::vector<std::string>::const_iterator it = dui.includes.begin(); it != dui.includes.end(); ++it) {
         const std::string &filename = realFilename(*it);
 
         if (ret.find(filename) != ret.end())
@@ -2545,7 +2545,7 @@ void simplecpp::preprocess(simplecpp::TokenList &output, const simplecpp::TokenL
     sizeOfType.insert(std::make_pair("long double *", sizeof(long double *)));
 
     std::map<TokenString, Macro> macros;
-    for (std::list<std::string>::const_iterator it = dui.defines.begin(); it != dui.defines.end(); ++it) {
+    for (std::vector<std::string>::const_iterator it = dui.defines.begin(); it != dui.defines.end(); ++it) {
         const std::string &macrostr = *it;
         const std::string::size_type eq = macrostr.find('=');
         const std::string::size_type par = macrostr.find('(');
@@ -2574,7 +2574,7 @@ void simplecpp::preprocess(simplecpp::TokenList &output, const simplecpp::TokenL
     std::set<std::string> pragmaOnce;
 
     includetokenstack.push(rawtokens.cfront());
-    for (std::list<std::string>::const_iterator it = dui.includes.begin(); it != dui.includes.end(); ++it) {
+    for (std::vector<std::string>::const_iterator it = dui.includes.begin(); it != dui.includes.end(); ++it) {
         const std::map<std::string, TokenList*>::const_iterator f = filedata.find(*it);
         if (f != filedata.end())
             includetokenstack.push(f->second->cfront());

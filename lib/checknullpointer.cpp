@@ -592,7 +592,7 @@ bool CheckNullPointer::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInfo
     bool foundErrors = false;
     (void)settings; // This argument is unused
 
-    const std::map<std::string, std::list<const CTU::CTUInfo::CallBase *>> callsMap = ctu->getCallsMap();
+    const std::map<std::string, std::vector<const CTU::CTUInfo::CallBase *>> callsMap = ctu->getCallsMap();
 
     for (CTU::CTUInfo& ctui : analyzerInformation.getCTUs()) {
         const CNP_FileInfo* fi = dynamic_cast<CNP_FileInfo*>(ctui.getCheckInfo(name()));

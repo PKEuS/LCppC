@@ -120,7 +120,7 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
 
     // Check that all include paths exist
     {
-        for (std::list<std::string>::iterator iter = mSettings.includePaths.begin();
+        for (std::vector<std::string>::iterator iter = mSettings.includePaths.begin();
              iter != mSettings.includePaths.end();
             ) {
             const std::string path(Path::toNativeSeparators(*iter));

@@ -854,7 +854,7 @@ bool CheckBufferOverrun::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerIn
     bool foundErrors = false;
     (void)settings; // This argument is unused
 
-    const std::map<std::string, std::list<const CTU::CTUInfo::CallBase *>> callsMap = ctu->getCallsMap();
+    const std::map<std::string, std::vector<const CTU::CTUInfo::CallBase *>> callsMap = ctu->getCallsMap();
 
     for (CTU::CTUInfo& ctui : analyzerInformation.getCTUs()) {
         const CBO_FileInfo* fi = dynamic_cast<CBO_FileInfo*>(ctui.getCheckInfo(name()));
@@ -868,7 +868,7 @@ bool CheckBufferOverrun::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerIn
     return foundErrors;
 }
 
-bool CheckBufferOverrun::analyseWholeProgram1(const CTU::CTUInfo *ctu, const std::map<std::string, std::list<const CTU::CTUInfo::CallBase *>> &callsMap, const CTU::CTUInfo::UnsafeUsage &unsafeUsage, int type, ErrorLogger &errorLogger)
+bool CheckBufferOverrun::analyseWholeProgram1(const CTU::CTUInfo *ctu, const std::map<std::string, std::vector<const CTU::CTUInfo::CallBase *>> &callsMap, const CTU::CTUInfo::UnsafeUsage &unsafeUsage, int type, ErrorLogger &errorLogger)
 {
     const CTU::CTUInfo::FunctionCall *functionCall = nullptr;
 

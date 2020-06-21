@@ -1021,7 +1021,7 @@ void SymbolDatabase::createSymbolDatabaseSetScopePointers()
         for (Token* tok = start; tok != end; tok = tok->next()) {
             if (start != end && tok->str() == "{") {
                 bool isEndOfScope = false;
-                for (std::list<Scope*>::const_iterator innerScope = it->nestedList.begin(); innerScope != it->nestedList.end(); ++innerScope) {
+                for (std::vector<Scope*>::const_iterator innerScope = it->nestedList.begin(); innerScope != it->nestedList.end(); ++innerScope) {
                     if (tok == (*innerScope)->bodyStart) { // Is begin of inner scope
                         tok = tok->link();
                         if (tok->next() == end || !tok->next()) {
@@ -3242,10 +3242,8 @@ void SymbolDatabase::printOut(const char *title) const
 
         std::cout << "    nestedList[" << scope->nestedList.size() << "] = (";
 
-        std::list<Scope *>::const_iterator nsi;
-
         std::size_t count = scope->nestedList.size();
-        for (nsi = scope->nestedList.begin(); nsi != scope->nestedList.end(); ++nsi) {
+        for (std::vector<Scope*>::const_iterator nsi = scope->nestedList.begin(); nsi != scope->nestedList.end(); ++nsi) {
             std::cout << " " << (*nsi) << " " << (*nsi)->type << " " << (*nsi)->className;
             if (count-- > 1)
                 std::cout << ",";
@@ -4204,7 +4202,7 @@ const Enumerator * SymbolDatabase::findEnumerator(const Token * tok) const
                     return enumerator;
                 // enum
                 else {
-                    for (std::list<Scope *>::const_iterator it = scope->nestedList.begin(), end = scope->nestedList.end(); it != end; ++it) {
+                    for (std::vector<Scope *>::const_iterator it = scope->nestedList.begin(), end = scope->nestedList.end(); it != end; ++it) {
                         enumerator = (*it)->findEnumerator(tokStr);
 
                         if (enumerator)
@@ -4219,7 +4217,7 @@ const Enumerator * SymbolDatabase::findEnumerator(const Token * tok) const
         if (enumerator)
             return enumerator;
 
-        for (std::list<Scope *>::const_iterator s = scope->nestedList.begin(); s != scope->nestedList.end(); ++s) {
+        for (std::vector<Scope *>::const_iterator s = scope->nestedList.begin(); s != scope->nestedList.end(); ++s) {
             enumerator = (*s)->findEnumerator(tokStr);
 
             if (enumerator)
@@ -4250,7 +4248,7 @@ const Enumerator * SymbolDatabase::findEnumerator(const Token * tok) const
             if (enumerator)
                 return enumerator;
 
-            for (std::list<Scope*>::const_iterator s = scope->nestedList.begin(); s != scope->nestedList.end(); ++s) {
+            for (std::vector<Scope*>::const_iterator s = scope->nestedList.begin(); s != scope->nestedList.end(); ++s) {
                 enumerator = (*s)->findEnumerator(tokStr);
 
                 if (enumerator)
@@ -4836,7 +4834,7 @@ const Scope *SymbolDatabase::findScopeByName(const std::string& name) const
 
 Scope *Scope::findInNestedList(const std::string & name)
 {
-    std::list<Scope *>::iterator it;
+    std::vector<Scope *>::iterator it;
 
     for (it = nestedList.begin(); it != nestedList.end(); ++it) {
         if ((*it)->className == name)
@@ -4849,7 +4847,7 @@ Scope *Scope::findInNestedList(const std::string & name)
 
 const Scope *Scope::findRecordInNestedList(const std::string & name) const
 {
-    std::list<Scope *>::const_iterator it;
+    std::vector<Scope *>::const_iterator it;
 
     for (it = nestedList.begin(); it != nestedList.end(); ++it) {
         if ((*it)->className == name && (*it)->type != eFunction)
@@ -4899,7 +4897,7 @@ const Type* Scope::findType(const std::string & name) const
 
 Scope *Scope::findInNestedListRecursive(const std::string & name)
 {
-    std::list<Scope *>::iterator it;
+    std::vector<Scope *>::iterator it;
 
     for (it = nestedList.begin(); it != nestedList.end(); ++it) {
         if ((*it)->className == name)

@@ -30,7 +30,7 @@
 #include <cstddef>
 #include <functional>
 #include <istream>
-#include <list>
+#include <vector>
 #include <map>
 #include <string>
 
@@ -185,7 +185,7 @@ private:
      */
     void reportOut(const std::string &outmsg) override;
 
-    std::list<std::string> mErrorList;
+    std::vector<std::string> mErrorList;
     Settings& mSettings;
 
     void reportProgress(const std::string &filename, const char stage[], const std::size_t value) override;

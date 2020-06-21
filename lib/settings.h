@@ -30,7 +30,6 @@
 
 #include <algorithm>
 #include <atomic>
-#include <list>
 #include <set>
 #include <string>
 #include <vector>
@@ -134,7 +133,7 @@ public:
     Settings();
 
     /** @brief addons, either filename of python/json file or json data */
-    std::list<std::string> addons;
+    std::vector<std::string> addons;
 
     /** @brief Path to the python interpreter to be used to run addons. */
     std::string addonPython;
@@ -199,7 +198,7 @@ public:
 
     /** @brief List of include paths, e.g. "my/includes/" which should be used
         for finding include files inside source files. (-I) */
-    std::list<std::string> includePaths;
+    std::vector<std::string> includePaths;
 
     /** @brief If errors are found, this value is returned from main().
         Default value is 0. */
@@ -221,7 +220,7 @@ public:
     bool jointSuppressionReport;
 
     /** @brief --library= */
-    std::list<std::string> libraries;
+    std::vector<std::string> libraries;
 
     /** Library */
     Library library;
@@ -267,7 +266,7 @@ public:
     /**
      * @brief Extra rules
      */
-    std::list<Rule> rules;
+    std::vector<Rule> rules;
 
     /** Do not only check how interface is used. Also check that interface is safe. */
     class CPPCHECKLIB SafeChecks {
@@ -340,7 +339,7 @@ public:
     std::set<std::string> userUndefs;
 
     /** @brief forced includes given by the user */
-    std::list<std::string> userIncludes;
+    std::vector<std::string> userIncludes;
 
     /** @brief Is --verbose given? */
     bool verbose;
