@@ -536,7 +536,7 @@ ValueFlow::Value CheckBufferOverrun::getBufferSize(const Token *bufTok) const
 }
 //---------------------------------------------------------------------------
 
-static bool checkBufferSize(const Token *ftok, const Library::ArgumentChecks::MinSize &minsize, const std::vector<const Token *> &args, const MathLib::bigint bufferSize, const Settings *settings)
+static bool checkBufferSize(const Token *ftok, const Library::ArgumentChecks::MinSize &minsize, const std::vector<const Token *> &args, const MathLib::bigint bufferSize, const Settings *settings, const Tokenizer* tokenizer)
 {
     const Token * const arg = (minsize.arg > 0 && minsize.arg - 1 < args.size()) ? args[minsize.arg - 1] : nullptr;
     const Token * const arg2 = (minsize.arg2 > 0 && minsize.arg2 - 1 < args.size()) ? args[minsize.arg2 - 1] : nullptr;
@@ -562,8 +562,13 @@ static bool checkBufferSize(const Token *ftok, const Library::ArgumentChecks::Mi
         if (arg && arg2 && arg->hasKnownIntValue() && arg2->hasKnownIntValue())
             return (arg->getKnownIntValue() * arg2->getKnownIntValue()) <= bufferSize;
         break;
-    case Library::ArgumentChecks::MinSize::Type::VALUE:
-        return minsize.value <= bufferSize;
+    case Library::ArgumentChecks::MinSize::Type::VALUE: {
+        MathLib::bigint myMinsize = minsize.value;
+        unsigned int baseSize = tokenizer->sizeOfType(minsize.baseType);
+        if (baseSize != 0)
+            myMinsize *= baseSize;
+        return myMinsize <= bufferSize;
+    }
     case Library::ArgumentChecks::MinSize::Type::NONE:
         break;
     }
@@ -602,7 +607,7 @@ void CheckBufferOverrun::bufferOverflow()
                 if (bufferSize.intvalue <= 1)
                     continue;
                 bool error = std::none_of(minsizes->begin(), minsizes->end(), [=](const Library::ArgumentChecks::MinSize &minsize) {
-                    return checkBufferSize(tok, minsize, args, bufferSize.intvalue, mSettings);
+                    return checkBufferSize(tok, minsize, args, bufferSize.intvalue, mSettings, mTokenizer);
                 });
                 if (error)
                     bufferOverflowError(args[argnr], &bufferSize);

@@ -287,6 +287,7 @@ public:
             int arg;
             int arg2;
             long long value;
+            std::string baseType;
         };
         std::vector<MinSize> minsizes;
 

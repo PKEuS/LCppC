@@ -192,7 +192,8 @@ public:
      * @param type Token which will contain e.g. "int", "*", or string.
      * @return sizeof for given type, or 0 if it can't be calculated.
      */
-    unsigned int sizeOfType(const Token *type) const;
+    unsigned int sizeOfType(const Token* type) const;
+    unsigned int sizeOfType(const std::string& type) const;
 
     /**
      * Try to determine if function parameter is passed by value by looking

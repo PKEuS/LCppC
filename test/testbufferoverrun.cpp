@@ -278,6 +278,8 @@ private:
         TEST_CASE(ctu_arithmetic);
 
         TEST_CASE(objectIndex);
+
+        TEST_CASE(checkPipeParameterSize); // ticket #3521
     }
 
 
@@ -4452,6 +4454,44 @@ private:
               "  m[1] = y;\n"
               "  return m[1][1];\n"
               "}");
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void checkPipeParameterSize() { // #3521
+
+        Settings settings;
+        LOAD_LIB_2(settings.library, "posix.cfg");
+
+        check("void f(){\n"
+              "int pipefd[1];\n" // <--  array of two integers is needed
+              "if (pipe(pipefd) == -1) {\n"
+              "    return;\n"
+              "  }\n"
+              "}", settings);
+        ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: pipefd\n", errout.str());
+
+        check("void f(){\n"
+              "int pipefd[2];\n"
+              "if (pipe(pipefd) == -1) {\n"
+              "    return;\n"
+              "  }\n"
+              "}", settings);
+        ASSERT_EQUALS("", errout.str());
+
+        check("void f(){\n"
+              "char pipefd[2];\n"
+              "if (pipe((int*)pipefd) == -1) {\n"
+              "    return;\n"
+              "  }\n"
+              "}", settings);
+        ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: (int*)pipefd\n", errout.str());
+
+        check("void f(){\n"
+              "char pipefd[20];\n" // Strange, but large enough
+              "if (pipe((int*)pipefd) == -1) {\n"
+              "    return;\n"
+              "  }\n"
+              "}", settings);
         ASSERT_EQUALS("", errout.str());
     }
 };
