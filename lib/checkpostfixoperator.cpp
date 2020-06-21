@@ -52,13 +52,11 @@ void CheckPostfixOperator::postfixOperator()
     for (const Scope * scope : symbolDatabase->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             const Variable *var = tok->variable();
-            if (!var || !Token::Match(tok, "%var% ++|--"))
+            if (!var || var->isArrayOrPointer() || !Token::Match(tok, "%var% ++|--"))
                 continue;
 
             const Token* parent = tok->next()->astParent();
             if (!parent || parent->str() == ";" || (parent->str() == "," && (!parent->astParent() || parent->astParent()->str() != "("))) {
-                if (var->isPointer() || var->isArray())
-                    continue;
 
                 if (Token::Match(var->nameToken()->previous(), "iterator|const_iterator|reverse_iterator|const_reverse_iterator")) {
                     // the variable is an iterator

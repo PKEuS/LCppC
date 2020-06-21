@@ -1638,7 +1638,7 @@ void CheckOther::checkNanInArithmeticExpression()
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
         if (tok->str() != "/")
             continue;
-        if (!Token::Match(tok->astParent(), "[+-]"))
+        if (!Token::Match(tok->astParent(), "[+-*/]"))
             continue;
         if (Token::simpleMatch(tok->astOperand2(), "0.0"))
             nanInArithmeticExpressionError(tok);
@@ -1805,7 +1805,7 @@ void CheckOther::checkInvalidFree()
             // If a previously-allocated pointer is incremented or decremented, any subsequent
             // free involving pointer arithmetic may or may not be invalid, so we should only
             // report an inconclusive result.
-            else if (Token::Match(tok, "%var% = %name% +|-") &&
+            else if (Token::Match(tok, "%var% = %var% +|-") &&
                      tok->varId() == tok->tokAt(2)->varId() &&
                      allocation.find(tok->varId()) != allocation.end()) {
                 if (printInconclusive)
@@ -2292,8 +2292,6 @@ void CheckOther::checkRedundantCopy()
         if (!tok)
             continue;
         if (!Token::Match(tok->previous(), "%name% ("))
-            continue;
-        if (!Token::Match(tok->link(), ") )| ;")) // bailout for usage like "const A a = getA()+3"
             continue;
 
         const Function* func = tok->previous()->function();
