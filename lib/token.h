@@ -29,7 +29,6 @@
 
 #include <cstddef>
 #include <functional>
-#include <list>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -98,8 +97,8 @@ struct TokenImpl {
     ValueType *mValueType;
 
     // ValueFlow
-    std::list<ValueFlow::Value>* mValues;
-    static const std::list<ValueFlow::Value> mEmptyValueList;
+    std::vector<ValueFlow::Value>* mValues;
+    static const std::vector<ValueFlow::Value> mEmptyValueList;
 
     // Pointer to a template in the template simplifier
     std::set<TemplateSimplifier::TokenAndName*>* mTemplateSimplifierPointers;
@@ -1034,7 +1033,7 @@ public:
         return mImpl->mOriginalName ? *mImpl->mOriginalName : emptyString;
     }
 
-    const std::list<ValueFlow::Value>& values() const {
+    const std::vector<ValueFlow::Value>& values() const {
         return mImpl->mValues ? *mImpl->mValues : TokenImpl::mEmptyValueList;
     }
 
@@ -1079,10 +1078,7 @@ public:
     /** Add token value. Return true if value is added. */
     bool addValue(const ValueFlow::Value &value);
 
-    void removeValues(std::function<bool(const ValueFlow::Value &)> pred) {
-        if (mImpl->mValues)
-            mImpl->mValues->remove_if(pred);
-    }
+    void removeValues(std::function<bool(const ValueFlow::Value&)> pred);
 
     unsigned int index() const {
         return mImpl->mIndex;

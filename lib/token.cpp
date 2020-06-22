@@ -35,7 +35,7 @@
 #include <stack>
 #include <utility>
 
-const std::list<ValueFlow::Value> TokenImpl::mEmptyValueList;
+const std::vector<ValueFlow::Value> TokenImpl::mEmptyValueList;
 
 Token::Token(TokensFrontBack *tokensFrontBack) :
     mTokensFrontBack(tokensFrontBack),
@@ -1709,7 +1709,7 @@ const ValueFlow::Value * Token::getValueLE(const MathLib::bigint val, const Sett
     if (!mImpl->mValues)
         return nullptr;
     const ValueFlow::Value *ret = nullptr;
-    std::list<ValueFlow::Value>::const_iterator it;
+    std::vector<ValueFlow::Value>::const_iterator it;
     for (it = mImpl->mValues->begin(); it != mImpl->mValues->end(); ++it) {
         if (it->isImpossible())
             continue;
@@ -1734,7 +1734,7 @@ const ValueFlow::Value * Token::getValueGE(const MathLib::bigint val, const Sett
     if (!mImpl->mValues)
         return nullptr;
     const ValueFlow::Value *ret = nullptr;
-    std::list<ValueFlow::Value>::const_iterator it;
+    std::vector<ValueFlow::Value>::const_iterator it;
     for (it = mImpl->mValues->begin(); it != mImpl->mValues->end(); ++it) {
         if (it->isImpossible())
             continue;
@@ -1759,7 +1759,7 @@ const ValueFlow::Value * Token::getInvalidValue(const Token *ftok, unsigned int 
     if (!mImpl->mValues || !settings)
         return nullptr;
     const ValueFlow::Value *ret = nullptr;
-    std::list<ValueFlow::Value>::const_iterator it;
+    std::vector<ValueFlow::Value>::const_iterator it;
     for (it = mImpl->mValues->begin(); it != mImpl->mValues->end(); ++it) {
         if (it->isImpossible())
             continue;
@@ -1786,7 +1786,7 @@ const Token *Token::getValueTokenMinStrSize(const Settings *settings) const
         return nullptr;
     const Token *ret = nullptr;
     int minsize = INT_MAX;
-    std::list<ValueFlow::Value>::const_iterator it;
+    std::vector<ValueFlow::Value>::const_iterator it;
     for (it = mImpl->mValues->begin(); it != mImpl->mValues->end(); ++it) {
         if (it->isTokValue() && it->tokvalue && it->tokvalue->tokType() == Token::eString) {
             const int size = getStrSize(it->tokvalue, settings);
@@ -1805,7 +1805,7 @@ const Token *Token::getValueTokenMaxStrLength() const
         return nullptr;
     const Token *ret = nullptr;
     int maxlength = 0;
-    std::list<ValueFlow::Value>::const_iterator it;
+    std::vector<ValueFlow::Value>::const_iterator it;
     for (it = mImpl->mValues->begin(); it != mImpl->mValues->end(); ++it) {
         if (it->isTokValue() && it->tokvalue && it->tokvalue->tokType() == Token::eString) {
             const int length = getStrLength(it->tokvalue);
@@ -1829,7 +1829,7 @@ const Token *Token::getValueTokenDeadPointer() const
 {
     const Scope * const functionscope = getfunctionscope(this->scope());
 
-    std::list<ValueFlow::Value>::const_iterator it;
+    std::vector<ValueFlow::Value>::const_iterator it;
     for (it = values().begin(); it != values().end(); ++it) {
         // Is this a pointer alias?
         if (!it->isTokValue() || (it->tokvalue && it->tokvalue->str() != "&"))
@@ -1858,34 +1858,35 @@ const Token *Token::getValueTokenDeadPointer() const
     return nullptr;
 }
 
-static bool removeContradiction(std::list<ValueFlow::Value>& values)
+static bool removeContradiction(std::vector<ValueFlow::Value>& values)
 {
     bool result = false;
-    for (ValueFlow::Value& x : values) {
-        if (x.isNonValue())
+    for (auto x = values.begin(); x != values.end(); ++x) {
+        if (x->isNonValue())
             continue;
-        for (ValueFlow::Value& y : values) {
-            if (y.isNonValue())
+        for (auto y = x+1; y != values.end(); ++y) {
+            if (y->isNonValue())
                 continue;
-            if (x == y)
+            if (*x == *y)
                 continue;
-            if (x.valueType != y.valueType)
+            if (x->valueType != y->valueType)
                 continue;
-            if (x.isImpossible() == y.isImpossible())
+            if (x->isImpossible() == y->isImpossible())
                 continue;
-            if (!x.equalValue(y))
+            if (!x->equalValue(*y))
                 continue;
-            if (x.bound == y.bound ||
-                (x.bound != ValueFlow::Value::Bound::Point && y.bound != ValueFlow::Value::Bound::Point)) {
-                const bool removex = !x.isImpossible() || y.isKnown();
-                const bool removey = !y.isImpossible() || x.isKnown();
+            if (x->bound == y->bound ||
+                (x->bound != ValueFlow::Value::Bound::Point && y->bound != ValueFlow::Value::Bound::Point)) {
+                const bool removex = !x->isImpossible() || y->isKnown();
+                const bool removey = !y->isImpossible() || x->isKnown();
+                ValueFlow::Value y2 = *y;
                 if (removex)
-                    values.remove(x);
+                    values.erase(std::remove(values.begin(), values.end(), *x), values.end());
                 if (removey)
-                    values.remove(y);
+                    values.erase(std::remove(values.begin(), values.end(), y2), values.end());
                 return true;
-            } else if (x.bound == ValueFlow::Value::Bound::Point) {
-                y.decreaseRange();
+            } else if (x->bound == ValueFlow::Value::Bound::Point) {
+                y->decreaseRange();
                 result = true;
             }
         }
@@ -1893,34 +1894,34 @@ static bool removeContradiction(std::list<ValueFlow::Value>& values)
     return result;
 }
 
-static void removeOverlaps(std::list<ValueFlow::Value>& values)
+static void removeOverlaps(std::vector<ValueFlow::Value>& values)
 {
-    for (ValueFlow::Value& x : values) {
-        if (x.isNonValue())
+    for (auto x = values.begin(); x != values.end(); ++x) {
+        if (x->isNonValue())
             continue;
-        values.remove_if([&](ValueFlow::Value& y) {
+        values.erase(std::remove_if(x+1, values.end(), [&](ValueFlow::Value& y) {
             if (y.isNonValue())
                 return false;
-            if (&x == &y)
+            if (&*x == &y)
                 return false;
-            if (x.valueType != y.valueType)
+            if (x->valueType != y.valueType)
                 return false;
-            if (x.valueKind != y.valueKind)
+            if (x->valueKind != y.valueKind)
                 return false;
             // TODO: Remove points coverd in a lower or upper bound
             // TODO: Remove lower or upper bound already covered by a lower and upper bound
-            if (!x.equalValue(y))
+            if (!x->equalValue(y))
                 return false;
-            if (x.bound != y.bound)
+            if (x->bound != y.bound)
                 return false;
             return true;
-        });
+        }), values.end());
     }
 }
 
 // Removing contradictions is an NP-hard problem. Instead we run multiple
 // passes to try to catch most contradictions
-static void removeContradictions(std::list<ValueFlow::Value>& values)
+static void removeContradictions(std::vector<ValueFlow::Value>& values)
 {
     for (int i = 0; i < 4; i++) {
         if (!removeContradiction(values))
@@ -1931,9 +1932,9 @@ static void removeContradictions(std::list<ValueFlow::Value>& values)
 
 bool Token::addValue(const ValueFlow::Value &value)
 {
-    if (value.isKnown() && mImpl->mValues) {
+    if (value.isKnown()) {
         // Clear all other values of the same type since value is known
-        mImpl->mValues->remove_if([&](const ValueFlow::Value & x) {
+        removeValues([&](const ValueFlow::Value & x) {
             return x.valueType == value.valueType;
         });
     }
@@ -1945,7 +1946,7 @@ bool Token::addValue(const ValueFlow::Value &value)
             return false;
 
         // if value already exists, don't add it again
-        std::list<ValueFlow::Value>::iterator it;
+        std::vector<ValueFlow::Value>::iterator it;
         for (it = mImpl->mValues->begin(); it != mImpl->mValues->end(); ++it) {
             // different types => continue
             if (it->valueType != value.valueType)
@@ -2001,7 +2002,7 @@ bool Token::addValue(const ValueFlow::Value &value)
             if (v.varId == 0)
                 v.varId = mImpl->mVarId;
             if (v.isKnown() && v.isIntValue())
-                mImpl->mValues->push_front(v);
+                mImpl->mValues->insert(mImpl->mValues->begin(), v);
             else
                 mImpl->mValues->push_back(v);
         }
@@ -2009,12 +2010,18 @@ bool Token::addValue(const ValueFlow::Value &value)
         ValueFlow::Value v(value);
         if (v.varId == 0)
             v.varId = mImpl->mVarId;
-        mImpl->mValues = new std::list<ValueFlow::Value>(1, v);
+        mImpl->mValues = new std::vector<ValueFlow::Value>(1, v);
     }
 
     removeContradictions(*mImpl->mValues);
 
     return true;
+}
+
+void Token::removeValues(std::function<bool(const ValueFlow::Value&)> pred)
+{
+    if (mImpl->mValues)
+        mImpl->mValues->erase(std::remove_if(mImpl->mValues->begin(), mImpl->mValues->end(), pred), mImpl->mValues->end());
 }
 
 void Token::assignProgressValues(Token *tok)

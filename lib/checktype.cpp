@@ -28,7 +28,7 @@
 #include "tokenize.h"
 
 #include <cstddef>
-#include <list>
+#include <vector>
 #include <ostream>
 #include <stack>
 //---------------------------------------------------------------------------
@@ -384,7 +384,7 @@ void CheckType::checkFloatToIntegerOverflow()
 {
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
         const ValueType *vtint, *vtfloat;
-        const std::list<ValueFlow::Value> *floatValues;
+        const std::vector<ValueFlow::Value> *floatValues;
 
         // Explicit cast
         if (Token::Match(tok, "( %name%") && tok->astOperand1() && !tok->astOperand2()) {
@@ -416,7 +416,7 @@ void CheckType::checkFloatToIntegerOverflow()
     }
 }
 
-void CheckType::checkFloatToIntegerOverflow(const Token *tok, const ValueType *vtint, const ValueType *vtfloat, const std::list<ValueFlow::Value> *floatValues)
+void CheckType::checkFloatToIntegerOverflow(const Token *tok, const ValueType *vtint, const ValueType *vtfloat, const std::vector<ValueFlow::Value> *floatValues)
 {
     // Conversion of float to integer?
     if (!vtint || !vtint->isIntegral())

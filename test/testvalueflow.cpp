@@ -27,7 +27,6 @@
 #include <simplecpp.h>
 #include <algorithm>
 #include <cmath>
-#include <list>
 #include <map>
 #include <ostream>
 #include <string>
@@ -316,17 +315,17 @@ private:
         settings.debugwarnings = false;
     }
 
-    std::list<ValueFlow::Value> tokenValues(const char code[], const char tokstr[], const Settings *s = nullptr) {
+    std::vector<ValueFlow::Value> tokenValues(const char code[], const char tokstr[], const Settings *s = nullptr) {
         Tokenizer tokenizer(s ? s : &settings, this);
         std::istringstream istr(code);
         errout.str("");
         tokenizer.tokenize(istr, "test.cpp");
         const Token *tok = Token::findmatch(tokenizer.tokens(), tokstr);
-        return tok ? tok->values() : std::list<ValueFlow::Value>();
+        return tok ? tok->values() : std::vector<ValueFlow::Value>();
     }
 
     ValueFlow::Value valueOfTok(const char code[], const char tokstr[]) {
-        std::list<ValueFlow::Value> values = tokenValues(code, tokstr);
+        std::vector<ValueFlow::Value> values = tokenValues(code, tokstr);
         return values.size() == 1U && !values.front().isTokValue() ? values.front() : ValueFlow::Value();
     }
 
@@ -372,7 +371,7 @@ private:
 
     void valueFlowPointerAlias() {
         const char *code;
-        std::list<ValueFlow::Value> values;
+        std::vector<ValueFlow::Value> values;
 
         code  = "const char * f() {\n"
                 "    static const char *x;\n"
@@ -395,11 +394,11 @@ private:
                 "  x = &x[1];\n"
                 "}";
         values = tokenValues(code, "&");
-        values.remove_if(&isNotTokValue);
+        values.erase(std::remove_if(values.begin(), values.end(), &isNotTokValue), values.end());
         ASSERT_EQUALS(true, values.empty());
 
         values = tokenValues(code, "x [");
-        values.remove_if(&isNotTokValue);
+        values.erase(std::remove_if(values.begin(), values.end(), &isNotTokValue), values.end());
         ASSERT_EQUALS(true, values.empty());
     }
 
@@ -633,7 +632,7 @@ private:
                 "    if (x==2) {}\n"
                 "    if (x==4) {}\n"
                 "}";
-        std::list<ValueFlow::Value> values = tokenValues(code,"*");
+        std::vector<ValueFlow::Value> values = tokenValues(code,"*");
         ASSERT_EQUALS(2U, values.size());
         ASSERT_EQUALS(4, values.front().intvalue);
         ASSERT_EQUALS(16, values.back().intvalue);
@@ -803,7 +802,7 @@ private:
 
     void valueFlowSizeof() {
         const char *code;
-        std::list<ValueFlow::Value> values;
+        std::vector<ValueFlow::Value> values;
 
         // array size
         code  = "void f() {\n"
@@ -2798,7 +2797,7 @@ private:
 
     void valueFlowFwdAnalysis() {
         const char *code;
-        std::list<ValueFlow::Value> values;
+        std::vector<ValueFlow::Value> values;
 
         code = "void f() {\n"
                "  struct Foo foo;\n"
@@ -3164,7 +3163,7 @@ private:
                "    for (x = 0; x < 10; x++)\n"
                "        x;\n"
                "}";
-        std::list<ValueFlow::Value> values = tokenValues(code, "x <");
+        std::vector<ValueFlow::Value> values = tokenValues(code, "x <");
         ASSERT(std::none_of(values.begin(), values.end(), std::mem_fn(&ValueFlow::Value::isUninitValue)));
 
         // #9637
@@ -3745,7 +3744,7 @@ private:
 
     void valueFlowUninit() {
         const char* code;
-        std::list<ValueFlow::Value> values;
+        std::vector<ValueFlow::Value> values;
 
         code = "void f() {\n"
                "    int x;\n"
@@ -3997,7 +3996,7 @@ private:
         ASSERT_EQUALS(false, valueOfTok(code, "<").intvalue == 1);
     }
 
-    static std::string isPossibleContainerSizeValue(const std::list<ValueFlow::Value> &values, MathLib::bigint i) {
+    static std::string isPossibleContainerSizeValue(const std::vector<ValueFlow::Value> &values, MathLib::bigint i) {
         if (values.size() != 1)
             return "values.size():" + std::to_string(values.size());
         if (!values.front().isContainerSizeValue())
@@ -4009,7 +4008,7 @@ private:
         return "";
     }
 
-    static std::string isImpossibleContainerSizeValue(const std::list<ValueFlow::Value>& values, MathLib::bigint i) {
+    static std::string isImpossibleContainerSizeValue(const std::vector<ValueFlow::Value>& values, MathLib::bigint i) {
         if (values.size() != 1)
             return "values.size():" + std::to_string(values.size());
         if (!values.front().isContainerSizeValue())
@@ -4021,7 +4020,7 @@ private:
         return "";
     }
 
-    static std::string isKnownContainerSizeValue(const std::list<ValueFlow::Value> &values, MathLib::bigint i) {
+    static std::string isKnownContainerSizeValue(const std::vector<ValueFlow::Value> &values, MathLib::bigint i) {
         if (values.size() != 1)
             return "values.size():" + std::to_string(values.size());
         if (!values.front().isContainerSizeValue())
@@ -4464,7 +4463,7 @@ private:
 
     void valueFlowSafeFunctionParameterValues() {
         const char *code;
-        std::list<ValueFlow::Value> values;
+        std::vector<ValueFlow::Value> values;
         Settings s;
         LOAD_LIB_2(s.library, "std.cfg");
         s.safeChecks.classes = s.safeChecks.externalFunctions = s.safeChecks.internalFunctions = true;
@@ -4513,7 +4512,7 @@ private:
 
     void valueFlowUnknownFunctionReturn() {
         const char *code;
-        std::list<ValueFlow::Value> values;
+        std::vector<ValueFlow::Value> values;
         Settings s;
         LOAD_LIB_2(s.library, "std.cfg");
         s.checkUnknownFunctionReturn.insert("rand");

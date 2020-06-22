@@ -472,7 +472,7 @@ static bool findFormat(unsigned int arg, const Token *firstArg,
                  argTok->variable()->dimension(0) != 0))) {
         *formatArgTok = argTok->nextArgument();
         if (!argTok->values().empty()) {
-            std::list<ValueFlow::Value>::const_iterator value = std::find_if(
+            std::vector<ValueFlow::Value>::const_iterator value = std::find_if(
                         argTok->values().begin(), argTok->values().end(), std::mem_fn(&ValueFlow::Value::isTokValue));
             if (value != argTok->values().end() && value->isTokValue() && value->tokvalue &&
                 value->tokvalue->tokType() == Token::eString) {
