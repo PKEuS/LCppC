@@ -258,6 +258,8 @@ void TemplateSimplifier::cleanupAfterSimplify()
 {
     bool goback = false;
     for (Token *tok = mTokenList.front(); tok; tok = tok->next()) {
+        tok->clearTemplatesimplifier();
+
         if (goback) {
             tok = tok->previous();
             goback = false;
