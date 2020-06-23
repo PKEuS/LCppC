@@ -2386,8 +2386,16 @@ void CheckOther::checkIncompleteArrayFill()
 
     for (const Scope * scope : symbolDatabase->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
-            if (Token::Match(tok, "memset|memcpy|memmove ( %var% ,") && Token::Match(tok->linkAt(1)->tokAt(-2), ", %num% )")) {
-                const Variable *var = tok->tokAt(2)->variable();
+            if (Token::Match(tok, "memset|memcpy|memmove ( ") && Token::Match(tok->linkAt(1)->tokAt(-2), ", %num% )")) {
+                const Token* tok2 = tok->tokAt(2);
+                if (tok2->str() == "::")
+                    tok2 = tok2->next();
+                while (Token::Match(tok2, "%name% ::|."))
+                    tok2 = tok2->tokAt(2);
+                if (!Token::Match(tok2, "%var% ,"))
+                    continue;
+
+                const Variable *var = tok2->variable();
                 if (!var || !var->isArray() || var->dimensions().empty() || !var->dimension(0))
                     continue;
 
