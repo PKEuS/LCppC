@@ -37,6 +37,7 @@ class TimerResults;
 class Token;
 class TemplateSimplifier;
 class ErrorLogger;
+class VariableMap;
 
 namespace simplecpp {
     class TokenList;
@@ -55,33 +56,6 @@ class CPPCHECKLIB Tokenizer {
     friend class SymbolDatabase;
     friend class TestSimplifyTemplate;
     friend class TemplateSimplifier;
-
-    /** Class used in Tokenizer::setVarIdPass1 */
-    class VariableMap {
-    private:
-        std::map<std::string, int> mVariableId;
-        std::stack<std::list<std::pair<std::string,int> > > mScopeInfo;
-        mutable unsigned int mVarId;
-    public:
-        VariableMap();
-        void enterScope();
-        bool leaveScope();
-        void addVariable(const std::string &varname);
-        bool hasVariable(const std::string &varname) const;
-        std::map<std::string,int>::const_iterator find(const std::string &varname) const {
-            return mVariableId.find(varname);
-        }
-        std::map<std::string,int>::const_iterator end() const {
-            return mVariableId.end();
-        }
-        const std::map<std::string,int> &map() const {
-            return mVariableId;
-        }
-        unsigned int *getVarId() const {
-            return &mVarId;
-        }
-    };
-
 
 public:
     Tokenizer();
@@ -607,19 +581,19 @@ private:
     void unsupportedTypedef(const Token *tok) const;
 
     void setVarIdClassDeclaration(const Token * const startToken,
-                                  const VariableMap &variableMap,
+                                  VariableMap &variableMap,
                                   const unsigned int scopeStartVarId,
-                                  std::map<int, std::map<std::string,int> >& structMembers);
+                                  std::map<unsigned int, std::map<std::string, unsigned int> >& structMembers);
 
     void setVarIdStructMembers(Token **tok1,
-                               std::map<int, std::map<std::string, int> >& structMembers,
+                               std::map<unsigned int, std::map<std::string, unsigned int> >& structMembers,
                                unsigned int *varId);
 
     void setVarIdClassFunction(const std::string &classname,
                                Token * const startToken,
                                const Token * const endToken,
-                               const std::map<std::string,int> &varlist,
-                               std::map<int, std::map<std::string,int> >& structMembers,
+                               const std::map<std::string, unsigned int> &varlist,
+                               std::map<unsigned int, std::map<std::string, unsigned int> >& structMembers,
                                unsigned int *varId_);
 
     /**

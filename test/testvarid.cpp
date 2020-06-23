@@ -170,6 +170,7 @@ private:
         TEST_CASE(varid_parameter_pack); // #9383
         TEST_CASE(varid_for_auto_cpp17);
         TEST_CASE(varid_not); // #9689 'not x'
+        TEST_CASE(varid_globalScope);
 
         TEST_CASE(varidclass1);
         TEST_CASE(varidclass2);
@@ -2615,6 +2616,29 @@ private:
         const char exp1[] = "1: void foo ( int x@1 ) const {\n"
                             "2: if ( ! x@1 ) { }\n"
                             "3: }\n";
+        ASSERT_EQUALS(exp1, tokenize(code1));
+    }
+
+    void varid_globalScope() {
+        const char code1[] = "int a[5];\n"
+                             "namespace Z { struct B { int a[5]; } b; }\n"
+                             "void f() {\n"
+                             "  int a[5];\n"
+                             "  memset(a, 123, 5);\n"
+                             "  memset(::a, 123, 5);\n"
+                             "  memset(Z::b.a, 123, 5);\n"
+                             "  memset(::Z::b.a, 123, 5);\n"
+                             "}";
+
+        const char exp1[] = "1: int a@1 [ 5 ] ;\n"
+                            "2: namespace Z { struct B { int a@2 [ 5 ] ; } ; struct B b@3 ; }\n"
+                            "3: void f ( ) {\n"
+                            "4: int a@4 [ 5 ] ;\n"
+                            "5: memset ( a@4 , 123 , 5 ) ;\n"
+                            "6: memset ( :: a@1 , 123 , 5 ) ;\n"
+                            "7: memset ( Z :: b@3 . a@5 , 123 , 5 ) ;\n"
+                            "8: memset ( :: Z :: b@3 . a@5 , 123 , 5 ) ;\n"
+                            "9: }\n";
         ASSERT_EQUALS(exp1, tokenize(code1));
     }
 
