@@ -47,6 +47,11 @@ private:
         settings.library.setdealloc("fclose", id, 1);
         settings.library.smartPointers.insert("std::shared_ptr");
         settings.library.smartPointers.insert("std::unique_ptr");
+        Library::Container string;
+        string.startPattern = "std :: string";
+        string.startPattern2 = "std :: string !!::";
+        string.arrayLike_indexOp = string.stdStringLike = true;
+        settings.library.containers["std::string"] = string;
 
         const char xmldata[] = "<?xml version=\"1.0\"?>\n"
                                "<def>\n"
@@ -436,7 +441,7 @@ private:
         check("void f() {\n"
               "    std::string *str = new std::string;"
               "}", true);
-        TODO_ASSERT_EQUALS("[test.cpp:2]: (error) Memory leak: str\n", "", errout.str());
+        ASSERT_EQUALS("[test.cpp:2]: (error) Memory leak: str\n", errout.str());
 
         check("class TestType {\n" // #9028
               "public:\n"

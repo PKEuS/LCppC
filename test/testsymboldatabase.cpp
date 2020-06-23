@@ -407,6 +407,7 @@ private:
 
         TEST_CASE(valueType1);
         TEST_CASE(valueType2);
+        TEST_CASE(valueType3);
 
         TEST_CASE(variadic1); // #7453
         TEST_CASE(variadic2); // #7649
@@ -6659,8 +6660,8 @@ private:
 
         // char *
         ASSERT_EQUALS("const char *", typeOf("\"hello\" + 1;", "+"));
-        ASSERT_EQUALS("const char",  typeOf("\"hello\"[1];", "["));
-        ASSERT_EQUALS("const char",  typeOf(";*\"hello\";", "*"));
+        ASSERT_EQUALS("const char", typeOf("\"hello\"[1];", "["));
+        ASSERT_EQUALS("const char", typeOf(";*\"hello\";", "*"));
         ASSERT_EQUALS("const wchar_t *", typeOf("L\"hello\" + 1;", "+"));
 
         // Variable calculations
@@ -6785,8 +6786,9 @@ private:
         ASSERT_EQUALS("unsigned long", typeOf("enum E : unsigned long { }; void foo() { E e[3]; bar(e[0]); }", "[ 0"));
         ASSERT_EQUALS("signed long long", typeOf("enum E : long long { }; void foo() { E e[3]; bar(e[0]); }", "[ 0"));
         ASSERT_EQUALS("unsigned long long", typeOf("enum E : unsigned long long { }; void foo() { E e[3]; bar(e[0]); }", "[ 0"));
+    }
 
-        // Library types
+    void valueType2() { // Library types
         {
             // Char types
             Settings settings;
@@ -6913,7 +6915,7 @@ private:
         }
     }
 
-    void valueType2() {
+    void valueType3() {
         GET_SYMBOL_DB("int i;\n"
                       "bool b;\n"
                       "Unknown u;\n"
