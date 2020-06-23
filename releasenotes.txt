@@ -5,14 +5,46 @@ LCppC - Release Notes
 Version 1.1 - August 2020 (planned)
 ----------------------------
 
-The focus of this release will be bringing back useful checks that got lost in recent
-years of Cppcheck development - besides fixing bugs from the first release.
+This release focusses on bringing back useful checks that got lost in recent
+years of Cppcheck development and improving existing checks to fix false negatives - 
+besides fixing bugs from the first release.
 
 New Features:
 
- - New Check: Char given as third parameter to memset() (Partially restored functionality from Cppcheck 1.87)
+ - New Check: Char given as third parameter to memset()
+   (One half restored functionality from Cppcheck 1.87, the other half is new)
 
- - New Check: Allocation of memory with negative size with new[] or as VLAs (Restored functionality from Cppcheck 1.87)
+ - New Check: Allocation of memory with negative size with new[] or as VLAs
+   (Restored functionality from Cppcheck 1.87)
+
+
+Improvements:
+
+ - Improved various checks to support more generic code:
+
+    - Usage of std::string::c_str()
+
+    - Filling arrays incompletely in a suspicious manner
+
+    - Comparison of string literals with char*
+
+    - Replaced specific check for usage of pipe() by CheckBufferOverrun and Library configuration
+
+ - A couple of small performance and memory usage optimizations
+
+ - Improved std.cfg and wxwidgets.cfg (also in Cppcheck 2.2)
+
+
+Bugfixes:
+
+ - Fixed a major regression in LCppC 1.0 that made whole program analysis partially ineffective
+
+ - Fixed AST and template parsing in some scenarios (also in Cppcheck 2.2)
+
+ - Lots of other bugs were fixed
+
+
+ Note: The check for correct return type of operator=, removed in Cppcheck 2.2, was kept in LCppC.
 
 
 -----------------------------
