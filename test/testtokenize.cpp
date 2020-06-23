@@ -5608,6 +5608,8 @@ private:
                              "Ref<X> r;\n"
                              "int x(0);";
         ASSERT_EQUALS("unoRef:: x0(", testAst(code1));
+
+        ASSERT_EQUALS("vary=", testAst("std::string var = y;"));
     }
 
     void astunaryop() { // unary operators
