@@ -1000,7 +1000,7 @@ public:
     std::vector<Scope *> nestedList;
     unsigned int numConstructors;
     unsigned int numCopyOrMoveConstructors;
-    std::list<UsingInfo> usingList;
+    std::vector<UsingInfo> usingList;
     ScopeType type;
     Type* definedType;
     std::map<std::string, Type*> definedTypesMap;
@@ -1363,7 +1363,7 @@ private:
     /** Whether iName is a keyword as defined in http://en.cppreference.com/w/c/keyword and http://en.cppreference.com/w/cpp/keyword*/
     bool isReservedName(const std::string& iName) const;
 
-    const Enumerator * findEnumerator(const Token * tok) const;
+    const Enumerator * findEnumerator(const Token * tok, std::set<std::string>& tokensThatAreNotEnumeratorValues) const;
 
     void setValueType(Token *tok, const ValueType &valuetype);
     void setValueType(Token *tok, const Variable &var);
@@ -1381,9 +1381,6 @@ private:
 
     bool mIsCpp;
     ValueType::Sign mDefaultSignedness;
-
-    /** "negative cache" list of tokens that we find are not enumeration values */
-    mutable std::set<std::string> mTokensThatAreNotEnumeratorValues;
 };
 
 

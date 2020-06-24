@@ -795,7 +795,7 @@ static void setTokenValue(Token* tok, const ValueFlow::Value &value, const Setti
                         if (index == s.size()) {
                             result.intvalue = 0;
                             setTokenValue(parent, result, settings);
-                        } else if (index >= 0 && index < s.size()) {
+                        } else if (index < s.size()) {
                             result.intvalue = s[index];
                             setTokenValue(parent, result, settings);
                         }
@@ -1544,8 +1544,6 @@ static void valueFlowOppositeCondition(SymbolDatabase *symboldatabase, const Set
         if (scope.type != Scope::eIf)
             continue;
         Token *tok = const_cast<Token *>(scope.classDef);
-        if (!Token::simpleMatch(tok, "if ("))
-            continue;
         const Token *cond1 = tok->next()->astOperand2();
         if (!cond1 || !cond1->isComparisonOp())
             continue;
@@ -3566,7 +3564,6 @@ static void valueFlowLifetime(TokenList *tokenlist, SymbolDatabase*, ErrorLogger
             bool captureByValue = Token::Match(lam.capture, "[ = ]");
 
             for (const Token * tok2 = lam.bodyTok; tok2 != lam.bodyTok->link(); tok2 = tok2->next()) {
-                ErrorPath errorPath;
                 if (captureByRef) {
                     LifetimeStore{tok2, "Lambda captures variable by reference here.", ValueFlow::Value::LifetimeKind::Lambda} .byRef(
                         tok, tokenlist, errorLogger, settings, isCapturingVariable);
