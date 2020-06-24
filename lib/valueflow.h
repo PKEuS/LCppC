@@ -174,7 +174,7 @@ namespace ValueFlow {
 
         std::string infoString() const;
 
-        enum ValueType { INT, TOK, FLOAT, MOVED, UNINIT, CONTAINER_SIZE, LIFETIME, BUFFER_SIZE } valueType;
+        enum ValueType : uint8_t { INT, TOK, FLOAT, MOVED, UNINIT, CONTAINER_SIZE, LIFETIME, BUFFER_SIZE } valueType;
         bool isIntValue() const {
             return valueType == ValueType::INT;
         }
@@ -213,7 +213,13 @@ namespace ValueFlow {
         }
 
         /** The value bound  */
-        enum class Bound { Upper, Lower, Point } bound;
+        enum class Bound : uint8_t { Upper, Lower, Point } bound;
+
+        /** value relies on safe checking */
+        bool safe;
+
+        /** Conditional value */
+        bool conditional;
 
         /** int value */
         long long intvalue;
@@ -223,9 +229,6 @@ namespace ValueFlow {
 
         /** float value */
         double floatValue;
-
-        /** kind of moved  */
-        enum class MoveKind {NonMovedVariable, MovedVariable, ForwardedVariable} moveKind;
 
         /** For calculated values - variable value that calculated value depends on */
         long long varvalue;
@@ -238,28 +241,25 @@ namespace ValueFlow {
         /** For calculated values - varId that calculated value depends on */
         unsigned int varId;
 
-        /** value relies on safe checking */
-        bool safe;
-
-        /** Conditional value */
-        bool conditional;
-
-        /** Is this value passed as default parameter to the function? */
-        bool defaultArg;
-
         int indirect;
 
         /** Path id */
         MathLib::bigint path;
 
-        enum class LifetimeKind {Object, Lambda, Iterator, Address} lifetimeKind;
+        /** Is this value passed as default parameter to the function? */
+        bool defaultArg;
 
-        enum class LifetimeScope { Local, Argument } lifetimeScope;
+        /** kind of moved  */
+        enum class MoveKind : uint8_t { NonMovedVariable, MovedVariable, ForwardedVariable } moveKind;
+
+        enum class LifetimeKind : uint8_t {Object, Lambda, Iterator, Address} lifetimeKind;
+
+        enum class LifetimeScope : uint8_t { Local, Argument } lifetimeScope;
 
         static const char* toString(MoveKind moveKind);
 
         /** How known is this value */
-        enum class ValueKind {
+        enum class ValueKind : uint8_t {
             /** This value is possible, other unlisted values may also be possible */
             Possible,
             /** Only listed values are possible */
@@ -326,18 +326,18 @@ namespace ValueFlow {
 
 struct LifetimeToken {
     const Token* token;
-    bool addressOf;
     ValueFlow::Value::ErrorPath errorPath;
+    bool addressOf;
     bool inconclusive;
 
-    LifetimeToken() : token(nullptr), addressOf(false), errorPath(), inconclusive(false) {}
+    LifetimeToken() : token(nullptr), errorPath(), addressOf(false), inconclusive(false) {}
 
     LifetimeToken(const Token* token, ValueFlow::Value::ErrorPath errorPath)
-        : token(token), addressOf(false), errorPath(std::move(errorPath)), inconclusive(false)
+        : token(token), errorPath(std::move(errorPath)), addressOf(false), inconclusive(false)
     {}
 
     LifetimeToken(const Token* token, bool addressOf, ValueFlow::Value::ErrorPath errorPath)
-        : token(token), addressOf(addressOf), errorPath(std::move(errorPath)), inconclusive(false)
+        : token(token), errorPath(std::move(errorPath)), addressOf(addressOf), inconclusive(false)
     {}
 
     static std::vector<LifetimeToken> setAddressOf(std::vector<LifetimeToken> v, bool b) {

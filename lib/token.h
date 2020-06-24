@@ -108,14 +108,14 @@ struct TokenImpl {
 
     // __cppcheck_in_range__
     struct CppcheckAttributes {
-        enum Type {LOW,HIGH} type;
+        enum Type : uint8_t {LOW,HIGH} type;
         MathLib::bigint value;
         struct CppcheckAttributes *next;
     };
     struct CppcheckAttributes *mCppcheckAttributes;
 
     // For memoization, to speed up parsing of huge arrays #8897
-    enum class Cpp11init {UNKNOWN, CPP11INIT, NOINIT} mCpp11init;
+    enum class Cpp11init : uint8_t {UNKNOWN, CPP11INIT, NOINIT} mCpp11init;
 
     /** Bitfield bit count. */
     unsigned char mBits;
@@ -170,7 +170,7 @@ private:
     Token operator=(const Token &);
 
 public:
-    enum Type {
+    enum Type : uint8_t {
         eVariable, eType, eFunction, eKeyword, eName, // Names: Variable (varId), Type (typeId, later), Function (FuncId, later), Language keyword, Name (unknown identifier)
         eNumber, eString, eChar, eBoolean, eLiteral, eEnumerator, // Literals: Number, String, Character, Boolean, User defined literal (C++11), Enumerator
         eArithmeticalOp, eComparisonOp, eAssignmentOp, eLogicalOp, eBitOp, eIncDecOp, eExtendedOp, // Operators: Arithmetical, Comparison, Assignment, Logical, Bitwise, ++/--, Extended
@@ -1152,7 +1152,7 @@ private:
 
     Token::Type mTokType;
 
-    unsigned int mFlags;
+    uint32_t mFlags;
 
     TokenImpl *mImpl;
 
@@ -1161,7 +1161,7 @@ private:
      * @param flag_ flag to get state of
      * @return true if flag set or false in flag not set
      */
-    bool getFlag(unsigned int flag_) const {
+    bool getFlag(uint32_t flag_) const {
         return ((mFlags & flag_) != 0);
     }
 
@@ -1170,7 +1170,7 @@ private:
      * @param flag_ flag to set state
      * @param state_ new state of flag
      */
-    void setFlag(unsigned int flag_, bool state_) {
+    void setFlag(uint32_t flag_, bool state_) {
         mFlags = state_ ? mFlags | flag_ : mFlags & ~flag_;
     }
 

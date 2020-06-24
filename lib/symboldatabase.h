@@ -50,7 +50,7 @@ class ValueType;
 /**
  * @brief Access control enumerations.
  */
-enum class AccessControl { Public, Protected, Private, Global, Namespace, Argument, Local, Throw };
+enum class AccessControl : uint8_t { Public, Protected, Private, Global, Namespace, Argument, Local, Throw };
 
 /**
  * @brief Array dimension information.
@@ -69,9 +69,6 @@ public:
     const Token* classDef;     ///< Points to "class" token
     const Scope* classScope;
     const Scope* enclosingScope;
-    enum class NeedInitialization {
-        Unknown, True, False
-    } needInitialization;
 
     class BaseInfo {
     public:
@@ -107,14 +104,18 @@ public:
     const Token * typeEnd;
     MathLib::bigint sizeOf;
 
+    enum class NeedInitialization : uint8_t {
+        Unknown, True, False
+    } needInitialization;
+
     Type(const Token* classDef_ = nullptr, const Scope* classScope_ = nullptr, const Scope* enclosingScope_ = nullptr) :
         classDef(classDef_),
         classScope(classScope_),
         enclosingScope(enclosingScope_),
-        needInitialization(NeedInitialization::Unknown),
         typeStart(nullptr),
         typeEnd(nullptr),
-        sizeOf(0) {
+        sizeOf(0),
+        needInitialization(NeedInitialization::Unknown) {
         if (classDef_ && classDef_->str() == "enum")
             needInitialization = NeedInitialization::True;
         else if (classDef_ && classDef_->str() == "using") {
@@ -206,7 +207,7 @@ class CPPCHECKLIB Variable {
      * @param flag_ flag to get state of
      * @return true if flag set or false in flag not set
      */
-    bool getFlag(unsigned int flag_) const {
+    bool getFlag(uint32_t flag_) const {
         return ((mFlags & flag_) != 0);
     }
 
@@ -215,7 +216,7 @@ class CPPCHECKLIB Variable {
      * @param flag_ flag to set state
      * @param state_ new state of flag
      */
-    void setFlag(unsigned int flag_, bool state_) {
+    void setFlag(uint32_t flag_, bool state_) {
         mFlags = state_ ? mFlags | flag_ : mFlags & ~flag_;
     }
 
@@ -663,7 +664,7 @@ private:
     AccessControl mAccess;  // public/protected/private
 
     /** @brief flags */
-    unsigned int mFlags;
+    uint32_t mFlags;
 
     /** @brief pointer to user defined type info (for known types) */
     const Type *mType;
@@ -716,7 +717,7 @@ class CPPCHECKLIB Function {
      * @param flag flag to get state of
      * @return true if flag set or false in flag not set
      */
-    bool getFlag(unsigned int flag) const {
+    bool getFlag(uint32_t flag) const {
         return ((mFlags & flag) != 0);
     }
 
@@ -725,12 +726,12 @@ class CPPCHECKLIB Function {
      * @param flag flag to set state
      * @param state new state of flag
      */
-    void setFlag(unsigned int flag, bool state) {
+    void setFlag(uint32_t flag, bool state) {
         mFlags = state ? mFlags | flag : mFlags & ~flag;
     }
 
 public:
-    enum Type { eConstructor, eCopyConstructor, eMoveConstructor, eOperatorEqual, eDestructor, eFunction, eLambda };
+    enum Type : uint8_t { eConstructor, eCopyConstructor, eMoveConstructor, eOperatorEqual, eDestructor, eFunction, eLambda };
 
     Function(const Tokenizer *mTokenizer, const Token *tok, const Scope *scope, const Token *tokDef, const Token *tokArgDef);
     explicit Function(const Token *tokenDef);
@@ -983,7 +984,7 @@ public:
         const Scope *scope;
     };
 
-    enum ScopeType { eGlobal, eClass, eStruct, eUnion, eNamespace, eFunction, eIf, eElse, eFor, eWhile, eDo, eSwitch, eUnconditional, eTry, eCatch, eLambda, eEnum };
+    enum ScopeType : uint8_t { eGlobal, eClass, eStruct, eUnion, eNamespace, eFunction, eIf, eElse, eFor, eWhile, eDo, eSwitch, eUnconditional, eTry, eCatch, eLambda, eEnum };
 
     Scope(const SymbolDatabase *check_, const Token *classDef_, const Scope *nestedIn_);
     Scope(const SymbolDatabase *check_, const Token *classDef_, const Scope *nestedIn_, ScopeType type_, const Token *start_);
@@ -1001,7 +1002,6 @@ public:
     unsigned int numConstructors;
     unsigned int numCopyOrMoveConstructors;
     std::vector<UsingInfo> usingList;
-    ScopeType type;
     Type* definedType;
     std::map<std::string, Type*> definedTypesMap;
 
@@ -1010,10 +1010,11 @@ public:
     Function *function; ///< function info for this function
 
     // enum specific fields
+    std::vector<Enumerator> enumeratorList;
     const Token * enumType;
     bool enumClass;
 
-    std::vector<Enumerator> enumeratorList;
+    ScopeType type;
 
     const Enumerator * findEnumerator(const std::string & name) const {
         for (const Enumerator & i : enumeratorList) {
@@ -1144,8 +1145,8 @@ private:
 /** Value type */
 class CPPCHECKLIB ValueType {
 public:
-    enum Sign { UNKNOWN_SIGN, SIGNED, UNSIGNED } sign;
-    enum Type { UNKNOWN_TYPE, NONSTD, RECORD, CONTAINER, ITERATOR, VOID, BOOL, CHAR, SHORT, WCHAR_T, INT, LONG, LONGLONG, UNKNOWN_INT, FLOAT, DOUBLE, LONGDOUBLE } type;
+    enum Sign : uint8_t { UNKNOWN_SIGN, SIGNED, UNSIGNED } sign;
+    enum Type : uint8_t { UNKNOWN_TYPE, NONSTD, RECORD, CONTAINER, ITERATOR, VOID, BOOL, CHAR, SHORT, WCHAR_T, INT, LONG, LONGLONG, UNKNOWN_INT, FLOAT, DOUBLE, LONGDOUBLE } type;
     unsigned int bits;                    ///< bitfield bitcount
     unsigned int pointer;                 ///< 0=>not pointer, 1=>*, 2=>**, 3=>***, etc
     unsigned int constness;               ///< bit 0=data, bit 1=*, bit 2=**
@@ -1209,7 +1210,7 @@ public:
 
     static Type typeFromString(const std::string &typestr, bool longType);
 
-    enum class MatchResult { UNKNOWN, SAME, FALLBACK1, FALLBACK2, NOMATCH };
+    enum class MatchResult : uint8_t { UNKNOWN, SAME, FALLBACK1, FALLBACK2, NOMATCH };
     static MatchResult matchParameter(const ValueType *call, const ValueType *func);
     static MatchResult matchParameter(const ValueType *call, const Variable *callVar, const Variable *funcVar);
 
