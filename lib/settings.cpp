@@ -47,6 +47,7 @@ Settings::Settings()
       jointSuppressionReport(false),
       maxConfigs(12),
       maxCtuDepth(2),
+      maxTemplateRecursion(100),
       preprocessOnly(false),
       relativePaths(false),
       showtime(SHOWTIME_MODES::SHOWTIME_NONE),

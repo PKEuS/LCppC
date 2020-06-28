@@ -311,6 +311,7 @@ private:
         TEST_CASE(simplifyOperatorName24);
         TEST_CASE(simplifyOperatorName25);
         TEST_CASE(simplifyOperatorName26);
+        TEST_CASE(simplifyOperatorName27);
 
         TEST_CASE(simplifyNullArray);
 
@@ -4569,6 +4570,14 @@ private:
                             "    x = y.operator *().z[123];"
                             "}";
         ASSERT_EQUALS("void foo ( ) { x = y . operator* ( ) . z [ 123 ] ; }",
+                      tokenizeAndStringify(code));
+    }
+
+    void simplifyOperatorName27() {
+        const char code[] = "int operator \"\" i (const char *, int);\n"
+                            "x = \"abc\"i;";
+        ASSERT_EQUALS("int operator\"\"i ( const char * , int ) ;\n"
+                      "x = operator\"\"i ( \"abc\" , 3 ) ;",
                       tokenizeAndStringify(code));
     }
 

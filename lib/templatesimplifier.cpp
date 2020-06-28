@@ -2931,7 +2931,22 @@ bool TemplateSimplifier::simplifyTemplateInstantiations(
         if (numberOfTemplateInstantiations != mTemplateInstantiations.size()) {
             numberOfTemplateInstantiations = mTemplateInstantiations.size();
             ++recursiveCount;
-            if (recursiveCount > 100) {
+            if (recursiveCount > mSettings->maxTemplateRecursion) {
+                if (mErrorLogger && mSettings->severity.isEnabled(Severity::information)) {
+                    std::vector<std::string> typeStringsUsedInTemplateInstantiation;
+                    const std::string typeForNewName = templateDeclaration.name() + "<" + getNewName(instantiation.token(), typeStringsUsedInTemplateInstantiation) + ">";
+
+                    const std::list<const Token*> callstack(1, instantiation.token());
+                    const ErrorMessage errmsg(callstack,
+                                              &mTokenizer->list,
+                                              Severity::information,
+                                              "templateRecursion",
+                                              "TemplateSimplifier: max template recursion ("
+                                              + MathLib::toString(mSettings->maxTemplateRecursion)
+                                              + ") reached for template '" + typeForNewName + "'. You might want to limit Cppcheck recursion.",
+                                              Certainty::safe);
+                    mErrorLogger->reportErr(errmsg);
+                }
                 // bail out..
                 break;
             }

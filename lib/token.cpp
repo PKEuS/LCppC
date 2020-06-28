@@ -2061,6 +2061,8 @@ void Token::type(const ::Type *t)
 
 const ::Type *Token::typeOf(const Token *tok)
 {
+    if (!tok)
+        return nullptr;
     if (Token::simpleMatch(tok, "return")) {
         const Scope *scope = tok->scope();
         if (!scope)
@@ -2081,6 +2083,8 @@ const ::Type *Token::typeOf(const Token *tok)
         if (!function)
             return nullptr;
         return function->retType;
+    } else if (Token::Match(tok->previous(), "%type% (|{")) {
+        return typeOf(tok->previous());
     } else if (Token::simpleMatch(tok, "=")) {
         return Token::typeOf(tok->astOperand1());
     } else if (Token::simpleMatch(tok, ".")) {
@@ -2093,6 +2097,8 @@ const ::Type *Token::typeOf(const Token *tok)
 
 std::pair<const Token*, const Token*> Token::typeDecl(const Token * tok)
 {
+    if (!tok)
+        return {};
     if (Token::simpleMatch(tok, "return")) {
         const Scope *scope = tok->scope();
         if (!scope)
@@ -2109,9 +2115,19 @@ std::pair<const Token*, const Token*> Token::typeDecl(const Token * tok)
             return {};
         if (!var->typeStartToken() || !var->typeEndToken())
             return {};
+        if (Token::simpleMatch(var->typeStartToken(), "auto")) {
+            const Token * tok2 = var->declEndToken();
+            if (Token::Match(tok2, "; %varid% =", var->declarationId()))
+                tok2 = tok2->tokAt(2);
+            if (Token::simpleMatch(tok2, "=") && tok2->astOperand2()) {
+                std::pair<const Token*, const Token*> r = typeDecl(tok2->astOperand2());
+                if (r.first)
+                    return r;
+            }
+        }
         return {var->typeStartToken(), var->typeEndToken()->next()};
-    } else if (Token::Match(tok, "%name%")) {
-        const Function *function = tok->function();
+    } else if (Token::Match(tok->previous(), "%name% (")) {
+        const Function *function = tok->previous()->function();
         if (!function)
             return {};
         return {function->retDef, function->returnDefEnd()};

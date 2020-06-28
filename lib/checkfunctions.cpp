@@ -455,6 +455,9 @@ void CheckFunctions::checkLibraryMatchFunctions()
         if (tok->linkAt(1)->strAt(1) == "(")
             continue;
 
+        if (tok->function())
+            continue;
+
         if (!mSettings->library.isNotLibraryFunction(tok))
             continue;
 

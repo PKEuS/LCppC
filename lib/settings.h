@@ -232,6 +232,9 @@ public:
     /** @brief --max-ctu-depth */
     int maxCtuDepth;
 
+    /** @brief max template recursion */
+    unsigned int maxTemplateRecursion;
+
     /** @brief suppress exitcode */
     Suppressions nofail;
 
