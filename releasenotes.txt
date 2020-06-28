@@ -17,6 +17,8 @@ New Features:
  - New Check: Allocation of memory with negative size with new[] or as VLAs
    (Restored functionality from Cppcheck 1.87)
 
+ - New Check: Detect incorrect usage of mutexes and lock guards (also in Cppcheck 2.2)
+
 
 Improvements:
 
@@ -44,7 +46,11 @@ Bugfixes:
  - Lots of other bugs were fixed
 
 
- Note: The check for correct return type of operator=, removed in Cppcheck 2.2, was kept in LCppC.
+ Notes:
+ 
+  - The check for correct return type of operator=, removed in Cppcheck 2.2, was kept in LCppC.
+
+  - LCppC retained the approach on comparison of boolean expressions with integerns from CppCheck 2.1 and earlier.
 
 
 -----------------------------
