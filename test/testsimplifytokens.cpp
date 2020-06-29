@@ -1217,6 +1217,8 @@ private:
         ASSERT_EQUALS("int foo ( ) { }", tok("__inline int foo ( ) { }", true));
         ASSERT_EQUALS("int foo ( ) { }", tok("__forceinline int foo ( ) { }", true));
         ASSERT_EQUALS("const int foo ( ) { }", tok("constexpr int foo() { }", true));
+        ASSERT_EQUALS("const int foo ( ) { }", tok("consteval int foo() { }", true));
+        ASSERT_EQUALS("int x ; x = 0 ;", tok("constinit int x = 0;", true));
         ASSERT_EQUALS("void f ( ) { int final [ 10 ] ; }", tok("void f() { int final[10]; }", true));
         ASSERT_EQUALS("int * p ;", tok("int * __restrict p;", "test.c"));
         ASSERT_EQUALS("int * * p ;", tok("int * __restrict__ * p;", "test.c"));
