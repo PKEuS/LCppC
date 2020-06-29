@@ -78,6 +78,7 @@ public:
         int bufferSizeArg1;
         int bufferSizeArg2;
         int reallocArg;
+        bool initData;
     };
 
     /** get allocation info for function */
@@ -419,7 +420,6 @@ public:
         return -1;
     }
 
-    std::set<std::string> returnuninitdata;
     std::vector<std::string> defines; // to provide some library defines
 
     std::set<std::string> smartPointers;
