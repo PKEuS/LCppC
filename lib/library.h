@@ -73,11 +73,11 @@ public:
     struct AllocFunc {
         int groupId;
         int arg;
-        enum class BufferSize {none,malloc,calloc,strdup};
-        BufferSize bufferSize;
+        enum class BufferSize : uint8_t {none,malloc,calloc,strdup};
         int bufferSizeArg1;
         int bufferSizeArg2;
         int reallocArg;
+        BufferSize bufferSize;
         bool initData;
     };
 
@@ -205,11 +205,11 @@ public:
             unstableInsert(false) {
         }
 
-        enum class Action {
+        enum class Action : uint8_t {
             RESIZE, CLEAR, PUSH, POP, FIND, INSERT, ERASE, CHANGE_CONTENT, CHANGE, CHANGE_INTERNAL,
             NO_ACTION
         };
-        enum class Yield {
+        enum class Yield : uint8_t {
             AT_INDEX, ITEM, BUFFER, BUFFER_NT, START_ITERATOR, END_ITERATOR, ITERATOR, SIZE, EMPTY,
             NO_YIELD
         };
@@ -249,24 +249,17 @@ public:
     class ArgumentChecks {
     public:
         ArgumentChecks() :
+            iteratorInfo(),
+            direction(Direction::DIR_UNKNOWN),
+            notuninit(-1),
             notbool(false),
             notnull(false),
-            notuninit(-1),
             formatstr(false),
             strz(false),
             optional(false),
-            variadic(false),
-            iteratorInfo(),
-            direction(Direction::DIR_UNKNOWN) {
+            variadic(false) {
         }
 
-        bool         notbool;
-        bool         notnull;
-        int          notuninit;
-        bool         formatstr;
-        bool         strz;
-        bool         optional;
-        bool         variadic;
         std::string  valid;
 
         class IteratorInfo {
@@ -282,7 +275,7 @@ public:
 
         class MinSize {
         public:
-            enum Type { NONE, STRLEN, ARGVALUE, SIZEOF, MUL, VALUE };
+            enum Type : uint8_t { NONE, STRLEN, ARGVALUE, SIZEOF, MUL, VALUE };
             MinSize(Type t, int a) : type(t), arg(a), arg2(0), value(0) {}
             Type type;
             int arg;
@@ -292,13 +285,20 @@ public:
         };
         std::vector<MinSize> minsizes;
 
-        enum class Direction {
+        enum class Direction : uint8_t {
             DIR_IN,     ///< Input to called function. Data is treated as read-only.
             DIR_OUT,    ///< Output to caller. Data is passed by reference or address and is potentially written.
             DIR_INOUT,  ///< Input to called function, and output to caller. Data is passed by reference or address and is potentially modified.
             DIR_UNKNOWN ///< direction not known / specified
         };
         Direction direction;
+        int          notuninit;
+        bool         notbool;
+        bool         notnull;
+        bool         formatstr;
+        bool         strz;
+        bool         optional;
+        bool         variadic;
     };
 
     struct Function {
@@ -428,7 +428,7 @@ public:
     struct PodType {
         unsigned int   size;
         char           sign;
-        enum { NO, BOOL, CHAR, SHORT, INT, LONG, LONGLONG } stdtype;
+        enum : uint8_t { NO, BOOL, CHAR, SHORT, INT, LONG, LONGLONG } stdtype;
     };
     const struct PodType *podtype(const std::string &name) const {
         const std::map<std::string, struct PodType>::const_iterator it = mPodTypes.find(name);
@@ -493,7 +493,7 @@ public:
     static bool isContainerYield(const Token * const cond, Library::Container::Yield y, const std::string& fallback="");
 
     /** Suppress/check a type */
-    enum class TypeCheck { def, check, suppress };
+    enum class TypeCheck : uint8_t { def, check, suppress };
     TypeCheck getTypeCheck(const std::string &check, const std::string &typeName) const;
 
 private:

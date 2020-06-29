@@ -33,10 +33,10 @@
  */
 struct Standards {
     /** C code C89/C99/C11 standard */
-    enum cstd_t { C89, C99, C11, CLatest=C11 } c;
+    enum cstd_t : uint8_t { C89, C99, C11, CLatest=C11 } c;
 
     /** C++ code standard */
-    enum cppstd_t { CPP03, CPP11, CPP14, CPP17, CPP20, CPPLatest=CPP20 } cpp;
+    enum cppstd_t : uint8_t { CPP03, CPP11, CPP14, CPP17, CPP20, CPPLatest=CPP20 } cpp;
 
     /** This constructor clear all the variables **/
     Standards() : c(C11), cpp(CPPLatest) {}

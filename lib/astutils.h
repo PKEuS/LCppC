@@ -112,7 +112,7 @@ const Token* getCondTokFromEnd(const Token* endBlock);
  * Extract for loop values: loopvar varid, init value, step value, last value (inclusive)
  */
 bool extractForLoopValues(const Token *forToken,
-                          nonneg int * const varid,
+                          unsigned int * const varid,
                           long long * const initValue,
                           long long * const stepValue,
                           long long * const lastValue);

@@ -437,7 +437,7 @@ const Token* getCondTokFromEnd(const Token* endBlock)
 }
 
 bool extractForLoopValues(const Token *forToken,
-                          nonneg int * const varid,
+                          unsigned int * const varid,
                           MathLib::bigint * const initValue,
                           MathLib::bigint * const stepValue,
                           MathLib::bigint * const lastValue)
