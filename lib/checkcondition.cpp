@@ -62,7 +62,7 @@ bool CheckCondition::diag(const Token* tok, bool insert)
     return true;
 }
 
-bool CheckCondition::isAliased(const std::set<int> &vars) const
+bool CheckCondition::isAliased(const std::set<unsigned int> &vars) const
 {
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
         if (Token::Match(tok, "= & %var% ;") && vars.find(tok->tokAt(2)->varId()) != vars.end())
@@ -595,7 +595,7 @@ void CheckCondition::multiCondition2()
 
         bool nonConstFunctionCall = false;
         bool nonlocal = false; // nonlocal variable used in condition
-        std::set<int> vars; // variables used in condition
+        std::set<unsigned int> vars; // variables used in condition
         visitAstNodes(condTok,
         [&](const Token *cond) {
             if (Token::Match(cond, "%name% (")) {

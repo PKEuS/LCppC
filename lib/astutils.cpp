@@ -1564,7 +1564,7 @@ bool isVariablesChanged(const Token* start,
                         const Settings* settings,
                         bool cpp)
 {
-    std::set<int> varids;
+    std::set<unsigned int> varids;
     std::transform(vars.begin(), vars.end(), std::inserter(varids, varids.begin()), [](const Variable* var) {
         return var->declarationId();
     });
@@ -1816,7 +1816,7 @@ static bool hasFunctionCall(const Token *tok)
     return hasFunctionCall(tok->astOperand1()) || hasFunctionCall(tok->astOperand2());
 }
 
-static bool isUnchanged(const Token *startToken, const Token *endToken, const std::set<int> &exprVarIds, bool local)
+static bool isUnchanged(const Token *startToken, const Token *endToken, const std::set<unsigned int> &exprVarIds, bool local)
 {
     for (const Token *tok = startToken; tok != endToken; tok = tok->next()) {
         if (!local && Token::Match(tok, "%name% (") && !Token::simpleMatch(tok->linkAt(1), ") {"))
@@ -1923,7 +1923,7 @@ bool isGlobalData(const Token *expr, bool cpp)
     return globalData;
 }
 
-struct FwdAnalysis::Result FwdAnalysis::checkRecursive(const Token *expr, const Token *startToken, const Token *endToken, const std::set<int> &exprVarIds, bool local, bool inInnerClass, int depth)
+struct FwdAnalysis::Result FwdAnalysis::checkRecursive(const Token *expr, const Token *startToken, const Token *endToken, const std::set<unsigned int> &exprVarIds, bool local, bool inInnerClass, int depth)
 {
     // Parse the given tokens
     if (++depth > 1000)
@@ -2200,10 +2200,10 @@ bool FwdAnalysis::isGlobalData(const Token *expr) const
     return ::isGlobalData(expr, mCpp);
 }
 
-std::set<int> FwdAnalysis::getExprVarIds(const Token* expr, bool* localOut, bool* unknownVarIdOut) const
+std::set<unsigned int> FwdAnalysis::getExprVarIds(const Token* expr, bool* localOut, bool* unknownVarIdOut) const
 {
     // all variable ids in expr.
-    std::set<int> exprVarIds;
+    std::set<unsigned int> exprVarIds;
     bool local = true;
     bool unknownVarId = false;
     visitAstNodes(expr,
@@ -2237,7 +2237,7 @@ FwdAnalysis::Result FwdAnalysis::check(const Token* expr, const Token* startToke
     // all variable ids in expr.
     bool local = true;
     bool unknownVarId = false;
-    std::set<int> exprVarIds = getExprVarIds(expr, &local, &unknownVarId);
+    std::set<unsigned int> exprVarIds = getExprVarIds(expr, &local, &unknownVarId);
 
     if (unknownVarId)
         return Result(FwdAnalysis::Result::Type::BAILOUT);

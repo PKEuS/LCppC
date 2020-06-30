@@ -1093,12 +1093,12 @@ static void valueFlowString(TokenList *tokenlist)
 
 static void valueFlowArray(TokenList *tokenlist)
 {
-    std::map<int, const Token *> constantArrays;
+    std::map<unsigned int, const Token *> constantArrays;
 
     for (Token *tok = tokenlist->front(); tok; tok = tok->next()) {
         if (tok->varId() > 0U) {
             // array
-            const std::map<int, const Token *>::const_iterator it = constantArrays.find(tok->varId());
+            const std::map<unsigned int, const Token *>::const_iterator it = constantArrays.find(tok->varId());
             if (it != constantArrays.end()) {
                 ValueFlow::Value value;
                 value.valueType = ValueFlow::Value::TOK;
@@ -3979,8 +3979,8 @@ static std::vector<const Variable*> getExprVariables(const Token* expr,
 {
     std::vector<const Variable*> result;
     FwdAnalysis fwdAnalysis(tokenlist->isCPP(), settings->library);
-    std::set<int> varids = fwdAnalysis.getExprVarIds(expr);
-    std::transform(varids.begin(), varids.end(), std::back_inserter(result), [&](int id) {
+    std::set<unsigned int> varids = fwdAnalysis.getExprVarIds(expr);
+    std::transform(varids.begin(), varids.end(), std::back_inserter(result), [&](unsigned int id) {
         return symboldatabase->getVariableFromVarId(id);
     });
     return result;

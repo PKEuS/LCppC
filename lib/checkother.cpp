@@ -85,7 +85,7 @@ void CheckOther::checkCastIntToCharAndBack()
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope * scope : symbolDatabase->functionScopes) {
-        std::map<int, std::string> vars;
+        std::map<unsigned int, std::string> vars;
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             // Quick check to see if any of the matches below have any chances
             if (!Token::Match(tok, "%var%|EOF %comp%|="))
@@ -553,8 +553,8 @@ void CheckOther::checkRedundantAssignmentInSwitch()
             continue;
 
         // Check the contents of the switch statement
-        std::map<int, const Token*> varsWithBitsSet;
-        std::map<int, std::string> bitOperations;
+        std::map<unsigned int, const Token*> varsWithBitsSet;
+        std::map<unsigned int, std::string> bitOperations;
 
         for (const Token *tok2 = switchScope.bodyStart->next(); tok2 != switchScope.bodyEnd; tok2 = tok2->next()) {
             if (tok2->str() == "{") {
@@ -592,7 +592,7 @@ void CheckOther::checkRedundantAssignmentInSwitch()
                      (tok2->strAt(1) == "|=" || tok2->strAt(1) == "&=") &&
                      Token::Match(tok2->next()->astOperand2(), "%num%")) {
                 const std::string bitOp = tok2->strAt(1)[0] + tok2->strAt(2);
-                const std::map<int, const Token*>::const_iterator i2 = varsWithBitsSet.find(tok2->varId());
+                const std::map<unsigned int, const Token*>::const_iterator i2 = varsWithBitsSet.find(tok2->varId());
 
                 // This variable has not had a bit operation performed on it yet, so just make a note of it
                 if (i2 == varsWithBitsSet.end()) {
@@ -617,7 +617,7 @@ void CheckOther::checkRedundantAssignmentInSwitch()
             else if (Token::Match(tok2->previous(), ";|{|}|: %var% = %name% %or%|& %num% ;") &&
                      tok2->varId() == tok2->tokAt(2)->varId()) {
                 const std::string bitOp = tok2->strAt(3) + tok2->strAt(4);
-                const std::map<int, const Token*>::const_iterator i2 = varsWithBitsSet.find(tok2->varId());
+                const std::map<unsigned int, const Token*>::const_iterator i2 = varsWithBitsSet.find(tok2->varId());
 
                 // This variable has not had a bit operation performed on it yet, so just make a note of it
                 if (i2 == varsWithBitsSet.end()) {
@@ -1791,8 +1791,8 @@ void CheckOther::duplicateBranchError(const Token *tok1, const Token *tok2, Erro
 //-----------------------------------------------------------------------------
 void CheckOther::checkInvalidFree()
 {
-    std::map<int, bool> inconclusive;
-    std::map<int, std::string> allocation;
+    std::map<unsigned int, bool> inconclusive;
+    std::map<unsigned int, std::string> allocation;
 
     const bool printInconclusive = mSettings->certainty.isEnabled(Certainty::inconclusive);
     const SymbolDatabase* symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -1834,10 +1834,10 @@ void CheckOther::checkInvalidFree()
 
                 const int varIndex = tok->strAt(1) == "(" ? 2 :
                                      tok->strAt(3) == "(" ? 4 : 1;
-                const int var1 = tok->tokAt(varIndex)->varId();
-                const int var2 = tok->tokAt(varIndex + 2)->varId();
-                const std::map<int, bool>::const_iterator alloc1 = inconclusive.find(var1);
-                const std::map<int, bool>::const_iterator alloc2 = inconclusive.find(var2);
+                const unsigned int var1 = tok->tokAt(varIndex)->varId();
+                const unsigned int var2 = tok->tokAt(varIndex + 2)->varId();
+                const std::map<unsigned int, bool>::const_iterator alloc1 = inconclusive.find(var1);
+                const std::map<unsigned int, bool>::const_iterator alloc2 = inconclusive.find(var2);
                 if (alloc1 != inconclusive.end()) {
                     invalidFreeError(tok, allocation[var1], alloc1->second);
                 } else if (alloc2 != inconclusive.end()) {

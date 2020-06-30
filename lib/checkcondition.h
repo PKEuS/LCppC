@@ -125,7 +125,7 @@ private:
     // The conditions that have been diagnosed
     std::set<const Token*> mCondDiags;
     bool diag(const Token* tok, bool insert=true);
-    bool isAliased(const std::set<int> &vars) const;
+    bool isAliased(const std::set<unsigned int> &vars) const;
     bool isOverlappingCond(const Token * const cond1, const Token * const cond2, bool pure) const;
     void assignIfError(const Token *tok1, const Token *tok2, const std::string &condition, bool result);
     void mismatchingBitAndError(const Token *tok1, const MathLib::bigint num1, const Token *tok2, const MathLib::bigint num2);

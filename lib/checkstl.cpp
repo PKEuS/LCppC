@@ -354,7 +354,7 @@ void CheckStl::iterators()
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
 
     // Filling map of iterators id and their scope begin
-    std::map<int, const Token*> iteratorScopeBeginInfo;
+    std::map<unsigned int, const Token*> iteratorScopeBeginInfo;
     for (const Variable* var : symbolDatabase->variableList()) {
         bool inconclusiveType=false;
         if (!isIterator(var, inconclusiveType))

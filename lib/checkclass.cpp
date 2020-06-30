@@ -324,7 +324,7 @@ void CheckClass::copyconstructors()
         return;
 
     for (const Scope * scope : mSymbolDatabase->classAndStructScopes) {
-        std::map<int, const Token*> allocatedVars;
+        std::map<unsigned int, const Token*> allocatedVars;
 
         for (const Function &func : scope->functionList) {
             if (func.type != Function::eConstructor || !func.functionScope)
@@ -372,7 +372,7 @@ void CheckClass::copyconstructors()
             }
             if (!funcDestructor || funcDestructor->isDefault()) {
                 const Token * mustDealloc = nullptr;
-                for (std::map<int, const Token*>::const_iterator it = allocatedVars.begin(); it != allocatedVars.end(); ++it) {
+                for (std::map<unsigned int, const Token*>::const_iterator it = allocatedVars.begin(); it != allocatedVars.end(); ++it) {
                     if (!Token::Match(it->second, "%var% [(=] new %type%")) {
                         mustDealloc = it->second;
                         break;
@@ -429,7 +429,7 @@ void CheckClass::copyconstructors()
                 copyConstructorShallowCopyError(cv, cv->str());
             // throw error if count mismatch
             /* FIXME: This doesn't work. See #4154
-            for (std::map<int, const Token*>::const_iterator i = allocatedVars.begin(); i != allocatedVars.end(); ++i) {
+            for (std::map<unsigned int, const Token*>::const_iterator i = allocatedVars.begin(); i != allocatedVars.end(); ++i) {
                 copyConstructorMallocError(copyCtor, i->second, i->second->str());
             }
             */
@@ -1703,7 +1703,7 @@ void CheckClass::virtualDestructor()
                 // If this pattern is not seen then bailout the checking of these base/derived classes
                 {
                     // pointer variables of type 'Base *'
-                    std::set<int> baseClassPointers;
+                    std::set<unsigned int> baseClassPointers;
 
                     for (const Variable* var : mSymbolDatabase->variableList()) {
                         if (var && var->isPointer() && var->type() == derivedFrom)
@@ -1711,7 +1711,7 @@ void CheckClass::virtualDestructor()
                     }
 
                     // pointer variables of type 'Base *' that should not be deleted
-                    std::set<int> dontDelete;
+                    std::set<unsigned int> dontDelete;
 
                     // No deletion of derived class instance through base class pointer found => the code is ok
                     bool ok = true;

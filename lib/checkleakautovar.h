@@ -54,10 +54,10 @@ public:
             return status < 0;
         }
     };
-    std::map<int, AllocInfo> alloctype;
-    std::map<int, std::string> possibleUsage;
-    std::set<int> conditionalAlloc;
-    std::set<int> referenced;
+    std::map<unsigned int, AllocInfo> alloctype;
+    std::map<unsigned int, std::string> possibleUsage;
+    std::set<unsigned int> conditionalAlloc;
+    std::set<unsigned int> referenced;
 
     void clear() {
         alloctype.clear();
@@ -118,7 +118,7 @@ private:
     /** check for leaks in a function scope */
     void checkScope(const Token * const startToken,
                     VarInfo *varInfo,
-                    std::set<int> notzero,
+                    std::set<unsigned int> notzero,
                     unsigned int recursiveCount);
 
     /** Check token inside expression.
@@ -135,7 +135,7 @@ private:
     void changeAllocStatus(VarInfo *varInfo, const VarInfo::AllocInfo& allocation, const Token* tok, const Token* arg);
 
     /** update allocation status if reallocation function */
-    void changeAllocStatusIfRealloc(std::map<int, VarInfo::AllocInfo> &alloctype, const Token *fTok, const Token *retTok);
+    void changeAllocStatusIfRealloc(std::map<unsigned int, VarInfo::AllocInfo> &alloctype, const Token *fTok, const Token *retTok);
 
     /** return. either "return" or end of variable scope is seen */
     void ret(const Token *tok, const VarInfo &varInfo);
