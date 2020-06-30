@@ -514,16 +514,17 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 continue;
             }
 
-            Tokenizer mTokenizer(&mSettings, this);
+            Tokenizer tokenizer(&mSettings, this);
+            tokenizer.setPreprocessor(&preprocessor);
             if (mSettings.showtime != SHOWTIME_MODES::SHOWTIME_NONE)
-                mTokenizer.setTimerResults(&s_timerResults);
+                tokenizer.setTimerResults(&s_timerResults);
 
             try {
                 // Create tokens, skip rest of iteration if failed
                 {
                     Timer timer("Tokenizer::createTokens", mSettings.showtime, &s_timerResults);
                     simplecpp::TokenList tokensP = preprocessor.preprocess(tokens1, mCurrentConfig, files, true);
-                    mTokenizer.createTokens(std::move(tokensP));
+                    tokenizer.createTokens(std::move(tokensP));
                 }
                 hasValidConfig = true;
 
@@ -534,7 +535,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                     mErrorLogger.reportOut("Checking " + fixedpath + ": " + mCurrentConfig + "...");
                 }
 
-                if (!mTokenizer.tokens())
+                if (!tokenizer.tokens())
                     continue;
 
                 // skip rest of iteration if just checking configuration
@@ -542,17 +543,17 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                     continue;
 
                 // Check raw tokens
-                checkRawTokens(mTokenizer);
+                checkRawTokens(tokenizer);
 
                 // Simplify tokens into normal form, skip rest of iteration if failed
                 Timer timer2("Tokenizer::simplifyTokens0", mSettings.showtime, &s_timerResults);
-                if (!mTokenizer.simplifyTokens0(mCurrentConfig))
+                if (!tokenizer.simplifyTokens0(mCurrentConfig))
                     continue;
                 timer2.stop();
 
                 // Skip if we already met the same token list
                 if (mSettings.force || mSettings.maxConfigs > 1) {
-                    const uint64_t checksum = mTokenizer.list.calculateChecksum();
+                    const uint64_t checksum = tokenizer.list.calculateChecksum();
                     if (checksums0.find(checksum) != checksums0.end()) {
                         if (mSettings.debugwarnings)
                             purgedConfigurationMessage(ctu->sourcefile, mCurrentConfig);
@@ -562,7 +563,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 }
 
                 Timer timer3("Tokenizer::simplifyTokens1", mSettings.showtime, &s_timerResults);
-                if (!mTokenizer.simplifyTokens1())
+                if (!tokenizer.simplifyTokens1())
                     continue;
                 timer3.stop();
 
@@ -574,13 +575,13 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                     fdump << "    <cpp version=\"" << mSettings.standards.getCPP() << "\"/>" << std::endl;
                     fdump << "  </standards>" << std::endl;
                     preprocessor.dump(fdump);
-                    mTokenizer.dump(fdump);
+                    tokenizer.dump(fdump);
                     fdump << "</dump>" << std::endl;
                 }
 
                 // Skip if we already met the same simplified token list
                 if (mSettings.force || mSettings.maxConfigs > 1) {
-                    const uint64_t checksum = mTokenizer.list.calculateChecksum();
+                    const uint64_t checksum = tokenizer.list.calculateChecksum();
                     if (checksums1.find(checksum) != checksums1.end()) {
                         if (mSettings.debugwarnings)
                             purgedConfigurationMessage(ctu->sourcefile, mCurrentConfig);
@@ -590,7 +591,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 }
 
                 // Check normal tokens
-                checkNormalTokens(mTokenizer);
+                checkNormalTokens(tokenizer);
 
             } catch (const simplecpp::Output &o) {
                 // #error etc during preprocessing
@@ -601,16 +602,16 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
             } catch (const InternalError &e) {
                 std::list<ErrorMessage::FileLocation> locationList;
                 if (e.token) {
-                    ErrorMessage::FileLocation loc(e.token, &mTokenizer.list);
+                    ErrorMessage::FileLocation loc(e.token, &tokenizer.list);
                     locationList.push_back(loc);
                 } else {
-                    ErrorMessage::FileLocation loc(mTokenizer.list.getSourceFilePath(), 0, 0);
+                    ErrorMessage::FileLocation loc(tokenizer.list.getSourceFilePath(), 0, 0);
                     ErrorMessage::FileLocation loc2(ctu->sourcefile, 0, 0);
                     locationList.push_back(loc2);
                     locationList.push_back(loc);
                 }
                 ErrorMessage errmsg(locationList,
-                                    mTokenizer.list.getSourceFilePath(),
+                                    tokenizer.list.getSourceFilePath(),
                                     Severity::error,
                                     e.errorMessage,
                                     e.id,
