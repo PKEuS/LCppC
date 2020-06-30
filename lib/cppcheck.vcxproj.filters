@@ -334,6 +334,9 @@
     <ClInclude Include="errortypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="valueptr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="version.rc" />

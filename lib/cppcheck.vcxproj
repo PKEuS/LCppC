@@ -152,6 +152,7 @@
     <ClInclude Include="tokenlist.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="valueflow.h" />
+    <ClInclude Include="valueptr.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>

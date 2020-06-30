@@ -190,10 +190,10 @@ public:
 private:
 
     /** Disable copy constructor, no implementation */
-    TokenList(const TokenList &);
+    TokenList(const TokenList &) = delete;
 
     /** Disable assignment operator, no implementation */
-    TokenList &operator=(const TokenList &);
+    TokenList &operator=(const TokenList &) = delete;
 
     void determineCppC();
 

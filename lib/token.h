@@ -166,8 +166,8 @@ private:
     TokensFrontBack* mTokensFrontBack;
 
     // Not implemented..
-    Token(const Token &);
-    Token operator=(const Token &);
+    Token(const Token &) = delete;
+    Token operator=(const Token &) = delete;
 
 public:
     enum Type : uint8_t {

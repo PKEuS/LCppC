@@ -74,8 +74,8 @@ public:
     void stop();
 
 private:
-    Timer(const Timer& other); // disallow copying
-    Timer& operator=(const Timer&); // disallow assignments
+    Timer(const Timer& other) = delete;
+    Timer& operator=(const Timer&) = delete;
 
     const std::string mStr;
     TimerResultsIntf* mTimerResults;
