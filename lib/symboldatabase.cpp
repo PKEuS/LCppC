@@ -960,7 +960,7 @@ void SymbolDatabase::createSymbolDatabaseVariableSymbolTable()
 
         // add all function parameters
         for (std::list<Function>::iterator func = scope->functionList.begin(); func != scope->functionList.end(); ++func) {
-            for (std::list<Variable>::iterator arg = func->argumentList.begin(); arg != func->argumentList.end(); ++arg) {
+            for (std::vector<Variable>::iterator arg = func->argumentList.begin(); arg != func->argumentList.end(); ++arg) {
                 // check for named parameters
                 if (arg->nameToken() && arg->declarationId()) {
                     const unsigned int declarationId = arg->declarationId();
@@ -1785,9 +1785,50 @@ void SymbolDatabase::validate() const
     //validateVariables();
 }
 
-Variable::~Variable()
+Variable::~Variable() noexcept
 {
     delete mValueType;
+}
+
+Variable::Variable(const Variable& rhs) noexcept
+{
+    *this = rhs;
+}
+
+Variable::Variable(Variable&& rhs) noexcept
+{
+    *this = std::move(rhs);
+}
+
+Variable& Variable::operator=(const Variable& rhs) noexcept
+{
+    mNameToken = rhs.mNameToken;
+    mTypeStartToken = rhs.mTypeStartToken;
+    mTypeEndToken = rhs.mTypeEndToken;
+    mIndex = rhs.mIndex;
+    mAccess = rhs.mAccess;
+    mFlags = rhs.mFlags;
+    mType = rhs.mType;
+    mScope = rhs.mScope;
+    mValueType = new ValueType(*rhs.mValueType);
+    mDimensions = std::move(rhs.mDimensions);
+    return *this;
+}
+
+Variable& Variable::operator=(Variable&& rhs) noexcept
+{
+    mNameToken = rhs.mNameToken;
+    mTypeStartToken = rhs.mTypeStartToken;
+    mTypeEndToken = rhs.mTypeEndToken;
+    mIndex = rhs.mIndex;
+    mAccess = rhs.mAccess;
+    mFlags = rhs.mFlags;
+    mType = rhs.mType;
+    mScope = rhs.mScope;
+    mValueType = rhs.mValueType;
+    rhs.mValueType = nullptr;
+    mDimensions = std::move(rhs.mDimensions);
+    return *this;
 }
 
 bool Variable::isPointerArray() const
@@ -3674,7 +3715,7 @@ const Function * Function::getOverriddenFunctionRecursive(const ::Type* baseType
 
 const Variable* Function::getArgumentVar(std::size_t num) const
 {
-    for (std::list<Variable>::const_iterator i = argumentList.begin(); i != argumentList.end(); ++i) {
+    for (std::vector<Variable>::const_iterator i = argumentList.cbegin(); i != argumentList.cend(); ++i) {
         if (i->index() == num)
             return (&*i);
         else if (i->index() > num)

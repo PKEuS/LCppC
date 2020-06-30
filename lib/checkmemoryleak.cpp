@@ -417,7 +417,7 @@ const char *CheckMemoryLeak::functionArgAlloc(const Function *func, unsigned int
     if (!Token::simpleMatch(func->retDef, "void"))
         return "";
 
-    std::list<Variable>::const_iterator arg = func->argumentList.begin();
+    std::vector<Variable>::const_iterator arg = func->argumentList.begin();
     for (; arg != func->argumentList.end(); ++arg) {
         if (arg->index() == targetpar-1)
             break;

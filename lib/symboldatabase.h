@@ -230,7 +230,7 @@ class CPPCHECKLIB Variable {
 public:
     Variable(const Token *name_, const Token *start_, const Token *end_,
              unsigned int index_, AccessControl access_, const Type *type_,
-             const Scope *scope_, const Settings* settings)
+             const Scope *scope_, const Settings* settings) noexcept
         : mNameToken(name_),
           mTypeStartToken(start_),
           mTypeEndToken(end_),
@@ -242,8 +242,13 @@ public:
           mValueType(nullptr) {
         evaluate(settings);
     }
+    ~Variable() noexcept;
 
-    ~Variable();
+    Variable(const Variable& rhs) noexcept;
+    Variable(Variable&& rhs) noexcept;
+
+    Variable& operator=(const Variable& rhs) noexcept;
+    Variable& operator=(Variable&& rhs) noexcept;
 
     /**
      * Get name token.
@@ -672,7 +677,7 @@ private:
     /** @brief pointer to scope this variable is in */
     const Scope *mScope;
 
-    ValueType *mValueType;
+    const ValueType *mValueType;
 
     /** @brief array dimensions */
     std::vector<Dimension> mDimensions;
@@ -881,7 +886,7 @@ public:
     const ::Type *retType;            ///< function return type
     const Scope *functionScope;       ///< scope of function body
     const Scope* nestedIn;            ///< Scope the function is declared in
-    std::list<Variable> argumentList; ///< argument list
+    std::vector<Variable> argumentList; ///< argument list
     std::size_t initArgCount;         ///< number of args with default values
     Type type;                        ///< constructor, destructor, ...
     AccessControl access;             ///< public/protected/private
