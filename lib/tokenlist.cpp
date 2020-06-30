@@ -1565,7 +1565,7 @@ void TokenList::validateAst() const
                     throw InternalError(tok, "AST broken: endless recursion from '" + tok->str() + "'", InternalError::AST);
                 astTokens.insert(parent);
             } while ((parent = parent->astParent()) != nullptr);
-            safeAstTokens.insert(astTokens.begin(), astTokens.end());
+            safeAstTokens.merge(astTokens);
         } else if (tok->str() == ";") {
             safeAstTokens.clear();
         } else {

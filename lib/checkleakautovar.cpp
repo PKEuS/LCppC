@@ -563,11 +563,11 @@ void CheckLeakAutoVar::checkScope(const Token * const startToken,
                     }
                 }
 
-                alloctype.insert(varInfo1.alloctype.begin(), varInfo1.alloctype.end());
-                alloctype.insert(varInfo2.alloctype.begin(), varInfo2.alloctype.end());
+                alloctype.merge(varInfo1.alloctype);
+                alloctype.merge(varInfo2.alloctype);
 
-                possibleUsage.insert(varInfo1.possibleUsage.begin(), varInfo1.possibleUsage.end());
-                possibleUsage.insert(varInfo2.possibleUsage.begin(), varInfo2.possibleUsage.end());
+                possibleUsage.merge(varInfo1.possibleUsage);
+                possibleUsage.merge(varInfo2.possibleUsage);
             }
         }
 
