@@ -206,7 +206,7 @@ void CheckOther::clarifyStatement()
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope * scope : symbolDatabase->functionScopes) {
         for (const Token* tok = scope->bodyStart; tok && tok != scope->bodyEnd; tok = tok->next()) {
-            if (Token::Match(tok, "* %name%") && tok->astOperand1()) {
+            if (tok->astOperand1() && Token::Match(tok, "* %name%")) {
                 const Token *tok2 = tok->previous();
 
                 while (tok2 && tok2->str() == "*")
@@ -380,7 +380,7 @@ void CheckOther::checkRedundantAssignment()
             if (Token::simpleMatch(tok, "try {"))
                 // todo: check try blocks
                 tok = tok->linkAt(1);
-            if ((tok->isAssignmentOp() || Token::Match(tok, "++|--")) && tok->astOperand1()) {
+            if ((tok->isAssignmentOp() || tok->tokType() == Token::eIncDecOp) && tok->astOperand1()) {
                 if (tok->astParent())
                     continue;
 
@@ -2639,7 +2639,7 @@ void CheckOther::checkEvaluationOrder()
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope * functionScope : symbolDatabase->functionScopes) {
         for (const Token* tok = functionScope->bodyStart; tok != functionScope->bodyEnd; tok = tok->next()) {
-            if (!Token::Match(tok, "++|--") && !tok->isAssignmentOp())
+            if (tok->tokType() != Token::eIncDecOp && !tok->isAssignmentOp())
                 continue;
             if (!tok->astOperand1())
                 continue;
@@ -3012,7 +3012,7 @@ void CheckOther::checkKnownArgument()
                 continue;
             if (!tok->hasKnownIntValue())
                 continue;
-            if (Token::Match(tok, "++|--"))
+            if (tok->tokType() == Token::eIncDecOp)
                 continue;
             if (isConstVarExpression(tok))
                 continue;

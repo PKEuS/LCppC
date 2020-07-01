@@ -422,7 +422,7 @@ void execute(const Token *expr,
             programMemory->setIntValue(expr->astOperand1()->varId(), intValue ^ *result);
     }
 
-    else if (Token::Match(expr, "++|--")) {
+    else if (expr->tokType() == Token::eIncDecOp) {
         if (!expr->astOperand1() || expr->astOperand1()->varId() == 0U)
             *error = true;
         else {

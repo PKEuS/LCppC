@@ -1412,7 +1412,7 @@ bool Token::isUnaryPreOp() const
 {
     if (!astOperand1() || astOperand2())
         return false;
-    if (!Token::Match(this, "++|--"))
+    if (this->tokType() != Token::eIncDecOp)
         return true;
     const Token *tokbefore = mPrevious;
     const Token *tokafter = mNext;

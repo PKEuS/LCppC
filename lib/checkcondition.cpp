@@ -657,22 +657,21 @@ void CheckCondition::multiCondition2()
                     const Token * condStartToken = tok->str() == "if" ? tok->next() : tok;
                     const Token * condEndToken = tok->str() == "if" ? condStartToken->link() : Token::findsimplematch(condStartToken, ";");
                     // Does condition modify tracked variables?
-                    if (const Token *op = Token::findmatch(tok, "++|--", condEndToken)) {
-                        bool bailout = false;
-                        while (op) {
-                            if (vars.find(op->astOperand1()->varId()) != vars.end()) {
-                                bailout = true;
-                                break;
-                            }
-                            if (nonlocal && op->astOperand1()->varId() == 0) {
-                                bailout = true;
-                                break;
-                            }
-                            op = Token::findmatch(op->next(), "++|--", condEndToken);
-                        }
-                        if (bailout)
+                    bool bailout = false;
+                    for (const Token* op = tok; op != condEndToken; op = op->next()) {
+                        if (op->tokType() != Token::eIncDecOp)
+                            continue;
+                        if (vars.find(op->astOperand1()->varId()) != vars.end()) {
+                            bailout = true;
                             break;
+                        }
+                        if (nonlocal && op->astOperand1()->varId() == 0) {
+                            bailout = true;
+                            break;
+                        }
                     }
+                    if (bailout)
+                        break;
 
                     // Condition..
                     const Token *cond2 = tok->str() == "if" ? condStartToken->astOperand2() : condStartToken->astOperand1();
