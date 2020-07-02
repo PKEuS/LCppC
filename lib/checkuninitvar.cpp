@@ -257,8 +257,8 @@ static void conditionAlwaysTrueOrFalse(const Token *tok, const std::map<unsigned
         return;
     }
 
-    if (tok->isName() || tok->str() == ".") {
-        while (tok && tok->str() == ".")
+    if (tok->isName() || tok->str() == "." || tok->str() == "::") {
+        while (Token::Match(tok, ".|::"))
             tok = tok->astOperand2();
         const std::map<unsigned int, VariableValue>::const_iterator it = variableValue.find(tok ? tok->varId() : ~0U);
         if (it != variableValue.end()) {
@@ -291,7 +291,7 @@ static void conditionAlwaysTrueOrFalse(const Token *tok, const std::map<unsigned
             return;
         }
 
-        while (vartok && vartok->str() == ".")
+        while (Token::Match(vartok, ".|::"))
             vartok = vartok->astOperand2();
 
         const std::map<unsigned int, VariableValue>::const_iterator it = variableValue.find(vartok ? vartok->varId() : ~0U);
@@ -441,7 +441,7 @@ bool CheckUninitVar::checkScopeForVariable(const Token *tok, const Variable& var
                 const Token *rhs = condition->astOperand2();
                 const Token *vartok = (lhs && lhs->hasKnownIntValue()) ? rhs : lhs;
                 const Token *numtok = (lhs == vartok) ? rhs : lhs;
-                while (Token::simpleMatch(vartok, "."))
+                while (Token::Match(vartok, ".|::"))
                     vartok = vartok->astOperand2();
                 if (vartok && vartok->varId() && numtok && numtok->hasKnownIntValue()) {
                     const std::map<unsigned int,VariableValue>::const_iterator it = variableValue.find(vartok->varId());
@@ -1385,7 +1385,7 @@ void CheckUninitVar::valueFlowUninit()
                 continue;
             uninitvarError(tok, tok->expressionString(), v->errorPath);
             const Token * nextTok = tok;
-            while (Token::simpleMatch(nextTok->astParent(), "."))
+            while (Token::Match(nextTok->astParent(), ".|::"))
                 nextTok = nextTok->astParent();
             nextTok = nextAfterAstRightmostLeaf(nextTok);
             if (nextTok == scope.bodyEnd)

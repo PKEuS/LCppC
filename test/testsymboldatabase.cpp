@@ -2735,7 +2735,7 @@ private:
         const Scope &scope = db->scopeList.back();
         ASSERT_EQUALS(1U, scope.varlist.size());
         const Variable &var = scope.varlist.front();
-        ASSERT_EQUALS(std::string("ints"), var.name());
+        ASSERT_EQUALS("ints", var.name());
         ASSERT_EQUALS(true, var.isClass());
     }
 

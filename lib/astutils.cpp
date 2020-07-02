@@ -201,16 +201,16 @@ const Token * astIsVariableComparison(const Token *tok, const std::string &comp,
         } else if (tok->str() == comp && tok->astOperand2() && match(tok->astOperand2(), rhs)) {
             ret = tok->astOperand1();
         }
-    } else if (comp == "!=" && rhs == std::string("0")) {
+    } else if (comp == "!=" && rhs == "0") {
         ret = tok;
-    } else if (comp == "==" && rhs == std::string("0")) {
+    } else if (comp == "==" && rhs == "0") {
         if (tok->str() == "!") {
             ret = tok->astOperand1();
             // handle (!(x!=0)) as (x==0)
             astIsVariableComparison(ret, "!=", "0", &ret);
         }
     }
-    while (ret && ret->str() == ".")
+    while (ret && (ret->str() == "." || ret->str() == "::"))
         ret = ret->astOperand2();
     if (ret && ret->str() == "=" && ret->astOperand1() && ret->astOperand1()->varId())
         ret = ret->astOperand1();
@@ -1745,8 +1745,10 @@ static void getLHSVariablesRecursive(std::vector<const Variable*>& vars, const T
         getLHSVariablesRecursive(vars, tok->astOperand2());
     } else if (Token::Match(tok->previous(), "this . %var%")) {
         getLHSVariablesRecursive(vars, tok->next());
-    } else if (Token::simpleMatch(tok, ".")) {
+    } else if (tok->str() == ".") {
         getLHSVariablesRecursive(vars, tok->astOperand1());
+        getLHSVariablesRecursive(vars, tok->astOperand2());
+    } else if (tok->str() == "::") {
         getLHSVariablesRecursive(vars, tok->astOperand2());
     } else if (tok->variable()) {
         vars.push_back(tok->variable());
@@ -1756,7 +1758,7 @@ static void getLHSVariablesRecursive(std::vector<const Variable*>& vars, const T
 std::vector<const Variable*> getLHSVariables(const Token* tok)
 {
     std::vector<const Variable*> result;
-    if (!Token::Match(tok, "%assign%"))
+    if (!tok->isAssignmentOp())
         return result;
     if (!tok->astOperand1())
         return result;

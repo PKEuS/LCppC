@@ -1258,7 +1258,7 @@ static bool isVariableMutableInInitializer(const Token* start, const Token * end
             continue;
         if (tok->astParent()) {
             const Token * memberTok = tok->astParent()->previous();
-            if (Token::Match(memberTok, "%var% (") && memberTok->variable()) {
+            if (memberTok->variable() && Token::Match(memberTok, "%var% (")) {
                 const Variable * memberVar = memberTok->variable();
                 if (memberVar->isClass())
                     //TODO: check if the called constructor could live with a const variable
