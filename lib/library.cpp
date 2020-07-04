@@ -853,15 +853,17 @@ std::vector<Library::InvalidArgValue> Library::getInvalidArgValues(const std::st
         if (Token::Match(tok, ": %num%")) {
             valid.push_back(InvalidArgValue{InvalidArgValue::le, tok->next()->str(), std::string()});
             tok = tok->tokAt(2);
-        } else if (Token::Match(tok, "%num% : %num%")) {
-            valid.push_back(InvalidArgValue{InvalidArgValue::range, tok->str(), tok->strAt(2)});
-            tok = tok->tokAt(3);
-        } else if (Token::Match(tok, "%num% :")) {
-            valid.push_back(InvalidArgValue{InvalidArgValue::ge, tok->str(), std::string()});
-            tok = tok->tokAt(2);
-        } else if (Token::Match(tok, "%num%")) {
-            valid.push_back(InvalidArgValue{InvalidArgValue::eq, tok->str(), std::string()});
-            tok = tok->next();
+        } else if (tok->isNumber()) {
+            if (Token::Match(tok->next(), ": %num%")) {
+                valid.push_back(InvalidArgValue{ InvalidArgValue::range, tok->str(), tok->strAt(2) });
+                tok = tok->tokAt(3);
+            } else if (tok->strAt(1) == ":") {
+                valid.push_back(InvalidArgValue{ InvalidArgValue::ge, tok->str(), std::string() });
+                tok = tok->tokAt(2);
+            } else {
+                valid.push_back(InvalidArgValue{ InvalidArgValue::eq, tok->str(), std::string() });
+                tok = tok->next();
+            }
         }
     }
 

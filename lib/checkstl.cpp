@@ -815,8 +815,6 @@ void CheckStl::invalidContainer()
     const Library& library = mSettings->library;
     for (const Scope * scope : symbolDatabase->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
-            if (!Token::Match(tok, "%var%"))
-                continue;
             if (tok->varId() == 0)
                 continue;
             if (!astIsContainer(tok))
@@ -844,8 +842,6 @@ void CheckStl::invalidContainer()
             ErrorPath errorPath;
             PathAnalysis::Info info = PathAnalysis{endToken, library} .forwardFind([&](const PathAnalysis::Info& info) {
                 if (!info.tok->variable())
-                    return false;
-                if (info.tok->varId() == 0)
                     return false;
                 if (skipVarIds.count(info.tok->varId()) > 0)
                     return false;
@@ -919,8 +915,6 @@ void CheckStl::invalidContainerLoop()
                 continue;
             const Token * blockStart = tok->next()->link()->next();
             const Token * blockEnd = blockStart->link();
-            if (!Token::Match(contTok, "%var%"))
-                continue;
             if (contTok->varId() == 0)
                 continue;
             if (!astIsContainer(contTok))
@@ -1342,10 +1336,8 @@ static const Token *skipLocalVars(const Token *tok)
             return tok;
         return skipLocalVars(semi->next());
     }
-    if (Token::Match(top, "%assign%")) {
+    if (tok->isAssignmentOp()) {
         const Token *varTok = top->astOperand1();
-        if (!Token::Match(varTok, "%var%"))
-            return tok;
         const Variable *var = varTok->variable();
         if (!var)
             return tok;
@@ -2269,7 +2261,7 @@ void CheckStl::useStlAlgorithm()
             if (!Token::simpleMatch(splitTok, ":"))
                 continue;
             const Token *loopVar = splitTok->previous();
-            if (!Token::Match(loopVar, "%var%"))
+            if (loopVar->varId() == 0)
                 continue;
 
             // Check for single assignment

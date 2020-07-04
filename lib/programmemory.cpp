@@ -103,7 +103,13 @@ bool conditionIsTrue(const Token *condition, const ProgramMemory &programMemory)
 
 static void programMemoryParseCondition(ProgramMemory& pm, const Token* tok, const Token* endTok, const Settings* settings, bool then)
 {
-    if (Token::Match(tok, "==|>=|<=|<|>|!=")) {
+    if (tok->varId() != 0) {
+        if (then && !astIsPointer(tok) && !astIsBool(tok))
+            return;
+        if (endTok && isVariableChanged(tok->next(), endTok, tok->varId(), false, settings, true))
+            return;
+        pm.setIntValue(tok->varId(), then);
+    } else if (Token::Match(tok, "==|>=|<=|<|>|!=")) {
         if (then && !Token::Match(tok, "==|>=|<="))
             return;
         if (!then && !Token::Match(tok, "<|>|!="))
@@ -120,14 +126,6 @@ static void programMemoryParseCondition(ProgramMemory& pm, const Token* tok, con
         if (endTok && isVariableChanged(tok->next(), endTok, vartok->varId(), false, settings, true))
             return;
         pm.setIntValue(vartok->varId(),  then ? truevalue.intvalue : falsevalue.intvalue);
-    } else if (Token::Match(tok, "%var%")) {
-        if (tok->varId() == 0)
-            return;
-        if (then && !astIsPointer(tok) && !astIsBool(tok))
-            return;
-        if (endTok && isVariableChanged(tok->next(), endTok, tok->varId(), false, settings, true))
-            return;
-        pm.setIntValue(tok->varId(), then);
     } else if (Token::simpleMatch(tok, "!")) {
         programMemoryParseCondition(pm, tok->astOperand1(), endTok, settings, !then);
     } else if (then && Token::simpleMatch(tok, "&&")) {

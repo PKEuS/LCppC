@@ -1397,7 +1397,7 @@ static void valueFlowTerminatingCondition(TokenList *tokenlist, SymbolDatabase* 
                 continue;
             Token *const startToken = cond.first->findExpressionStartEndTokens().second->next();
             for (Token* tok = startToken; tok != scope->bodyEnd; tok = tok->next()) {
-                if (!Token::Match(tok, "%comp%"))
+                if (!tok->isComparisonOp())
                     continue;
                 // Skip known values
                 if (tok->hasKnownValue())
@@ -2169,9 +2169,9 @@ static bool bifurcate(const Token* tok, const std::set<unsigned int>& varids, co
         return true;
     if (tok->hasKnownIntValue())
         return true;
-    if (Token::Match(tok, "%cop%"))
+    if (tok->isConstOp())
         return bifurcate(tok->astOperand1(), varids, settings, depth) && bifurcate(tok->astOperand2(), varids, settings, depth);
-    if (Token::Match(tok, "%var%")) {
+    if (tok->varId() != 0) {
         if (varids.count(tok->varId()) > 0)
             return true;
         const Variable* var = tok->variable();

@@ -559,7 +559,7 @@ bool exprDependsOnThis(const Token* expr, unsigned int depth)
             nestedIn = nestedIn->nestedIn;
         }
         return nestedIn == expr->function()->nestedIn;
-    } else if (Token::Match(expr, "%var%") && expr->variable()) {
+    } else if (expr->variable()) {
         const Variable* var = expr->variable();
         return (var->isPrivate() || var->isPublic() || var->isProtected());
     }
@@ -740,7 +740,7 @@ bool isSameExpression(bool cpp, bool macro, const Token *tok1, const Token *tok2
         return true;
 
     // Follow variable
-    if (followVar && tok1->str() != tok2->str() && (Token::Match(tok1, "%var%") || Token::Match(tok2, "%var%"))) {
+    if (followVar && (tok1->varId() || tok2->varId()) && tok1->str() != tok2->str()) {
         const Token * varTok1 = followVariableExpression(tok1, cpp, tok2);
         if ((varTok1->str() == tok2->str()) || isSameConstantValue(macro, varTok1, tok2)) {
             followVariableExpressionError(tok1, varTok1, errors);
@@ -1382,7 +1382,7 @@ bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, co
         return false;
     }
 
-    if (!tok->function() && !tok->variable() && Token::Match(tok, "%name%")) {
+    if (!tok->function() && !tok->variable() && tok->isName()) {
         // Check if direction (in, out, inout) is specified in the library configuration and use that
         if (!addressOf && settings) {
             const Library::ArgumentChecks::Direction argDirection = settings->library.getArgDirection(tok, 1 + argnr);
@@ -1785,7 +1785,7 @@ static const Variable *getLHSVariableRecursive(const Token *tok)
 
 const Variable *getLHSVariable(const Token *tok)
 {
-    if (!Token::Match(tok, "%assign%"))
+    if (!tok || !tok->isAssignmentOp())
         return nullptr;
     if (!tok->astOperand1())
         return nullptr;
