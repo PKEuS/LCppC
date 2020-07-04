@@ -1739,11 +1739,9 @@ void CheckStl::string_c_str()
                 bool err = false;
 
                 const Token* tok2 = tok->next();
-                if (Token::Match(tok2, "std :: string|wstring (") &&
-                    Token::Match(tok2->linkAt(3), ") . c_str|data ( ) ;")) {
+                if (Token::Match(tok2, "std :: string|wstring @( . c_str|data ( ) ;")) {
                     err = true;
-                } else if (Token::simpleMatch(tok2, "(") &&
-                           Token::Match(tok2->link(), ") . c_str|data ( ) ;")) {
+                } else if (Token::Match(tok2, "@( . c_str|data ( ) ;")) {
                     // Check for "+ localvar" or "+ std::string(" inside the bracket
                     bool is_implicit_std_string = printInconclusive;
                     const Token *search_end = tok2->link();
@@ -1784,7 +1782,7 @@ void CheckStl::string_c_str()
                             local = false;
                         lastVar = tok2->variable();
                         tok2 = tok2->tokAt(2);
-                    } else if (Token::Match(tok2, "%name% (") && Token::simpleMatch(tok2->linkAt(1), ") .")) {
+                    } else if (Token::Match(tok2, "%name% @( .")) {
                         lastFunc = tok2->function();
                         local = false;
                         funcStr = tok2->str() == "str";
@@ -2114,9 +2112,7 @@ static const Token *singleMemberCallInScope(const Token *start, unsigned int var
     if (start->str() != "{")
         return nullptr;
     const Token *endToken = start->link();
-    if (!Token::Match(start->next(), "%var% . %name% ("))
-        return nullptr;
-    if (!Token::simpleMatch(start->linkAt(4), ") ; }"))
+    if (!Token::Match(start->next(), "%var% . %name% @( ; }"))
         return nullptr;
     const Token *endStatement = start->linkAt(4)->next();
     if (endStatement->next() != endToken)

@@ -628,6 +628,12 @@ bool Token::Match(const Token *tok, const char pattern[], unsigned int varid)
         if (*p == '\0')
             break;
 
+        bool useLink = false;
+        if (p[0] == '@' && (p[1] != 0 && p[1] != ' ' && p[1] != '|')) {
+            useLink = true;
+            p++;
+        }
+
         if (!tok) {
             // If we have no tokens, pattern "!!else" should return true
             if (p[0] == '!' && p[1] == '!' && p[2] != '\0') {
@@ -696,6 +702,11 @@ bool Token::Match(const Token *tok, const char pattern[], unsigned int varid)
         while (*p && *p != ' ')
             ++p;
 
+        if (useLink) {
+            if (!tok->link())
+                return false;
+            tok = tok->link();
+        }
         tok = tok->next();
     }
 

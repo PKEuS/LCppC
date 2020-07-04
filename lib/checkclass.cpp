@@ -611,7 +611,7 @@ void CheckClass::initializeVarList(const Function &func, std::list<const Functio
         // Class constructor.. initializing variables like this
         // clKalle::clKalle() : var(value) { }
         if (initList) {
-            if (level == 0 && Token::Match(ftok, "%name% {|(") && Token::Match(ftok->linkAt(1), "}|) ,|{")) {
+            if (level == 0 && Token::Match(ftok, "%name% @{|( ,|{")) {
                 if (ftok->str() != func.name()) {
                     initVar(ftok->varId(), scope, usage);
                 } else { // c++11 delegate constructor
@@ -681,7 +681,7 @@ void CheckClass::initializeVarList(const Function &func, std::list<const Functio
         }
 
         // Using swap to assign all variables..
-        if (func.type == Function::eOperatorEqual && Token::Match(ftok, "[;{}] %name% (") && Token::Match(ftok->linkAt(2), ") . %name% ( *| this ) ;")) {
+        if (func.type == Function::eOperatorEqual && Token::Match(ftok, "[;{}] %name% @( . %name% ( *| this ) ;")) {
             assignAllVar(usage);
             break;
         }

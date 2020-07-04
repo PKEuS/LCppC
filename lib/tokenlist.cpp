@@ -520,7 +520,7 @@ static bool iscast(const Token *tok)
             tok2 = tok2->link()->next();
 
         if (tok2->str() == ")") {
-            if (Token::simpleMatch(tok2, ") (") && Token::simpleMatch(tok2->linkAt(1), ") ."))
+            if (Token::Match(tok2, ") @( ."))
                 return true;
             if (Token::simpleMatch(tok2, ") {") && !type) {
                 const Token *tok3 = tok2->linkAt(1);
@@ -646,7 +646,7 @@ static bool iscpp11init_impl(const Token * const tok)
     const Token *endtok = nullptr;
     if (Token::Match(nameToken, "%name%|return {") && (!Token::simpleMatch(nameToken->tokAt(2), "[") || findLambdaEndScope(nameToken->tokAt(2))))
         endtok = nameToken->linkAt(1);
-    else if (Token::Match(nameToken,"%name% <") && Token::simpleMatch(nameToken->linkAt(1),"> {"))
+    else if (Token::Match(nameToken,"%name% @< {"))
         endtok = nameToken->linkAt(1)->linkAt(1);
     else if (Token::Match(nameToken->previous(), "%name% ( {"))
         endtok = nameToken->linkAt(1);
@@ -954,7 +954,7 @@ static void compilePrecedence2(Token *&tok, AST_state& state)
                     compileUnaryOp(tok, state, nullptr);
             }
             tok = tok->link()->next();
-        } else if (iscast(tok) && Token::simpleMatch(tok->link(), ") {") && Token::simpleMatch(tok->link()->linkAt(1), "} [")) {
+        } else if (iscast(tok) && Token::Match(tok->link(), ") @{ [")) {
             Token *cast = tok;
             tok = tok->link()->next();
             Token *tok1 = tok;

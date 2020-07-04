@@ -5063,7 +5063,7 @@ private:
                 const unsigned int linenrs[2] = { 2, 1 };
                 unsigned int index = 0;
                 for (const Token * tok = bar->bodyStart->next(); tok != bar->bodyEnd; tok = tok->next()) {
-                    if (Token::Match(tok, "%name% (") && !tok->varId() && Token::simpleMatch(tok->linkAt(1), ") ;")) {
+                    if (!tok->varId() && Token::Match(tok, "%name% @( ;")) {
                         const Function * function = db->findFunction(tok);
                         ASSERT(function != nullptr);
                         if (function) {

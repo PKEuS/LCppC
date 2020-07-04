@@ -82,6 +82,7 @@ private:
         TEST_CASE(matchOr);
         TEST_CASE(matchOp);
         TEST_CASE(matchConstOp);
+        TEST_CASE(matchBracket);
 
         TEST_CASE(isArithmeticalOp);
         TEST_CASE(isOp);
@@ -789,6 +790,13 @@ private:
         for (other_op = other_ops.begin(); other_op != other_ops_end; ++other_op) {
             ASSERT_EQUALS_MSG(false, Match(*other_op, "%cop%"), "Failing other operator: " + *other_op);
         }
+    }
+
+    void matchBracket() const {
+        givenACodeSampleToTokenize bracket1("( a, b) c;");
+        ASSERT_EQUALS(true, Token::Match(bracket1.tokens(), "@( c"));
+        ASSERT_EQUALS(true, Token::Match(bracket1.tokens(), "@{|( c"));
+        ASSERT_EQUALS(false, Token::Match(bracket1.tokens(), "( @c"));
     }
 
 

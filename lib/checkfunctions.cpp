@@ -201,7 +201,7 @@ void CheckFunctions::checkIgnoredReturnValue()
             // skip c++11 initialization, ({...})
             if (Token::Match(tok, "%var%|(|,|return {"))
                 tok = tok->linkAt(1);
-            else if (Token::Match(tok, "[(<]") && tok->link())
+            else if (tok->link() && Token::Match(tok, "[(<]"))
                 tok = tok->link();
 
             if (tok->varId() || !Token::Match(tok, "%name% ("))
@@ -278,7 +278,7 @@ void CheckFunctions::checkMathFunctions()
             if (styleC99) {
                 if (Token::Match(tok, "%num% - erf (") && Tokenizer::isOneNumber(tok->str()) && tok->next()->astOperand2() == tok->tokAt(3)) {
                     mathfunctionCallWarning(tok, "1 - erf(x)", "erfc(x)");
-                } else if (Token::simpleMatch(tok, "exp (") && Token::Match(tok->linkAt(1), ") - %num%") && Tokenizer::isOneNumber(tok->linkAt(1)->strAt(2)) && tok->linkAt(1)->next()->astOperand1() == tok->next()) {
+                } else if (Token::Match(tok, "exp @( - %num%") && Tokenizer::isOneNumber(tok->linkAt(1)->strAt(2)) && tok->linkAt(1)->next()->astOperand1() == tok->next()) {
                     mathfunctionCallWarning(tok, "exp(x) - 1", "expm1(x)");
                 } else if (Token::simpleMatch(tok, "log (") && tok->next()->astOperand2()) {
                     const Token* plus = tok->next()->astOperand2();

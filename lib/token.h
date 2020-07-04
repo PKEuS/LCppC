@@ -293,6 +293,9 @@ public:
      * - "!!else" No tokens or any token that is not "else".
      * - "someRandomText" If token contains "someRandomText".
      *
+     * Furthermore, the following commands are supported (as a prefix to a pattern):
+     * - @ continues matching at Token::link()->next()
+     *
      * multi-compare patterns such as "int|void|char" can contain %%or%, %%oror% and %%op%
      * it is recommended to put such an %%cmd% as the first pattern.
      * For example: "%var%|%num%|)" means yes to a variable, a number or ')'.

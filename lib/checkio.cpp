@@ -1379,9 +1379,7 @@ CheckIO::ArgumentInfo::ArgumentInfo(const Token * arg, const Settings *settings,
         return;
     } else if (arg->str() == "&" || arg->tokType() == Token::eVariable ||
                arg->tokType() == Token::eFunction || Token::Match(arg, "%type% ::") ||
-               (Token::Match(arg, "static_cast|reinterpret_cast|const_cast <") &&
-                Token::simpleMatch(arg->linkAt(1), "> (") &&
-                Token::Match(arg->linkAt(1)->linkAt(1), ") ,|)"))) {
+               Token::Match(arg, "static_cast|reinterpret_cast|const_cast @< @( ,|)")) {
         if (Token::Match(arg, "static_cast|reinterpret_cast|const_cast")) {
             typeToken = arg->tokAt(2);
             while (typeToken->str() == "const" || typeToken->str() == "extern")
@@ -1488,8 +1486,7 @@ CheckIO::ArgumentInfo::ArgumentInfo(const Token * arg, const Settings *settings,
             }
 
             // check for std::vector::at() and std::string::at()
-            else if (Token::Match(tok1->previous(), "%var% . at (") &&
-                     Token::Match(tok1->linkAt(2), ") [,)]")) {
+            else if (Token::Match(tok1->previous(), "%var% . at @( [,)]")) {
                 varTok = tok1->previous();
                 variableInfo = varTok->variable();
 

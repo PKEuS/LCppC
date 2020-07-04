@@ -785,7 +785,7 @@ bool CheckBufferOverrun::isCtuUnsafeBufferUsage(const Check *check, const Token 
     if (!argtok->valueType() || argtok->valueType()->typeSize(*c->mSettings) == 0)
         return false;
     const Token *indexTok = nullptr;
-    if (type == 1 && Token::Match(argtok, "%name% [") && argtok->astParent() == argtok->next() && !Token::simpleMatch(argtok->linkAt(1), "] ["))
+    if (type == 1 && Token::Match(argtok, "%name% @[ !![") && argtok->astParent() == argtok->next())
         indexTok = argtok->next()->astOperand2();
     else if (type == 2 && Token::simpleMatch(argtok->astParent(), "+"))
         indexTok = (argtok == argtok->astParent()->astOperand1()) ?

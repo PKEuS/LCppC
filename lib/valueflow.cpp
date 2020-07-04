@@ -1808,9 +1808,7 @@ static void valueFlowReverse(TokenList *tokenlist,
                 if (parent && Token::simpleMatch(parent->tokAt(-2), "} while (") && Token::simpleMatch(parent->linkAt(-2)->previous(), "do {")) {
                     bool breakBailout = false;
                     for (const Token *iftok = parent->linkAt(-2); iftok != parent; iftok = iftok->next()) {
-                        if (!Token::simpleMatch(iftok, "if ("))
-                            continue;
-                        if (!Token::simpleMatch(iftok->linkAt(1), ") { break"))
+                        if (!Token::Match(iftok, "if @( { break"))
                             continue;
                         ProgramMemory programMemory;
                         programMemory.setIntValue(varid, num);
@@ -1924,7 +1922,7 @@ static void valueFlowReverse(TokenList *tokenlist,
             }
         }
 
-        if (Token::Match(tok2, "%name% (") && !Token::simpleMatch(tok2->linkAt(1), ") {")) {
+        if (Token::Match(tok2, "%name% @( !!{")) {
             // bailout: global non-const variables
             if (!(var->isLocal() || var->isArgument()) && !var->isConst()) {
                 if (settings->debugwarnings)
@@ -2318,7 +2316,7 @@ struct ValueFlowForwardAnalyzer : ForwardAnalyzer {
             return isModified(tok);
         } else if (isAlias(tok)) {
             return isAliasModified(tok);
-        } else if (Token::Match(tok, "%name% (") && !Token::simpleMatch(tok->linkAt(1), ") {")) {
+        } else if (Token::Match(tok, "%name% @( !!{")) {
             // bailout: global non-const variables
             if (isGlobal()) {
                 return Action::Invalid;
@@ -3117,8 +3115,7 @@ static void valueFlowForwardLifetime(Token * tok, TokenList *tokenlist, ErrorLog
                                      errorLogger,
                                      settings);
 
-            if (tok->astTop() && Token::simpleMatch(tok->astTop()->previous(), "for (") &&
-                Token::simpleMatch(tok->astTop()->link(), ") {")) {
+            if (tok->astTop() && Token::Match(tok->astTop()->previous(), "for @( {")) {
                 Token* start = tok->astTop()->link()->next();
                 valueFlowForwardVariable(
                     start, start->link(), var, var->declarationId(), values, false, false, tokenlist, errorLogger, settings);

@@ -134,7 +134,7 @@ TemplateSimplifier::TokenAndName::TokenAndName(Token *token, const std::string &
                 while (tok1 && !Token::Match(tok1, ";|{")) {
                     if (tok1->str() == "<")
                         tok1 = tok1->findClosingBracket();
-                    else if (Token::Match(tok1, "(|[") && tok1->link())
+                    else if (Token::Match(tok1, "(|["))
                         tok1 = tok1->link();
                     if (tok1)
                         tok1 = tok1->next();
@@ -599,7 +599,7 @@ Token *TemplateSimplifier::findTemplateDeclarationEnd(Token *tok)
     while (tok2 && !Token::Match(tok2, ";|{")) {
         if (tok2->str() == "<")
             tok2 = tok2->findClosingBracket();
-        else if (Token::Match(tok2, "(|[") && tok2->link())
+        else if (Token::Match(tok2, "(|["))
             tok2 = tok2->link();
         if (tok2)
             tok2 = tok2->next();

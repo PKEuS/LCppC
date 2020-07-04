@@ -267,7 +267,7 @@ static bool isFunctionCall(const Token* tok)
 {
     if (Token::Match(tok, "%name% ("))
         return true;
-    if (Token::Match(tok, "%name% <") && Token::simpleMatch(tok->next()->link(), "> ("))
+    if (Token::Match(tok, "%name% @< ("))
         return true;
     if (Token::Match(tok, "%name% ::"))
         return isFunctionCall(tok->tokAt(2));
@@ -1821,7 +1821,7 @@ static bool hasFunctionCall(const Token *tok)
 static bool isUnchanged(const Token *startToken, const Token *endToken, const std::set<unsigned int> &exprVarIds, bool local)
 {
     for (const Token *tok = startToken; tok != endToken; tok = tok->next()) {
-        if (!local && Token::Match(tok, "%name% (") && !Token::simpleMatch(tok->linkAt(1), ") {"))
+        if (!local && Token::Match(tok, "%name% @( !!{"))
             // TODO: this is a quick bailout
             return false;
         if (tok->varId() == 0 || exprVarIds.find(tok->varId()) == exprVarIds.end())
@@ -2086,7 +2086,7 @@ struct FwdAnalysis::Result FwdAnalysis::checkRecursive(const Token *expr, const 
                 return Result(Result::Type::BAILOUT);
         }
 
-        if (!local && Token::Match(tok, "%name% (") && !Token::simpleMatch(tok->linkAt(1), ") {")) {
+        if (!local && Token::Match(tok, "%name% @( !!{")) {
             // TODO: this is a quick bailout
             return Result(Result::Type::BAILOUT);
         }

@@ -113,7 +113,7 @@ void CheckUninitVar::checkScope(const Scope* scope, const std::set<std::string> 
             checkRhs(var.nameToken(), var, NO_ALLOC, 0U, emptyString);
             continue;
         }
-        if (Token::Match(var.nameToken(), "%name% ) (") && Token::simpleMatch(var.nameToken()->linkAt(2), ") =")) { // Function pointer is initialized, but Rhs might be not
+        if (Token::Match(var.nameToken(), "%name% ) @( =")) { // Function pointer is initialized, but Rhs might be not
             checkRhs(var.nameToken()->linkAt(2)->next(), var, NO_ALLOC, 0U, emptyString);
             continue;
         }
@@ -742,7 +742,7 @@ bool CheckUninitVar::checkScopeForVariable(const Token *tok, const Variable& var
                         return true;
 
                     // array new
-                    if (Token::Match(tok->next(), "= new %type% [") && Token::simpleMatch(tok->linkAt(4), "] ("))
+                    if (Token::Match(tok->next(), "= new %type% @[ ("))
                         return true;
                 }
 
@@ -1178,7 +1178,7 @@ int CheckUninitVar::isFunctionParUsage(const Token *vartok, bool pointer, Alloc 
                 }
                 if ((pointer || address) && alloc == NO_ALLOC && Token::Match(argStart, "const struct| %type% * %name% [,)]"))
                     return 1;
-                if ((pointer || address) && Token::Match(argStart, "const %type% %name% [") && Token::Match(argStart->linkAt(3), "] [,)]"))
+                if ((pointer || address) && Token::Match(argStart, "const %type% %name% @[ [,)]"))
                     return 1;
             }
 

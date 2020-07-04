@@ -561,7 +561,7 @@ void CheckOther::checkRedundantAssignmentInSwitch()
                 // Inside a conditional or loop. Don't mark variable accesses as being redundant. E.g.:
                 //   case 3: b = 1;
                 //   case 4: if (a) { b = 2; }    // Doesn't make the b=1 redundant because it's conditional
-                if (Token::Match(tok2->previous(), ")|else {") && tok2->link()) {
+                if (Token::Match(tok2->previous(), ")|else {")) {
                     const Token* endOfConditional = tok2->link();
                     for (const Token* tok3 = tok2; tok3 != endOfConditional; tok3 = tok3->next()) {
                         if (tok3->varId() != 0) {
@@ -889,7 +889,7 @@ void CheckOther::checkVariableScope()
                 tok = tok->link();
 
                 // parse else if blocks..
-            } else if (Token::simpleMatch(tok, "else { if (") && Token::simpleMatch(tok->linkAt(3), ") {")) {
+            } else if (Token::Match(tok, "else { if @( {")) {
                 const Token *endif = tok->linkAt(3)->linkAt(1);
                 bool elseif = false;
                 if (Token::simpleMatch(endif, "} }"))
@@ -1455,11 +1455,13 @@ void CheckOther::charBitOpError(const Token *tok)
 
 static bool isType(const Token * tok, bool unknown)
 {
+    if (!tok)
+        return false;
     if (Token::Match(tok, "%type%"))
         return true;
-    if (Token::simpleMatch(tok, "::"))
+    if (tok->str() == "::")
         return isType(tok->astOperand2(), unknown);
-    if (Token::simpleMatch(tok, "<") && tok->link())
+    if (tok->link() && tok->str() == "<")
         return true;
     if (unknown && Token::Match(tok, "%name% !!("))
         return true;
@@ -1675,8 +1677,7 @@ void CheckOther::checkMisusedScopedObject()
     for (const Scope * scope : symbolDatabase->functionScopes) {
         for (const Token *tok = scope->bodyStart; tok && tok != scope->bodyEnd; tok = tok->next()) {
             if ((tok->next()->type() || (tok->next()->function() && tok->next()->function()->isConstructor())) // TODO: The rhs of || should be removed; It is a workaround for a symboldatabase bug
-                && Token::Match(tok, "[;{}] %name% (")
-                && Token::Match(tok->linkAt(2), ") ; !!}")
+                && Token::Match(tok, "[;{}] %name% @( ; !!}")
                 && (!tok->next()->function() || // is not a function on this scope
                     tok->next()->function()->isConstructor())) { // or is function in this scope and it's a ctor
                 tok = tok->next();
@@ -2391,7 +2392,7 @@ void CheckOther::checkIncompleteArrayFill()
 
     for (const Scope * scope : symbolDatabase->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
-            if (Token::Match(tok, "memset|memcpy|memmove ( ") && Token::Match(tok->linkAt(1)->tokAt(-2), ", %num% )")) {
+            if (Token::Match(tok, "memset|memcpy|memmove (") && Token::Match(tok->linkAt(1)->tokAt(-2), ", %num% )")) {
                 const Token* tok2 = tok->tokAt(2);
                 if (tok2->str() == "::")
                     tok2 = tok2->next();
@@ -2771,7 +2772,7 @@ bool CheckOther::isMovedParameterAllowedForInconclusiveFunction(const Token * to
     if (Token::simpleMatch(tok->tokAt(-4), "std :: move ("))
         return false;
     const Token * tokAtM2 = tok->tokAt(-2);
-    if (Token::simpleMatch(tokAtM2, "> (") && tokAtM2->link()) {
+    if (tokAtM2->link() && Token::simpleMatch(tokAtM2, "> (")) {
         const Token * leftAngle = tokAtM2->link();
         if (Token::simpleMatch(leftAngle->tokAt(-3), "std :: forward <"))
             return false;

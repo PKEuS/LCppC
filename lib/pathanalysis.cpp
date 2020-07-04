@@ -100,7 +100,7 @@ PathAnalysis::Progress PathAnalysis::forwardRange(const Token* startToken, const
             if (Token::simpleMatch(tok, "} else {")) {
                 tok = tok->linkAt(2);
             }
-        } else if (Token::Match(tok, "if|while|for (") && Token::simpleMatch(tok->next()->link(), ") {")) {
+        } else if (Token::Match(tok, "if|while|for @( {")) {
             const Token * endCond = tok->next()->link();
             const Token * endBlock = endCond->next()->link();
             const Token * condTok = getCondTok(tok);

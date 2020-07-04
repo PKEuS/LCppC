@@ -175,7 +175,7 @@ bool CheckCondition::assignIfParseScope(const Token * const assignTok,
             ret = true;
         if (ret && tok2->str() == ";")
             return false;
-        if (!islocal && Token::Match(tok2, "%name% (") && !Token::simpleMatch(tok2->next()->link(), ") {"))
+        if (!islocal && Token::Match(tok2, "%name% @( {"))
             return true;
         if (Token::Match(tok2, "if|while (")) {
             if (!islocal && tok2->str() == "while")
@@ -730,8 +730,6 @@ void CheckCondition::multiCondition2()
                     const Token *tok1 = tok->next();
                     const Token *tok2;
                     if (Token::simpleMatch(tok, "do {")) {
-                        if (!Token::simpleMatch(tok->linkAt(1), "} while ("))
-                            break;
                         tok2 = tok->linkAt(1)->linkAt(2);
                     } else if (Token::Match(tok, "if|while (")) {
                         tok2 = tok->linkAt(1);

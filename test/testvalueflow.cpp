@@ -4518,13 +4518,12 @@ private:
 
 
     void valueFlowUnknownFunctionReturn() {
-        const char *code;
         std::vector<ValueFlow::Value> values;
         Settings s;
         LOAD_LIB_2(s.library, "std.cfg");
         s.checkUnknownFunctionReturn.insert("rand");
 
-        code = "x = rand();";
+        const char* code = "x = rand();";
         values = tokenValues(code, "(", &s);
         ASSERT_EQUALS(2, values.size());
         ASSERT_EQUALS(INT_MIN, values.front().intvalue);

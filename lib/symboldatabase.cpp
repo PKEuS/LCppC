@@ -76,8 +76,7 @@ static const Token* skipScopeIdentifiers(const Token* tok)
     if (tok && tok->str() == "::") {
         tok = tok->next();
     }
-    while (Token::Match(tok, "%name% ::") ||
-           (Token::Match(tok, "%name% <") && Token::simpleMatch(tok->linkAt(1), "> ::"))) {
+    while (Token::Match(tok, "%name% ::") || Token::Match(tok, "%name% @< ::")) {
         if (tok->strAt(1) == "::")
             tok = tok->tokAt(2);
         else
@@ -162,8 +161,7 @@ void SymbolDatabase::createSymbolDatabaseFindAllScopes()
                 if (tok2 && tok2->next()) {
                     if (tok2->next()->str() == ";")
                         tok = tok2->next();
-                    else if (Token::simpleMatch(tok2->next(), "= {") &&
-                             Token::simpleMatch(tok2->linkAt(2), "} ;"))
+                    else if (Token::Match(tok2->next(), "= @{ ;"))
                         tok = tok2->linkAt(2)->next();
                     else if (Token::Match(tok2->next(), "(|{") &&
                              tok2->next()->link()->strAt(1) == ";")
@@ -299,9 +297,8 @@ void SymbolDatabase::createSymbolDatabaseFindAllScopes()
 
         // Namespace and unknown macro (#3854)
         else if (mTokenizer->isCPP() && tok->isKeyword() &&
-                 Token::Match(tok, "namespace %name% %type% (") &&
-                 tok->tokAt(2)->isUpperCaseName() &&
-                 Token::simpleMatch(tok->linkAt(3), ") {")) {
+                 Token::Match(tok, "namespace %name% %type% @( {") &&
+                 tok->tokAt(2)->isUpperCaseName()) {
             scopeList.emplace_back(this, tok, scope);
 
             Scope *new_scope = &scopeList.back();
@@ -373,8 +370,7 @@ void SymbolDatabase::createSymbolDatabaseFindAllScopes()
         }
 
         // unnamed struct and union
-        else if (tok->isKeyword() && Token::Match(tok, "struct|union {") &&
-                 Token::Match(tok->next()->link(), "} *|&| %name% ;|[|=")) {
+        else if (tok->isKeyword() && Token::Match(tok, "struct|union @{ *|&| %name% ;|[|=")) {
             scopeList.emplace_back(this, tok, scope);
 
             Scope *new_scope = &scopeList.back();
@@ -519,8 +515,7 @@ void SymbolDatabase::createSymbolDatabaseFindAllScopes()
                             if (end->link() && Token::Match(end, "(|<")) {
                                 end = end->link();
                             } else if (foundInitList &&
-                                       Token::Match(end, "%name%|> {") &&
-                                       Token::Match(end->linkAt(1), "} ,|{")) {
+                                       Token::Match(end, "%name%|> @{ ,|{")) {
                                 end = end->linkAt(1);
                             } else {
                                 if (end->str() == ":")
@@ -657,7 +652,7 @@ void SymbolDatabase::createSymbolDatabaseFindAllScopes()
                 tok = tok1;
                 scope->nestedList.push_back(&scopeList.back());
                 scope = &scopeList.back();
-            } else if (tok->isKeyword() && Token::Match(tok, "if|for|while|catch|switch (") && Token::simpleMatch(tok->next()->link(), ") {")) {
+            } else if (tok->isKeyword() && Token::Match(tok, "if|for|while|catch|switch @( {")) {
                 const Token *scopeStartTok = tok->next()->link()->next();
                 if (tok->str() == "if")
                     scopeList.emplace_back(this, tok, scope, Scope::eIf, scopeStartTok);
@@ -1670,7 +1665,7 @@ bool SymbolDatabase::isFunction(const Token *tok, const Scope* outerScope, const
         if (tok2 &&
             (Token::Match(tok2, ";|{|=") ||
              (tok2->isUpperCaseName() && Token::Match(tok2, "%name% ;|{")) ||
-             (tok2->isUpperCaseName() && Token::Match(tok2, "%name% (") && tok2->next()->link()->strAt(1) == "{") ||
+             (tok2->isUpperCaseName() && Token::Match(tok2, "%name% @( {")) ||
              Token::Match(tok2, ": ::| %name% (|::|<|{") ||
              Token::Match(tok2, "&|&&| ;|{") ||
              Token::Match(tok2, "= delete|default ;"))) {
@@ -1683,9 +1678,8 @@ bool SymbolDatabase::isFunction(const Token *tok, const Scope* outerScope, const
 
     // UNKNOWN_MACRO(a,b) { ... }
     else if (outerScope->type == Scope::eGlobal &&
-             Token::Match(tok, "%name% (") &&
+             Token::Match(tok, "%name% @( {") &&
              tok->isUpperCaseName() &&
-             Token::simpleMatch(tok->linkAt(1), ") {") &&
              (!tok->previous() || Token::Match(tok->previous(), "[;{}]"))) {
         *funcStart = tok;
         *argStart = tok->next();
@@ -1694,7 +1688,7 @@ bool SymbolDatabase::isFunction(const Token *tok, const Scope* outerScope, const
     }
 
     // template constructor?
-    else if (Token::Match(tok, "%name% <") && Token::simpleMatch(tok->next()->link(), "> (")) {
+    else if (Token::Match(tok, "%name% @< (")) {
         const Token* tok2 = tok->next()->link()->next()->link();
         if (Token::Match(tok2, ") const| ;|{|=") ||
             Token::Match(tok2, ") : ::| %name% (|::|<|{") ||
@@ -1707,8 +1701,7 @@ bool SymbolDatabase::isFunction(const Token *tok, const Scope* outerScope, const
     }
 
     // regular C function with missing return or invalid C++ ?
-    else if (Token::Match(tok, "%name% (") && !isReservedName(tok->str()) &&
-             Token::simpleMatch(tok->linkAt(1), ") {") &&
+    else if (Token::Match(tok, "%name% @( {") && !isReservedName(tok->str()) &&
              (!tok->previous() || Token::Match(tok->previous(), ";|}"))) {
         if (mTokenizer->isC()) {
             debugMessage(tok, "SymbolDatabase::isFunction found C function '" + tok->str() + "' without a return type.");
@@ -1913,7 +1906,7 @@ void Variable::evaluate(const Settings* settings)
             strtype += "::" + typeToken->strAt(2);
         setFlag(fIsClass, !lib->podtype(strtype) && !mTypeStartToken->isStandardType() && !isEnumType() && !isPointer() && !isReference() && strtype != "...");
         setFlag(fIsStlType, Token::simpleMatch(mTypeStartToken, "std ::"));
-        setFlag(fIsStlString, isStlType() && (Token::Match(mTypeStartToken->tokAt(2), "string|wstring|u16string|u32string !!::") || (Token::simpleMatch(mTypeStartToken->tokAt(2), "basic_string <") && !Token::simpleMatch(mTypeStartToken->linkAt(3), "> ::"))));
+        setFlag(fIsStlString, isStlType() && (Token::Match(mTypeStartToken->tokAt(2), "string|wstring|u16string|u32string !!::") || Token::Match(mTypeStartToken->tokAt(2), "basic_string @< !!::")));
         setFlag(fIsSmartPointer, lib->isSmartPointer(mTypeStartToken));
     }
     if (mAccess == AccessControl::Argument) {
@@ -2363,8 +2356,7 @@ bool Function::argsMatch(const Scope *scope, const Token *first, const Token *se
             // nested or base class variable
             else if (arg_path_length <= 2 && Token::Match(first->next(), "%name%") &&
                      (Token::Match(second->next(), "%name% :: %name%") ||
-                      (Token::Match(second->next(), "%name% <") &&
-                       Token::Match(second->linkAt(1), "> :: %name%"))) &&
+                      (Token::Match(second->next(), "%name% @< :: %name%"))) &&
                      ((second->next()->str() == scope->className) ||
                       (scope->definedType && scope->definedType->isDerivedFrom(second->next()->str()))) &&
                      (first->next()->str() == second->strAt(3))) {
@@ -2470,7 +2462,7 @@ const Token * Function::constructorMemberInitialization() const
         return nullptr;
     if (Token::simpleMatch(arg->link(), ") :"))
         return arg->link()->next();
-    if (Token::simpleMatch(arg->link(), ") noexcept (") && arg->link()->linkAt(2)->strAt(1) == ":")
+    if (Token::Match(arg->link(), ") noexcept @( :"))
         return arg->link()->linkAt(2)->next();
     return nullptr;
 }
@@ -2594,8 +2586,7 @@ void SymbolDatabase::addClassFunction(Scope **scope, const Token **tok, const To
                             const Token *closeParen = (*tok)->next()->link();
                             if (closeParen) {
                                 if (Token::Match(closeParen, ") noexcept| = default ;") ||
-                                    (Token::simpleMatch(closeParen, ") noexcept (") &&
-                                     Token::simpleMatch(closeParen->linkAt(2), ") = default ;"))) {
+                                    (Token::simpleMatch(closeParen, ") noexcept @( = default ;"))) {
                                     func->isDefault(true);
                                     return;
                                 }
@@ -2669,8 +2660,7 @@ void SymbolDatabase::addClassFunction(Scope **scope, const Token **tok, const To
                             const Token *closeParen = (*tok)->next()->link();
                             if (closeParen) {
                                 if (Token::Match(closeParen, ") noexcept| = default ;") ||
-                                    (Token::simpleMatch(closeParen, ") noexcept (") &&
-                                     Token::simpleMatch(closeParen->linkAt(2), ") = default ;"))) {
+                                    (Token::Match(closeParen, ") noexcept @( = default ;"))) {
                                     func->isDefault(true);
                                     return;
                                 }
@@ -2717,8 +2707,7 @@ void SymbolDatabase::addNewFunction(Scope **scope, const Token **tok)
         if (tok1->link() && Token::Match(tok1, "(|<")) {
             tok1 = tok1->link();
         } else if (foundInitList &&
-                   Token::Match(tok1, "%name%|> {") &&
-                   Token::Match(tok1->linkAt(1), "} ,|{")) {
+                   Token::Match(tok1, "%name%|> @{ ,|{")) {
             tok1 = tok1->linkAt(1);
         } else {
             if (tok1->str() == ":")
@@ -3953,13 +3942,11 @@ void Scope::getVariableList(const Settings* settings)
 const Token *Scope::checkVariable(const Token *tok, AccessControl varaccess, const Settings* settings)
 {
     // Is it a throw..?
-    if (tok->isKeyword() && Token::Match(tok, "throw %any% (") &&
-        Token::simpleMatch(tok->linkAt(2), ") ;")) {
+    if (tok->isKeyword() && Token::Match(tok, "throw %any% @( ;")) {
         return tok->linkAt(2);
     }
 
-    if (tok->isKeyword() && Token::Match(tok, "throw %any% :: %any% (") &&
-        Token::simpleMatch(tok->linkAt(4), ") ;")) {
+    if (tok->isKeyword() && Token::Match(tok, "throw %any% :: %any% @( ;")) {
         return tok->linkAt(4);
     }
 
@@ -4098,8 +4085,7 @@ bool Scope::isVariableDeclaration(const Token* const tok, const Token*& vartok, 
     } else if (Token::Match(localVarTok, "%name% )|[") && localVarTok->str() != "operator") {
         vartok = localVarTok;
         typetok = localTypeTok;
-    } else if (localVarTok && localVarTok->varId() && Token::Match(localVarTok, "%name% (|{") &&
-               Token::Match(localVarTok->next()->link(), ")|} ;")) {
+    } else if (localVarTok && localVarTok->varId() && Token::Match(localVarTok, "%name% @(|{ ;")) {
         vartok = localVarTok;
         typetok = localTypeTok;
     } else if (type == eCatch &&
@@ -4136,7 +4122,7 @@ const Token * Scope::addEnum(const Token * tok, bool isCpp)
         tok2 = tok2->next();
 
         while (Token::Match(tok2, "%name% =|,|}") ||
-               (Token::Match(tok2, "%name% (") && Token::Match(tok2->linkAt(1), ") ,|}"))) {
+               (Token::Match(tok2, "%name% @( ,|}"))) {
             Enumerator enumerator(this);
 
             // save enumerator name
@@ -4408,7 +4394,7 @@ const Type* SymbolDatabase::findVariableType(const Scope *start, const Token *ty
         if (scope) {
             // follow qualification
             while (scope && (Token::Match(tok1, "%type% ::") ||
-                             (Token::Match(tok1, "%type% <") && Token::simpleMatch(tok1->linkAt(1), "> ::")))) {
+                             (Token::Match(tok1, "%type% @< ::")))) {
                 if (tok1->strAt(1) == "::")
                     tok1 = tok1->tokAt(2);
                 else
@@ -4805,7 +4791,7 @@ const Function* SymbolDatabase::findFunction(const Token *tok) const
 
         if (currScope) {
             while (currScope && !(Token::Match(tok1, "%type% :: %any% (") ||
-                                  (Token::Match(tok1, "%type% <") && Token::Match(tok1->linkAt(1), "> :: %any% (")))) {
+                                  (Token::Match(tok1, "%type% @< :: %any% (")))) {
                 if (tok1->strAt(1) == "::")
                     tok1 = tok1->tokAt(2);
                 else
