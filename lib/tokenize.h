@@ -400,6 +400,8 @@ public:
         return mPreprocessor;
     }
 
+    bool hasIfdef(const Token *start, const Token *end) const;
+
 private:
 
     /** Simplify pointer to standard type (C only) */

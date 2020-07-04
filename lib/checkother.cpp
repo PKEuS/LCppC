@@ -838,6 +838,9 @@ void CheckOther::checkVariableScope()
         if (var->isConst())
             continue;
 
+        if (mTokenizer->hasIfdef(var->nameToken(), var->scope()->bodyEnd))
+            continue;
+
         // reference of range for loop variable..
         if (Token::Match(var->nameToken()->previous(), "& %var% = %var% .")) {
             const Token *otherVarToken = var->nameToken()->tokAt(2);
@@ -2601,6 +2604,7 @@ void CheckOther::checkUnusedLabel()
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope * scope : symbolDatabase->functionScopes) {
+        const bool hasIfdef = mTokenizer->hasIfdef(scope->bodyStart, scope->bodyEnd);
         for (const Token* tok = scope->bodyStart; tok != scope->bodyEnd; tok = tok->next()) {
             if (!tok->scope()->isExecutable())
                 tok = tok->scope()->bodyEnd;
@@ -2608,25 +2612,35 @@ void CheckOther::checkUnusedLabel()
             if (Token::Match(tok, "{|}|; %name% :") && tok->strAt(1) != "default") {
                 const std::string tmp("goto " + tok->strAt(1));
                 if (!Token::findsimplematch(scope->bodyStart->next(), tmp.c_str(), tmp.size(), scope->bodyEnd->previous()))
-                    unusedLabelError(tok->next(), tok->next()->scope()->type == Scope::eSwitch);
+                    unusedLabelError(tok->next(), tok->next()->scope()->type == Scope::eSwitch, hasIfdef);
             }
         }
     }
 }
 
-void CheckOther::unusedLabelError(const Token* tok, bool inSwitch)
+void CheckOther::unusedLabelError(const Token* tok, bool inSwitch, bool hasIfdef)
 {
-    if (inSwitch) {
-        if (!tok || mSettings->severity.isEnabled(Severity::warning))
-            reportError(tok, Severity::warning, "unusedLabelSwitch",
-                        "$symbol:" + (tok ? tok->str() : emptyString) + "\n"
-                        "Label '$symbol' is not used. Should this be a 'case' of the enclosing switch()?", CWE398, Certainty::safe);
-    } else {
-        if (!tok || mSettings->severity.isEnabled(Severity::style))
-            reportError(tok, Severity::style, "unusedLabel",
-                        "$symbol:" + (tok ? tok->str() : emptyString) + "\n"
-                        "Label '$symbol' is not used.", CWE398, Certainty::safe);
-    }
+    if (tok && !mSettings->severity.isEnabled(inSwitch ? Severity::warning : Severity::style))
+        return;
+
+    std::string id = "unusedLabel";
+    if (inSwitch)
+        id += "Switch";
+    if (hasIfdef)
+        id += "Configuration";
+
+    std::string msg = "$symbol:" + (tok ? tok->str() : emptyString) + "\nLabel '$symbol' is not used.";
+    if (hasIfdef)
+        msg += " There is #if in function body so the label might be used in code that is removed by the preprocessor.";
+    if (inSwitch)
+        msg += " Should this be a 'case' of the enclosing switch()?";
+
+    reportError(tok,
+                inSwitch ? Severity::warning : Severity::style,
+                id,
+                msg,
+                CWE398,
+                Certainty::safe);
 }
 
 
