@@ -1512,20 +1512,20 @@ void CheckStl::redundantCondition()
             continue;
 
         const Token* tok = scope.classDef->tokAt(2);
-        if (!Token::Match(tok, "%name% . find ( %any% ) != %name% . end|rend|cend|crend ( ) ) { %name% . remove|erase ( %any% ) ;"))
+        if (!Token::Match(tok, "%name% . find @( != $ %name% . end|rend|cend|crend ( ) ) { %name% . remove|erase @( ;"))
             continue;
 
-        // Get tokens for the fields %name% and %any%
+        // Get tokens for the fields %name% and ( %any% )
         const Token *var1 = tok;
-        const Token *any1 = var1->tokAt(4);
-        const Token *var2 = any1->tokAt(3);
+        const Token *any1 = var1->tokAt(3);
+        const Token *var2 = Token::matchResult();
         const Token *var3 = var2->tokAt(7);
-        const Token *any2 = var3->tokAt(4);
+        const Token *any2 = var3->tokAt(3);
 
         // Check if all the "%name%" fields are the same and if all the "%any%" are the same..
         if (var1->str() == var2->str() &&
             var2->str() == var3->str() &&
-            any1->str() == any2->str()) {
+            any1->stringifyList(any1->link()) == any2->stringifyList(any2->link())) {
             redundantIfRemoveError(tok);
         }
     }
@@ -1870,7 +1870,7 @@ void CheckStl::uselessCalls()
                 if (!var || !var->isStlType())
                     continue;
                 uselessCallsReturnValueError(tok->tokAt(4), tok->str(), tok->strAt(2));
-            } else if (printPerformance && Token::Match(tok, "%var% . swap ( %name% )") &&
+            } else if (printPerformance && Token::Match(tok, "%var% . swap ( %var% )") &&
                        tok->varId() == tok->tokAt(4)->varId()) {
                 const Variable* var = tok->variable();
                 if (!var || !var->isStlType())

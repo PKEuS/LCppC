@@ -2020,9 +2020,9 @@ bool Tokenizer::simplifyUsing()
 
         // look for non-template type aliases
         if (!(tok->strAt(-1) != ">" &&
-              (Token::Match(tok, "using %name% = ::| %name%") ||
+              (Token::Match(tok, "using %name% = ::| $ %name%") ||
                (Token::Match(tok, "using %name% [ [") &&
-                Token::Match(tok->linkAt(2), "] ] = ::| %name%")))))
+                Token::Match(tok->linkAt(2), "] ] = ::| $ %name%")))))
             continue;
 
         std::list<ScopeInfo3> scopeList1;
@@ -2031,11 +2031,7 @@ bool Tokenizer::simplifyUsing()
         const Token *nameToken = tok->next();
         std::string scope = getScopeName(scopeList);
         Token *usingStart = tok;
-        Token *start;
-        if (tok->strAt(2) == "=")
-            start = tok->tokAt(3);
-        else
-            start = tok->linkAt(2)->tokAt(3);
+        Token *start = const_cast<Token*>(Token::matchResult());
         Token *usingEnd = findSemicolon(start);
         if (!usingEnd)
             continue;
@@ -6038,7 +6034,7 @@ void Tokenizer::simplifyInitVar()
         if (tok->str() == "return")
             continue;
 
-        if (Token::Match(tok, "class|struct|union| %type% *| %name% ( &| %any% ) ;")) {
+        if (Token::Match(tok, "class|struct|union| %type% *| %name% ( &|*| %any% ) ;")) {
             tok = initVar(tok);
         } else if (Token::Match(tok, "%type% *| %name% ( %type% (")) {
             const Token* tok2 = tok->tokAt(2);
@@ -6046,7 +6042,7 @@ void Tokenizer::simplifyInitVar()
                 tok2 = tok2->next();
             if (!tok2->link() || (tok2->link()->strAt(1) == ";" && !Token::simpleMatch(tok2->linkAt(2), ") (")))
                 tok = initVar(tok);
-        } else if (Token::Match(tok, "class|struct|union| %type% *| %name% ( &| %any% ) $ ,")) {
+        } else if (Token::Match(tok, "class|struct|union| %type% *| %name% ( &|*| %any% ) $ ,")) {
             Token *tok1 = const_cast<Token*>(Token::matchResult());
             tok1->str(";");
 

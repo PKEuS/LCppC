@@ -378,7 +378,7 @@ static const Token* doAssignment(Variables &variables, const Token *tok, bool de
         if (Token::Match(tok, "( const| struct|union| %type% * ) ( ("))
             tok = tok->link()->next();
 
-        if (Token::Match(tok, "( [(<] const| struct|union| %type% *| [>)]"))
+        if (Token::Match(tok, "( ( const| struct|union| %type% *| )"))
             tok = tok->next();
 
         if (Token::Match(tok, "(| &| %name%") ||
@@ -416,18 +416,8 @@ static const Token* doAssignment(Variables &variables, const Token *tok, bool de
 
             // check for C++ style cast
             else if (tok->str().find("cast") != std::string::npos &&
-                     tok->strAt(1) == "<") {
-                tok = tok->tokAt(2);
-                if (tok->str() == "const")
-                    tok = tok->next();
-
-                if (Token::Match(tok, "struct|union"))
-                    tok = tok->next();
-
-                tok = tok->next();
-                if (tok->str() == "*")
-                    tok = tok->next();
-
+                     tok->strAt(1) == "<" && tok->next()->link()) {
+                tok = tok->linkAt(1);
                 tok = tok->tokAt(2);
                 if (!tok)
                     return tokOld;

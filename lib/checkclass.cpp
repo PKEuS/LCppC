@@ -771,7 +771,7 @@ void CheckClass::initializeVarList(const Function &func, std::list<const Functio
             else {
                 assignAllVar(usage);
             }
-        } else if (Token::Match(ftok, "::| %name% (") && !Token::Match(ftok, "if|while|for")) {
+        } else if (Token::Match(ftok, "::| %name% (") && !ftok->isControlFlowKeyword()) {
             if (ftok->str() == "::")
                 ftok = ftok->next();
 
@@ -806,10 +806,8 @@ void CheckClass::initializeVarList(const Function &func, std::list<const Functio
                     for (const Token *tok2 = ftok; tok2; tok2 = tok2->next()) {
                         if (Token::Match(tok2, "[;{}]"))
                             break;
-                        if (Token::Match(tok2, "[(,] &| %name% [,)]")) {
-                            tok2 = tok2->next();
-                            if (tok2->str() == "&")
-                                tok2 = tok2->next();
+                        if (Token::Match(tok2, "[(,] &| $ %var% [,)]")) {
+                            tok2 = Token::matchResult();
                             assignVar(tok2->varId(), scope, usage);
                         }
                     }

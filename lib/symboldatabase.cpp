@@ -553,11 +553,11 @@ void SymbolDatabase::createSymbolDatabaseFindAllScopes()
             }
 
             // friend class declaration?
-            else if (mTokenizer->isCPP() && tok->isKeyword() && Token::Match(tok, "friend class| ::| %any% ;|::")) {
+            else if (mTokenizer->isCPP() && tok->isKeyword() && Token::Match(tok, "friend class| $ ::| %any% ;|::")) {
                 Type::FriendInfo friendInfo;
 
                 // save the name start
-                friendInfo.nameStart = tok->strAt(1) == "class" ? tok->tokAt(2) : tok->next();
+                friendInfo.nameStart = Token::matchResult();
                 friendInfo.nameEnd = friendInfo.nameStart;
 
                 // skip leading "::"
