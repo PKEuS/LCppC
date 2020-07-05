@@ -278,18 +278,17 @@ void CheckOther::warningOldStylePointerCast()
             tok = scope->bodyStart;
         for (; tok && tok != scope->bodyEnd; tok = tok->next()) {
             // Old style pointer casting..
-            if (!Token::Match(tok, "( const|volatile| const|volatile| %type% * const| ) (| %name%|%num%|%bool%|%char%|%str%"))
+            if (!Token::Match(tok, "( const|volatile| const|volatile| $ %type% * const| ) (| %name%|%num%|%bool%|%char%|%str%"))
                 continue;
 
-            // skip first "const" in "const Type* const"
-            while (Token::Match(tok->next(), "const|volatile"))
-                tok = tok->next();
-            const Token* typeTok = tok->next();
+            tok = Token::matchResult();
+            const Token* typeTok = tok;
+
             // skip second "const" in "const Type* const"
-            if (tok->strAt(3) == "const")
+            if (tok->strAt(2) == "const")
                 tok = tok->next();
 
-            const Token *p = tok->tokAt(4);
+            const Token *p = tok->tokAt(3);
             if (p->hasKnownIntValue() && p->values().front().intvalue==0) // Casting nullpointers is safe
                 continue;
 
@@ -2570,10 +2569,10 @@ void CheckOther::checkInterlockedDecrement()
                 (Token::Match(checkStartTok, "%name% %comp% 0 )") && checkStartTok->str() == interlockedVarTok->str())) {
                 raceAfterInterlockedDecrementError(checkStartTok);
             }
-        } else if (Token::Match(tok, "if ( ::| InterlockedDecrement ( & %name%")) {
+        } else if (Token::Match(tok, "if ( ::| InterlockedDecrement ( & $ %name%")) {
             const Token* condEnd = tok->next()->link();
             const Token* funcTok = tok->tokAt(2);
-            const Token* firstAccessTok = funcTok->str() == "::" ? funcTok->tokAt(4) : funcTok->tokAt(3);
+            const Token* firstAccessTok = Token::matchResult();
             if (condEnd && condEnd->next() && condEnd->next()->link()) {
                 const Token* ifEndTok = condEnd->next()->link();
                 if (Token::Match(ifEndTok, "} return %name%")) {

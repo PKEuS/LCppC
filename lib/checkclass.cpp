@@ -699,31 +699,19 @@ void CheckClass::initializeVarList(const Function &func, std::list<const Functio
             ftok = ftok->tokAt(2);
         }
 
-        if (!Token::Match(ftok->next(), "::| %name%") &&
-            !Token::Match(ftok->next(), "*| this . %name%") &&
-            !Token::Match(ftok->next(), "* %name% =") &&
-            !Token::Match(ftok->next(), "( * this ) . %name%"))
+        if (!Token::Match(ftok->next(), "::| $ %name%") &&
+            !Token::Match(ftok->next(), "*| this . $ %name%") &&
+            !Token::Match(ftok->next(), "* $ %name% =") &&
+            !Token::Match(ftok->next(), "( * this ) . $ %name%"))
             continue;
 
-        // Goto the first token in this statement..
-        ftok = ftok->next();
+        // Goto the relevant token in this statement..
+        ftok = Token::matchResult();
 
         // skip "return"
         if (ftok->str() == "return")
             ftok = ftok->next();
 
-        // Skip "( * this )"
-        if (Token::simpleMatch(ftok, "( * this ) .")) {
-            ftok = ftok->tokAt(5);
-        }
-
-        // Skip "this->"
-        if (Token::simpleMatch(ftok, "this ."))
-            ftok = ftok->tokAt(2);
-
-        // Skip "classname :: "
-        if (Token::Match(ftok, ":: %name%"))
-            ftok = ftok->next();
         while (Token::Match(ftok, "%name% ::"))
             ftok = ftok->tokAt(2);
 
@@ -734,23 +722,21 @@ void CheckClass::initializeVarList(const Function &func, std::list<const Functio
         }
 
         // Ticket #7068
-        else if (Token::Match(ftok, "::| memset ( &| this . %name%")) {
-            if (ftok->str() == "::")
-                ftok = ftok->next();
-            int offsetToMember = 4;
-            if (ftok->strAt(2) == "&")
+        else if (Token::Match(ftok, "::| memset $ ( &| this . %name%")) {
+            ftok = Token::matchResult();
+            int offsetToMember = 3;
+            if (ftok->strAt(1) == "&")
                 ++offsetToMember;
             assignVar(ftok->tokAt(offsetToMember)->varId(), scope, usage);
-            ftok = ftok->linkAt(1);
+            ftok = ftok->link();
             continue;
         }
 
         // Clearing array..
-        else if (Token::Match(ftok, "::| memset ( %name% ,")) {
-            if (ftok->str() == "::")
-                ftok = ftok->next();
-            assignVar(ftok->tokAt(2)->varId(), scope, usage);
-            ftok = ftok->linkAt(1);
+        else if (Token::Match(ftok, "::| memset $ ( %name% ,")) {
+            ftok = Token::matchResult();
+            assignVar(ftok->next()->varId(), scope, usage);
+            ftok = ftok->link();
             continue;
         }
 

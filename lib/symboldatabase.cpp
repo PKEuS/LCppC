@@ -335,7 +335,7 @@ void SymbolDatabase::createSymbolDatabaseFindAllScopes()
         }
 
         // using namespace
-        else if (mTokenizer->isCPP() && tok->isKeyword() && Token::Match(tok, "using namespace ::| %type% ;|::")) {
+        else if (mTokenizer->isCPP() && tok->isKeyword() && Token::Match(tok, "using namespace ::| $ %type% ;|::")) {
             Scope::UsingInfo using_info;
 
             using_info.start = tok; // save location
@@ -343,11 +343,7 @@ void SymbolDatabase::createSymbolDatabaseFindAllScopes()
 
             scope->usingList.push_back(using_info);
 
-            // check for global namespace
-            if (tok->strAt(2) == "::")
-                tok = tok->tokAt(4);
-            else
-                tok = tok->tokAt(3);
+            tok = Token::matchResult();
 
             // skip over qualification
             while (Token::Match(tok, "%type% ::"))
@@ -2067,14 +2063,9 @@ Function::Function(const Tokenizer *mTokenizer,
     if (!isConstructor() && !isDestructor() && !isLambda()) {
         // @todo auto type deduction should be checked
         // @todo attributes and exception specification can also precede trailing return type
-        if (Token::Match(argDef->link()->next(), "const|volatile| &|&&| .")) { // Trailing return type
+        if (Token::Match(argDef->link()->next(), "const|volatile| &|&&| $ .")) { // Trailing return type
             hasTrailingReturnType(true);
-            if (argDef->link()->strAt(1) == ".")
-                retDef = argDef->link()->tokAt(2);
-            else if (argDef->link()->strAt(2) == ".")
-                retDef = argDef->link()->tokAt(3);
-            else if (argDef->link()->strAt(3) == ".")
-                retDef = argDef->link()->tokAt(4);
+            retDef = Token::matchResult()->next();
         } else {
             if (tok1->str() == ">")
                 tok1 = tok1->next();

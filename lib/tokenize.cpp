@@ -3586,8 +3586,8 @@ void Tokenizer::setVarIdPass1()
                 continue;
 
             bool decl;
-            if (isCPP() && Token::Match(tok->previous(), "for ( const| auto &|&&| [")) {
-                tok2 = Token::findsimplematch(tok, "[");
+            if (isCPP() && Token::Match(tok->previous(), "for ( const| auto &|&&| $ [")) {
+                tok2 = Token::matchResult();
                 while (tok2 && tok2->str() != "]") {
                     if (Token::Match(tok2, "%name% [,]]"))
                         variableMap.addVariable(tok2->str(), false);
@@ -3899,11 +3899,9 @@ void Tokenizer::setVarIdPass2()
             if (tok->strAt(-1) == "::" && tok->tokAt(-2) && tok->tokAt(-2)->isName())
                 continue;
 
-            while (Token::Match(tok, ":: ~| %name%")) {
-                tok = tok->next();
-                if (tok->str() == "~")
-                    tok = tok->next();
-                else if (Token::Match(tok, "%name% <") && Token::Match(tok->next()->findClosingBracket(),"> :: ~| %name%"))
+            while (Token::Match(tok, ":: ~| $ %name%")) {
+                tok = const_cast<Token*>(Token::matchResult());
+                if (Token::Match(tok, "%name% <") && Token::Match(tok->next()->findClosingBracket(),"> :: ~| %name%"))
                     tok = tok->next()->findClosingBracket()->next();
                 else if (Token::Match(tok, "%name% ::"))
                     tok = tok->next();
@@ -5459,20 +5457,9 @@ void Tokenizer::simplifyFunctionPointers()
         }
 
         // check for function pointer cast
-        if (Token::Match(tok, "( %type% %type%| *| *| ( * ) (") ||
-            (isCPP() && Token::Match(tok, "static_cast < %type% %type%| *| *| ( * ) ("))) {
-            Token *tok1 = tok;
-
-            if (isCPP() && tok1->str() == "static_cast")
-                tok1 = tok1->next();
-
-            tok1 = tok1->next();
-
-            if (Token::Match(tok1->next(), "%type%"))
-                tok1 = tok1->next();
-
-            while (tok1->next()->str() == "*")
-                tok1 = tok1->next();
+        if (Token::Match(tok, "( %type% %type%| *| *| $ ( * ) (") ||
+            (isCPP() && Token::Match(tok, "static_cast < %type% %type%| *| *| $ ( * ) ("))) {
+            Token *tok1 = const_cast<Token*>(Token::matchResult()->previous());
 
             // check that the cast ends
             if (!Token::Match(tok1->linkAt(4), ") )|>"))
@@ -5502,11 +5489,9 @@ void Tokenizer::simplifyFunctionPointers()
             continue;
         while (Token::Match(tok2, "(|:: %type%"))
             tok2 = tok2->tokAt(2);
-        if (!Token::Match(tok2, "(|:: * *| %name%"))
+        if (!Token::Match(tok2, "(|:: * *| $ %name%"))
             continue;
-        tok2 = tok2->tokAt(2);
-        if (tok2->str() == "*")
-            tok2 = tok2->next();
+        tok2 = const_cast<Token*>(Token::matchResult());
         while (Token::Match(tok2, "%type%|:: %type%|::"))
             tok2 = tok2->next();
 
@@ -6061,10 +6046,8 @@ void Tokenizer::simplifyInitVar()
                 tok2 = tok2->next();
             if (!tok2->link() || (tok2->link()->strAt(1) == ";" && !Token::simpleMatch(tok2->linkAt(2), ") (")))
                 tok = initVar(tok);
-        } else if (Token::Match(tok, "class|struct|union| %type% *| %name% ( &| %any% ) ,")) {
-            Token *tok1 = tok->tokAt(5);
-            while (tok1->str() != ",")
-                tok1 = tok1->next();
+        } else if (Token::Match(tok, "class|struct|union| %type% *| %name% ( &| %any% ) $ ,")) {
+            Token *tok1 = const_cast<Token*>(Token::matchResult());
             tok1->str(";");
 
             const int numTokens = (Token::Match(tok, "class|struct|union")) ? 2U : 1U;
@@ -8083,10 +8066,10 @@ void Tokenizer::simplifyBitfields()
             }
         }
 
-        if (Token::Match(tok->next(), "const| %type% %name% :") &&
+        if (Token::Match(tok->next(), "const| %type% $ %name% :") &&
             !Token::Match(tok->next(), "case|public|protected|private|class|struct") &&
             !Token::simpleMatch(tok->tokAt(2), "default :")) {
-            Token *tok1 = (tok->next()->str() == "const") ? tok->tokAt(3) : tok->tokAt(2);
+            Token* tok1 = const_cast<Token*>(Token::matchResult());
             if (Token::Match(tok1, "%name% : %num% ;"))
                 tok1->setBits(MathLib::toLongNumber(tok1->strAt(2)));
             if (tok1 && tok1->tokAt(2) &&

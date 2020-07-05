@@ -36,6 +36,7 @@
 #include <utility>
 
 const std::vector<ValueFlow::Value> TokenImpl::mEmptyValueList;
+static thread_local const Token* lastMatchResult = nullptr;
 
 Token::Token(TokensFrontBack *tokensFrontBack) :
     mTokensFrontBack(tokensFrontBack),
@@ -628,6 +629,19 @@ bool Token::Match(const Token *tok, const char pattern[], unsigned int varid)
         if (*p == '\0')
             break;
 
+        if (p[0] == '$' && (p[1] == 0 || p[1] == ' ' || p[1] == '|')) {
+            lastMatchResult = tok;
+            ++p;
+
+            // Skip spaces in pattern..
+            while (*p == ' ')
+                ++p;
+
+            // No token => Success!
+            if (*p == '\0')
+                break;
+        }
+
         bool useLink = false;
         if (p[0] == '@' && (p[1] != 0 && p[1] != ' ' && p[1] != '|')) {
             useLink = true;
@@ -712,6 +726,11 @@ bool Token::Match(const Token *tok, const char pattern[], unsigned int varid)
 
     // The end of the pattern has been reached and nothing wrong has been found
     return true;
+}
+
+const Token* Token::matchResult()
+{
+    return lastMatchResult;
 }
 
 unsigned int Token::getStrLength(const Token *tok)

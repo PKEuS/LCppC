@@ -293,8 +293,9 @@ public:
      * - "!!else" No tokens or any token that is not "else".
      * - "someRandomText" If token contains "someRandomText".
      *
-     * Furthermore, the following commands are supported (as a prefix to a pattern):
-     * - @ continues matching at Token::link()->next()
+     * Furthermore, the following commands are supported:
+     * - @ continues matching at Token::link()->next() (as a prefix to a pattern)
+     * - $ set Token returned by Token::matchResult() to current token
      *
      * multi-compare patterns such as "int|void|char" can contain %%or%, %%oror% and %%op%
      * it is recommended to put such an %%cmd% as the first pattern.
@@ -315,6 +316,8 @@ public:
      *         false if given token does not match with given pattern
      */
     static bool Match(const Token *tok, const char pattern[], unsigned int varid = 0);
+
+    static const Token* matchResult();
 
     /**
      * @return length of C-string.

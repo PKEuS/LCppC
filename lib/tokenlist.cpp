@@ -1338,8 +1338,8 @@ static Token * findAstTop(Token *tok1, Token *tok2)
 static Token * createAstAtToken(Token *tok, bool cpp)
 {
     if (Token::simpleMatch(tok, "for (")) {
-        if (cpp && Token::Match(tok, "for ( const| auto &|&&| [")) {
-            Token *decl = Token::findsimplematch(tok, "[");
+        if (cpp && Token::Match(tok, "for ( const| auto &|&&| $ [")) {
+            Token *decl = const_cast<Token*>(Token::matchResult());
             if (Token::simpleMatch(decl->link(), "] :")) {
                 AST_state state1(cpp);
                 while (decl->str() != "]") {

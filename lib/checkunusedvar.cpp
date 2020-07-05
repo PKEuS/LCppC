@@ -823,22 +823,16 @@ void CheckUnusedVar::checkFunctionVariableUsage_iterateScopes(const Scope* const
         }
 
         // assignment
-        else if (Token::Match(tok, "*| ++|--| %name% ++|--| %assign%") ||
-                 Token::Match(tok, "*| ( const| %type% *| ) %name% %assign%")) {
+        else if (Token::Match(tok, "*| $ ++|--| %name% ++|--| %assign%") ||
+                 Token::Match(tok, "*| ( const| %type% *| ) $ %name% %assign%")) {
             bool dereference = false;
             bool pre = false;
             bool post = false;
 
-            if (tok->str() == "*") {
+            if (tok->str() == "*")
                 dereference = true;
-                tok = tok->next();
-            }
 
-            if (Token::Match(tok, "( const| %type% *| ) %name% %assign%"))
-                tok = tok->link()->next();
-
-            else if (tok->str() == "(")
-                tok = tok->next();
+            tok = Token::matchResult();
 
             if (tok->tokType() == Token::eIncDecOp) {
                 pre = true;
@@ -1021,10 +1015,8 @@ void CheckUnusedVar::checkFunctionVariableUsage_iterateScopes(const Scope* const
             variables.eraseAll(tok->tokAt(2)->varId());
         } else if (Token::Match(tok, "[(,] @( %var% [,)]")) {
             variables.use(tok->next()->link()->next()->varId(), tok);   // use = read + write
-        } else if (Token::Match(tok, "[(,] *| %var% =")) {
-            tok = tok->next();
-            if (tok->str() == "*")
-                tok = tok->next();
+        } else if (Token::Match(tok, "[(,] *| $ %var% =")) {
+            tok = Token::matchResult();
             variables.use(tok->varId(), tok);
         }
 

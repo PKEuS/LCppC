@@ -1103,12 +1103,9 @@ void CheckStl::erase()
     for (const Scope &scope : symbolDatabase->scopeList) {
         if (scope.type == Scope::eFor && Token::simpleMatch(scope.classDef, "for (")) {
             const Token *tok = scope.classDef->linkAt(1);
-            if (!Token::Match(tok->tokAt(-3), "; ++| %var% ++| ) {"))
+            if (!Token::Match(tok->tokAt(-3), "; ++| $ %var% ++| ) {"))
                 continue;
-            tok = tok->previous();
-            if (!tok->isName())
-                tok = tok->previous();
-            eraseCheckLoopVar(scope, tok->variable());
+            eraseCheckLoopVar(scope, Token::matchResult()->variable());
         } else if (scope.type == Scope::eWhile && Token::Match(scope.classDef, "while ( %var% !=")) {
             eraseCheckLoopVar(scope, scope.classDef->tokAt(2)->variable());
         }
