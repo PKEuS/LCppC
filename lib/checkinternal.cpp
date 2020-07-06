@@ -66,8 +66,15 @@ void CheckInternal::checkTokenMatchPatterns()
                 continue;
 
             bool complex = false;
+            for (std::string::size_type pos = 0; pos < pattern.size(); ++pos) {
+                if (pattern[pos] == '@' && pos + 1 != pattern.length() && pattern[pos + 1] != ' ' && pattern[pos + 1] != '|')
+                    complex = true;
+                else if (pattern[pos] == '$')
+                    complex = true;
+            }
+
             size_t index = pattern.find('%');
-            while (index != std::string::npos) {
+            while (!complex && index != std::string::npos) {
                 if (pattern.length() <= index + 2) {
                     complex = true;
                     break;
@@ -189,6 +196,8 @@ void CheckInternal::checkTokenSimpleMatchPatterns()
                     if (pattern[j] == '%' && pattern[j + 1] != ' ')
                         complexPatternError(tok, pattern, funcname);
                     else if (pattern[j] == '!' && pattern[j + 1] == '!')
+                        complexPatternError(tok, pattern, funcname);
+                    else if (pattern[j] == '@' && (pattern[j+1] == '[' || pattern[j + 1] == '{' || pattern[j + 1] == '(' || pattern[j + 1] == '<'))
                         complexPatternError(tok, pattern, funcname);
                 }
             }
@@ -343,7 +352,7 @@ void CheckInternal::checkExtraWhitespace()
                 continue;
 
             const std::string pattern = patternTok->strValue();
-            if (!pattern.empty() && (pattern[0] == ' ' || *pattern.rbegin() == ' '))
+            if (!pattern.empty() && (pattern[0] == ' ' || pattern.back() == ' '))
                 extraWhitespaceError(tok, pattern, funcname);
 
             // two whitespaces or more
