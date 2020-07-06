@@ -2573,10 +2573,9 @@ void CheckOther::checkInterlockedDecrement()
             }
         } else if (Token::Match(tok, "if ( ::| InterlockedDecrement ( & $ %name%")) {
             const Token* condEnd = tok->next()->link();
-            const Token* funcTok = tok->tokAt(2);
-            const Token* firstAccessTok = Token::matchResult();
-            if (condEnd && condEnd->next() && condEnd->next()->link()) {
+            if (condEnd->next() && condEnd->next()->link()) {
                 const Token* ifEndTok = condEnd->next()->link();
+                const Token* firstAccessTok = Token::matchResult();
                 if (Token::Match(ifEndTok, "} return %name%")) {
                     const Token* secondAccessTok = ifEndTok->tokAt(2);
                     if (secondAccessTok->str() == firstAccessTok->str()) {

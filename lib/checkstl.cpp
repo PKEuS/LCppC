@@ -1554,22 +1554,24 @@ void CheckStl::missingComparison()
             if (tok2->str() == ";")
                 break;
 
-            if (!Token::Match(tok2, "%var% = %name% . begin|rbegin|cbegin|crbegin ( ) ; %name% != %name% . end|rend|cend|crend ( ) ; ++| %name% ++| ) {"))
+            if (!Token::Match(tok2, "%var% = %name% . begin|rbegin|cbegin|crbegin ( ) ; %name% != $ %name% . end|rend|cend|crend ( ) ; ++| %name% ++| ) {"))
                 continue;
 
+            const Token* tok4 = Token::matchResult();
+
             // same container
-            if (tok2->strAt(2) != tok2->strAt(10))
+            if (tok2->strAt(2) != tok4->str())
                 break;
 
             const unsigned int iteratorId(tok2->varId());
 
             // same iterator
-            if (iteratorId == tok2->tokAt(10)->varId())
+            if (iteratorId != tok4->tokAt(-2)->varId())
                 break;
 
             // increment iterator
-            if (!Token::Match(tok2->tokAt(16), "++ %varid% )", iteratorId) &&
-                !Token::Match(tok2->tokAt(16), "%varid% ++ )", iteratorId)) {
+            if (!Token::Match(tok4->tokAt(6), "++ %varid% )", iteratorId) &&
+                !Token::Match(tok4->tokAt(6), "%varid% ++ )", iteratorId)) {
                 break;
             }
 
@@ -1593,7 +1595,7 @@ void CheckStl::missingComparison()
                 }
             }
             if (incrementToken)
-                missingComparisonError(incrementToken, tok2->tokAt(16));
+                missingComparisonError(incrementToken, tok4->tokAt(6));
         }
     }
 }

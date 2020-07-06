@@ -6990,13 +6990,13 @@ void Tokenizer::reportUnknownMacros()
         } else if (tok->str() == "}")
             possible.clear();
 
-        if (Token::Match(tok, "%name% @( @( {") && tok->isUpperCaseName()) {
-            // A keyword is not an unknown macro
-            if (tok->isKeyword())
-                continue;
+        // A keyword is not an unknown macro
+        if (tok->isKeyword())
+            continue;
 
-            const Token *bodyStart = tok->linkAt(1)->linkAt(1)->tokAt(2);
-            const Token *bodyEnd = tok->link();
+        if (Token::Match(tok, "%name% @( @( $ {") && tok->isUpperCaseName()) {
+            const Token *bodyStart = Token::matchResult();
+            const Token *bodyEnd = bodyStart->link();
             for (const Token *tok2 = bodyStart; tok2 && tok2 != bodyEnd; tok2 = tok2->next()) {
                 if (Token::Match(tok2, "if|switch|for|while|return"))
                     unknownMacroError(tok);
