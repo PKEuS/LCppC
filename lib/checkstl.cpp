@@ -353,17 +353,6 @@ void CheckStl::iterators()
 {
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
 
-    // Filling map of iterators id and their scope begin
-    std::map<unsigned int, const Token*> iteratorScopeBeginInfo;
-    for (const Variable* var : symbolDatabase->variableList()) {
-        bool inconclusiveType=false;
-        if (!isIterator(var, inconclusiveType))
-            continue;
-        const int iteratorId = var->declarationId();
-        if (iteratorId != 0)
-            iteratorScopeBeginInfo[iteratorId] = var->nameToken();
-    }
-
     for (const Variable* var : symbolDatabase->variableList()) {
         bool inconclusiveType=false;
         if (!isIterator(var, inconclusiveType))
@@ -371,7 +360,7 @@ void CheckStl::iterators()
         if (inconclusiveType && !mSettings->certainty.isEnabled(Certainty::inconclusive))
             continue;
 
-        const int iteratorId = var->declarationId();
+        const unsigned int iteratorId = var->declarationId();
 
         // the validIterator flag says if the iterator has a valid value or not
         bool validIterator = Token::Match(var->nameToken()->next(), "[(=:{]");
@@ -710,9 +699,9 @@ void CheckStl::mismatchingContainers()
         }
     }
     for (const Variable *var : symbolDatabase->variableList()) {
-        if (var && var->isStlStringType() && Token::Match(var->nameToken(), "%var% (") && Token::Match(var->nameToken()->tokAt(2), pattern2.c_str())) {
+        if (var && var->isStlType() && Token::Match(var->nameToken(), "%var% (") && Token::Match(var->nameToken()->tokAt(2), pattern2.c_str())) {
             if (var->nameToken()->strAt(2) != var->nameToken()->strAt(8)) {
-                mismatchingContainersError(var->nameToken(), var->nameToken()->tokAt(2));
+                mismatchingContainersError(var->nameToken()->tokAt(2), var->nameToken()->tokAt(8));
             }
         }
     }

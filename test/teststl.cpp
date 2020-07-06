@@ -589,8 +589,16 @@ private:
               "}");
         ASSERT_EQUALS( // TODO "[test.cpp:2]: (error) Iterators of different containers are used together.\n"
             // TODO "[test.cpp:3]: (error) Iterators of different containers are used together.\n"
-            "[test.cpp:4]: (error) Iterators of different containers 'tp3' and 'a' are used together.\n"
-            "[test.cpp:5]: (error) Iterators of different containers 'tp4' and 'b' are used together.\n",
+            "[test.cpp:4]: (error) Iterators of different containers 'a' and 'b' are used together.\n"
+            "[test.cpp:5]: (error) Iterators of different containers 'b' and 'a' are used together.\n",
+            errout.str());
+
+        check("void f(const std::list<int>& a, const std::list<int>& b) {\n"
+              "    const std::list<int> tp1 = std::list<int>(a.begin(), b.end());\n"
+              "    const std::list<int> tp2(a.begin(), b.end());\n"
+              "}");
+        ASSERT_EQUALS(// TODO "[test.cpp:2]: (error) Iterators of different containers are used together.\n"
+            "[test.cpp:3]: (error) Iterators of different containers 'a' and 'b' are used together.\n",
             errout.str());
     }
 
