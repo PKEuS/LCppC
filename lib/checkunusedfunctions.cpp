@@ -56,7 +56,7 @@ class CUF_FileInfo : public Check::FileInfo {
 public:
     class CPPCHECKLIB FunctionUsage {
     public:
-        FunctionUsage() : lineNumber(0), usedSameFile(false), usedOtherFile(false) {
+        FunctionUsage() : lineNumber(0), usedSameFile(false), usedOtherFile(false), isOperator(false) {
         }
 
         std::string filename;

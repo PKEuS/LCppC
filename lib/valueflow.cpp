@@ -784,7 +784,7 @@ static void setTokenValue(Token* tok, const ValueFlow::Value &value, const Setti
                     (value1.varId == value2.varId && value1.varvalue == value2.varvalue)) {
                     ValueFlow::Value result(0);
                     result.condition = value1.condition ? value1.condition : value2.condition;
-                    result.setInconclusive(value1.isInconclusive() | value2.isInconclusive());
+                    result.setInconclusive(value1.isInconclusive() || value2.isInconclusive());
                     result.varId = (value1.varId != 0U) ? value1.varId : value2.varId;
                     result.varvalue = (result.varId == value1.varId) ? value1.intvalue : value2.intvalue;
                     if (value1.valueKind == value2.valueKind)
@@ -6077,18 +6077,18 @@ static void valueFlowUnknownFunctionReturn(TokenList *tokenlist, const Settings 
 ValueFlow::Value::Value(const Token* c, long long val)
     : valueType(INT),
       bound(Bound::Point),
+      safe(false),
+      conditional(false),
       intvalue(val),
       tokvalue(nullptr),
       floatValue(0.0),
-      moveKind(MoveKind::NonMovedVariable),
       varvalue(val),
       condition(c),
       varId(0U),
-      safe(false),
-      conditional(false),
-      defaultArg(false),
       indirect(0),
       path(0),
+      defaultArg(false),
+      moveKind(MoveKind::NonMovedVariable),
       lifetimeKind(LifetimeKind::Object),
       lifetimeScope(LifetimeScope::Local),
       valueKind(ValueKind::Possible)

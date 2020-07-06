@@ -111,7 +111,9 @@ namespace CTU {
         CTUInfo(const std::string& sourcefile_, std::size_t filesize_, const std::string& analyzerfile_)
             : sourcefile(sourcefile_)
             , analyzerfile(analyzerfile_)
-            , filesize(filesize_) {
+            , analyzerfileExists(false)
+            , filesize(filesize_)
+            , mChecksum(false) {
         }
         ~CTUInfo();
         void addCheckInfo(const std::string& check, Check::FileInfo* fileInfo);

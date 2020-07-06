@@ -1789,32 +1789,36 @@ Variable::Variable(Variable&& rhs) noexcept
 
 Variable& Variable::operator=(const Variable& rhs) noexcept
 {
-    mNameToken = rhs.mNameToken;
-    mTypeStartToken = rhs.mTypeStartToken;
-    mTypeEndToken = rhs.mTypeEndToken;
-    mIndex = rhs.mIndex;
-    mAccess = rhs.mAccess;
-    mFlags = rhs.mFlags;
-    mType = rhs.mType;
-    mScope = rhs.mScope;
-    mValueType = new ValueType(*rhs.mValueType);
-    mDimensions = std::move(rhs.mDimensions);
+    if (this != &rhs) {
+        mNameToken = rhs.mNameToken;
+        mTypeStartToken = rhs.mTypeStartToken;
+        mTypeEndToken = rhs.mTypeEndToken;
+        mIndex = rhs.mIndex;
+        mAccess = rhs.mAccess;
+        mFlags = rhs.mFlags;
+        mType = rhs.mType;
+        mScope = rhs.mScope;
+        mValueType = new ValueType(*rhs.mValueType);
+        mDimensions = std::move(rhs.mDimensions);
+    }
     return *this;
 }
 
 Variable& Variable::operator=(Variable&& rhs) noexcept
 {
-    mNameToken = rhs.mNameToken;
-    mTypeStartToken = rhs.mTypeStartToken;
-    mTypeEndToken = rhs.mTypeEndToken;
-    mIndex = rhs.mIndex;
-    mAccess = rhs.mAccess;
-    mFlags = rhs.mFlags;
-    mType = rhs.mType;
-    mScope = rhs.mScope;
-    mValueType = rhs.mValueType;
-    rhs.mValueType = nullptr;
-    mDimensions = std::move(rhs.mDimensions);
+    if (this != &rhs) {
+        mNameToken = rhs.mNameToken;
+        mTypeStartToken = rhs.mTypeStartToken;
+        mTypeEndToken = rhs.mTypeEndToken;
+        mIndex = rhs.mIndex;
+        mAccess = rhs.mAccess;
+        mFlags = rhs.mFlags;
+        mType = rhs.mType;
+        mScope = rhs.mScope;
+        mValueType = rhs.mValueType;
+        rhs.mValueType = nullptr;
+        mDimensions = std::move(rhs.mDimensions);
+    }
     return *this;
 }
 
@@ -2577,7 +2581,7 @@ void SymbolDatabase::addClassFunction(Scope **scope, const Token **tok, const To
                             const Token *closeParen = (*tok)->next()->link();
                             if (closeParen) {
                                 if (Token::Match(closeParen, ") noexcept| = default ;") ||
-                                    (Token::simpleMatch(closeParen, ") noexcept @( = default ;"))) {
+                                    Token::Match(closeParen, ") noexcept @( = default ;")) {
                                     func->isDefault(true);
                                     return;
                                 }
@@ -3712,12 +3716,12 @@ Scope::Scope(const SymbolDatabase *check_, const Token *classDef_, const Scope *
     nestedIn(nestedIn_),
     numConstructors(0),
     numCopyOrMoveConstructors(0),
-    type(type_),
     definedType(nullptr),
     functionOf(nullptr),
     function(nullptr),
     enumType(nullptr),
-    enumClass(false)
+    enumClass(false),
+    type(type_)
 {
 }
 

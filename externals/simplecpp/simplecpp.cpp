@@ -603,7 +603,7 @@ void simplecpp::TokenList::readfile(std::istream &istr, const std::string &filen
                 prefix = cback()->str();
             }
             // C++11 raw string literal
-            if (ch == '\"' && !prefix.empty() && *cback()->str().rbegin() == 'R') {
+            if (ch == '\"' && !prefix.empty() && cback()->str().back() == 'R') {
                 std::string delim;
                 currentToken = ch;
                 prefix.pop_back();

@@ -5493,7 +5493,7 @@ void Tokenizer::simplifyFunctionPointers()
 
         if (!Token::Match(tok2, "%name% ) (") &&
             !Token::Match(tok2, "%name% [ ] ) (") &&
-            !(Token::Match(tok2, "%name%  @( ) (")))
+            !Token::Match(tok2, "%name% @( ) ("))
             continue;
 
         while (tok && tok->str() != "(")
@@ -6990,7 +6990,7 @@ void Tokenizer::reportUnknownMacros()
         } else if (tok->str() == "}")
             possible.clear();
 
-        if (Token::Match(tok, "%name%  @( @( {") && tok->isUpperCaseName()) {
+        if (Token::Match(tok, "%name% @( @( {") && tok->isUpperCaseName()) {
             // A keyword is not an unknown macro
             if (tok->isKeyword())
                 continue;

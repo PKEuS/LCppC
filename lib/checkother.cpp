@@ -1472,7 +1472,9 @@ static bool isVarDeclOp(const Token* tok)
     if (!tok)
         return false;
     const Token * vartok = tok->astOperand2();
-    if (vartok && vartok->variable() && vartok->variable()->nameToken() == vartok)
+    if (!vartok)
+        return false;
+    if (vartok->variable() && vartok->variable()->nameToken() == vartok)
         return true;
     const Token * typetok = tok->astOperand1();
     return isType(typetok, vartok->varId() != 0);
@@ -2752,8 +2754,8 @@ void CheckOther::checkAccessOfMovedVariable()
                 else
                     inconclusive = true;
             } else {
-                const bool isVariableChanged = isVariableChangedByFunctionCall(tok, 0, mSettings, &inconclusive);
-                accessOfMoved = !isVariableChanged && checkUninitVar.isVariableUsage(tok, false, CheckUninitVar::NO_ALLOC);
+                const bool isVarChanged = isVariableChangedByFunctionCall(tok, 0, mSettings, &inconclusive);
+                accessOfMoved = !isVarChanged && checkUninitVar.isVariableUsage(tok, false, CheckUninitVar::NO_ALLOC);
                 if (inconclusive) {
                     accessOfMoved = !isMovedParameterAllowedForInconclusiveFunction(tok);
                     if (accessOfMoved)

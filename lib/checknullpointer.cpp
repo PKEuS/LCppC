@@ -75,7 +75,7 @@ void CheckNullPointer::parseFunctionCall(const Token &tok, std::list<const Token
     }
 
     if (library && library->formatstr_function(&tok)) {
-        const std::size_t formatStringArgNr = library->formatstr_argno(&tok);
+        const int formatStringArgNr = library->formatstr_argno(&tok);
         if (formatStringArgNr < 0 || formatStringArgNr >= args.size())
             return;
 
