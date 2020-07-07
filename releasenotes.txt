@@ -19,6 +19,8 @@ New Features:
 
  - New Check: Detect incorrect usage of mutexes and lock guards (also in Cppcheck 2.2)
 
+ - Support C++20 features: consteval and constinit
+
 
 Improvements:
 
@@ -32,9 +34,13 @@ Improvements:
 
     - Replaced specific check for usage of pipe() by CheckBufferOverrun and Library configuration
 
+    - Usage of mismatching iterators
+
  - A couple of small performance and memory usage optimizations
 
- - Improved std.cfg and wxwidgets.cfg (also in Cppcheck 2.2)
+ - Avoid false positives caused by #if/ifdef in several checks (also in Cppcheck 2.2)
+
+ - Improved std.cfg, wxwidgets.cfg and windows.cfg (also in Cppcheck 2.2)
 
 
 Bugfixes:
