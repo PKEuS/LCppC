@@ -263,9 +263,7 @@ void CheckIO::checkFileUsage()
                 if (!fileTok || !fileTok->varId() || fileTok->strAt(1) == "[")
                     continue;
 
-                if (filepointers.find(fileTok->varId()) == filepointers.end()) { // function call indicates: Its a File
-                    filepointers.insert(std::make_pair(fileTok->varId(), Filepointer(UNKNOWN_OM)));
-                }
+                filepointers.try_emplace(fileTok->varId(), Filepointer(UNKNOWN_OM));
                 Filepointer& f = filepointers[fileTok->varId()];
 
                 switch (operation) {
@@ -655,9 +653,7 @@ void CheckIO::checkFormatString(const Token * const tok,
 
                 // Handle parameter positions (POSIX extension) - Ticket #4900
                 if (hasParameterPosition) {
-                    if (parameterPositionsUsed.find(parameterPosition) == parameterPositionsUsed.end())
-                        parameterPositionsUsed.insert(parameterPosition);
-                    else // Parameter already referenced, hence don't consider it a new format
+                    if (!parameterPositionsUsed.insert(parameterPosition).second) // Parameter already referenced, hence don't consider it a new format
                         --numFormat;
                 }
 

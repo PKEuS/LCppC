@@ -1518,9 +1518,8 @@ void Token::printAst(bool verbose, bool xml, std::ostream &out) const
         if (!tok->mImpl->mAstParent && tok->mImpl->mAstOperand1) {
             if (printed.empty() && !xml)
                 out << "\n\n##AST" << std::endl;
-            else if (printed.find(tok) != printed.end())
+            else if (!printed.insert(tok).second)
                 continue;
-            printed.insert(tok);
 
             if (xml) {
                 out << "<ast scope=\"" << tok->scope() << "\" fileIndex=\"" << tok->fileIndex() << "\" linenr=\"" << tok->linenr()

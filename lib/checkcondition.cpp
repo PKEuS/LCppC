@@ -54,12 +54,11 @@ bool CheckCondition::diag(const Token* tok, bool insert)
 {
     if (!tok)
         return false;
-    if (mCondDiags.find(tok) == mCondDiags.end()) {
-        if (insert)
-            mCondDiags.insert(tok);
-        return false;
-    }
-    return true;
+
+    if (insert)
+        return !mCondDiags.insert(tok).second;
+    else
+        return mCondDiags.find(tok) != mCondDiags.end();
 }
 
 bool CheckCondition::isAliased(const std::set<unsigned int> &vars) const

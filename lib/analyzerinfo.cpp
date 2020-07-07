@@ -73,10 +73,11 @@ void AnalyzerInformation::createCTUs(const std::string &buildDir, const std::map
     std::ofstream fout(filesTxt);
     for (auto it = sourcefiles.cbegin(); it != sourcefiles.cend(); ++it) {
         const std::string path = Path::simplifyPath(Path::fromNativeSeparators(it->first));
-        bool existing = existingFiles.find(path) != existingFiles.cend();
+        auto file = existingFiles.find(path);
+        bool existing = (file != existingFiles.cend());
         std::string afile;
         if (existing) {
-            afile = existingFiles[path];
+            afile = file->second;
             existingFiles.erase(path);
         } else {
             const std::string filename = getFilename(it->first);

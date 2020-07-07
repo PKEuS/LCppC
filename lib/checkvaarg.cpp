@@ -95,7 +95,7 @@ void CheckVaarg::va_list_usage()
 {
     const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Variable* var : symbolDatabase->variableList()) {
-        if (!var || var->isPointer() || var->isReference() || var->isArray() || !var->scope() || var->typeStartToken()->str() != "va_list")
+        if (!var || var->isPointer() || var->isReference() || var->isArray() || var->typeStartToken()->str() != "va_list")
             continue;
         if (!var->isLocal() && !var->isArgument()) // Check only local variables and arguments
             continue;

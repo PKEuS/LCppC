@@ -1200,9 +1200,8 @@ void CheckClass::checkMemset()
 void CheckClass::checkMemsetType(const Scope *start, const Token *tok, const Scope *type, bool allocation, std::set<const Scope *> parsedTypes)
 {
     // If type has been checked there is no need to check it again
-    if (parsedTypes.find(type) != parsedTypes.end())
+    if (!parsedTypes.insert(type).second)
         return;
-    parsedTypes.insert(type);
 
     const bool printPortability = mSettings->severity.isEnabled(Severity::portability);
 
@@ -1430,8 +1429,7 @@ void CheckClass::checkReturnPtrThis(const Scope *scope, const Function *func, co
                         if (!it->isConst()) {
                             /** @todo make sure argument types match */
                             // avoid endless recursions
-                            if (analyzedFunctions.find(&*it) == analyzedFunctions.end()) {
-                                analyzedFunctions.insert(&*it);
+                            if (analyzedFunctions.insert(&*it).second) {
                                 checkReturnPtrThis(scope, &*it, it->arg->link()->next(), it->arg->link()->next()->link(),
                                                    analyzedFunctions);
                             }
@@ -1745,7 +1743,7 @@ void CheckClass::virtualDestructor()
                         if (baseDestructor->access == AccessControl::Public) {
                             virtualDestructorError(baseDestructor->token, derivedFrom->name(), derivedClass->str(), false);
                             // check for duplicate error and remove it if found
-                            const std::list<const Function *>::iterator found = find(inconclusiveErrors.begin(), inconclusiveErrors.end(), baseDestructor);
+                            const std::list<const Function *>::iterator found = std::find(inconclusiveErrors.begin(), inconclusiveErrors.end(), baseDestructor);
                             if (found != inconclusiveErrors.end())
                                 inconclusiveErrors.erase(found);
                         }

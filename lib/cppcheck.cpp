@@ -554,12 +554,11 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 // Skip if we already met the same token list
                 if (mSettings.force || mSettings.maxConfigs > 1) {
                     const uint64_t checksum = tokenizer.list.calculateChecksum();
-                    if (checksums0.find(checksum) != checksums0.end()) {
+                    if (!checksums0.insert(checksum).second) {
                         if (mSettings.debugwarnings)
                             purgedConfigurationMessage(ctu->sourcefile, mCurrentConfig);
                         continue;
                     }
-                    checksums0.insert(checksum);
                 }
 
                 Timer timer3("Tokenizer::simplifyTokens1", mSettings.showtime, &s_timerResults);
@@ -582,12 +581,11 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 // Skip if we already met the same simplified token list
                 if (mSettings.force || mSettings.maxConfigs > 1) {
                     const uint64_t checksum = tokenizer.list.calculateChecksum();
-                    if (checksums1.find(checksum) != checksums1.end()) {
+                    if (!checksums1.insert(checksum).second) {
                         if (mSettings.debugwarnings)
                             purgedConfigurationMessage(ctu->sourcefile, mCurrentConfig);
                         continue;
                     }
-                    checksums1.insert(checksum);
                 }
 
                 // Check normal tokens

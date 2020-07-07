@@ -2871,10 +2871,9 @@ bool Type::hasCircularDependencies(std::set<BaseInfo>* ancestors) const
             continue;
         else if (this==parent->type)
             return true;
-        else if (ancestors->find(*parent)!=ancestors->end())
+        else if (!ancestors->insert(*parent).second)
             return true;
         else {
-            ancestors->insert(*parent);
             if (parent->type->hasCircularDependencies(ancestors))
                 return true;
         }

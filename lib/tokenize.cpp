@@ -5359,11 +5359,10 @@ void Tokenizer::simplifyFunctionParameters()
                         break;
                     }
 
-                    if (argumentNames2.find(tok2->str()) != argumentNames2.end()) {
+                    if (!argumentNames2.insert_or_assign(tok2->str(), tok2).second) {
                         //same parameter names...
                         syntaxError(tok1);
-                    } else
-                        argumentNames2[tok2->str()] = tok2;
+                    }
 
                     if (argumentNames.find(tok2->str()) == argumentNames.end()) {
                         //non-matching parameter... bailout
