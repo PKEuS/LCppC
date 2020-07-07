@@ -328,8 +328,8 @@ void CheckString::overlappingStrcmp()
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (tok->str() != "||")
                 continue;
-            std::list<const Token *> equals0;
-            std::list<const Token *> notEquals0;
+            std::vector<const Token *> equals0;
+            std::vector<const Token *> notEquals0;
             std::stack<const Token *> tokens;
             tokens.push(tok);
             while (!tokens.empty()) {

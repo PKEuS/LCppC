@@ -2895,7 +2895,7 @@ static const Token* getLifetimeToken(const Token* tok, ValueFlow::Value::ErrorPa
         return nullptr;
     if (addressOf)
         *addressOf = lts.front().addressOf;
-    errorPath.insert(errorPath.end(), lts.front().errorPath.begin(), lts.front().errorPath.end());
+    errorPath.insert(errorPath.end(), std::make_move_iterator(lts.front().errorPath.begin()), std::make_move_iterator(lts.front().errorPath.end()));
     return lts.front().token;
 }
 

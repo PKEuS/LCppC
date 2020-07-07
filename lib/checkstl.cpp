@@ -93,11 +93,11 @@ void CheckStl::outOfBounds()
                 }
                 if (!container->arrayLike_indexOp && !container->stdStringLike)
                     continue;
-                if (value.intvalue == 0 && Token::Match(parent, "[") && tok == parent->astOperand1()) {
-                    outOfBoundsError(parent, tok->expressionString(), &value, "", nullptr);
+                if (value.intvalue == 0 && parent->str() == "[" && tok == parent->astOperand1()) {
+                    outOfBoundsError(parent, tok->expressionString(), &value, emptyString, nullptr);
                     continue;
                 }
-                if (container->arrayLike_indexOp && Token::Match(parent, "[")) {
+                if (container->arrayLike_indexOp && parent->str() == "[") {
                     const ValueFlow::Value *indexValue = parent->astOperand2() ? parent->astOperand2()->getMaxValue(false) : nullptr;
                     if (indexValue && indexValue->intvalue >= value.intvalue) {
                         outOfBoundsError(parent, tok->expressionString(), &value, parent->astOperand2()->expressionString(), indexValue);

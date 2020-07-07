@@ -82,9 +82,11 @@ void CheckUninitVar::check()
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
 
     std::set<std::string> arrayTypeDefs;
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
-        if (Token::Match(tok, "%name% [") && tok->variable() && Token::Match(tok->variable()->typeStartToken(), "%type% %var% ;"))
-            arrayTypeDefs.insert(tok->variable()->typeStartToken()->str());
+    if (mTokenizer->isC()) {
+        for (const Token* tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+            if (Token::Match(tok, "%name% [") && tok->variable() && Token::Match(tok->variable()->typeStartToken(), "%type% %var% ;"))
+                arrayTypeDefs.insert(tok->variable()->typeStartToken()->str());
+        }
     }
 
     // check every executable scope

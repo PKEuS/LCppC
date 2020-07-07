@@ -92,7 +92,7 @@ static bool addPathsToSet(const std::string& fileName, std::set<std::string>* se
     std::vector<std::string> templist;
     if (!addIncludePathsToList(fileName, &templist))
         return false;
-    set->insert(templist.begin(), templist.end());
+    set->insert(std::make_move_iterator(templist.begin()), std::make_move_iterator(templist.end()));
     return true;
 }
 
