@@ -4421,6 +4421,8 @@ bool Scope::hasInlineOrLambdaFunction() const
         // Lambda function
         if (s->type == Scope::eLambda)
             return true;
+        if (s->hasInlineOrLambdaFunction())
+            return true;
     }
     return false;
 }
