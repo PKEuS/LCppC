@@ -2993,7 +2993,7 @@ private:
         ASSERT(db != nullptr);
         ASSERT_EQUALS(4U, db->variableList().size() - 1);
         ASSERT_EQUALS(2U, db->scopeList.size());
-        for (std::size_t i = 1U; i < db->variableList().size(); i++)
+        for (unsigned int i = 1U; i < db->variableList().size(); i++)
             ASSERT(db->getVariableFromVarId(i) != nullptr);
     }
 
@@ -3014,7 +3014,7 @@ private:
 
         ASSERT(db != nullptr);
         ASSERT_EQUALS(4U, db->variableList().size() - 1);
-        for (std::size_t i = 1U; i < db->variableList().size(); i++)
+        for (unsigned int i = 1U; i < db->variableList().size(); i++)
             ASSERT(db->getVariableFromVarId(i) != nullptr);
 
         ASSERT_EQUALS(4U, db->scopeList.size());

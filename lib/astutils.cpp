@@ -1326,7 +1326,7 @@ static const Variable* getArgumentVar(const Token* tok, int argnr)
         if (!type)
             return nullptr;
         const Scope* typeScope = type->classScope;
-        const int argCount = numberOfArguments(tok);
+        const std::size_t argCount = numberOfArguments(tok);
         for (const Function &function : typeScope->functionList) {
             if (function.isConstructor())
                 continue;

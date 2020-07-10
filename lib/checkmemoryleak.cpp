@@ -117,7 +117,7 @@ CheckMemoryLeak::AllocType CheckMemoryLeak::getAllocationType(const Token *tok2,
             if (Token::Match(tok2, "open|openat|creat|mkstemp|mkostemp|socket (")) {
                 // simple sanity check of function parameters..
                 // TODO: Make such check for all these functions
-                const int num = numberOfArguments(tok2);
+                const std::size_t num = numberOfArguments(tok2);
                 if (tok2->str() == "open" && num != 2 && num != 3)
                     return No;
 

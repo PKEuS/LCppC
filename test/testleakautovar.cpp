@@ -209,20 +209,18 @@ private:
         c.runChecks(&tokenizer, &settings, this);
     }
 
-    void check(const char code[], Settings & settings) {
+    void check(const char code[], Settings& settings0) {
         // Clear the error buffer..
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for leaks..
         CheckLeakAutoVar c;
-        settings.checkLibrary = true;
-        settings.addEnabled("information");
-        c.runChecks(&tokenizer, &settings, this);
+        c.runChecks(&tokenizer, &settings0, this);
     }
 
     void checkP(const char code[], bool cpp = false) {
@@ -2049,6 +2047,8 @@ private:
 
     void functionCallCastConfig() { // #9652
         Settings settingsFunctionCall = settings;
+        settingsFunctionCall.checkLibrary = true;
+        settingsFunctionCall.severity.enable(Severity::information);
 
         const char xmldata[] = "<?xml version=\"1.0\"?>\n"
                                "<def format=\"2\">\n"

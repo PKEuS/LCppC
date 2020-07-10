@@ -960,7 +960,7 @@ void CheckLeakAutoVar::ret(const Token *tok, const VarInfo &varInfo)
         if (varInfo.referenced.find(it->first) != varInfo.referenced.end())
             continue;
 
-        const int varid = it->first;
+        const unsigned int varid = it->first;
         const Variable *var = symbolDatabase->getVariableFromVarId(varid);
         if (var) {
             bool used = false;

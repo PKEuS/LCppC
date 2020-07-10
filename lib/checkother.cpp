@@ -2890,7 +2890,7 @@ void CheckOther::checkFuncArgNamesDifferent()
     }
 }
 
-void CheckOther::funcArgNamesDifferent(const std::string & functionName, unsigned int index,
+void CheckOther::funcArgNamesDifferent(const std::string & functionName, std::size_t index,
                                        const Token* declaration, const Token* definition)
 {
     std::list<const Token *> tokens = { declaration,definition };

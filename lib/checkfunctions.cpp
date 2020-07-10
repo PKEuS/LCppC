@@ -106,7 +106,7 @@ void CheckFunctions::invalidFunctionUsage()
                 continue;
             const Token * const functionToken = tok;
             const std::vector<const Token *> arguments = getArguments(tok);
-            for (std::size_t argnr = 1; argnr <= arguments.size(); ++argnr) {
+            for (int argnr = 1; argnr <= arguments.size(); ++argnr) {
                 const Token * const argtok = arguments[argnr-1];
 
                 // check <valid>...</valid>
