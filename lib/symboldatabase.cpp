@@ -88,8 +88,6 @@ static const Token* skipScopeIdentifiers(const Token* tok)
 
 static bool isExecutableScope(const Token* tok)
 {
-    if (!Token::simpleMatch(tok, "{"))
-        return false;
     const Token * tok2 = tok->link()->previous();
     if (Token::simpleMatch(tok2, "; }"))
         return true;
@@ -759,6 +757,9 @@ void SymbolDatabase::createSymbolDatabaseVariableInfo()
 
 void SymbolDatabase::createSymbolDatabaseCopyAndMoveConstructors()
 {
+    if (mTokenizer->isC())
+        return;
+
     // fill in class and struct copy/move constructors
     for (std::list<Scope>::iterator scope = scopeList.begin(); scope != scopeList.end(); ++scope) {
         if (!scope->isClassOrStruct())
@@ -1112,6 +1113,9 @@ void SymbolDatabase::createSymbolDatabaseSetTypePointers()
 
 void SymbolDatabase::createSymbolDatabaseSetSmartPointerType()
 {
+    if (mTokenizer->isC())
+        return;
+
     for (Scope &scope: scopeList) {
         for (Variable &var: scope.varlist) {
             if (var.valueType() && var.valueType()->smartPointerTypeToken && !var.valueType()->smartPointerType) {
@@ -1213,7 +1217,7 @@ void SymbolDatabase::createSymbolDatabaseSetVariablePointers()
         // func(...)[...].var
         else if (tok->function() && tok->next()->str() == "(" &&
                  (Token::Match(tok->next()->link(), ") . %name% !!(") ||
-                  (Token::Match(tok->next()->link(), ") [") && Token::Match(tok->next()->link()->next()->link(), "] . %name% !!(")))) {
+                  (Token::Match(tok->next()->link(), ") @[ . %name% !!(")))) {
             const Type *type = tok->function()->retType;
             if (type) {
                 Token *membertok;

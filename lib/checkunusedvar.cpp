@@ -1444,8 +1444,7 @@ bool CheckUnusedVar::isEmptyType(const Type* type)
 {
     // a type that has no variables and no constructor
 
-    const std::pair<std::map<const Type *,bool>::iterator,bool> found=mIsEmptyTypeMap.insert(
-                std::pair<const Type *,bool>(type,false));
+    const std::pair<std::map<const Type *,bool>::iterator,bool> found=mIsEmptyTypeMap.emplace(type,false);
     bool & emptyType=found.first->second;
     if (!found.second)
         return emptyType;
