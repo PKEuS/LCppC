@@ -8111,7 +8111,8 @@ void Tokenizer::simplifyBitfields()
 
 // Types and objects in std namespace that are neither functions nor templates
 static const std::set<std::string> stdTypes = {
-    "string", "wstring", "u16string", "u32string",
+    "string", "wstring", "u8string", "u16string", "u32string",
+    "string_view", "wstring_view", "u8string_view", "u16string_view", "u32string_view",
     "iostream", "ostream", "ofstream", "ostringstream",
     "istream", "ifstream", "istringstream", "fstream", "stringstream",
     "wstringstream", "wistringstream", "wostringstream", "wstringbuf",
@@ -8133,7 +8134,7 @@ static const std::set<std::string> stdTypes = {
 };
 
 static const std::set<std::string> stdTemplates = {
-    "array", "basic_string", "bitset", "deque", "list", "map", "multimap",
+    "array", "basic_string", "basic_string_view", "bitset", "deque", "list", "forward_list", "map", "multimap",
     "priority_queue", "queue", "set", "multiset", "stack", "vector", "pair",
     "iterator", "iterator_traits",
     "unordered_map", "unordered_multimap", "unordered_set", "unordered_multiset",

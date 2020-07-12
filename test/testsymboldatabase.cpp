@@ -6946,7 +6946,7 @@ private:
 
             tok = Token::findsimplematch(tok, "s");
             ASSERT(tok && tok->valueType());
-            ASSERT_EQUALS("container(std :: string|wstring|u16string|u32string)", tok->valueType()->str());
+            ASSERT_EQUALS("container(std :: string|wstring|u8string|u16string|u32string)", tok->valueType()->str());
             ASSERT(tok->valueType()->container && tok->valueType()->container->stdStringLike);
 
             tok = Token::findsimplematch(tok, "v");
