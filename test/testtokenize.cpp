@@ -280,6 +280,8 @@ private:
 
         TEST_CASE(simplifySQL);
 
+        TEST_CASE(simplifyModules);
+
         TEST_CASE(simplifyCAlternativeTokens);
 
         // x = ({ 123; });  =>  { x = 123; }
@@ -396,12 +398,12 @@ private:
         TEST_CASE(cppcast);
     }
 
-    std::string tokenizeAndStringify(const char code[], bool expand = true, Settings::PlatformType platform = Settings::Native, const char* filename = "test.cpp", bool cpp11 = true) {
+    std::string tokenizeAndStringify(const char code[], bool expand = true, Settings::PlatformType platform = Settings::Native, const char* filename = "test.cpp", Standards::cppstd_t cpp = Standards::CPP20) {
         errout.str("");
 
         settings1.debugwarnings = true;
         settings1.platform(platform);
-        settings1.standards.cpp = cpp11 ? Standards::CPP11 : Standards::CPP03;
+        settings1.standards.cpp = cpp;
 
         // tokenize..
         Tokenizer tokenizer(&settings1, this);
@@ -1276,7 +1278,7 @@ private:
 
         {
             const char code[] = "module ( a , a , sizeof ( a ) , 0444 ) ;";
-            ASSERT_EQUALS("module ( a , a , sizeof ( a ) , 0444 ) ;", tokenizeAndStringify(code));
+            ASSERT_EQUALS("module ( a , a , sizeof ( a ) , 0444 ) ;", tokenizeAndStringify(code, true, cppcheck::Platform::Native, "test.cpp", Standards::CPP11));
         }
 
         ASSERT_EQUALS("void f ( int x ) { }", tokenizeAndStringify("void f(x) int x; { }"));
@@ -1937,7 +1939,7 @@ private:
 
     void vardecl14() {
         const char code[] = "::std::tr1::shared_ptr<int> pNum1, pNum2;\n";
-        ASSERT_EQUALS(":: std :: tr1 :: shared_ptr < int > pNum1 ; :: std :: tr1 :: shared_ptr < int > pNum2 ;", tokenizeAndStringify(code, false, Settings::Native, "test.cpp", false));
+        ASSERT_EQUALS(":: std :: tr1 :: shared_ptr < int > pNum1 ; :: std :: tr1 :: shared_ptr < int > pNum2 ;", tokenizeAndStringify(code, false, Settings::Native, "test.cpp", Standards::CPP03));
     }
 
     void vardecl15() {
@@ -3892,12 +3894,12 @@ private:
 
         code = "using namespace std;\n"
                "tr1::function <void(int)> f;";
-        ASSERT_EQUALS("tr1 :: function < void ( int ) > f ;", tokenizeAndStringify(code, true, Settings::Native, "test.cpp", false));
-        ASSERT_EQUALS("std :: function < void ( int ) > f ;", tokenizeAndStringify(code, true, Settings::Native, "test.cpp", true));
+        ASSERT_EQUALS("tr1 :: function < void ( int ) > f ;", tokenizeAndStringify(code, true, Settings::Native, "test.cpp", Standards::CPP03));
+        ASSERT_EQUALS("std :: function < void ( int ) > f ;", tokenizeAndStringify(code, true, Settings::Native, "test.cpp", Standards::CPP11));
 
         code = "std::tr1::function <void(int)> f;";
-        ASSERT_EQUALS("std :: tr1 :: function < void ( int ) > f ;", tokenizeAndStringify(code, true, Settings::Native, "test.cpp", false));
-        ASSERT_EQUALS("std :: function < void ( int ) > f ;", tokenizeAndStringify(code, true, Settings::Native, "test.cpp", true));
+        ASSERT_EQUALS("std :: tr1 :: function < void ( int ) > f ;", tokenizeAndStringify(code, true, Settings::Native, "test.cpp", Standards::CPP03));
+        ASSERT_EQUALS("std :: function < void ( int ) > f ;", tokenizeAndStringify(code, true, Settings::Native, "test.cpp", Standards::CPP11));
 
         // #4042 (Do not add 'std ::' to variables)
         code = "using namespace std;\n"
@@ -4158,6 +4160,17 @@ private:
         const char code1[] = "class Foo::Bar: public QObject { private slots: };";
         const char result1[] = "class Foo :: Bar : public QObject { private: } ;";
         ASSERT_EQUALS(result1, tokenizeAndStringify(code1));
+    }
+
+    void simplifyModules() {
+        ASSERT_EQUALS(";", tokenizeAndStringify("export module helloworld;"));
+        ASSERT_EQUALS(";", tokenizeAndStringify("export import <iostream>;"));
+        ASSERT_EQUALS("void hello ( ) { foo ( ) ; }", tokenizeAndStringify("export void hello() { foo(); }"));
+
+        ASSERT_EQUALS(";", tokenizeAndStringify("import helloworld;"));
+        ASSERT_EQUALS(";", tokenizeAndStringify("module helloworld;"));
+        ASSERT_EQUALS(";", tokenizeAndStringify("module;"));
+        ASSERT_EQUALS(";", tokenizeAndStringify("module : private;"));
     }
 
     void simplifySQL() {
@@ -5154,43 +5167,43 @@ private:
 
     void simplifyCPPAttribute() {
         ASSERT_EQUALS("int f ( ) ;",
-                      tokenizeAndStringify("[[deprecated]] int f();", true, Settings::Native, "test.cpp", true));
+                      tokenizeAndStringify("[[deprecated]] int f();", true, Settings::Native, "test.cpp", Standards::CPP11));
 
         ASSERT_EQUALS("[ [ deprecated ] ] int f ( ) ;",
-                      tokenizeAndStringify("[[deprecated]] int f();", true, Settings::Native, "test.cpp", false));
+                      tokenizeAndStringify("[[deprecated]] int f();", true, Settings::Native, "test.cpp", Standards::CPP03));
 
         ASSERT_EQUALS("[ [ deprecated ] ] int f ( ) ;",
-                      tokenizeAndStringify("[[deprecated]] int f();", true, Settings::Native, "test.c", true));
+                      tokenizeAndStringify("[[deprecated]] int f();", true, Settings::Native, "test.c", Standards::CPP11));
 
         ASSERT_EQUALS("template < class T > int f ( ) { }",
-                      tokenizeAndStringify("template <class T> [[noreturn]] int f(){}", true, Settings::Native, "test.cpp", true));
+                      tokenizeAndStringify("template <class T> [[noreturn]] int f(){}", true, Settings::Native, "test.cpp", Standards::CPP11));
 
         ASSERT_EQUALS("int f ( int i ) ;",
-                      tokenizeAndStringify("[[maybe_unused]] int f([[maybe_unused]] int i);", true, Settings::Native, "test.cpp", true));
+                      tokenizeAndStringify("[[maybe_unused]] int f([[maybe_unused]] int i);", true, Settings::Native, "test.cpp", Standards::CPP11));
 
         ASSERT_EQUALS("[ [ maybe_unused ] ] int f ( [ [ maybe_unused ] ] int i ) ;",
-                      tokenizeAndStringify("[[maybe_unused]] int f([[maybe_unused]] int i);", true, Settings::Native, "test.cpp", false));
+                      tokenizeAndStringify("[[maybe_unused]] int f([[maybe_unused]] int i);", true, Settings::Native, "test.cpp", Standards::CPP03));
 
         ASSERT_EQUALS("struct a ;",
-                      tokenizeAndStringify("struct [[]] a;", true, Settings::Native, "test.cpp", true));
+                      tokenizeAndStringify("struct [[]] a;", true, Settings::Native, "test.cpp", Standards::CPP11));
 
         ASSERT_EQUALS("struct a ;",
-                      tokenizeAndStringify("struct [[,]] a;", true, Settings::Native, "test.cpp", true));
+                      tokenizeAndStringify("struct [[,]] a;", true, Settings::Native, "test.cpp", Standards::CPP11));
 
         ASSERT_EQUALS("struct a ;",
-                      tokenizeAndStringify("struct [[deprecated,]] a;", true, Settings::Native, "test.cpp", true));
+                      tokenizeAndStringify("struct [[deprecated,]] a;", true, Settings::Native, "test.cpp", Standards::CPP11));
 
         ASSERT_EQUALS("struct a ;",
-                      tokenizeAndStringify("struct [[,,]] a;", true, Settings::Native, "test.cpp", true));
+                      tokenizeAndStringify("struct [[,,]] a;", true, Settings::Native, "test.cpp", Standards::CPP11));
 
         ASSERT_EQUALS("struct a ;",
-                      tokenizeAndStringify("struct [[deprecated,,]] a;", true, Settings::Native, "test.cpp", true));
+                      tokenizeAndStringify("struct [[deprecated,,]] a;", true, Settings::Native, "test.cpp", Standards::CPP11));
 
         ASSERT_EQUALS("struct a ;",
-                      tokenizeAndStringify("struct [[deprecated,maybe_unused,]] a;", true, Settings::Native, "test.cpp", true));
+                      tokenizeAndStringify("struct [[deprecated,maybe_unused,]] a;", true, Settings::Native, "test.cpp", Standards::CPP11));
 
         ASSERT_EQUALS("struct a ;",
-                      tokenizeAndStringify("struct [[,,,]] a;", true, Settings::Native, "test.cpp", true));
+                      tokenizeAndStringify("struct [[,,,]] a;", true, Settings::Native, "test.cpp", Standards::CPP11));
     }
 
     void simplifyCaseRange() {

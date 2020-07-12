@@ -2679,6 +2679,28 @@ void Tokenizer::simplifySQL()
     }
 }
 
+void Tokenizer::simplifyModules()
+{
+    if (isC() || mSettings->standards.cpp < Standards::CPP20)
+        return;
+
+    for (Token* tok = list.front(); tok; tok = tok->next()) {
+        if (tok->str() == "export") {
+            if (tok->strAt(1) == "import" || tok->strAt(1) == "module") {
+                Token::eraseTokens(tok, tok->findsimplematch(tok, ";"));
+                if (tok->tokAt(2))
+                    tok->deleteNext();
+            }
+            tok->deleteThis();
+        } else if (tok->str() == "module" || tok->str() == "import") {
+            Token::eraseTokens(tok, tok->findsimplematch(tok, ";"));
+            if (tok->tokAt(2))
+                tok->deleteNext();
+            tok->deleteThis();
+        }
+    }
+}
+
 void Tokenizer::simplifyArrayAccessSyntax()
 {
     // 0[a] -> a[0]
@@ -4282,6 +4304,9 @@ bool Tokenizer::simplifyTokenList0()
 
     // replace inline SQL with "asm()" (Oracle PRO*C). Ticket: #1959
     simplifySQL();
+
+    // Simplify C++20 modules
+    simplifyModules();
 
     createLinks();
 

@@ -359,6 +359,8 @@ public:
 
     void simplifySQL();
 
+    void simplifyModules();
+
     void checkForEnumsWithTypedef();
 
     void findComplicatedSyntaxErrorsInTemplates();
