@@ -1779,8 +1779,8 @@ void CheckOther::checkDuplicateBranch()
 
 void CheckOther::duplicateBranchError(const Token *tok1, const Token *tok2, ErrorPath errors)
 {
-    errors.emplace_back(tok2, "");
-    errors.emplace_back(tok1, "");
+    errors.emplace_back(tok2, emptyString);
+    errors.emplace_back(tok1, emptyString);
 
     reportError(errors, Severity::style, "duplicateBranch", "Found duplicate branches for 'if' and 'else'.\n"
                 "Finding the same code in an 'if' and related 'else' branch is suspicious and "
@@ -2056,7 +2056,7 @@ void CheckOther::checkDuplicateExpression()
 
 void CheckOther::oppositeExpressionError(const Token *opTok, ErrorPath errors)
 {
-    errors.emplace_back(opTok, "");
+    errors.emplace_back(opTok, emptyString);
 
     const std::string& op = opTok ? opTok->str() : "&&";
 
@@ -2068,7 +2068,7 @@ void CheckOther::oppositeExpressionError(const Token *opTok, ErrorPath errors)
 
 void CheckOther::duplicateExpressionError(const Token *tok1, const Token *tok2, const Token *opTok, ErrorPath errors)
 {
-    errors.emplace_back(opTok, "");
+    errors.emplace_back(opTok, emptyString);
 
     const std::string& expr1 = tok1 ? tok1->expressionString() : "x";
     const std::string& expr2 = tok2 ? tok2->expressionString() : "x";
@@ -2109,7 +2109,7 @@ void CheckOther::duplicateAssignExpressionError(const Token *tok1, const Token *
 
 void CheckOther::duplicateExpressionTernaryError(const Token *tok, ErrorPath errors)
 {
-    errors.emplace_back(tok, "");
+    errors.emplace_back(tok, emptyString);
     reportError(errors, Severity::style, "duplicateExpressionTernary", "Same expression in both branches of ternary operator.\n"
                 "Finding the same expression in both branches of ternary operator is suspicious as "
                 "the same code is executed regardless of the condition.", CWE398, Certainty::safe);
@@ -3103,7 +3103,7 @@ void CheckOther::comparePointersError(const Token *tok, const ValueFlow::Value *
         errorPath.emplace_back(v2->tokvalue->variable()->nameToken(), "Variable declared here.");
         errorPath.insert(errorPath.end(), v2->errorPath.begin(), v2->errorPath.end());
     }
-    errorPath.emplace_back(tok, "");
+    errorPath.emplace_back(tok, emptyString);
     reportError(
         errorPath, Severity::error, "comparePointers", verb + " pointers that point to different objects", CWE570, Certainty::safe);
 }

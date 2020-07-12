@@ -1232,7 +1232,7 @@ void CheckCondition::checkIncorrectLogicOperator()
 
 void CheckCondition::incorrectLogicOperatorError(const Token *tok, const std::string &condition, bool always, bool inconclusive, ErrorPath errors)
 {
-    errors.emplace_back(tok, "");
+    errors.emplace_back(tok, emptyString);
     if (always)
         reportError(errors, Severity::warning, "incorrectLogicOperator",
                     "Logical disjunction always evaluates to true: " + condition + ".\n"

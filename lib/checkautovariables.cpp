@@ -539,7 +539,7 @@ void CheckAutoVariables::errorReturnDanglingLifetime(const Token *tok, const Val
     const bool inconclusive = val ? val->isInconclusive() : false;
     ErrorPath errorPath = val ? val->errorPath : ErrorPath();
     std::string msg = "Returning " + lifetimeMessage(tok, val, errorPath);
-    errorPath.emplace_back(tok, "");
+    errorPath.emplace_back(tok, emptyString);
     reportError(errorPath, Severity::error, "returnDanglingLifetime", msg + " that will be invalid when returning.", CWE562, inconclusive ? Certainty::inconclusive : Certainty::safe);
 }
 
@@ -548,7 +548,7 @@ void CheckAutoVariables::errorInvalidLifetime(const Token *tok, const ValueFlow:
     const bool inconclusive = val ? val->isInconclusive() : false;
     ErrorPath errorPath = val ? val->errorPath : ErrorPath();
     std::string msg = "Using " + lifetimeMessage(tok, val, errorPath);
-    errorPath.emplace_back(tok, "");
+    errorPath.emplace_back(tok, emptyString);
     reportError(errorPath, Severity::error, "invalidLifetime", msg + " that is out of scope.", CWE562, inconclusive ? Certainty::inconclusive : Certainty::safe);
 }
 
@@ -557,7 +557,7 @@ void CheckAutoVariables::errorDanglingTemporaryLifetime(const Token* tok, const 
     const bool inconclusive = val ? val->isInconclusive() : false;
     ErrorPath errorPath = val ? val->errorPath : ErrorPath();
     std::string msg = "Using " + lifetimeMessage(tok, val, errorPath);
-    errorPath.emplace_back(tok, "");
+    errorPath.emplace_back(tok, emptyString);
     reportError(errorPath, Severity::error, "danglingTemporaryLifetime", msg + " to temporary.", CWE562, inconclusive ? Certainty::inconclusive : Certainty::safe);
 }
 
@@ -567,13 +567,13 @@ void CheckAutoVariables::errorDanglngLifetime(const Token *tok, const ValueFlow:
     ErrorPath errorPath = val ? val->errorPath : ErrorPath();
     std::string tokName = tok ? tok->expressionString() : "x";
     std::string msg = "Non-local variable '" + tokName + "' will use " + lifetimeMessage(tok, val, errorPath);
-    errorPath.emplace_back(tok, "");
+    errorPath.emplace_back(tok, emptyString);
     reportError(errorPath, Severity::error, "danglingLifetime", msg + ".", CWE562, inconclusive ? Certainty::inconclusive : Certainty::safe);
 }
 
 void CheckAutoVariables::errorReturnReference(const Token* tok, ErrorPath errorPath, bool inconclusive)
 {
-    errorPath.emplace_back(tok, "");
+    errorPath.emplace_back(tok, emptyString);
     reportError(
         errorPath, Severity::error, "returnReference", "Reference to local variable returned.", CWE562, inconclusive ? Certainty::inconclusive : Certainty::safe);
 }
@@ -583,13 +583,13 @@ void CheckAutoVariables::errorDanglingReference(const Token *tok, const Variable
     std::string tokName = tok ? tok->str() : "x";
     std::string varName = var ? var->name() : "y";
     std::string msg = "Non-local reference variable '" + tokName + "' to local variable '" + varName + "'";
-    errorPath.emplace_back(tok, "");
+    errorPath.emplace_back(tok, emptyString);
     reportError(errorPath, Severity::error, "danglingReference", msg, CWE562, Certainty::safe);
 }
 
 void CheckAutoVariables::errorReturnTempReference(const Token* tok, ErrorPath errorPath, bool inconclusive)
 {
-    errorPath.emplace_back(tok, "");
+    errorPath.emplace_back(tok, emptyString);
     reportError(
         errorPath, Severity::error, "returnTempReference", "Reference to temporary returned.", CWE562, inconclusive ? Certainty::inconclusive : Certainty::safe);
 }

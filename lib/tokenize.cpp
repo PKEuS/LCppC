@@ -1819,7 +1819,7 @@ namespace {
                 }
 
                 if (all && !added)
-                    scopeInfo->emplace_back("", tok->link());
+                    scopeInfo->emplace_back(emptyString, tok->link());
             }
             return;
         }
@@ -1996,7 +1996,7 @@ bool Tokenizer::simplifyUsing()
     };
     std::list<Using> usingList;
 
-    scopeList.emplace_back("", nullptr);
+    scopeList.emplace_back(emptyString, nullptr);
 
     for (Token *tok = list.front(); tok; tok = tok->next()) {
         if (mErrorLogger && !list.getFiles().empty())
@@ -2026,7 +2026,7 @@ bool Tokenizer::simplifyUsing()
             continue;
 
         std::list<ScopeInfo3> scopeList1;
-        scopeList1.emplace_back("", nullptr);
+        scopeList1.emplace_back(emptyString, nullptr);
         std::string name = tok->strAt(1);
         const Token *nameToken = tok->next();
         std::string scope = getScopeName(scopeList);
@@ -2042,7 +2042,7 @@ bool Tokenizer::simplifyUsing()
         if (Token::Match(start, "struct|union|enum %name%| {")) {
             if (start->strAt(1) != "{") {
                 Token *structEnd = start->linkAt(2);
-                structEnd->insertToken(";", "");
+                structEnd->insertToken(";");
                 TokenList::copyTokens(structEnd->next(), tok, start->next());
                 usingStart = structEnd->tokAt(2);
                 nameToken = usingStart->next();
@@ -2057,15 +2057,15 @@ bool Tokenizer::simplifyUsing()
                 tok = usingStart;
             } else {
                 Token *structEnd = start->linkAt(1);
-                structEnd->insertToken(";", "");
+                structEnd->insertToken(";");
                 std::string newName;
                 if (structEnd->strAt(2) == ";")
                     newName = name;
                 else
                     newName = "Unnamed" + MathLib::toString(mUnnamedCount++);
                 TokenList::copyTokens(structEnd->next(), tok, start);
-                structEnd->tokAt(5)->insertToken(newName, "");
-                start->insertToken(newName, "");
+                structEnd->tokAt(5)->insertToken(newName);
+                start->insertToken(newName);
 
                 usingStart = structEnd->tokAt(2);
                 nameToken = usingStart->next();
@@ -2963,7 +2963,7 @@ void Tokenizer::calculateScopes()
         tok->scopeInfo(nullptr);
 
     std::string nextScopeNameAddition;
-    std::shared_ptr<ScopeInfo2> primaryScope = std::make_shared<ScopeInfo2>("", nullptr);
+    std::shared_ptr<ScopeInfo2> primaryScope = std::make_shared<ScopeInfo2>(emptyString, nullptr);
     list.front()->scopeInfo(primaryScope);
 
     for (Token* tok = list.front(); tok; tok = tok->next()) {

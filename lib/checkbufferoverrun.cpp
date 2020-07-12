@@ -951,7 +951,7 @@ void CheckBufferOverrun::objectIndexError(const Token *tok, const ValueFlow::Val
         name = v->tokvalue->variable()->name();
         errorPath = v->errorPath;
     }
-    errorPath.emplace_back(tok, "");
+    errorPath.emplace_back(tok, emptyString);
     std::string verb = known ? "is" : "might be";
     reportError(errorPath,
                 known ? Severity::error : Severity::warning,

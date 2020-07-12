@@ -935,7 +935,7 @@ void CheckStl::invalidContainerLoopError(const Token *tok, const Token * loopTok
     errorPath.emplace_back(loopTok, "Iterating container here.");
 
     const std::string msg = "Calling '" + method + "' while iterating the container is invalid.";
-    errorPath.emplace_back(tok, "");
+    errorPath.emplace_back(tok, emptyString);
     reportError(errorPath, Severity::error, "invalidContainerLoop", msg, CWE664, Certainty::safe);
 }
 
@@ -947,7 +947,7 @@ void CheckStl::invalidContainerError(const Token *tok, const Token * contTok, co
     if (val)
         errorPath.insert(errorPath.begin(), val->errorPath.begin(), val->errorPath.end());
     std::string msg = "Using " + lifetimeMessage(tok, val, errorPath);
-    errorPath.emplace_back(tok, "");
+    errorPath.emplace_back(tok, emptyString);
     reportError(errorPath, Severity::error, "invalidContainer", msg + " that may be invalid.", CWE664, inconclusive ? Certainty::inconclusive : Certainty::safe);
 }
 
@@ -958,7 +958,7 @@ void CheckStl::invalidContainerReferenceError(const Token* tok, const Token* con
     errorPath.emplace_back(
         contTok, "After calling '" + method + "', iterators or references to the container's data may be invalid .");
     std::string msg = "Reference to " + name;
-    errorPath.emplace_back(tok, "");
+    errorPath.emplace_back(tok, emptyString);
     reportError(errorPath, Severity::error, "invalidContainerReference", msg + " that may be invalid.", CWE664, Certainty::safe);
 }
 
