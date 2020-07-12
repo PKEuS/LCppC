@@ -6,7 +6,7 @@
 
 # If project management wishes to take a newer astyle version into use
 # just change this string to match the start of astyle version string.
-ASTYLE_VERSION="3.0.1"
+ASTYLE_VERSION="3.1"
 ASTYLE="${ASTYLE-astyle}"
 
 DETECTED_VERSION=$("$ASTYLE" --version 2>&1 | awk '{ print $NF; }')

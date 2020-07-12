@@ -6,7 +6,7 @@
 
 @REM If project management wishes to take a newer astyle version into use
 @REM just change this string to match the start of astyle version string.
-@SET ASTYLE_VERSION="Artistic Style Version 3.0.1"
+@SET ASTYLE_VERSION="Artistic Style Version 3.1"
 @SET ASTYLE="astyle"
 
 @SET DETECTED_VERSION=""
