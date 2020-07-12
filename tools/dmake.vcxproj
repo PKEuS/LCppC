@@ -84,8 +84,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader />
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <StringPooling>true</StringPooling>
+      <AdditionalOptions>/Zc:throwingNew /Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -95,11 +101,13 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
+      <SetChecksum>true</SetChecksum>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\externals\simplecpp\simplecpp.cpp" />
     <ClCompile Include="..\lib\pathmatch.cpp" />
+    <ClCompile Include="..\lib\utils.cpp" />
     <ClCompile Include="dmake.cpp" />
     <ClCompile Include="..\cli\filelister.cpp" />
     <ClCompile Include="..\lib\path.cpp" />
@@ -107,6 +115,7 @@
   <ItemGroup>
     <ClInclude Include="..\cli\filelister.h" />
     <ClInclude Include="..\lib\path.h" />
+    <ClInclude Include="..\lib\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
