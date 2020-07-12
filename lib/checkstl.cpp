@@ -91,7 +91,7 @@ void CheckStl::outOfBounds()
                         continue;
                     }
                 }
-                if (!container->arrayLike_indexOp && !container->stdStringLike)
+                if (!container->arrayLike_indexOp && !container->stdStringLike || !parent)
                     continue;
                 if (value.intvalue == 0 && parent->str() == "[" && tok == parent->astOperand1()) {
                     outOfBoundsError(parent, tok->expressionString(), &value, emptyString, nullptr);
