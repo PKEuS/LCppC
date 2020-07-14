@@ -2446,11 +2446,6 @@ std::vector<const Token*> Function::findReturns(const Function* f)
         if (Token::simpleMatch(tok->astParent(), "return")) {
             result.push_back(tok);
         }
-        // Skip lambda functions since the scope may not be set correctly
-        const Token* lambdaEndToken = findLambdaEndToken(tok);
-        if (lambdaEndToken) {
-            tok = lambdaEndToken;
-        }
     }
     return result;
 }

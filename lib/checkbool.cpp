@@ -445,11 +445,12 @@ void CheckBool::returnValueOfFunctionReturningBool()
             continue;
 
         for (const Token* tok = scope->bodyStart->next(); tok && (tok != scope->bodyEnd); tok = tok->next()) {
-            // Skip lambdas
-            const Token* tok2 = findLambdaEndToken(tok);
-            if (tok2)
-                tok = tok2;
-            else if (tok->scope() && tok->scope()->isClassOrStruct())
+            // Skip lambda..
+            if (tok->scope()->type == Scope::eLambda) {
+                tok = tok->scope()->bodyEnd;
+                continue;
+            }
+            else if (tok->scope()->isClassOrStruct())
                 tok = tok->scope()->bodyEnd;
             else if (Token::simpleMatch(tok, "return") && tok->astOperand1() &&
                      (tok->astOperand1()->getValueGE(2, mSettings) || tok->astOperand1()->getValueLE(-1, mSettings)) &&

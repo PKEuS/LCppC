@@ -105,10 +105,11 @@ void CheckVaarg::va_list_usage()
 
         const Token* tok = var->nameToken()->next();
         for (;  tok && tok != var->scope()->bodyEnd; tok = tok->next()) {
-            // Skip lambdas
-            const Token* tok2 = findLambdaEndToken(tok);
-            if (tok2)
-                tok = tok2;
+            // Skip lambda..
+            if (tok->scope()->type == Scope::eLambda) {
+                tok = tok->scope()->bodyEnd;
+                continue;
+            }
             if (Token::Match(tok, "va_start ( %varid%", var->declarationId())) {
                 if (open)
                     va_start_subsequentCallsError(tok, var->name());

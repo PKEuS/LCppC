@@ -236,8 +236,8 @@ void CheckAutoVariables::autoVariables()
     for (const Scope * scope : symbolDatabase->functionScopes) {
         for (const Token *tok = scope->bodyStart; tok && tok != scope->bodyEnd; tok = tok->next()) {
             // Skip lambda..
-            if (const Token *lambdaEndToken = findLambdaEndToken(tok)) {
-                tok = lambdaEndToken;
+            if (tok->scope()->type == Scope::eLambda) {
+                tok = tok->scope()->bodyEnd;
                 continue;
             }
             // Critical assignment
