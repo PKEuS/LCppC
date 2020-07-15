@@ -214,7 +214,7 @@ ErrorItem XmlReportV2::readError(QXmlStreamReader *reader)
         if (attribs.hasAttribute(QString(), InconclusiveAttribute))
             item.inconclusive = true;
         if (attribs.hasAttribute(QString(), CWEAttribute))
-            item.cwe = attribs.value(QString(), CWEAttribute).toString().toInt();
+            item.cwe = attribs.value(QString(), CWEAttribute).toInt();
         if (attribs.hasAttribute(QString(), SinceDateAttribute))
             item.sinceDate = attribs.value(QString(), SinceDateAttribute).toString();
         if (attribs.hasAttribute(QString(), TagsAttribute))

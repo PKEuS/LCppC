@@ -43,6 +43,7 @@
 #include "resultstree.h"
 #include "report.h"
 #include "application.h"
+#include "projectfile.h"
 #include "showtypes.h"
 #include "threadhandler.h"
 #include "path.h"
@@ -1028,6 +1029,8 @@ void ResultsTree::suppressSelectedIds()
                 j++;
             }
         }
+        if (file->rowCount() == 0)
+            mModel.removeRow(file->row());
     }
 
 
@@ -1133,7 +1136,7 @@ void ResultsTree::saveResults(Report *report) const
     report->writeFooter();
 }
 
-void ResultsTree::saveErrors(Report *report, QStandardItem *fileItem) const
+void ResultsTree::saveErrors(Report *report, const QStandardItem *fileItem) const
 {
     if (!fileItem) {
         return;

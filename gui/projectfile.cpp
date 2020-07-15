@@ -28,6 +28,8 @@
 
 #include "settings.h"
 
+ProjectFile *ProjectFile::mActiveProject;
+
 ProjectFile::ProjectFile(QObject *parent) :
     QObject(parent)
 {

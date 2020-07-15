@@ -76,7 +76,7 @@ public:
     * @brief Convert error item to string.
     * @return Error item as string.
     */
-    QString ToString() const;
+    QString toString() const;
     QString tool() const;
 
     QString file0;

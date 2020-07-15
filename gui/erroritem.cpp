@@ -70,7 +70,7 @@ QString ErrorItem::tool() const
     return "cppcheck";
 }
 
-QString ErrorItem::ToString() const
+QString ErrorItem::toString() const
 {
     QString str = errorPath.back().file + " - " + errorId + " - ";
     if (inconclusive)

@@ -357,8 +357,6 @@ bool ErrorMessage::deserialize(const std::string &data)
 
 std::string ErrorMessage::getXMLHeader()
 {
-    // xml_version 1 is the default xml format
-
     tinyxml2::XMLPrinter printer;
 
     // standard xml header
