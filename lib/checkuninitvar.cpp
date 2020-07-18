@@ -1162,21 +1162,19 @@ int CheckUninitVar::isFunctionParUsage(const Token *vartok, bool pointer, Alloc 
             const Variable *arg = func->getArgumentVar(argumentNumber);
             if (arg) {
                 const Token *argStart = arg->typeStartToken();
-                if (!address && !array && Token::Match(argStart, "%type% %name%| [,)]"))
+                if (!address && !array && !arg->isArrayOrPointer() && !arg->isReference())
                     return 1;
-                if (pointer && !address && alloc == NO_ALLOC && Token::Match(argStart,  "%type% * %name% [,)]"))
+                if (pointer && !address && alloc == NO_ALLOC && arg->isPointer() && argStart->str() != "const")
                     return 1;
-                while (argStart->previous() && argStart->previous()->isName())
-                    argStart = argStart->previous();
-                if (Token::Match(argStart, "const %type% & %name% [,)]")) {
+                if (arg->isReference() && arg->isConst()) {
                     // If it's a record it's ok to pass a partially uninitialized struct.
                     if (vartok->variable() && vartok->variable()->valueType() && vartok->variable()->valueType()->type == ValueType::Type::RECORD)
                         return -1;
                     return 1;
                 }
-                if ((pointer || address) && alloc == NO_ALLOC && Token::Match(argStart, "const struct| %type% * %name% [,)]"))
+                if ((pointer || address) && alloc == NO_ALLOC && arg->isPointer() && arg->valueType() && arg->valueType()->pointer == 1 && arg->valueType()->constness & 0x1)
                     return 1;
-                if ((pointer || address) && Token::Match(argStart, "const %type% %name% @[ [,)]"))
+                if ((pointer || address) && arg->isConst() && arg->isArray())
                     return 1;
             }
 
