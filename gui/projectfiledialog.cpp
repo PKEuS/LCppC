@@ -199,6 +199,7 @@ ProjectFileDialog::ProjectFileDialog(ProjectFile *projectFile, QWidget *parent)
     connect(mUI.mBtnEditInclude, &QPushButton::clicked, this, &ProjectFileDialog::editIncludeDir);
     connect(mUI.mBtnRemoveInclude, &QPushButton::clicked, this, &ProjectFileDialog::removeIncludeDir);
     connect(mUI.mBtnAddIgnorePath, SIGNAL(clicked()), this, SLOT(addExcludePath()));
+    connect(mUI.mBtnAddIgnoreFile, SIGNAL(clicked()), this, SLOT(addExcludeFile()));
     connect(mUI.mBtnEditIgnorePath, &QPushButton::clicked, this, &ProjectFileDialog::editExcludePath);
     connect(mUI.mBtnRemoveIgnorePath, &QPushButton::clicked, this, &ProjectFileDialog::removeExcludePath);
     connect(mUI.mBtnIncludeUp, &QPushButton::clicked, this, &ProjectFileDialog::moveIncludePathUp);
@@ -208,6 +209,7 @@ ProjectFileDialog::ProjectFileDialog(ProjectFile *projectFile, QWidget *parent)
     connect(mUI.mListSuppressions, &QListWidget::doubleClicked, this, &ProjectFileDialog::editSuppression);
     connect(mUI.mBtnBrowseMisraFile, &QPushButton::clicked, this, &ProjectFileDialog::browseMisraFile);
     connect(mUI.mChkAllVsConfigs, &QCheckBox::clicked, this, &ProjectFileDialog::checkAllVSConfigs);
+    connect(mUI.mBtnNormalAnalysis, &QCheckBox::toggled, mUI.mBtnSafeClasses, &QCheckBox::setEnabled);
     loadFromProjectFile(projectFile);
 }
 
@@ -266,7 +268,7 @@ void ProjectFileDialog::loadFromProjectFile(const ProjectFile *projectFile)
     else
         mUI.mBtnCppcheckParser->setChecked(true);
     mUI.mBtnSafeClasses->setChecked(projectFile->safeChecks.classes);
-    mUI.mBugHunting->setChecked(projectFile->bugHunting);
+    mUI.mBtnBugHunting->setChecked(projectFile->bugHunting);
     setExcludedPaths(projectFile->getExcludedPaths());
     setLibraries(projectFile->getLibraries());
     const QString platform = projectFile->getPlatform();
@@ -371,7 +373,7 @@ void ProjectFileDialog::saveToProjectFile(ProjectFile *projectFile) const
     projectFile->setLibraries(getLibraries());
     projectFile->clangParser = mUI.mBtnClangParser->isChecked();
     projectFile->safeChecks.classes = mUI.mBtnSafeClasses->isChecked();
-    projectFile->bugHunting = mUI.mBugHunting->isChecked();
+    projectFile->bugHunting = mUI.mBtnBugHunting->isChecked();
     if (mUI.mComboBoxPlatform->currentText().endsWith(".xml"))
         projectFile->setPlatform(mUI.mComboBoxPlatform->currentText());
     else {
@@ -717,9 +719,17 @@ void ProjectFileDialog::editIncludeDir()
 
 void ProjectFileDialog::addExcludePath()
 {
-    QString dir = getExistingDirectory(tr("Select directory to ignore"), true);
-    if (!dir.isEmpty())
-        addExcludePath(dir);
+    addExcludePath(getExistingDirectory(tr("Select directory to ignore"), true));
+}
+
+void ProjectFileDialog::addExcludeFile()
+{
+    const QFileInfo inf(mProjectFile->getFilename());
+    const QDir &dir = inf.absoluteDir();
+    QMap<QString,QString> filters;
+    filters[tr("Source files")] = "*.c *.cpp";
+    filters[tr("All files")] = "*.*";
+    addExcludePath(QFileDialog::getOpenFileName(this, tr("Exclude file"), dir.canonicalPath(), toFilterString(filters)));
 }
 
 void ProjectFileDialog::editExcludePath()
@@ -802,7 +812,10 @@ int ProjectFileDialog::getSuppressionIndex(const QString &shortText) const
 
 void ProjectFileDialog::browseMisraFile()
 {
-    const QString fileName = QFileDialog::getOpenFileName(this, tr("Select MISRA rule texts file"), QDir::homePath(), tr("Misra rule texts file (%1)").arg("*.txt"));
+    const QString fileName = QFileDialog::getOpenFileName(this,
+                             tr("Select MISRA rule texts file"),
+                             QDir::homePath(),
+                             tr("Misra rule texts file (%1)").arg("*.txt"));
     if (!fileName.isEmpty()) {
         QSettings settings;
         mUI.mEditMisraFile->setText(fileName);

@@ -72,6 +72,8 @@ void ProjectFile::clear()
     mCheckUnknownFunctionReturn.clear();
     safeChecks.clear();
     mVsConfigurations.clear();
+    mTags.clear();
+    mWarningTags.clear();
 }
 
 bool ProjectFile::read(const QString &filename)
@@ -187,6 +189,9 @@ bool ProjectFile::read(const QString &filename)
 
             if (xmlReader.name() == CppcheckXml::TagsElementName)
                 readStringList(mTags, xmlReader, CppcheckXml::TagElementName);
+
+            if (xmlReader.name() == CppcheckXml::TagWarningsElementName)
+                readTagWarnings(xmlReader, xmlReader.attributes().value(QString(), CppcheckXml::TagAttributeName).toString());
 
             if (xmlReader.name() == CppcheckXml::MaxCtuDepthElementName)
                 mMaxCtuDepth = readInt(xmlReader, mMaxCtuDepth);
@@ -717,6 +722,11 @@ void ProjectFile::setSuppressions(const QList<Suppressions::Suppression> &suppre
     mSuppressions = suppressions;
 }
 
+void ProjectFile::addSuppression(const Suppressions::Suppression &suppression)
+{
+    mSuppressions.append(suppression);
+}
+
 void ProjectFile::setAddons(const QStringList &addons)
 {
     mAddons = addons;
@@ -905,6 +915,26 @@ bool ProjectFile::write(const QString &filename)
                     CppcheckXml::ToolElementName);
 
     writeStringList(xmlWriter, mTags, CppcheckXml::TagsElementName, CppcheckXml::TagElementName);
+    if (!mWarningTags.empty()) {
+        QStringList tags;
+        for (const auto wt: mWarningTags) {
+            if (!tags.contains(wt.second))
+                tags.append(wt.second);
+        }
+        for (const QString &tag: tags) {
+            xmlWriter.writeStartElement(CppcheckXml::TagWarningsElementName);
+            xmlWriter.writeAttribute(CppcheckXml::TagAttributeName, tag);
+            QStringList warnings;
+            for (const auto wt: mWarningTags) {
+                if (wt.second == tag) {
+                    xmlWriter.writeStartElement(CppcheckXml::WarningElementName);
+                    xmlWriter.writeAttribute(CppcheckXml::CppcheckIdAttributeName, QString::number(wt.first));
+                    xmlWriter.writeEndElement();
+                }
+            }
+            xmlWriter.writeEndElement();
+        }
+    }
 
     xmlWriter.writeEndDocument();
     file.close();

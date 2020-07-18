@@ -309,6 +309,9 @@ public:
      */
     void setSuppressions(const QList<Suppressions::Suppression> &suppressions);
 
+    /** Add suppression */
+    void addSuppression(const Suppressions::Suppression &suppression);
+
     /**
      * @brief Set list of addons.
      * @param addons List of addons.
@@ -549,9 +552,14 @@ private:
     bool mClangTidy;
 
     /**
-     * @brief Warning tags
+     * @brief Tags
      */
     QStringList mTags;
+
+    /**
+     * @brief Warning tags
+     */
+    std::map<std::size_t, QString> mWarningTags;
 
     /** Max CTU depth */
     int mMaxCtuDepth;

@@ -363,8 +363,6 @@ void Suppressions::dump(std::ostream & out) const
     out << "  </suppressions>" << std::endl;
 }
 
-#include <iostream>
-
 std::list<Suppressions::Suppression> Suppressions::getUnmatchedLocalSuppressions(const std::string &file) const
 {
     std::list<Suppression> result;
