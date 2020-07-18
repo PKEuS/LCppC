@@ -627,10 +627,6 @@ bool CheckUninitVar::checkScopeForVariable(const Token *tok, const Variable& var
                     // Goto ')'
                     tok = tok->linkAt(2);
 
-                    if (!tok)
-                        // bailout : invalid code / bad tokenizer
-                        break;
-
                     if (initcond)
                         // variable is initialized in while-condition
                         return true;
