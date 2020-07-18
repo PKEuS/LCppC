@@ -317,7 +317,13 @@ public:
      */
     static bool Match(const Token *tok, const char pattern[], unsigned int varid = 0);
 
+    /**
+     * @return Token of last $ in a matching Token::Match call
+     *
+     * Token::Match() with $ in pattern has to be called before
+     **/
     static const Token* matchResult();
+    static void setMatchResult(const Token* tok);
 
     /**
      * @return length of C-string.

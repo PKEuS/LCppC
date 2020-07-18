@@ -130,7 +130,7 @@ class MatchCompiler:
         else:
             arg2 = ''
             if varid:
-                arg2 = ', const int varid'
+                arg2 = ', const unsigned int varid'
 
             ret = '// pattern: ' + pattern + '\n'
             ret += 'static bool match' + \
@@ -144,7 +144,12 @@ class MatchCompiler:
             if tok == '':
                 continue
             ret += gotoNextToken
-            gotoNextToken = '    tok = tok->next();\n'
+
+            if tok[0] == '@' and len(tok) > 1:
+                gotoNextToken = '    if (!tok->link()) ' + returnStatement + '    tok = tok->link()->next();\n'
+                tok = tok[1:]
+            else:
+                gotoNextToken = '    tok = tok->next();\n'
 
             # if varid is provided, check that it's non-zero on first use
             if varid and '%varid%' in tok and not checked_varid:
@@ -187,6 +192,10 @@ class MatchCompiler:
                 ret += '    if (tok && tok->str() == MatchCompiler::makeConstString("' + tok[2:] + '"))\n'
                 ret += '        ' + returnStatement
                 gotoNextToken = '    tok = tok ? tok->next() : nullptr;\n'
+
+            elif tok == "$":
+                ret += '    Token::setMatchResult(tok);\n'
+                gotoNextToken = ''
 
             else:
                 negatedTok = "!" + self._compileCmd(tok)
@@ -298,7 +307,7 @@ class MatchCompiler:
             is_simplematch, verifyNumber, pattern, patternNumber, varId):
         more_args = ''
         if varId:
-            more_args = ', const int varid'
+            more_args = ', const unsigned int varid'
 
         ret = 'static bool match_verify' + \
             str(verifyNumber) + '(const Token *tok' + more_args + ') {\n'
@@ -377,10 +386,11 @@ class MatchCompiler:
         return (
             line[:start_pos] + functionName + str(
                 patternNumber) + '(' + tok + more_args + ')' + line[start_pos + end_pos:]
-        )
+        ), False
 
     def _replaceTokenMatch(self, line, linenr, filename):
-        while True:
+        breakout = False
+        while not breakout:
             is_simplematch = False
             pos1 = line.find('Token::Match(')
             if pos1 == -1:
@@ -410,7 +420,7 @@ class MatchCompiler:
                 break  # Non-const pattern - bailout
 
             pattern = res.group(1)
-            line = self._replaceSpecificTokenMatch(
+            line, breakout = self._replaceSpecificTokenMatch(
                 is_simplematch,
                 line,
                 pos1,
@@ -547,7 +557,7 @@ class MatchCompiler:
             # Function prototypes:
             #     Token *findsimplematch(const Token *tok, const char pattern[]);
             #     Token *findsimplematch(const Token *tok, const char pattern[], const Token *end);
-            #     Token *findmatch(const Token *tok, const char pattern[], int varId = 0);
+            #     Token *findmatch(const Token *tok, const char pattern[], unsigned int varId = 0);
             # Token *findmatch(const Token *tok, const char pattern[], const
             # Token *end, int varId = 0);
             endToken = None

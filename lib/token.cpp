@@ -732,6 +732,10 @@ const Token* Token::matchResult()
 {
     return lastMatchResult;
 }
+void Token::setMatchResult(const Token* tok)
+{
+    lastMatchResult = tok;
+}
 
 unsigned int Token::getStrLength(const Token *tok)
 {
