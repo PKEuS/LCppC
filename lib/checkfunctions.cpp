@@ -436,7 +436,7 @@ void CheckFunctions::checkLibraryMatchFunctions()
 
     bool insideNew = false;
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
-        if (!tok->scope() || !tok->scope()->isExecutable())
+        if (!tok->scope()->isExecutable())
             continue;
 
         if (tok->str() == "new")

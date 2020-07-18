@@ -450,6 +450,8 @@ void SymbolDatabase::createSymbolDatabaseFindAllScopes()
         else if (tok == scope->bodyEnd) {
             access.erase(scope);
             scope = const_cast<Scope*>(scope->nestedIn);
+            if (!scope)
+                mTokenizer->syntaxError(tok);
             continue;
         }
 
@@ -1536,7 +1538,7 @@ SymbolDatabase::~SymbolDatabase()
 
 bool SymbolDatabase::isFunction(const Token *tok, const Scope* outerScope, const Token **funcStart, const Token **argStart, const Token** declEnd) const
 {
-    if (tok->varId())
+    if (tok->varId() || (tok->isKeyword() && !tok->isOperatorKeyword()))
         return false;
 
     // function returning function pointer? '... ( ... %name% ( ... ))( ... ) {'
@@ -2438,8 +2440,7 @@ std::vector<const Token*> Function::findReturns(const Function* f)
     if (!scope)
         return result;
     for (const Token* tok = scope->bodyStart->next(); tok && tok != scope->bodyEnd; tok = tok->next()) {
-        if (tok->str() == "{" && tok->scope() &&
-            (tok->scope()->type == Scope::eLambda || tok->scope()->type == Scope::eClass)) {
+        if (tok->str() == "{" && (tok->scope()->type == Scope::eLambda || tok->scope()->type == Scope::eClass)) {
             tok = tok->link();
             continue;
         }

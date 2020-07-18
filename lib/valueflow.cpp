@@ -1700,7 +1700,7 @@ static void valueFlowReverse(TokenList *tokenlist,
                     } else
                         values.push_back(val);
                     const Token* startForwardToken = nextAfterAstRightmostLeaf(tok2->next());
-                    const Token* endForwardToken = tok->scope() ? tok->scope()->bodyEnd : tok;
+                    const Token* endForwardToken = tok->scope()->bodyEnd;
                     valueFlowForward(const_cast<Token*>(startForwardToken),
                                      endForwardToken,
                                      assignTok,

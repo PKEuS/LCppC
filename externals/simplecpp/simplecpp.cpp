@@ -2654,7 +2654,7 @@ void simplecpp::preprocess(simplecpp::TokenList &output, const simplecpp::TokenL
                     if (dui.undefined.find(macro.name()) == dui.undefined.end()) {
                         std::map<TokenString, Macro>::iterator it = macros.find(macro.name());
                         if (it == macros.end())
-                            macros.insert(std::pair<TokenString, Macro>(macro.name(), macro));
+                            macros.emplace(macro.name(), macro);
                         else
                             it->second = macro;
                     }
