@@ -42,7 +42,6 @@
 #include <iostream>
 #include <set>
 #include <stack>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 //---------------------------------------------------------------------------
@@ -240,7 +239,7 @@ bool Tokenizer::duplicateTypedef(Token *tok, const Token *name, const Token *typ
 {
     const Token* starttok = tok;
     // check for an end of definition
-    if (tok && Token::Match(tok->next(), ";|,|[|=|)|>|(|{")) {
+    if (tok && Token::Match(tok->next(), "[;,[=)>({]")) {
         const Token * end = tok->next();
 
         if (end->str() == "[") {
@@ -5962,7 +5961,7 @@ void Tokenizer::simplifyVariableMultipleAssign()
 }
 
 // Binary operators simplification map
-static const std::map<std::string, std::string> cAlternativeTokens = {
+static const std::map<std::string, const char*> cAlternativeTokens = {
     std::make_pair("and", "&&")
     , std::make_pair("and_eq", "&=")
     , std::make_pair("bitand", "&")
@@ -6016,7 +6015,7 @@ bool Tokenizer::simplifyCAlternativeTokens()
         if (!tok->isName())
             continue;
 
-        const std::map<std::string, std::string>::const_iterator cOpIt = cAlternativeTokens.find(tok->str());
+        const std::map<std::string, const char*>::const_iterator cOpIt = cAlternativeTokens.find(tok->str());
         if (cOpIt != cAlternativeTokens.end()) {
             if (!Token::Match(tok->previous(), "%name%|%num%|%char%|)|]|> %name% %name%|%num%|%char%|%op%|("))
                 continue;
@@ -6311,7 +6310,7 @@ bool Tokenizer::simplifyRedundantParentheses()
 
 void Tokenizer::simplifyTypeIntrinsics()
 {
-    static const std::unordered_map<std::string, std::string> intrinsics = {
+    static const std::map<std::string, const char*> intrinsics = {
         { "__has_nothrow_assign", "has_nothrow_assign" },
         { "__has_nothrow_constructor", "has_nothrow_constructor" },
         { "__has_nothrow_copy", "has_nothrow_copy" },
@@ -8040,7 +8039,7 @@ void Tokenizer::simplifyMicrosoftMemoryFunctions()
 namespace {
     struct triplet {
         triplet(const char* m, const char* u) :  mbcs(m), unicode(u) {}
-        std::string mbcs, unicode;
+        const char* mbcs, *unicode;
     };
 
     const std::map<std::string, triplet> apis = {
