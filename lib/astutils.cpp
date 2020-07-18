@@ -1477,7 +1477,7 @@ bool isVariableChanged(const Token *tok, int indirect, const Settings *settings,
         bool isConst = var && var->isConst();
         if (!isConst) {
             const ValueType * valueType = var->valueType();
-            isConst = (valueType && valueType->pointer == 1 && valueType->constness == 1);
+            isConst = (valueType && valueType->pointer == 1 && (valueType->constness & 1));
         }
 
         const Token *ftok = tok->tokAt(2);
