@@ -19,6 +19,7 @@
 //---------------------------------------------------------------------------
 #include "checkexceptionsafety.h"
 
+#include "astutils.h"
 #include "settings.h"
 #include "symboldatabase.h"
 
@@ -129,8 +130,8 @@ void CheckExceptionSafety::deallocThrow()
                         deallocThrowError(throwToken, tok2->str());
                     break;
                 }
-                // Variable passed to function. Assume it becomes assigned -> Bail out
-                else if (Token::Match(tok2, "[,(] &| %varid% [,)]", varid)) // TODO: No bailout if passed by value or as const reference
+                // Variable passed to function and seems to be re-assigned
+                else if (Token::Match(tok2, "[(,] &| $ %varid% [,)]", varid) && isVariableChangedByFunctionCall(Token::matchResult(), 0, mSettings))
                     break;
             }
         }

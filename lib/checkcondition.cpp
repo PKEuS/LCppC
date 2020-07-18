@@ -114,32 +114,6 @@ void CheckCondition::assignIf()
     }
 }
 
-static bool isParameterChanged(const Token *partok)
-{
-    bool addressOf = Token::Match(partok, "[(,] &");
-    int argumentNumber = 0;
-    const Token *ftok;
-    for (ftok = partok; ftok && ftok->str() != "("; ftok = ftok->previous()) {
-        if (ftok->str() == ")")
-            ftok = ftok->link();
-        else if (argumentNumber == 0U && ftok->str() == "&")
-            addressOf = true;
-        else if (ftok->str() == ",")
-            argumentNumber++;
-    }
-    ftok = ftok ? ftok->previous() : nullptr;
-    if (!(ftok && ftok->function()))
-        return true;
-    const Variable *par = ftok->function()->getArgumentVar(argumentNumber);
-    if (!par)
-        return true;
-    if (par->isConst())
-        return false;
-    if (addressOf || par->isReference() || par->isPointer())
-        return true;
-    return false;
-}
-
 /** parse scopes recursively */
 bool CheckCondition::assignIfParseScope(const Token * const assignTok,
                                         const Token * const startTok,
@@ -166,7 +140,7 @@ bool CheckCondition::assignIfParseScope(const Token * const assignTok,
         }
         if (Token::Match(tok2, "++|-- %varid%", varid) || Token::Match(tok2, "%varid% ++|--", varid))
             return true;
-        if (Token::Match(tok2, "[(,] &| %varid% [,)]", varid) && isParameterChanged(tok2))
+        if (Token::Match(tok2, "[(,] &| $ %varid% [,)]", varid) && isVariableChangedByFunctionCall(Token::matchResult(), 0, mSettings))
             return true;
         if (tok2->str() == "}")
             return false;
@@ -787,7 +761,7 @@ void CheckCondition::multiCondition2()
                         if (!function || !function->isConst())
                             break;
                     }
-                    if (Token::Match(tok->previous(), "[(,] %name% [,)]") && isParameterChanged(tok))
+                    if (Token::Match(tok->previous(), "[(,] %name% [,)]") && isVariableChangedByFunctionCall(tok, 0, mSettings))
                         break;
                 }
             }

@@ -180,6 +180,15 @@ bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, un
  */
 bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, const Settings *settings, bool *inconclusive);
 
+/** Is variable changed by function call?
+ * In case the answer of the question is inconclusive, e.g. because the function declaration is not known
+ * the return value is true
+ *
+ * @param tok           token of variable in function call
+ * @param settings      program settings
+ */
+bool isVariableChangedByFunctionCall(const Token* tok, unsigned int indirect, const Settings* settings);
+
 /** Is variable changed in block of code? */
 bool isVariableChanged(const Token *start, const Token *end, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
 

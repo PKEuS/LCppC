@@ -36,6 +36,10 @@ Improvements:
 
     - Usage of mismatching iterators
 
+    - Detect known conditions when sizeof is involved (also in Cppcheck 2.2)
+
+ - Improved detection whether a function modifies its parameters in various checks
+
  - A couple of small performance and memory usage optimizations
 
  - Avoid false positives caused by #if/ifdef in several checks (also in Cppcheck 2.2)
@@ -57,6 +61,8 @@ Bugfixes:
   - The check for correct return type of operator=, removed in Cppcheck 2.2, was kept in LCppC.
 
   - LCppC retained the approach on comparison of boolean expressions with integerns from CppCheck 2.1 and earlier.
+
+  - The "cppcheck warning id" introduced in Cppcheck 2.2 is not part of LCppC.
 
 
 -----------------------------

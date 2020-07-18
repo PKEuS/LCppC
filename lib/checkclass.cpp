@@ -806,7 +806,7 @@ void CheckClass::initializeVarList(const Function &func, std::list<const Functio
                     for (const Token *tok2 = ftok; tok2; tok2 = tok2->next()) {
                         if (Token::Match(tok2, "[;{}]"))
                             break;
-                        if (Token::Match(tok2, "[(,] &| $ %var% [,)]")) {
+                        if (Token::Match(tok2, "[(,] &| $ %var% [,)]") && isVariableChangedByFunctionCall(Token::matchResult(), 0, mSettings)) {
                             tok2 = Token::matchResult();
                             assignVar(tok2->varId(), scope, usage);
                         }

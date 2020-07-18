@@ -143,6 +143,24 @@ private:
               "    throw 1;\n"
               "}", true);
         ASSERT_EQUALS("", errout.str());
+
+        check("void reset(int* p);\n"
+              "void f() {\n"
+              "    static int* p = 0;\n"
+              "    delete p;\n"
+              "    reset(p);\n"
+              "    throw 1;\n"
+              "}", true);
+        ASSERT_EQUALS("[test.cpp:6]: (warning) Exception thrown in invalid state, 'p' points at deallocated memory.\n", errout.str());
+
+        check("void reset(int** p);\n"
+              "void f() {\n"
+              "    static int* p = 0;\n"
+              "    delete p;\n"
+              "    reset(&p);\n"
+              "    throw 1;\n"
+              "}", true);
+        ASSERT_EQUALS("", errout.str());
     }
 
     void deallocThrow3() {

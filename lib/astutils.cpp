@@ -1433,6 +1433,12 @@ bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, co
     return !arg->isConst() && arg->isReference();
 }
 
+bool isVariableChangedByFunctionCall(const Token* tok, unsigned int indirect, const Settings* settings)
+{
+    bool inconclusive = false;
+    return isVariableChangedByFunctionCall(tok, indirect, settings, &inconclusive) || inconclusive;
+}
+
 bool isVariableChanged(const Token *tok, int indirect, const Settings *settings, bool cpp, int depth)
 {
     if (!tok)
