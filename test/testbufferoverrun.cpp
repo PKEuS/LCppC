@@ -265,7 +265,7 @@ private:
         // Access array and then check if the used index is within bounds
         TEST_CASE(arrayIndexThenCheck);
 
-        // TODO TEST_CASE(bufferNotZeroTerminated);
+        TEST_CASE(bufferNotZeroTerminated);
 
         TEST_CASE(negativeMemoryAllocationSizeError); // #389
         TEST_CASE(negativeArraySize);
@@ -4192,19 +4192,19 @@ private:
               "    char c[6];\n"
               "    strncpy(c,\"hello!\",6);\n"
               "}");
-        ASSERT_EQUALS("[test.cpp:3]: (warning, inconclusive) The buffer 'c' is not null-terminated after the call to strncpy().\n", errout.str());
+        ASSERT_EQUALS("[test.cpp:3]: (warning, inconclusive) The buffer 'c' may not be null-terminated after the call to strncpy().\n", errout.str());
 
         check("void f() {\n"
               "    char c[6];\n"
               "    memcpy(c,\"hello!\",6);\n"
               "}");
-        ASSERT_EQUALS("[test.cpp:3]: (warning, inconclusive) The buffer 'c' is not null-terminated after the call to memcpy().\n", errout.str());
+        TODO_ASSERT_EQUALS("[test.cpp:3]: (warning, inconclusive) The buffer 'c' may not be null-terminated after the call to memcpy().\n", "", errout.str());
 
         check("void f() {\n"
               "    char c[6];\n"
               "    memmove(c,\"hello!\",6);\n"
               "}");
-        ASSERT_EQUALS("[test.cpp:3]: (warning, inconclusive) The buffer 'c' is not null-terminated after the call to memmove().\n", errout.str());
+        TODO_ASSERT_EQUALS("[test.cpp:3]: (warning, inconclusive) The buffer 'c' may not be null-terminated after the call to memmove().\n", "", errout.str());
     }
 
     void negativeMemoryAllocationSizeError() { // #389
