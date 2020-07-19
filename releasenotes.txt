@@ -5,8 +5,8 @@ LCppC - Release Notes
 Version 1.1 - August 2020 (planned)
 ----------------------------
 
-This release focusses on bringing back useful checks that got lost in recent
-years of Cppcheck development and improving existing checks to fix false negatives - 
+This release focuses on bringing back useful checks that got lost in recent years
+of Cppcheck development and improving existing checks to fix false negatives - 
 besides fixing bugs from the first release.
 
 New Features:
@@ -15,6 +15,9 @@ New Features:
    (One half restored functionality from Cppcheck 1.87, the other half is new)
 
  - New Check: Allocation of memory with negative size with new[] or as VLAs
+   (Restored functionality from Cppcheck 1.87)
+
+ - New Check: Detect usage of command line arguments without checking their size
    (Restored functionality from Cppcheck 1.87)
 
  - New Check: Detect incorrect usage of mutexes and lock guards (also in Cppcheck 2.2)
@@ -60,7 +63,7 @@ Bugfixes:
  
   - The check for correct return type of operator=, removed in Cppcheck 2.2, was kept in LCppC.
 
-  - LCppC retained the approach on comparison of boolean expressions with integerns from CppCheck 2.1 and earlier.
+  - LCppC retained the approach on comparison of boolean expressions with integers from CppCheck 2.1 and earlier.
 
   - The "cppcheck warning id" introduced in Cppcheck 2.2 is not part of LCppC.
 

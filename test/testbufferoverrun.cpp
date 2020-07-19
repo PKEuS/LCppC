@@ -255,7 +255,7 @@ private:
         TEST_CASE(crash6);  // Ticket #9024 - crash
         TEST_CASE(crash7);  // Ticket #9073 - crash
 
-        // TODO TEST_CASE(insecureCmdLineArgs);
+        TEST_CASE(insecureCmdLineArgs);
         // TODO TEST_CASE(checkBufferAllocatedWithStrlen);
 
         TEST_CASE(scope);   // handling different scopes

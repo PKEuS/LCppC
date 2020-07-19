@@ -77,6 +77,7 @@ public:
         checkBufferOverrun.stringNotZeroTerminated();
         checkBufferOverrun.objectIndex();
         checkBufferOverrun.negativeArraySize();
+        checkBufferOverrun.checkInsecureCmdLineArgs();
     }
 
     void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
@@ -90,6 +91,7 @@ public:
         c.negativeMemoryAllocationSizeError(nullptr);
         c.negativeArraySizeError(nullptr);
         c.negativeMemoryAllocationSizeError(nullptr);
+        c.cmdLineArgsError(nullptr);
     }
 
     /** @brief Parse current TU and extract file info */
@@ -122,6 +124,9 @@ private:
     void negativeArraySize();
     void negativeArraySizeError(const Token* tok);
     void negativeMemoryAllocationSizeError(const Token* tok); // provide a negative value to memory allocation function
+
+    void checkInsecureCmdLineArgs();
+    void cmdLineArgsError(const Token* tok);
 
     void objectIndex();
     void objectIndexError(const Token *tok, const ValueFlow::Value *v, bool known);

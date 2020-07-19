@@ -50,6 +50,7 @@ namespace {
 //---------------------------------------------------------------------------
 
 // CWE ids used:
+static const CWE CWE119(119U);  // Improper Restriction of Operations within the Bounds of a Memory Buffer
 static const CWE CWE131(131U);  // Incorrect Calculation of Buffer Size
 static const CWE CWE170(170U);  // Improper Null Termination
 static const CWE CWE_ARRAY_INDEX_THEN_CHECK(398U);  // Indicator of Poor Code Quality
@@ -1023,4 +1024,69 @@ void CheckBufferOverrun::negativeMemoryAllocationSizeError(const Token* tok)
                 "Memory allocation size is negative.\n"
                 "Memory allocation size is negative."
                 "Negative allocation size has no specified behaviour.", CWE131, Certainty::safe);
+}
+
+
+//---------------------------------------------------------------------------
+// Checking for buffer overflow caused by copying command line arguments
+// into fixed-sized buffers without checking to make sure that the command
+// line arguments will not overflow the buffer.
+//
+// int main(int argc, char* argv[])
+// {
+//   char prog[10];
+//   strcpy(prog, argv[0]);      <-- Possible buffer overrun
+// }
+//---------------------------------------------------------------------------
+void CheckBufferOverrun::checkInsecureCmdLineArgs()
+{
+    const SymbolDatabase* symbolDatabase = mTokenizer->getSymbolDatabase();
+    const std::size_t functions = symbolDatabase->functionScopes.size();
+    for (std::size_t i = 0; i < functions; ++i) {
+        const Function* function = symbolDatabase->functionScopes[i]->function;
+        if (function && function->name() == "main") {
+            // Get the name of the argv variable
+            const Variable* argcvar = function->getArgumentVar(0);
+            const Variable* argvvar = function->getArgumentVar(1);
+            if (!argcvar || !argcvar)
+                continue;
+            if (!argcvar->valueType() || !argcvar->valueType()->isIntegral())
+                continue;
+            if (!argvvar->isArrayOrPointer() || !Token::Match(argvvar->typeStartToken(), "const| char"))
+                continue;
+
+            // Jump to the opening curly brace
+            const Token* tok = symbolDatabase->functionScopes[i]->bodyStart;
+
+            // Search within main() for possible buffer overruns involving argv
+            for (const Token* end = tok->link(); tok != end; tok = tok->next()) {
+                // If argv is modified or tested, its size may be being limited properly
+                if (tok->variable() == argvvar)
+                    break;
+
+                // Update varid in case the input is copied by strdup()
+                if (Token::Match(tok->tokAt(-2), "%var% = strdup ( %varid%", argvvar->declarationId()))
+                    argvvar = tok->tokAt(-2)->variable();
+
+                // Match common patterns that can result in a buffer overrun
+                // e.g. strcpy(buffer, argv[0])
+                if (Token::Match(tok, "strcpy|strcat (")) {
+                    const Token* nextArgument = tok->tokAt(2)->nextArgument();
+                    if (nextArgument)
+                        tok = nextArgument;
+                    else
+                        continue; // Ticket #7964
+                    if (Token::Match(tok, "* %varid%", argvvar->declarationId()) ||     // e.g. strcpy(buf, * ptr)
+                        Token::Match(tok, "%varid% [", argvvar->declarationId()) ||     // e.g. strcpy(buf, argv[1])
+                        Token::Match(tok, "%varid%", argvvar->declarationId()))         // e.g. strcpy(buf, pointer)
+                        cmdLineArgsError(tok);
+                }
+            }
+        }
+    }
+}
+
+void CheckBufferOverrun::cmdLineArgsError(const Token* tok)
+{
+    reportError(tok, Severity::error, "insecureCmdLineArgs", "Buffer overrun possible for long command line arguments.", CWE119, Certainty::safe);
 }
