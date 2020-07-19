@@ -41,6 +41,192 @@ class TokenList;
 /// @addtogroup Core
 /// @{
 
+
+/**
+ * Token and its full scopename
+ */
+class TokenAndName {
+    Token* mToken;
+    std::string mScope;
+    std::string mName;
+    std::string mFullName;
+    const Token* mNameToken;
+    const Token* mParamEnd;
+    unsigned int mFlags;
+
+    enum {
+        fIsClass = (1 << 0), // class template
+        fIsFunction = (1 << 1), // function template
+        fIsVariable = (1 << 2), // variable template
+        fIsAlias = (1 << 3), // alias template
+        fIsSpecialization = (1 << 4), // user specialized template
+        fIsPartialSpecialization = (1 << 5), // user partial specialized template
+        fIsForwardDeclaration = (1 << 6), // forward declaration
+        fIsVariadic = (1 << 7), // variadic template
+        fIsFriend = (1 << 8), // friend template
+        fFamilyMask = (fIsClass | fIsFunction | fIsVariable)
+    };
+
+    void isClass(bool state) {
+        setFlag(fIsClass, state);
+    }
+    void isFunction(bool state) {
+        setFlag(fIsFunction, state);
+    }
+    void isVariable(bool state) {
+        setFlag(fIsVariable, state);
+    }
+    void isAlias(bool state) {
+        setFlag(fIsAlias, state);
+    }
+    void isSpecialization(bool state) {
+        setFlag(fIsSpecialization, state);
+    }
+    void isPartialSpecialization(bool state) {
+        setFlag(fIsPartialSpecialization, state);
+    }
+    void isForwardDeclaration(bool state) {
+        setFlag(fIsForwardDeclaration, state);
+    }
+    void isVariadic(bool state) {
+        setFlag(fIsVariadic, state);
+    }
+    void isFriend(bool state) {
+        setFlag(fIsFriend, state);
+    }
+
+    /**
+     * Get specified flag state.
+     * @param flag flag to get state of
+     * @return true if flag set or false in flag not set
+     */
+    bool getFlag(unsigned int flag) const {
+        return ((mFlags & flag) != 0);
+    }
+
+    /**
+     * Set specified flag state.
+     * @param flag flag to set state
+     * @param state new state of flag
+     */
+    void setFlag(unsigned int flag, bool state) {
+        mFlags = state ? mFlags | flag : mFlags & ~flag;
+    }
+
+public:
+    /**
+     * Constructor used for instantiations.
+     * \param tok template instantiation name token "name<...>"
+     * \param s full qualification of template(scope)
+     */
+    TokenAndName(Token* token, const std::string& scope);
+    /**
+     * Constructor used for declarations.
+     * \param tok template declaration token "template < ... >"
+     * \param s full qualification of template(scope)
+     * \param nt template name token "template < ... > class name"
+     * \param pe template parameter end token ">"
+     */
+    TokenAndName(Token* token, const std::string& scope, const Token* nameToken, const Token* paramEnd);
+    TokenAndName(const TokenAndName& other);
+    ~TokenAndName();
+
+    bool operator == (const TokenAndName& rhs) const {
+        return mToken == rhs.mToken && mScope == rhs.mScope && mName == rhs.mName && mFullName == rhs.mFullName &&
+               mNameToken == rhs.mNameToken && mParamEnd == rhs.mParamEnd && mFlags == rhs.mFlags;
+    }
+
+    Token* token() const {
+        return mToken;
+    }
+    void token(Token* token) {
+        mToken = token;
+    }
+    const std::string& scope() const {
+        return mScope;
+    }
+    const std::string& name() const {
+        return mName;
+    }
+    const std::string& fullName() const {
+        return mFullName;
+    }
+    const Token* nameToken() const {
+        return mNameToken;
+    }
+    const Token* paramEnd() const {
+        return mParamEnd;
+    }
+    void paramEnd(const Token* end) {
+        mParamEnd = end;
+    }
+
+    bool isClass() const {
+        return getFlag(fIsClass);
+    }
+    bool isFunction() const {
+        return getFlag(fIsFunction);
+    }
+    bool isVariable() const {
+        return getFlag(fIsVariable);
+    }
+    bool isAlias() const {
+        return getFlag(fIsAlias);
+    }
+    bool isSpecialization() const {
+        return getFlag(fIsSpecialization);
+    }
+    bool isPartialSpecialization() const {
+        return getFlag(fIsPartialSpecialization);
+    }
+    bool isForwardDeclaration() const {
+        return getFlag(fIsForwardDeclaration);
+    }
+    bool isVariadic() const {
+        return getFlag(fIsVariadic);
+    }
+    bool isFriend() const {
+        return getFlag(fIsFriend);
+    }
+
+    /**
+     * Get alias start token.
+     * template < ... > using X = foo < ... >;
+     *                            ^
+     * @return alias start token
+     */
+    const Token* aliasStartToken() const;
+
+    /**
+     * Get alias end token.
+     * template < ... > using X = foo < ... >;
+     *                                       ^
+     * @return alias end token
+     */
+    const Token* aliasEndToken() const;
+
+    /**
+     * Is token an alias token?
+     * template < ... > using X = foo < ... >;
+     *                                   ^
+     * @param tok token to check
+     * @return true if alias token, false if not
+     */
+    bool isAliasToken(const Token* tok) const;
+
+    /**
+     * Is declaration the same family (class, function or variable).
+     *
+     * @param decl declaration to compare to
+     * @return true if same family, false if different family
+     */
+    bool isSameFamily(const TokenAndName& decl) const {
+        // Make sure a family flag is set and matches.
+        // This works because at most only one flag will be set.
+        return ((mFlags & fFamilyMask) & (decl.mFlags & fFamilyMask)) != 0;
+    }
+};
+
 /** @brief Simplify templates from the preprocessed and partially simplified code. */
 class CPPCHECKLIB TemplateSimplifier {
 public:
@@ -65,191 +251,6 @@ public:
      * \return number of parameters (invalid parameters => 0)
      */
     static unsigned int templateParameters(const Token *tok);
-
-    /**
-     * Token and its full scopename
-     */
-    class TokenAndName {
-        Token *mToken;
-        std::string mScope;
-        std::string mName;
-        std::string mFullName;
-        const Token *mNameToken;
-        const Token *mParamEnd;
-        unsigned int mFlags;
-
-        enum {
-            fIsClass                 = (1 << 0), // class template
-            fIsFunction              = (1 << 1), // function template
-            fIsVariable              = (1 << 2), // variable template
-            fIsAlias                 = (1 << 3), // alias template
-            fIsSpecialization        = (1 << 4), // user specialized template
-            fIsPartialSpecialization = (1 << 5), // user partial specialized template
-            fIsForwardDeclaration    = (1 << 6), // forward declaration
-            fIsVariadic              = (1 << 7), // variadic template
-            fIsFriend                = (1 << 8), // friend template
-            fFamilyMask              = (fIsClass | fIsFunction | fIsVariable)
-        };
-
-        void isClass(bool state) {
-            setFlag(fIsClass, state);
-        }
-        void isFunction(bool state) {
-            setFlag(fIsFunction, state);
-        }
-        void isVariable(bool state) {
-            setFlag(fIsVariable, state);
-        }
-        void isAlias(bool state) {
-            setFlag(fIsAlias, state);
-        }
-        void isSpecialization(bool state) {
-            setFlag(fIsSpecialization, state);
-        }
-        void isPartialSpecialization(bool state) {
-            setFlag(fIsPartialSpecialization, state);
-        }
-        void isForwardDeclaration(bool state) {
-            setFlag(fIsForwardDeclaration, state);
-        }
-        void isVariadic(bool state) {
-            setFlag(fIsVariadic, state);
-        }
-        void isFriend(bool state) {
-            setFlag(fIsFriend, state);
-        }
-
-        /**
-         * Get specified flag state.
-         * @param flag flag to get state of
-         * @return true if flag set or false in flag not set
-         */
-        bool getFlag(unsigned int flag) const {
-            return ((mFlags & flag) != 0);
-        }
-
-        /**
-         * Set specified flag state.
-         * @param flag flag to set state
-         * @param state new state of flag
-         */
-        void setFlag(unsigned int flag, bool state) {
-            mFlags = state ? mFlags | flag : mFlags & ~flag;
-        }
-
-    public:
-        /**
-         * Constructor used for instantiations.
-         * \param tok template instantiation name token "name<...>"
-         * \param s full qualification of template(scope)
-         */
-        TokenAndName(Token *token, const std::string &scope);
-        /**
-         * Constructor used for declarations.
-         * \param tok template declaration token "template < ... >"
-         * \param s full qualification of template(scope)
-         * \param nt template name token "template < ... > class name"
-         * \param pe template parameter end token ">"
-         */
-        TokenAndName(Token *token, const std::string &scope, const Token *nameToken, const Token *paramEnd);
-        TokenAndName(const TokenAndName& other);
-        ~TokenAndName();
-
-        bool operator == (const TokenAndName & rhs) const {
-            return mToken == rhs.mToken && mScope == rhs.mScope && mName == rhs.mName && mFullName == rhs.mFullName &&
-                   mNameToken == rhs.mNameToken && mParamEnd == rhs.mParamEnd && mFlags == rhs.mFlags;
-        }
-
-        Token * token() const {
-            return mToken;
-        }
-        void token(Token * token) {
-            mToken = token;
-        }
-        const std::string & scope() const {
-            return mScope;
-        }
-        const std::string & name() const {
-            return mName;
-        }
-        const std::string & fullName() const {
-            return mFullName;
-        }
-        const Token * nameToken() const  {
-            return mNameToken;
-        }
-        const Token * paramEnd() const {
-            return mParamEnd;
-        }
-        void paramEnd(const Token *end) {
-            mParamEnd = end;
-        }
-
-        bool isClass() const {
-            return getFlag(fIsClass);
-        }
-        bool isFunction() const {
-            return getFlag(fIsFunction);
-        }
-        bool isVariable() const {
-            return getFlag(fIsVariable);
-        }
-        bool isAlias() const {
-            return getFlag(fIsAlias);
-        }
-        bool isSpecialization() const {
-            return getFlag(fIsSpecialization);
-        }
-        bool isPartialSpecialization() const {
-            return getFlag(fIsPartialSpecialization);
-        }
-        bool isForwardDeclaration() const {
-            return getFlag(fIsForwardDeclaration);
-        }
-        bool isVariadic() const {
-            return getFlag(fIsVariadic);
-        }
-        bool isFriend() const {
-            return getFlag(fIsFriend);
-        }
-
-        /**
-         * Get alias start token.
-         * template < ... > using X = foo < ... >;
-         *                            ^
-         * @return alias start token
-         */
-        const Token * aliasStartToken() const;
-
-        /**
-         * Get alias end token.
-         * template < ... > using X = foo < ... >;
-         *                                       ^
-         * @return alias end token
-         */
-        const Token * aliasEndToken() const;
-
-        /**
-         * Is token an alias token?
-         * template < ... > using X = foo < ... >;
-         *                                   ^
-         * @param tok token to check
-         * @return true if alias token, false if not
-         */
-        bool isAliasToken(const Token *tok) const;
-
-        /**
-         * Is declaration the same family (class, function or variable).
-         *
-         * @param decl declaration to compare to
-         * @return true if same family, false if different family
-         */
-        bool isSameFamily(const TemplateSimplifier::TokenAndName &decl) const {
-            // Make sure a family flag is set and matches.
-            // This works because at most only one flag will be set.
-            return ((mFlags & fFamilyMask) & (decl.mFlags & fFamilyMask)) != 0;
-        }
-    };
 
     /**
      * Find last token of a template declaration.
@@ -496,7 +497,7 @@ private:
     void printOut(
         const TokenAndName &tokenAndName,
         const std::string &indent = "    ") const;
-    void printOut(const std::string &text = "") const;
+    void printOut(const std::string &text = emptyString) const;
 
     Tokenizer *mTokenizer;
     TokenList &mTokenList;

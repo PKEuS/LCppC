@@ -36,7 +36,7 @@ namespace {
     class FindToken {
     public:
         explicit FindToken(const Token *token) : mToken(token) {}
-        bool operator()(const TemplateSimplifier::TokenAndName &tokenAndName) const {
+        bool operator()(const TokenAndName &tokenAndName) const {
             return tokenAndName.token() == mToken;
         }
     private:
@@ -46,7 +46,7 @@ namespace {
     class FindName {
     public:
         explicit FindName(const std::string &name) : mName(name) {}
-        bool operator()(const TemplateSimplifier::TokenAndName &tokenAndName) const {
+        bool operator()(const TokenAndName &tokenAndName) const {
             return tokenAndName.name() == mName;
         }
     private:
@@ -56,7 +56,7 @@ namespace {
     class FindFullName {
     public:
         explicit FindFullName(const std::string &fullName) : mFullName(fullName) {}
-        bool operator()(const TemplateSimplifier::TokenAndName &tokenAndName) const {
+        bool operator()(const TokenAndName &tokenAndName) const {
             return tokenAndName.fullName() == mFullName;
         }
     private:
@@ -64,7 +64,7 @@ namespace {
     };
 }
 
-TemplateSimplifier::TokenAndName::TokenAndName(Token *token, const std::string &scope) :
+TokenAndName::TokenAndName(Token *token, const std::string &scope) :
     mToken(token), mScope(scope), mName(mToken ? mToken->str() : ""),
     mFullName(mScope.empty() ? mName : (mScope + " :: " + mName)),
     mNameToken(nullptr), mParamEnd(nullptr), mFlags(0)
@@ -73,7 +73,7 @@ TemplateSimplifier::TokenAndName::TokenAndName(Token *token, const std::string &
         mToken->templateSimplifierPointer(this);
 }
 
-TemplateSimplifier::TokenAndName::TokenAndName(Token *token, const std::string &scope, const Token *nameToken, const Token *paramEnd) :
+TokenAndName::TokenAndName(Token *token, const std::string &scope, const Token *nameToken, const Token *paramEnd) :
     mToken(token), mScope(scope), mName(nameToken->str()),
     mFullName(mScope.empty() ? mName : (mScope + " :: " + mName)),
     mNameToken(nameToken), mParamEnd(paramEnd), mFlags(0)
@@ -185,7 +185,7 @@ TemplateSimplifier::TokenAndName::TokenAndName(Token *token, const std::string &
         mToken->templateSimplifierPointer(this);
 }
 
-TemplateSimplifier::TokenAndName::TokenAndName(const TokenAndName& other) :
+TokenAndName::TokenAndName(const TokenAndName& other) :
     mToken(other.mToken), mScope(other.mScope), mName(other.mName), mFullName(other.mFullName),
     mNameToken(other.mNameToken), mParamEnd(other.mParamEnd), mFlags(other.mFlags)
 {
@@ -193,27 +193,27 @@ TemplateSimplifier::TokenAndName::TokenAndName(const TokenAndName& other) :
         mToken->templateSimplifierPointer(this);
 }
 
-TemplateSimplifier::TokenAndName::~TokenAndName()
+TokenAndName::~TokenAndName()
 {
     if (mToken && mToken->templateSimplifierPointers())
         mToken->templateSimplifierPointers()->erase(this);
 }
 
-const Token * TemplateSimplifier::TokenAndName::aliasStartToken() const
+const Token * TokenAndName::aliasStartToken() const
 {
     if (mParamEnd)
         return mParamEnd->tokAt(4);
     return nullptr;
 }
 
-const Token * TemplateSimplifier::TokenAndName::aliasEndToken() const
+const Token * TokenAndName::aliasEndToken() const
 {
     if (aliasStartToken())
         return Token::findsimplematch(aliasStartToken(), ";");
     return nullptr;
 }
 
-bool TemplateSimplifier::TokenAndName::isAliasToken(const Token *tok) const
+bool TokenAndName::isAliasToken(const Token *tok) const
 {
     const Token *end = aliasEndToken();
 
@@ -3121,13 +3121,13 @@ void TemplateSimplifier::replaceTemplateUsage(
     const std::vector<std::string> &typeStringsUsedInTemplateInstantiation,
     const std::string &newName)
 {
-    std::list< std::pair<Token *, Token *> > removeTokens;
+    std::vector< std::pair<Token *, Token *> > removeTokens;
     for (Token *nameTok = mTokenList.front(); nameTok; nameTok = nameTok->next()) {
         if (!Token::Match(nameTok, "%name% <") ||
             Token::Match(nameTok, "template|const_cast|dynamic_cast|reinterpret_cast|static_cast"))
             continue;
 
-        std::set<TemplateSimplifier::TokenAndName*>* pointers = nameTok->templateSimplifierPointers();
+        std::set<TokenAndName*>* pointers = nameTok->templateSimplifierPointers();
 
         // check if instantiation matches token instantiation from pointer
         if (pointers && pointers->size()) {
@@ -3219,9 +3219,7 @@ void TemplateSimplifier::replaceTemplateUsage(
     }
 }
 
-static bool specMatch(
-    const TemplateSimplifier::TokenAndName &spec,
-    const TemplateSimplifier::TokenAndName &decl)
+static bool specMatch(const TokenAndName &spec, const TokenAndName &decl)
 {
     // make sure decl is really a declaration
     if (decl.isPartialSpecialization() || decl.isSpecialization() || decl.isAlias() || decl.isFriend())

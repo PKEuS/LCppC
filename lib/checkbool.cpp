@@ -449,8 +449,7 @@ void CheckBool::returnValueOfFunctionReturningBool()
             if (tok->scope()->type == Scope::eLambda) {
                 tok = tok->scope()->bodyEnd;
                 continue;
-            }
-            else if (tok->scope()->isClassOrStruct())
+            } else if (tok->scope()->isClassOrStruct())
                 tok = tok->scope()->bodyEnd;
             else if (Token::simpleMatch(tok, "return") && tok->astOperand1() &&
                      (tok->astOperand1()->getValueGE(2, mSettings) || tok->astOperand1()->getValueLE(-1, mSettings)) &&

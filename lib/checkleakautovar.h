@@ -37,7 +37,7 @@ class Token;
 class Tokenizer;
 
 
-class CPPCHECKLIB VarInfo {
+class VarInfo {
 public:
     enum AllocStatus { OWNED = -2, DEALLOC = -1, NOALLOC = 0, ALLOC = 1 };
     struct AllocInfo {

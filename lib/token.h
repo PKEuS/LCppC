@@ -24,7 +24,6 @@
 #include "config.h"
 #include "mathlib.h"
 #include "valueflow.h"
-#include "templatesimplifier.h"
 #include "utils.h"
 
 #include <cstddef>
@@ -42,6 +41,7 @@ class Type;
 class ValueType;
 class Variable;
 class TokenList;
+class TokenAndName;
 
 /**
  * @brief This struct stores pointers to the front and back tokens of the list this token is in.
@@ -101,7 +101,7 @@ struct TokenImpl {
     static const std::vector<ValueFlow::Value> mEmptyValueList;
 
     // Pointer to a template in the template simplifier
-    std::set<TemplateSimplifier::TokenAndName*>* mTemplateSimplifierPointers;
+    std::set<TokenAndName*>* mTemplateSimplifierPointers;
 
     // Pointer to the object representing this token's scope
     std::shared_ptr<ScopeInfo2> mScopeInfo;
@@ -625,12 +625,12 @@ public:
     unsigned char bits() const {
         return mImpl->mBits;
     }
-    std::set<TemplateSimplifier::TokenAndName*>* templateSimplifierPointers() const {
+    std::set<TokenAndName*>* templateSimplifierPointers() const {
         return mImpl->mTemplateSimplifierPointers;
     }
-    void templateSimplifierPointer(TemplateSimplifier::TokenAndName* tokenAndName) {
+    void templateSimplifierPointer(TokenAndName* tokenAndName) {
         if (!mImpl->mTemplateSimplifierPointers)
-            mImpl->mTemplateSimplifierPointers = new std::set<TemplateSimplifier::TokenAndName*>;
+            mImpl->mTemplateSimplifierPointers = new std::set<TokenAndName*>;
         mImpl->mTemplateSimplifierPointers->insert(tokenAndName);
     }
     void setBits(const unsigned char b) {

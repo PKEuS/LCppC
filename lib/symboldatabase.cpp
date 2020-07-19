@@ -23,6 +23,7 @@
 #include "errorlogger.h"
 #include "platform.h"
 #include "settings.h"
+#include "templatesimplifier.h"
 #include "token.h"
 #include "tokenize.h"
 #include "tokenlist.h"

@@ -22,6 +22,7 @@
 #include "library.h"
 #include "settings.h"
 #include "symboldatabase.h"
+#include "templatesimplifier.h"
 #include "tokenlist.h"
 #include "utils.h"
 
