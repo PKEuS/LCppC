@@ -205,13 +205,13 @@
     <ClCompile Include="testastutils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\lib\astutils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="testsimplifyusing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="testutils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\astutils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

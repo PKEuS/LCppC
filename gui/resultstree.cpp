@@ -191,9 +191,6 @@ bool ResultsTree::addErrorItem(const ErrorItem &item)
     line.message = item.message;
     line.severity = item.severity;
     line.sinceDate = item.sinceDate;
-    if (const ProjectFile *activeProject = ProjectFile::getActiveProject()) {
-        line.tags = activeProject->getWarningTags(item.cppcheckId);
-    }
     //Create the base item for the error and ensure it has a proper
     //file item as a parent
     QStandardItem* fileItem = ensureFileItem(loc.file, item.file0, hide);
