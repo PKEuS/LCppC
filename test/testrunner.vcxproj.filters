@@ -127,9 +127,6 @@
     <ClCompile Include="..\cli\filelister.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\cli\threadexecutor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\cli\cmdlineparser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -229,9 +226,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\cli\filelister.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\cli\threadexecutor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\cli\cmdlineparser.h">

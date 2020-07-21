@@ -40,7 +40,7 @@ class Settings;
  * This class will take a list of filenames and settings and check then
  * all files using threads.
  */
-class ThreadExecutor : public ErrorLogger {
+class CPPCHECKLIB ThreadExecutor : public ErrorLogger {
 public:
     ThreadExecutor(std::list<CTU::CTUInfo>& files, Settings &settings, ErrorLogger &errorLogger);
     ThreadExecutor(const ThreadExecutor &) = delete;

@@ -20,7 +20,6 @@
 
 #include "config.h"
 #include "cppcheck.h"
-#include "cppcheckexecutor.h"
 #include "settings.h"
 #include "suppressions.h"
 
@@ -82,7 +81,7 @@ unsigned int ThreadExecutor::check()
 void ThreadExecutor::threadProc()
 {
     Settings settings = mSettings; // Create one copy per thread to avoid side effects across threads. Might be unnecessary.
-    CppCheck fileChecker(*this, settings, false, CppCheckExecutor::executeCommand);
+    CppCheck fileChecker(*this, settings, false);
 
     for (;;) {
         mFileSync.lock();
@@ -109,7 +108,7 @@ void ThreadExecutor::threadProc()
             mReportSync.lock();
             mProcessedSize += ctu->filesize;
             mProcessedFiles++;
-            CppCheckExecutor::reportStatus(mProcessedFiles, mTotalFiles, mProcessedSize, mTotalFileSize);
+            mErrorLogger.reportStatus(mProcessedFiles, mTotalFiles, mProcessedSize, mTotalFileSize);
             mReportSync.unlock();
         }
 

@@ -52,8 +52,7 @@ public:
      */
     CppCheck(ErrorLogger &errorLogger,
              Settings& settings,
-             bool useGlobalSuppressions,
-             std::function<bool(std::string,std::vector<std::string>,std::string,std::string*)> executeCommand);
+             bool useGlobalSuppressions);
 
     /**
      * @brief Destructor.
@@ -110,8 +109,6 @@ public:
      * @return extra version info, e.g. "04d42151" (Git commit id).
      */
     static const char * extraVersion();
-
-    virtual void reportStatus(unsigned int fileindex, unsigned int filecount, std::size_t sizedone, std::size_t sizetotal);
 
     /**
      * @brief Terminate checking. The checking will be terminated as soon as possible.
@@ -211,8 +208,10 @@ private:
     /** Are there too many configs? */
     bool mTooManyConfigs;
 
-    /** Callback for executing a shell command (exe, args, output) */
-    std::function<bool(std::string,std::vector<std::string>,std::string,std::string*)> mExecuteCommand;
+    /**
+     * Execute a shell command and read the output from it. Returns true if command terminated successfully.
+     */
+    static bool executeCommand(std::string exe, std::vector<std::string> args, std::string redirect, std::string* output);
 };
 
 /// @}

@@ -193,7 +193,7 @@ int CppCheckExecutor::check(int argc, const char* const argv[])
     Preprocessor::missingIncludeFlag = false;
     Preprocessor::missingSystemIncludeFlag = false;
 
-    CppCheck cppCheck(*this, mSettings, true, executeCommand);
+    CppCheck cppCheck(*this, mSettings, true);
 
     if (!parseFromArgs(&cppCheck, argc, argv)) {
         return EXIT_FAILURE;
@@ -1098,37 +1098,3 @@ bool CppCheckExecutor::tryLoadLibrary(Library& destination, const char* basepath
     }
     return true;
 }
-
-/**
- * Execute a shell command and read the output from it. Returns true if command terminated successfully.
- */
-// cppcheck-suppress passedByValue
-bool CppCheckExecutor::executeCommand(std::string exe, std::vector<std::string> args, std::string redirect, std::string *output)
-{
-    output->clear();
-
-    std::string joinedArgs;
-    for (const std::string arg: args) {
-        if (!joinedArgs.empty())
-            joinedArgs += " ";
-        joinedArgs += arg;
-    }
-
-#ifdef _WIN32
-    // Extra quoutes are needed in windows if filename has space
-    if (exe.find(" ") != std::string::npos)
-        exe = "\"" + exe + "\"";
-    const std::string cmd = exe + " " + joinedArgs + " " + redirect;
-    std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd.c_str(), "r"), _pclose);
-#else
-    const std::string cmd = exe + " " + joinedArgs + " " + redirect;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
-#endif
-    if (!pipe)
-        return false;
-    char buffer[1024];
-    while (fgets(buffer, sizeof(buffer), pipe.get()) != nullptr)
-        *output += buffer;
-    return true;
-}
-

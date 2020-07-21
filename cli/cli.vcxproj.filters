@@ -20,9 +20,6 @@
     <ClInclude Include="cmdlineparser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="threadexecutor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="cppcheckexecutor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -32,9 +29,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="threadexecutor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="cppcheckexecutor.cpp">

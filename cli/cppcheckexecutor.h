@@ -90,7 +90,7 @@ public:
      * @param sizedone The sum of sizes of the files checked.
      * @param sizetotal The total sizes of the files.
      */
-    static void reportStatus(std::size_t fileindex, std::size_t filecount, std::size_t sizedone, std::size_t sizetotal);
+    void reportStatus(std::size_t fileindex, std::size_t filecount, std::size_t sizedone, std::size_t sizetotal) override;
 
     /**
      * @param exception_output Output file
@@ -106,11 +106,6 @@ public:
     * @return false, if an error occurred (except unknown XML elements)
     */
     static bool tryLoadLibrary(Library& destination, const char* basepath, const char* filename);
-
-    /**
-     * Execute a shell command and read the output from it. Returns true if command terminated successfully.
-     */
-    static bool executeCommand(std::string exe, std::vector<std::string> args, std::string redirect, std::string *output);
 
     /**
      * Helper function to supply settings. This can be used for testing.

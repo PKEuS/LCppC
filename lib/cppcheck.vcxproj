@@ -90,6 +90,7 @@
     <ClCompile Include="suppressions.cpp" />
     <ClCompile Include="symboldatabase.cpp" />
     <ClCompile Include="templatesimplifier.cpp" />
+    <ClCompile Include="threadexecutor.cpp" />
     <ClCompile Include="timer.cpp" />
     <ClCompile Include="token.cpp" />
     <ClCompile Include="tokenize.cpp" />
@@ -146,6 +147,7 @@
     <ClInclude Include="suppressions.h" />
     <ClInclude Include="symboldatabase.h" />
     <ClInclude Include="templatesimplifier.h" />
+    <ClInclude Include="threadexecutor.h" />
     <ClInclude Include="timer.h" />
     <ClInclude Include="token.h" />
     <ClInclude Include="tokenize.h" />

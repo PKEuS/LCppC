@@ -180,7 +180,7 @@ private:
         errout.str("");
 
         Settings settings;
-        CppCheck cppCheck(*this, settings, true, nullptr);
+        CppCheck cppCheck(*this, settings, true);
         settings.exitCode = 1;
         settings.inlineSuppressions = true;
         if (suppression != "unusedFunction")
@@ -631,7 +631,7 @@ private:
         errout.str("");
 
         Settings settings;
-        CppCheck cppCheck(*this, settings, false, nullptr); // <- do not "use global suppressions". pretend this is a thread that just checks a file.
+        CppCheck cppCheck(*this, settings, false); // <- do not "use global suppressions". pretend this is a thread that just checks a file.
         settings.nomsg.addSuppressionLine("uninitvar");
         settings.exitCode = 1;
 
@@ -667,7 +667,7 @@ private:
         errout.str("");
 
         Settings settings;
-        CppCheck cppCheck(*this, settings, true, nullptr);
+        CppCheck cppCheck(*this, settings, true);
         settings.severity.enable(Severity::style);
         settings.inlineSuppressions = true;
         settings.relativePaths = true;

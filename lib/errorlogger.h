@@ -286,6 +286,21 @@ public:
     }
 
     /**
+     * Information about how many files have been checked
+     *
+     * @param fileindex This many files have been checked.
+     * @param filecount This many files there are in total.
+     * @param sizedone The sum of sizes of the files checked.
+     * @param sizetotal The total sizes of the files.
+     */
+    virtual void reportStatus(std::size_t fileindex, std::size_t filecount, std::size_t sizedone, std::size_t sizetotal) {
+        (void)fileindex;
+        (void)filecount;
+        (void)sizedone;
+        (void)sizetotal;
+    }
+
+    /**
      * Report unmatched suppressions
      * @param unmatched list of unmatched suppressions (from Settings::Suppressions::getUnmatched(Local|Global)Suppressions)
      * @return true is returned if errors are reported

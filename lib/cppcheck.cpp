@@ -230,10 +230,42 @@ static std::string executeAddon(const AddonInfo &addonInfo,
     return result;
 }
 
+/**
+ * Execute a shell command and read the output from it. Returns true if command terminated successfully.
+ */
+// cppcheck-suppress passedByValue
+bool CppCheck::executeCommand(std::string exe, std::vector<std::string> args, std::string redirect, std::string* output)
+{
+    output->clear();
+
+    std::string joinedArgs;
+    for (const std::string arg : args) {
+        if (!joinedArgs.empty())
+            joinedArgs += " ";
+        joinedArgs += arg;
+    }
+
+#ifdef _WIN32
+    // Extra quoutes are needed in windows if filename has space
+    if (exe.find(" ") != std::string::npos)
+        exe = "\"" + exe + "\"";
+    const std::string cmd = exe + " " + joinedArgs + " " + redirect;
+    std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd.c_str(), "r"), _pclose);
+#else
+    const std::string cmd = exe + " " + joinedArgs + " " + redirect;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
+#endif
+    if (!pipe)
+        return false;
+    char buffer[1024];
+    while (fgets(buffer, sizeof(buffer), pipe.get()) != nullptr)
+        *output += buffer;
+    return true;
+}
+
 CppCheck::CppCheck(ErrorLogger &errorLogger,
                    Settings& settings,
-                   bool useGlobalSuppressions,
-                   std::function<bool(std::string,std::vector<std::string>,std::string,std::string*)> executeCommand)
+                   bool useGlobalSuppressions)
     : mSettings(settings)
     , mErrorLogger(errorLogger)
     , mCTU(nullptr)
@@ -241,7 +273,6 @@ CppCheck::CppCheck(ErrorLogger &errorLogger,
     , mSuppressInternalErrorFound(false)
     , mUseGlobalSuppressions(useGlobalSuppressions)
     , mTooManyConfigs(false)
-    , mExecuteCommand(executeCommand)
 {
 }
 
@@ -655,7 +686,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                     continue;
                 }
                 const std::string results =
-                    executeAddon(addonInfo, mSettings.addonPython, dumpFile, mExecuteCommand);
+                    executeAddon(addonInfo, mSettings.addonPython, dumpFile, executeCommand);
                 std::istringstream istr(results);
                 std::string line;
 
@@ -1182,11 +1213,6 @@ void CppCheck::reportInfo(const ErrorMessage &msg)
     const Suppressions::ErrorMessage &errorMessage = msg.toSuppressionsErrorMessage();
     if (!mSettings.nomsg.isSuppressed(errorMessage))
         mErrorLogger.reportInfo(msg);
-}
-
-void CppCheck::reportStatus(unsigned int /*fileindex*/, unsigned int /*filecount*/, std::size_t /*sizedone*/, std::size_t /*sizetotal*/)
-{
-
 }
 
 void CppCheck::getErrorMessages()
