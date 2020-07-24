@@ -305,6 +305,8 @@ unsigned int CppCheck::check(CTU::CTUInfo* ctu, const std::string &content)
 
 unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
 {
+    Timer timer0("CppCheck::checkCTU", mSettings.showtime, &s_timerResults);
+
     mCTU = ctu;
     mExitCode = 0;
     mSuppressInternalErrorFound = false;
@@ -547,7 +549,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
 
             Tokenizer tokenizer(&mSettings, this);
             tokenizer.setPreprocessor(&preprocessor);
-            if (mSettings.showtime != SHOWTIME_MODES::SHOWTIME_NONE)
+            if (mSettings.showtime != Settings::SHOWTIME_NONE)
                 tokenizer.setTimerResults(&s_timerResults);
 
             try {
@@ -577,10 +579,8 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 checkRawTokens(tokenizer);
 
                 // Simplify tokens into normal form, skip rest of iteration if failed
-                Timer timer2("Tokenizer::simplifyTokens0", mSettings.showtime, &s_timerResults);
                 if (!tokenizer.simplifyTokens0(mCurrentConfig))
                     continue;
-                timer2.stop();
 
                 // Skip if we already met the same token list
                 if (mSettings.force || mSettings.maxConfigs > 1) {
@@ -592,10 +592,8 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                     }
                 }
 
-                Timer timer3("Tokenizer::simplifyTokens1", mSettings.showtime, &s_timerResults);
                 if (!tokenizer.simplifyTokens1())
                     continue;
-                timer3.stop();
 
                 // dump xml if --dump
                 if ((mSettings.dump || !mSettings.addons.empty()) && fdump.is_open()) {

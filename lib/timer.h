@@ -21,67 +21,73 @@
 //---------------------------------------------------------------------------
 
 #include "config.h"
+#include "Settings.h"
 
 #include <ctime>
 #include <map>
 #include <string>
-
-enum class SHOWTIME_MODES {
-    SHOWTIME_NONE = 0,
-    SHOWTIME_FILE,
-    SHOWTIME_SUMMARY,
-    SHOWTIME_TOP5
-};
-
-class CPPCHECKLIB TimerResultsIntf {
-public:
-    virtual ~TimerResultsIntf() { }
-
-    virtual void addResults(const std::string& str, std::clock_t clocks) = 0;
-};
+#include <vector>
 
 struct TimerResultsData {
     std::clock_t mClocks;
-    long mNumberOfResults;
+    std::clock_t mAdditionalClocks;
+    std::size_t mNumberOfResults;
 
     TimerResultsData()
         : mClocks(0)
+        , mAdditionalClocks(0)
         , mNumberOfResults(0) {
     }
 
     double seconds() const {
-        const double ret = (double)((unsigned long)mClocks) / (double)CLOCKS_PER_SEC;
+        const double ret = (double)(mClocks) / (double)CLOCKS_PER_SEC;
+        return ret;
+    }
+
+    double fullSeconds() const {
+        const double ret = (double)(mClocks + mAdditionalClocks) / (double)CLOCKS_PER_SEC;
         return ret;
     }
 };
 
-class CPPCHECKLIB TimerResults : public TimerResultsIntf {
+class Timer;
+
+class CPPCHECKLIB TimerResults {
 public:
     TimerResults() {
     }
 
-    void showResults(SHOWTIME_MODES mode) const;
-    void addResults(const std::string& str, std::clock_t clocks) override;
+    void showResults(Settings::SHOWTIME_MODES mode) const;
+    void start(Timer* timer, bool intermediate);
+    void stop(Timer* timer, std::clock_t clocks, bool intermediate);
 
 private:
-    std::map<std::string, struct TimerResultsData> mResults;
+    std::map<std::string, TimerResultsData> mResults;
+    std::vector<Timer*> mHierachy;
 };
 
 class CPPCHECKLIB Timer {
 public:
-    Timer(const std::string& str, SHOWTIME_MODES showtimeMode, TimerResultsIntf* timerResults = nullptr);
+    Timer(const std::string& str, Settings::SHOWTIME_MODES showtimeMode, TimerResults* timerResults = nullptr);
     ~Timer();
-    void stop();
+    void start(bool intermediate = false);
+    void stop(bool intermediate = false);
+
+    const std::string& getName() const {
+        return mStr;
+    }
 
 private:
     Timer(const Timer& other) = delete;
     Timer& operator=(const Timer&) = delete;
 
     const std::string mStr;
-    TimerResultsIntf* mTimerResults;
+    TimerResults* mTimerResults;
     std::clock_t mStart;
-    const SHOWTIME_MODES mShowTimeMode;
+    std::clock_t mAccumulated;
+    const Settings::SHOWTIME_MODES mShowTimeMode;
     bool mStopped;
 };
+
 //---------------------------------------------------------------------------
 #endif // timerH

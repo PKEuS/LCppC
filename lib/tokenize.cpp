@@ -575,6 +575,8 @@ void Tokenizer::simplifyUsingToTypedef()
 
 void Tokenizer::simplifyTypedef()
 {
+    Timer t("Tokenizer::simplifyTypedef", mSettings->showtime, mTimerResults);
+
     // Convert "using a::b;" to corresponding typedef statements
     simplifyUsingToTypedef();
 
@@ -2393,6 +2395,8 @@ void Tokenizer::createTokens(simplecpp::TokenList&& tokenList)
 
 bool Tokenizer::simplifyTokens0(const std::string& configuration)
 {
+    Timer timer2("Tokenizer::simplifyTokens0", mSettings->showtime, mTimerResults);
+
     mConfiguration = configuration;
 
     // Fill the map mTypeSize..
@@ -2403,36 +2407,26 @@ bool Tokenizer::simplifyTokens0(const std::string& configuration)
 
 bool Tokenizer::simplifyTokens1()
 {
+    Timer timer3("Tokenizer::simplifyTokens1", mSettings->showtime, mTimerResults);
+
     if (!simplifyTokenList1(list.getFiles().front().c_str()))
         return false;
 
-    if (mTimerResults) {
-        Timer t("Tokenizer::simplifyTokens1::createAst", mSettings->showtime, mTimerResults);
-        list.createAst();
-        list.validateAst();
-    } else {
+    {
+        Timer t("Tokenizer::createAst", mSettings->showtime, mTimerResults);
         list.createAst();
         list.validateAst();
     }
 
-    if (mTimerResults) {
-        Timer t("Tokenizer::simplifyTokens1::createSymbolDatabase", mSettings->showtime, mTimerResults);
-        createSymbolDatabase();
-    } else {
-        createSymbolDatabase();
-    }
+    createSymbolDatabase();
 
-    if (mTimerResults) {
-        Timer t("Tokenizer::simplifyTokens1::setValueType", mSettings->showtime, mTimerResults);
-        mSymbolDatabase->setValueTypeInTokenList(true);
-    } else {
+    {
+        Timer t("Tokenizer::setValueTypeInTokenList", mSettings->showtime, mTimerResults);
         mSymbolDatabase->setValueTypeInTokenList(true);
     }
 
-    if (mTimerResults) {
-        Timer t("Tokenizer::simplifyTokens1::ValueFlow", mSettings->showtime, mTimerResults);
-        ValueFlow::setValues(&list, mSymbolDatabase, mErrorLogger, mSettings);
-    } else {
+    {
+        Timer t("Tokenizer::ValueFlow", mSettings->showtime, mTimerResults);
         ValueFlow::setValues(&list, mSymbolDatabase, mErrorLogger, mSettings);
     }
 
@@ -3071,9 +3065,7 @@ void Tokenizer::calculateScopes()
 
 void Tokenizer::simplifyTemplates()
 {
-    if (isC())
-        return;
-
+    Timer t("Tokenizer::simplifyTemplates", mSettings->showtime, mTimerResults);
     mTemplateSimplifier->simplifyTemplates(
 #ifdef MAXTIME
         mMaxTime,
@@ -3452,6 +3444,8 @@ void Tokenizer::setVarIdClassFunction(const std::string &classname,
 
 void Tokenizer::setVarId()
 {
+    Timer t("Tokenizer::setVarId", mSettings->showtime, mTimerResults);
+
     // Clear all variable ids
     for (Token *tok = list.front(); tok; tok = tok->next()) {
         if (tok->isName())
@@ -4344,12 +4338,7 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
         mTemplateSimplifier->fixAngleBrackets();
 
     // Bail out if code is garbage
-    if (mTimerResults) {
-        Timer t("Tokenizer::tokenize::findGarbageCode", mSettings->showtime, mTimerResults);
-        findGarbageCode();
-    } else {
-        findGarbageCode();
-    }
+    findGarbageCode();
 
     if (Settings::terminated())
         return false;
@@ -4502,12 +4491,7 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
     simplifyVarDecl(false);
 
     // typedef..
-    if (mTimerResults) {
-        Timer t("Tokenizer::tokenize::simplifyTypedef", mSettings->showtime, mTimerResults);
-        simplifyTypedef();
-    } else {
-        simplifyTypedef();
-    }
+    simplifyTypedef();
 
     // using A = B;
     while (simplifyUsing())
@@ -4610,12 +4594,7 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
 
     if (!isC()) {
         // Handle templates..
-        if (mTimerResults) {
-            Timer t("Tokenizer::tokenize::simplifyTemplates", mSettings->showtime, mTimerResults);
-            simplifyTemplates();
-        } else {
-            simplifyTemplates();
-        }
+        simplifyTemplates();
 
         // The simplifyTemplates have inner loops
         if (Settings::terminated())
@@ -4642,12 +4621,7 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
 
     validate(); // #6772 "segmentation fault (invalid code) in Tokenizer::setVarId"
 
-    if (mTimerResults) {
-        Timer t("Tokenizer::tokenize::setVarId", mSettings->showtime, mTimerResults);
-        setVarId();
-    } else {
-        setVarId();
-    }
+    setVarId();
 
     // Link < with >
     createLinks2();
@@ -6789,6 +6763,8 @@ void Tokenizer::reportUnknownMacros()
 
 void Tokenizer::findGarbageCode() const
 {
+    Timer t("Tokenizer::findGarbageCode", mSettings->showtime, mTimerResults);
+
     const bool isCPP11 = isCPP() && mSettings->standards.cpp >= Standards::CPP11;
 
     const std::set<std::string> nonConsecutiveKeywords{ "break",
@@ -8225,6 +8201,7 @@ void Tokenizer::simplifyQtSignalsSlots()
 
 void Tokenizer::createSymbolDatabase()
 {
+    Timer t("Tokenizer::createSymbolDatabase", mSettings->showtime, mTimerResults);
     if (!mSymbolDatabase)
         mSymbolDatabase = new SymbolDatabase(this, mSettings, mErrorLogger);
     mSymbolDatabase->validate();

@@ -35,7 +35,7 @@ private:
 
     void result() const {
         TimerResultsData t1;
-        t1.mClocks = ~(std::clock_t)0;
+        t1.mClocks = std::numeric_limits<clock_t>::max();
         ASSERT(t1.seconds() > 100.0);
 
         t1.mClocks = CLOCKS_PER_SEC * 5 / 2;

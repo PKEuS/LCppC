@@ -26,7 +26,6 @@
 #include "platform.h"
 #include "standards.h"
 #include "suppressions.h"
-#include "timer.h"
 
 #include <algorithm>
 #include <atomic>
@@ -321,6 +320,12 @@ public:
     SimpleEnableGroup<Certainty::CertaintyLevel> certainty;
     ComplexEnableGroup checks;
 
+    enum SHOWTIME_MODES : uint8_t {
+        SHOWTIME_NONE = 0,
+        SHOWTIME_FILE,
+        SHOWTIME_SUMMARY,
+        SHOWTIME_TOP5
+    };
     /** @brief show timing information (--showtime=file|summary|top5) */
     SHOWTIME_MODES showtime;
 

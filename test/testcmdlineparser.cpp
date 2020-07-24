@@ -23,7 +23,6 @@
 #include "standards.h"
 #include "suppressions.h"
 #include "testsuite.h"
-#include "timer.h"
 
 #include <list>
 #include <set>
@@ -916,9 +915,9 @@ private:
     void showtime() {
         REDIRECT;
         const char * const argv[] = {"cppcheck", "--showtime=summary"};
-        settings.showtime = SHOWTIME_MODES::SHOWTIME_NONE;
+        settings.showtime = Settings::SHOWTIME_NONE;
         ASSERT(defParser.parseFromArgs(2, argv));
-        ASSERT(settings.showtime == SHOWTIME_MODES::SHOWTIME_SUMMARY);
+        ASSERT(settings.showtime == Settings::SHOWTIME_SUMMARY);
     }
 
     void errorlist1() {

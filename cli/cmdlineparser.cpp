@@ -26,7 +26,6 @@
 #include "settings.h"
 #include "standards.h"
 #include "suppressions.h"
-#include "timer.h"
 #include "utils.h"
 #include "version.h"
 
@@ -732,13 +731,13 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
             else if (std::strncmp(argv[i], "--showtime=", 11) == 0) {
                 const std::string showtimeMode = argv[i] + 11;
                 if (showtimeMode == "file")
-                    mSettings->showtime = SHOWTIME_MODES::SHOWTIME_FILE;
+                    mSettings->showtime = Settings::SHOWTIME_FILE;
                 else if (showtimeMode == "summary")
-                    mSettings->showtime = SHOWTIME_MODES::SHOWTIME_SUMMARY;
+                    mSettings->showtime = Settings::SHOWTIME_SUMMARY;
                 else if (showtimeMode == "top5")
-                    mSettings->showtime = SHOWTIME_MODES::SHOWTIME_TOP5;
+                    mSettings->showtime = Settings::SHOWTIME_TOP5;
                 else if (showtimeMode.empty())
-                    mSettings->showtime = SHOWTIME_MODES::SHOWTIME_NONE;
+                    mSettings->showtime = Settings::SHOWTIME_NONE;
                 else {
                     printMessage("cppcheck: error: unrecognized showtime mode: \"" + showtimeMode + "\". Supported modes: file, summary, top5.");
                     return false;
