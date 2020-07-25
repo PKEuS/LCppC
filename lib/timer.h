@@ -26,49 +26,38 @@
 #include <ctime>
 #include <map>
 #include <string>
-#include <vector>
 
-struct TimerResultsData {
-    std::clock_t mClocks;
-    std::clock_t mAdditionalClocks;
-    std::size_t mNumberOfResults;
-
-    TimerResultsData()
-        : mClocks(0)
-        , mAdditionalClocks(0)
-        , mNumberOfResults(0) {
-    }
-
-    double seconds() const {
-        const double ret = (double)(mClocks) / (double)CLOCKS_PER_SEC;
-        return ret;
-    }
-
-    double fullSeconds() const {
-        const double ret = (double)(mClocks + mAdditionalClocks) / (double)CLOCKS_PER_SEC;
-        return ret;
-    }
-};
-
-class Timer;
 
 class CPPCHECKLIB TimerResults {
 public:
-    TimerResults() {
-    }
+    struct Data {
+        std::clock_t mClocks;
+        std::clock_t mAdditionalClocks;
+        std::size_t mNumberOfResults;
 
-    void showResults(Settings::SHOWTIME_MODES mode) const;
-    void start(Timer* timer, bool intermediate);
-    void stop(Timer* timer, std::clock_t clocks, bool intermediate);
+        Data()
+            : mClocks(0)
+            , mAdditionalClocks(0)
+            , mNumberOfResults(0) {
+        }
 
-private:
-    std::map<std::string, TimerResultsData> mResults;
-    std::vector<Timer*> mHierachy;
+        double seconds() const {
+            const double ret = (double)(mClocks) / (double)CLOCKS_PER_SEC;
+            return ret;
+        }
+
+        double fullSeconds() const {
+            const double ret = (double)(mClocks + mAdditionalClocks) / (double)CLOCKS_PER_SEC;
+            return ret;
+        }
+    };
+
+    std::map<std::string, Data> mResults;
 };
 
 class CPPCHECKLIB Timer {
 public:
-    Timer(const std::string& str, Settings::SHOWTIME_MODES showtimeMode, TimerResults* timerResults = nullptr);
+    Timer(const std::string& str, Settings::SHOWTIME_MODES showtimeMode);
     ~Timer();
     void start(bool intermediate = false);
     void stop(bool intermediate = false);
@@ -77,12 +66,13 @@ public:
         return mStr;
     }
 
+    static TimerResults results;
+
 private:
     Timer(const Timer& other) = delete;
     Timer& operator=(const Timer&) = delete;
 
     const std::string mStr;
-    TimerResults* mTimerResults;
     std::clock_t mStart;
     std::clock_t mAccumulated;
     const Settings::SHOWTIME_MODES mShowTimeMode;

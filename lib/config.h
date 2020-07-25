@@ -13,6 +13,10 @@
 #  define CPPCHECKLIB
 #endif
 
+#ifdef _WIN32
+#  define NOMINMAX
+#endif
+
 // MS Visual C++ memory leak debug tracing
 #if defined(_MSC_VER) && defined(_DEBUG)
 #  define _CRTDBG_MAP_ALLOC

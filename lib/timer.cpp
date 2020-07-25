@@ -18,60 +18,24 @@
 
 #include "timer.h"
 
-#include <algorithm>
 #include <iostream>
-#include <utility>
 #include <vector>
 
+
+TimerResults Timer::results;
+
 namespace {
-    typedef std::pair<std::string, struct TimerResultsData> dataElementType;
-    bool more_second_sec(const dataElementType& lhs, const dataElementType& rhs)
-    {
-        return lhs.second.seconds() > rhs.second.seconds();
-    }
+    struct TimerResultsCollector {
+        void start(Timer* timer, bool intermediate);
+        void stop(Timer* timer, std::clock_t clocks, bool intermediate);
+
+        std::vector<Timer*> mHierachy;
+    };
+
+    thread_local TimerResultsCollector trc;
 }
 
-void TimerResults::showResults(Settings::SHOWTIME_MODES mode) const
-{
-    if (mode == Settings::SHOWTIME_NONE)
-        return;
-
-    std::cout << "\nTimings: exclusive / inclusive (averages), all in seconds\n";
-
-    TimerResultsData overallData;
-
-    std::vector<dataElementType> data(mResults.begin(), mResults.end());
-    std::sort(data.begin(), data.end(), more_second_sec);
-
-    std::cout.precision(3);
-    std::cout.setf(std::ios::fixed);
-    std::cout.setf(std::ios::showpoint);
-
-    size_t width = 0;
-
-    for (std::vector<dataElementType>::const_iterator iter = data.begin(); iter != data.end(); ++iter)
-        width = std::max(width, iter->first.size());
-
-    size_t ordinal = 1; // maybe it would be nice to have an ordinal in output later!
-    for (std::vector<dataElementType>::const_iterator iter=data.begin() ; iter!=data.end(); ++iter) {
-        const double sec1 = iter->second.seconds();
-        const double secAverage1 = sec1 / (double)(iter->second.mNumberOfResults);
-        const double sec2 = iter->second.fullSeconds();
-        const double secAverage2 = sec2 / (double)(iter->second.mNumberOfResults);
-        overallData.mClocks += iter->second.mClocks;
-        if ((mode != Settings::SHOWTIME_TOP5) || (ordinal<=5)) {
-            std::cout << iter->first << ": " << std::string(width-iter->first.size(), ' ');
-            std::cout << sec1 << " / " << sec2 << " (" << secAverage1 << " / " << secAverage2 << " - " << iter->second.mNumberOfResults;
-            std::cout << (iter->second.mNumberOfResults == 1 ? " result)" : " results)") << std::endl;
-        }
-        ++ordinal;
-    }
-
-    const double secOverall = overallData.seconds();
-    std::cout << "Overall time: " << secOverall << "s" << std::endl;
-}
-
-void TimerResults::start(Timer* timer, bool intermediate)
+void TimerResultsCollector::start(Timer* timer, bool intermediate)
 {
     if (!intermediate) {
         if (!mHierachy.empty())
@@ -80,7 +44,7 @@ void TimerResults::start(Timer* timer, bool intermediate)
     }
 }
 
-void TimerResults::stop(Timer* timer, std::clock_t clocks, bool intermediate)
+void TimerResultsCollector::stop(Timer* timer, std::clock_t clocks, bool intermediate)
 {
     if (!intermediate) {
         mHierachy.pop_back();
@@ -90,15 +54,14 @@ void TimerResults::stop(Timer* timer, std::clock_t clocks, bool intermediate)
     }
     for (size_t i = 0; i < mHierachy.size(); i++)
         if (mHierachy[i] != timer)
-            mResults[mHierachy[i]->getName()].mAdditionalClocks += clocks;
-    mResults[timer->getName()].mClocks += clocks;
+            Timer::results.mResults[mHierachy[i]->getName()].mAdditionalClocks += clocks;
+    Timer::results.mResults[timer->getName()].mClocks += clocks;
     if (!intermediate)
-        mResults[timer->getName()].mNumberOfResults++;
+        Timer::results.mResults[timer->getName()].mNumberOfResults++;
 }
 
-Timer::Timer(const std::string& str, Settings::SHOWTIME_MODES showtimeMode, TimerResults* timerResults)
+Timer::Timer(const std::string& str, Settings::SHOWTIME_MODES showtimeMode)
     : mStr(str)
-    , mTimerResults(timerResults)
     , mStart(0)
     , mAccumulated(0)
     , mShowTimeMode(showtimeMode)
@@ -119,28 +82,28 @@ Timer::~Timer()
 
 void Timer::start(bool intermediate)
 {
-    if (!mTimerResults)
+    if (mShowTimeMode == Settings::SHOWTIME_NONE)
         return;
-    if (mShowTimeMode != Settings::SHOWTIME_NONE && mStopped) {
+    if (mStopped) {
         mStopped = false;
         if (!intermediate)
-            mTimerResults->start(this, intermediate);
+            trc.start(this, intermediate);
         mStart = std::clock();
     }
 }
 
 void Timer::stop(bool intermediate)
 {
-    if (!mTimerResults)
+    if (mShowTimeMode == Settings::SHOWTIME_NONE)
         return;
-    if ((mShowTimeMode != Settings::SHOWTIME_NONE) && !mStopped) {
+    if (!mStopped) {
         const std::clock_t end = std::clock();
         const std::clock_t diff = end - mStart;
 
         mAccumulated += diff;
         if (mShowTimeMode == Settings::SHOWTIME_FILE) {
         } else
-            mTimerResults->stop(this, diff, intermediate);
+            trc.stop(this, diff, intermediate);
     }
 
     mStopped = true;

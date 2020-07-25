@@ -30,6 +30,7 @@
 #include "settings.h"
 #include "suppressions.h"
 #include "threadexecutor.h"
+#include "timer.h"
 #include "utils.h"
 #include "checkunusedfunctions.h"
 #include "version.h"
@@ -209,7 +210,52 @@ int CppCheckExecutor::check(int argc, const char* const argv[])
     else
         ret = check_internal(cppCheck, argc, argv);
 
+    showTimerResults();
+
     return ret;
+}
+
+void CppCheckExecutor::showTimerResults()
+{
+    if (mSettings.showtime == Settings::SHOWTIME_NONE)
+        return;
+
+    std::cout << "\nTimings: exclusive / inclusive (averages), all in seconds\n";
+
+    TimerResults::Data overallData;
+
+    typedef std::pair<std::string, struct TimerResults::Data> dataElementType;
+    std::vector<dataElementType> data(Timer::results.mResults.begin(), Timer::results.mResults.end());
+    std::sort(data.begin(), data.end(), [](const dataElementType& lhs, const dataElementType& rhs) -> bool {
+        return lhs.second.seconds() > rhs.second.seconds();
+    });
+
+    std::cout.precision(3);
+    std::cout.setf(std::ios::fixed);
+    std::cout.setf(std::ios::showpoint);
+
+    size_t width = 0;
+
+    for (std::vector<dataElementType>::const_iterator iter = data.begin(); iter != data.end(); ++iter)
+        width = std::max(width, iter->first.size());
+
+    size_t ordinal = 1; // maybe it would be nice to have an ordinal in output later!
+    for (std::vector<dataElementType>::const_iterator iter = data.begin(); iter != data.end(); ++iter) {
+        const double sec1 = iter->second.seconds();
+        const double secAverage1 = sec1 / (double)(iter->second.mNumberOfResults);
+        const double sec2 = iter->second.fullSeconds();
+        const double secAverage2 = sec2 / (double)(iter->second.mNumberOfResults);
+        overallData.mClocks += iter->second.mClocks;
+        if ((mSettings.showtime != Settings::SHOWTIME_TOP5) || (ordinal <= 5)) {
+            std::cout << iter->first << ": " << std::string(width - iter->first.size(), ' ');
+            std::cout << sec1 << " / " << sec2 << " (" << secAverage1 << " / " << secAverage2 << " - " << iter->second.mNumberOfResults;
+            std::cout << (iter->second.mNumberOfResults == 1 ? " result)" : " results)") << std::endl;
+        }
+        ++ordinal;
+    }
+
+    const double secOverall = overallData.seconds();
+    std::cout << "Overall time: " << secOverall << "s" << std::endl;
 }
 
 /**

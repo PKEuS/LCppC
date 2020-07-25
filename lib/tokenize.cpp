@@ -155,7 +155,6 @@ Tokenizer::Tokenizer() :
     mVarId(0),
     mUnnamedCount(0),
     mCodeWithTemplates(false), //is there any templates?
-    mTimerResults(nullptr),
 #ifdef MAXTIME
     mMaxTime(std::time(0) + MAXTIME),
 #endif
@@ -172,7 +171,6 @@ Tokenizer::Tokenizer(const Settings *settings, ErrorLogger *errorLogger) :
     mVarId(0),
     mUnnamedCount(0),
     mCodeWithTemplates(false), //is there any templates?
-    mTimerResults(nullptr),
 #ifdef MAXTIME
     mMaxTime(std::time(0) + MAXTIME),
 #endif
@@ -575,7 +573,7 @@ void Tokenizer::simplifyUsingToTypedef()
 
 void Tokenizer::simplifyTypedef()
 {
-    Timer t("Tokenizer::simplifyTypedef", mSettings->showtime, mTimerResults);
+    Timer t("Tokenizer::simplifyTypedef", mSettings->showtime);
 
     // Convert "using a::b;" to corresponding typedef statements
     simplifyUsingToTypedef();
@@ -2395,7 +2393,7 @@ void Tokenizer::createTokens(simplecpp::TokenList&& tokenList)
 
 bool Tokenizer::simplifyTokens0(const std::string& configuration)
 {
-    Timer timer2("Tokenizer::simplifyTokens0", mSettings->showtime, mTimerResults);
+    Timer timer2("Tokenizer::simplifyTokens0", mSettings->showtime);
 
     mConfiguration = configuration;
 
@@ -2407,13 +2405,13 @@ bool Tokenizer::simplifyTokens0(const std::string& configuration)
 
 bool Tokenizer::simplifyTokens1()
 {
-    Timer timer3("Tokenizer::simplifyTokens1", mSettings->showtime, mTimerResults);
+    Timer timer3("Tokenizer::simplifyTokens1", mSettings->showtime);
 
     if (!simplifyTokenList1(list.getFiles().front().c_str()))
         return false;
 
     {
-        Timer t("Tokenizer::createAst", mSettings->showtime, mTimerResults);
+        Timer t("Tokenizer::createAst", mSettings->showtime);
         list.createAst();
         list.validateAst();
     }
@@ -2421,12 +2419,12 @@ bool Tokenizer::simplifyTokens1()
     createSymbolDatabase();
 
     {
-        Timer t("Tokenizer::setValueTypeInTokenList", mSettings->showtime, mTimerResults);
+        Timer t("Tokenizer::setValueTypeInTokenList", mSettings->showtime);
         mSymbolDatabase->setValueTypeInTokenList(true);
     }
 
     {
-        Timer t("Tokenizer::ValueFlow", mSettings->showtime, mTimerResults);
+        Timer t("Tokenizer::ValueFlow", mSettings->showtime);
         ValueFlow::setValues(&list, mSymbolDatabase, mErrorLogger, mSettings);
     }
 
@@ -3065,7 +3063,7 @@ void Tokenizer::calculateScopes()
 
 void Tokenizer::simplifyTemplates()
 {
-    Timer t("Tokenizer::simplifyTemplates", mSettings->showtime, mTimerResults);
+    Timer t("Tokenizer::simplifyTemplates", mSettings->showtime);
     mTemplateSimplifier->simplifyTemplates(
 #ifdef MAXTIME
         mMaxTime,
@@ -3444,7 +3442,7 @@ void Tokenizer::setVarIdClassFunction(const std::string &classname,
 
 void Tokenizer::setVarId()
 {
-    Timer t("Tokenizer::setVarId", mSettings->showtime, mTimerResults);
+    Timer t("Tokenizer::setVarId", mSettings->showtime);
 
     // Clear all variable ids
     for (Token *tok = list.front(); tok; tok = tok->next()) {
@@ -6763,7 +6761,7 @@ void Tokenizer::reportUnknownMacros()
 
 void Tokenizer::findGarbageCode() const
 {
-    Timer t("Tokenizer::findGarbageCode", mSettings->showtime, mTimerResults);
+    Timer t("Tokenizer::findGarbageCode", mSettings->showtime);
 
     const bool isCPP11 = isCPP() && mSettings->standards.cpp >= Standards::CPP11;
 
@@ -8201,7 +8199,7 @@ void Tokenizer::simplifyQtSignalsSlots()
 
 void Tokenizer::createSymbolDatabase()
 {
-    Timer t("Tokenizer::createSymbolDatabase", mSettings->showtime, mTimerResults);
+    Timer t("Tokenizer::createSymbolDatabase", mSettings->showtime);
     if (!mSymbolDatabase)
         mSymbolDatabase = new SymbolDatabase(this, mSettings, mErrorLogger);
     mSymbolDatabase->validate();

@@ -34,7 +34,7 @@ private:
     }
 
     void result() const {
-        TimerResultsData t1;
+        TimerResults::Data t1;
         t1.mClocks = std::numeric_limits<clock_t>::max();
         ASSERT(t1.seconds() > 100.0);
 

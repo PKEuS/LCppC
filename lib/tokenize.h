@@ -33,7 +33,6 @@
 
 class Settings;
 class SymbolDatabase;
-class TimerResults;
 class Token;
 class TemplateSimplifier;
 class ErrorLogger;
@@ -62,10 +61,6 @@ public:
     Tokenizer();
     Tokenizer(const Settings * settings, ErrorLogger *errorLogger);
     ~Tokenizer();
-
-    void setTimerResults(TimerResults *tr) {
-        mTimerResults = tr;
-    }
 
     /** Is the code C. Used for bailouts */
     bool isC() const {
@@ -733,11 +728,6 @@ private:
      * removed from the token list
      */
     bool mCodeWithTemplates;
-
-    /**
-     * TimerResults
-     */
-    TimerResults *mTimerResults;
 
 #ifdef MAXTIME
     /** Tokenizer maxtime */

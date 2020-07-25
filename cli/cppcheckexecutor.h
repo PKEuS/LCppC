@@ -115,6 +115,8 @@ public:
         return mSettings;
     }
 
+    void showTimerResults();
+
 protected:
 
     /**

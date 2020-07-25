@@ -53,8 +53,6 @@
 static const char Version[] = CPPCHECK_VERSION_STRING;
 static const char ExtraVersion[] = "";
 
-static TimerResults s_timerResults;
-
 // CWE ids used
 static const CWE CWE398(398U);  // Indicator of Poor Code Quality
 
@@ -278,7 +276,6 @@ CppCheck::CppCheck(ErrorLogger &errorLogger,
 
 CppCheck::~CppCheck()
 {
-    s_timerResults.showResults(mSettings.showtime);
 }
 
 const char * CppCheck::version()
@@ -305,7 +302,7 @@ unsigned int CppCheck::check(CTU::CTUInfo* ctu, const std::string &content)
 
 unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
 {
-    Timer timer0("CppCheck::checkCTU", mSettings.showtime, &s_timerResults);
+    Timer timer0("CppCheck::checkCTU", mSettings.showtime);
 
     mCTU = ctu;
     mExitCode = 0;
@@ -461,7 +458,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
 
         // Get configurations..
         if ((mSettings.checkAllConfigurations && mSettings.userDefines.empty()) || mSettings.force) {
-            Timer t("Preprocessor::getConfigs", mSettings.showtime, &s_timerResults);
+            Timer t("Preprocessor::getConfigs", mSettings.showtime);
             configurations = preprocessor.getConfigs(tokens1);
         } else {
             configurations.insert(mSettings.userDefines);
@@ -528,7 +525,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
             }
 
             if (mSettings.preprocessOnly) {
-                Timer t("Preprocessor::getcode", mSettings.showtime, &s_timerResults);
+                Timer t("Preprocessor::getcode", mSettings.showtime);
                 std::string codeWithoutCfg = preprocessor.getcode(tokens1, mCurrentConfig, files, true);
                 t.stop();
 
@@ -549,13 +546,11 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
 
             Tokenizer tokenizer(&mSettings, this);
             tokenizer.setPreprocessor(&preprocessor);
-            if (mSettings.showtime != Settings::SHOWTIME_NONE)
-                tokenizer.setTimerResults(&s_timerResults);
 
             try {
                 // Create tokens, skip rest of iteration if failed
                 {
-                    Timer timer("Tokenizer::createTokens", mSettings.showtime, &s_timerResults);
+                    Timer timer("Tokenizer::createTokens", mSettings.showtime);
                     simplecpp::TokenList tokensP = preprocessor.preprocess(tokens1, mCurrentConfig, files, true);
                     tokenizer.createTokens(std::move(tokensP));
                 }
@@ -803,7 +798,7 @@ void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
         if (!mSettings.checks.isEnabled(check->name()))
             continue;
 
-        Timer timerRunChecks(check->name() + "::runChecks", mSettings.showtime, &s_timerResults);
+        Timer timerRunChecks(check->name() + "::runChecks", mSettings.showtime);
         check->runChecks(&tokenizer, &mSettings, this);
     }
 
