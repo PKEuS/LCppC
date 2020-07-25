@@ -14,5 +14,5 @@
 #define CPPCHECK_VERSION_STRING STRINGIFY(CPPCHECK_MAJOR) "." STRINGIFY(CPPCHECK_DEVMINOR) " dev"
 #define CPPCHECK_VERSION CPPCHECK_MAJOR,CPPCHECK_MINOR,99,0
 #endif
-#define LEGALCOPYRIGHT "Copyright (C) 2007-2020 Cppcheck team.\nCopyright (C) 2020 Philipp Kloke"
+#define LEGALCOPYRIGHT "Copyright (C) 2007-2020 Cppcheck team.\nCopyright (C) 2020 Philipp Kloke."
 #define PROGRAMNAME "LCppC"

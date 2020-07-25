@@ -41,6 +41,8 @@ Improvements:
 
     - Detect known conditions when sizeof is involved (also in Cppcheck 2.2)
 
+    - Support more simple class types in unused variable checking (also in Cppcheck 2.2)
+
  - Improved detection whether a function modifies its parameters in various checks
 
  - A couple of small performance and memory usage optimizations
@@ -48,6 +50,10 @@ Improvements:
  - Avoid false positives caused by #if/ifdef in several checks (also in Cppcheck 2.2)
 
  - Improved std.cfg, wxwidgets.cfg and windows.cfg (also in Cppcheck 2.2)
+
+ - Improved --showtime results for better readability and usability and fixed times for nested timers
+ 
+ - Improved accuracy of ValueFlow analysis (also in Cppcheck 2.2)
 
 
 Bugfixes:
@@ -65,7 +71,7 @@ Bugfixes:
 
   - LCppC retained the approach on comparison of boolean expressions with integers from CppCheck 2.1 and earlier.
 
-  - The "cppcheck warning id" introduced in Cppcheck 2.2 is not part of LCppC.
+  - The message hash introduced in Cppcheck 2.2 is not part of LCppC.
 
 
 -----------------------------
