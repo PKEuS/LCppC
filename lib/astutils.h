@@ -192,6 +192,7 @@ bool isVariableChangedByFunctionCall(const Token* tok, unsigned int indirect, co
 
 /** Is variable changed in block of code? */
 bool isVariableChanged(const Token *start, const Token *end, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
+bool isVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
 
 bool isVariableChanged(const Token *tok, int indirect, const Settings *settings, bool cpp, int depth = 20);
 
