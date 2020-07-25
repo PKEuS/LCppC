@@ -54,7 +54,7 @@ Improvements:
  - Improved std.cfg, wxwidgets.cfg and windows.cfg (also in Cppcheck 2.2)
 
  - Improved --showtime results for better readability and usability and fixed times for nested timers
- 
+
  - Improved accuracy of ValueFlow analysis (also in Cppcheck 2.2)
 
 
@@ -118,7 +118,7 @@ Removed Features:
  - "Bughunting" mode introduced in Cppcheck 2.0.
 
  - Capability to output .plist files.
- 
+
  - CMake makefiles were removed.
 
  - GUI is not maintained in LCppC and can not be considered part of this release. It might be added back in a future release.

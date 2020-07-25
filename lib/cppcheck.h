@@ -211,7 +211,7 @@ private:
     /**
      * Execute a shell command and read the output from it. Returns true if command terminated successfully.
      */
-    static bool executeCommand(std::string exe, std::vector<std::string> args, std::string redirect, std::string* output);
+    static bool executeCommand(const std::string& exe, const std::vector<std::string>& args, const std::string& redirect, std::string* output);
 };
 
 /// @}

@@ -1138,7 +1138,7 @@ bool CppCheckExecutor::tryLoadLibrary(Library& destination, const char* basepath
             break;
         }
         if (!err.reason.empty())
-            std::cout << " '" + err.reason + "'";
+            std::cout << " '" << err.reason << "'";
         std::cout << std::endl;
         return false;
     }

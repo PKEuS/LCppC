@@ -83,7 +83,7 @@ namespace {
         }
 
         std::string parseAddonInfo(const picojson::value &json, const std::string &fileName, const std::string &exename) {
-            std::string json_error = picojson::get_last_error();
+            const std::string& json_error = picojson::get_last_error();
             if (!json_error.empty()) {
                 return "Loading " + fileName + " failed. " + json_error;
             }
@@ -184,7 +184,7 @@ static std::vector<std::string> split(const std::string &str, const std::string 
 static std::string executeAddon(const AddonInfo &addonInfo,
                                 const std::string &defaultPythonExe,
                                 const std::string &dumpFile,
-                                std::function<bool(std::string,std::vector<std::string>,std::string,std::string*)> executeCommand)
+                                std::function<bool(const std::string&, const std::vector<std::string>&, const std::string&, std::string*)> executeCommand)
 {
     const std::string redirect = "2>&1";
 
@@ -231,13 +231,12 @@ static std::string executeAddon(const AddonInfo &addonInfo,
 /**
  * Execute a shell command and read the output from it. Returns true if command terminated successfully.
  */
-// cppcheck-suppress passedByValue
-bool CppCheck::executeCommand(std::string exe, std::vector<std::string> args, std::string redirect, std::string* output)
+bool CppCheck::executeCommand(const std::string& exe, const std::vector<std::string>& args, const std::string& redirect, std::string* output)
 {
     output->clear();
 
     std::string joinedArgs;
-    for (const std::string arg : args) {
+    for (const std::string& arg : args) {
         if (!joinedArgs.empty())
             joinedArgs += " ";
         joinedArgs += arg;
@@ -245,9 +244,12 @@ bool CppCheck::executeCommand(std::string exe, std::vector<std::string> args, st
 
 #ifdef _WIN32
     // Extra quoutes are needed in windows if filename has space
+    std::string exe2;
     if (exe.find(" ") != std::string::npos)
-        exe = "\"" + exe + "\"";
-    const std::string cmd = exe + " " + joinedArgs + " " + redirect;
+        exe2 = "\"" + exe + "\"";
+    else
+        exe2 = exe;
+    const std::string cmd = exe2 + " " + joinedArgs + " " + redirect;
     std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd.c_str(), "r"), _pclose);
 #else
     const std::string cmd = exe + " " + joinedArgs + " " + redirect;
@@ -372,7 +374,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 std::list<ErrorMessage::FileLocation> callstack(1, loc1);
 
                 ErrorMessage errmsg(callstack,
-                                    "",
+                                    emptyString,
                                     Severity::error,
                                     output.msg,
                                     "syntaxError",
@@ -410,7 +412,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                       << " pointer_bit=\"" << (mSettings.sizeof_pointer * mSettings.char_bit) << '\"'
                       << "/>\n";
                 fdump << "  <rawtokens>" << std::endl;
-                for (unsigned int i = 0; i < files.size(); ++i)
+                for (std::size_t i = 0; i < files.size(); ++i)
                     fdump << "    <file index=\"" << i << "\" name=\"" << ErrorLogger::toxml(files[i]) << "\"/>" << std::endl;
                 for (const simplecpp::Token *tok = tokens1.cfront(); tok; tok = tok->next) {
                     fdump << "    <tok "
