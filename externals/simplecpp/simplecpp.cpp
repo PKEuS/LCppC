@@ -1864,7 +1864,7 @@ namespace simplecpp {
 
             std::string strAB;
 
-            const bool varargs = variadic && args.size() >= 1U && B->str() == args[args.size()-1U];
+            const bool varargs = variadic && args.size() >= 1U && B->str() == args.back();
 
             TokenList tokensB(files);
             if (expandArg(&tokensB, B, parametertokens)) {
@@ -2385,7 +2385,7 @@ static std::string openHeader(std::ifstream &f, const simplecpp::DUI &dui, const
 
     for (std::vector<std::string>::const_iterator it = dui.includePaths.begin(); it != dui.includePaths.end(); ++it) {
         std::string s = *it;
-        if (!s.empty() && s[s.size()-1U]!='/' && s[s.size()-1U]!='\\')
+        if (!s.empty() && s.back()!='/' && s.back()!='\\')
             s += '/';
         s += header;
 
@@ -2420,7 +2420,7 @@ static std::string getFileName(const std::map<std::string, simplecpp::TokenList 
 
     for (std::vector<std::string>::const_iterator it = dui.includePaths.begin(); it != dui.includePaths.end(); ++it) {
         std::string s = *it;
-        if (!s.empty() && s[s.size()-1U]!='/' && s[s.size()-1U]!='\\')
+        if (!s.empty() && s.back()!='/' && s.back()!='\\')
             s += '/';
         s += header;
         s = simplecpp::simplifyPath(s);

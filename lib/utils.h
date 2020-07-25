@@ -23,14 +23,12 @@
 
 #include "config.h"
 
-#include <cctype>
 #include <cstddef>
 #include <string>
-#include <vector>
 
 inline bool endsWith(const std::string &str, char c)
 {
-    return str[str.size()-1U] == c;
+    return str.back() == c;
 }
 
 inline bool endsWith(const std::string &str, const char end[], std::size_t endlen)
@@ -38,24 +36,8 @@ inline bool endsWith(const std::string &str, const char end[], std::size_t endle
     return (str.size() >= endlen) && (str.compare(str.size()-endlen, endlen, end)==0);
 }
 
-inline static bool isPrefixStringCharLiteral(const std::string &str, char q, const std::string& p)
-{
-    if (!endsWith(str, q))
-        return false;
-    if ((str.length() + 1) > p.length() && (str.compare(0, p.size() + 1, p + q) == 0))
-        return true;
-    return false;
-}
-
-inline static bool isStringCharLiteral(const std::string &str, char q)
-{
-    static const std::vector<std::string> suffixes{"", "u8", "u", "U", "L"};
-    for (const std::string & p: suffixes) {
-        if (isPrefixStringCharLiteral(str, q, p))
-            return true;
-    }
-    return false;
-}
+CPPCHECKLIB bool isPrefixStringCharLiteral(const std::string& str, char q, const std::string& p);
+CPPCHECKLIB bool isStringCharLiteral(const std::string& str, char q);
 
 inline static bool isStringLiteral(const std::string &str)
 {
@@ -87,16 +69,7 @@ inline static std::string getCharLiteral(const std::string &str)
     return "";
 }
 
-inline static const char *getOrdinalText(int i)
-{
-    if (i == 1)
-        return "st";
-    if (i == 2)
-        return "nd";
-    if (i == 3)
-        return "rd";
-    return "th";
-}
+CPPCHECKLIB const char* getOrdinalText(int i);
 
 CPPCHECKLIB int caseInsensitiveStringCompare(const std::string& lhs, const std::string& rhs);
 

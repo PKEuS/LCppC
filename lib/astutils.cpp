@@ -160,9 +160,12 @@ bool astIsIterator(const Token *tok)
     return tok && tok->valueType() && tok->valueType()->type == ValueType::Type::ITERATOR;
 }
 
-bool astIsContainer(const Token *tok)
+const Library::Container* astGetContainer(const Token *tok)
 {
-    return getLibraryContainer(tok) != nullptr && tok->valueType()->type != ValueType::Type::ITERATOR;
+    const Library::Container* container = getLibraryContainer(tok);
+    if (container && tok->valueType()->type != ValueType::Type::ITERATOR)
+        return container;
+    return nullptr;
 }
 
 std::string astCanonicalType(const Token *expr)

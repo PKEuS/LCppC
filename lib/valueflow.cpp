@@ -2459,8 +2459,8 @@ struct SingleValueFlowForwardAnalyzer : ValueFlowForwardAnalyzer {
         if (value.isLifetimeValue())
             return false;
         for (const auto& m: {
-        std::ref(getVars()), std::ref(getAliasedVars())
-        }) {
+                 std::ref(getVars()), std::ref(getAliasedVars())
+             }) {
             for (const auto& p:m.get()) {
                 unsigned int varid = p.first;
                 const Variable* var = p.second;
@@ -2930,13 +2930,15 @@ std::vector<LifetimeToken> getLifetimeTokens(const Token* tok, ValueFlow::Value:
                 }
             }
             return result;
-        } else if (Token::Match(tok->tokAt(-2), ". %name% (") && astIsContainer(tok->tokAt(-2)->astOperand1())) {
-            const Library::Container* library = getLibraryContainer(tok->tokAt(-2)->astOperand1());
-            Library::Container::Yield y = library->getYield(tok->previous()->str());
-            if (y == Library::Container::Yield::AT_INDEX || y == Library::Container::Yield::ITEM) {
-                errorPath.emplace_back(tok->previous(), "Accessing container.");
-                return LifetimeToken::setAddressOf(
-                           getLifetimeTokens(tok->tokAt(-2)->astOperand1(), std::move(errorPath), depth - 1), false);
+        } else if (Token::Match(tok->tokAt(-2), ". %name% (")) {
+            const Library::Container* library = astGetContainer(tok->tokAt(-2)->astOperand1());
+            if (library) {
+                Library::Container::Yield y = library->getYield(tok->previous()->str());
+                if (y == Library::Container::Yield::AT_INDEX || y == Library::Container::Yield::ITEM) {
+                    errorPath.emplace_back(tok->previous(), "Accessing container.");
+                    return LifetimeToken::setAddressOf(
+                               getLifetimeTokens(tok->tokAt(-2)->astOperand1(), std::move(errorPath), depth - 1), false);
+                }
             }
         }
     } else if (Token::Match(tok, ".|::|[")) {
@@ -2953,7 +2955,7 @@ std::vector<LifetimeToken> getLifetimeTokens(const Token* tok, ValueFlow::Value:
         if (!vartok)
             return {{tok, std::move(errorPath)}};
         const Variable *tokvar = vartok->variable();
-        if (!astIsContainer(vartok) && !(tokvar && tokvar->isArray() && !tokvar->isArgument()) &&
+        if (!astGetContainer(vartok) && !(tokvar && tokvar->isArray() && !tokvar->isArgument()) &&
             (Token::Match(vartok->astParent(), "[|*") || vartok->astParent()->originalName() == "->")) {
             for (const ValueFlow::Value &v : vartok->values()) {
                 if (!v.isLocalLifetimeValue())
@@ -2963,7 +2965,7 @@ std::vector<LifetimeToken> getLifetimeTokens(const Token* tok, ValueFlow::Value:
             }
         } else {
             return LifetimeToken::setAddressOf(getLifetimeTokens(vartok, std::move(errorPath)),
-                                               !(astIsContainer(vartok) && Token::simpleMatch(vartok->astParent(), "[")));
+                                               !(astGetContainer(vartok) && Token::simpleMatch(vartok->astParent(), "[")));
         }
     }
     return {{tok, std::move(errorPath)}};
@@ -3122,7 +3124,7 @@ bool isLifetimeBorrowed(const Token *tok, const Settings *settings)
             }
         }
     } else if (Token::Match(tok->astParent()->tokAt(-3), "%var% . push_back|push_front|insert|push (") &&
-               astIsContainer(tok->astParent()->tokAt(-3))) {
+               astGetContainer(tok->astParent()->tokAt(-3))) {
         const ValueType *vt = tok->valueType();
         const ValueType *vtCont = tok->astParent()->tokAt(-3)->valueType();
         if (!vtCont->containerTypeToken)
@@ -3440,7 +3442,7 @@ static void valueFlowLifetimeFunction(Token *tok, TokenList *tokenlist, ErrorLog
                 tok->next(), tokenlist, errorLogger, settings);
         }
     } else if (Token::Match(tok->tokAt(-2), "%var% . push_back|push_front|insert|push|assign") &&
-               astIsContainer(tok->tokAt(-2))) {
+               astGetContainer(tok->tokAt(-2))) {
         Token *vartok = tok->tokAt(-2);
         std::vector<const Token *> args = getArguments(tok);
         std::size_t n = args.size();
@@ -3527,13 +3529,10 @@ static bool hasInitList(const Token* tok)
 {
     if (astIsPointer(tok))
         return true;
-    if (astIsContainer(tok)) {
-        const Library::Container * library = getLibraryContainer(tok);
-        if (!library)
-            return false;
-        return library->hasInitializerListConstructor;
-    }
-    return false;
+    const Library::Container * library = astGetContainer(tok);
+    if (!library)
+        return false;
+    return library->hasInitializerListConstructor;
 }
 
 static void valueFlowLifetimeConstructor(Token* tok, TokenList* tokenlist, ErrorLogger* errorLogger, const Settings* settings)
@@ -3548,7 +3547,7 @@ static void valueFlowLifetimeConstructor(Token* tok, TokenList* tokenlist, Error
     } else if (Token::simpleMatch(tok, "{") && hasInitList(parent)) {
         std::vector<const Token *> args = getArguments(tok);
         // Assume range constructor if passed a pair of iterators
-        if (astIsContainer(parent) && args.size() == 2 && astIsIterator(args[0]) && astIsIterator(args[1])) {
+        if (astGetContainer(parent) && args.size() == 2 && astIsIterator(args[0]) && astIsIterator(args[1])) {
             for (const Token *argtok : args) {
                 LifetimeStore ls{argtok, "Passed to initializer list.", ValueFlow::Value::LifetimeKind::Object};
                 ls.byDerefCopy(tok, tokenlist, errorLogger, settings);
@@ -3675,7 +3674,7 @@ static void valueFlowLifetime(TokenList *tokenlist, SymbolDatabase*, ErrorLogger
             }
         }
         // container lifetimes
-        else if (astIsContainer(tok)) {
+        else if (astGetContainer(tok)) {
             Token * parent = astParentSkipParens(tok);
             if (!Token::Match(parent, ". %name% ("))
                 continue;
@@ -5465,9 +5464,10 @@ static bool isContainerSize(const Token* tok)
 {
     if (!Token::Match(tok, "%var% . %name% ("))
         return false;
-    if (!astIsContainer(tok))
+    const Library::Container* c = astGetContainer(tok);
+    if (!c)
         return false;
-    if (tok->valueType()->container && tok->valueType()->container->getYield(tok->strAt(2)) == Library::Container::Yield::SIZE)
+    if (c->getYield(tok->strAt(2)) == Library::Container::Yield::SIZE)
         return true;
     if (Token::Match(tok->tokAt(2), "size|length ( )"))
         return true;
@@ -5478,9 +5478,10 @@ static bool isContainerEmpty(const Token* tok)
 {
     if (!Token::Match(tok, "%var% . %name% ("))
         return false;
-    if (!astIsContainer(tok))
+    const Library::Container* c = astGetContainer(tok);
+    if (!c)
         return false;
-    if (tok->valueType()->container && tok->valueType()->container->getYield(tok->strAt(2)) == Library::Container::Yield::EMPTY)
+    if (c->getYield(tok->strAt(2)) == Library::Container::Yield::EMPTY)
         return true;
     if (Token::simpleMatch(tok->tokAt(2), "empty ( )"))
         return true;
@@ -5849,7 +5850,7 @@ static void valueFlowContainerAfterCondition(TokenList *tokenlist,
             }
             if (!strtok)
                 return cond;
-            if (!astIsContainer(vartok))
+            if (!astGetContainer(vartok))
                 return cond;
             ValueFlow::Value value(tok, Token::getStrLength(strtok));
             value.valueType = ValueFlow::Value::ValueType::CONTAINER_SIZE;

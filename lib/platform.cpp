@@ -167,7 +167,7 @@ bool cppcheck::Platform::loadPlatformFile(const char exename[], const std::strin
         }
 #ifdef FILESDIR
         std::string filesdir = FILESDIR;
-        if (!filesdir.empty() && filesdir[filesdir.size()-1] != '/')
+        if (!filesdir.empty() && filesdir.back() != '/')
             filesdir += '/';
         filenames.push_back(filesdir + ("platforms/" + filename));
         filenames.push_back(filesdir + ("platforms/" + filename + ".xml"));

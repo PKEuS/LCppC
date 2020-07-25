@@ -72,7 +72,7 @@ bool astIsSmartPointer(const Token* tok);
 
 bool astIsIterator(const Token *tok);
 
-bool astIsContainer(const Token *tok);
+const Library::Container* astGetContainer(const Token *tok);
 
 /**
  * Get canonical type of expression. const/static/etc are not included and neither *&.
@@ -112,13 +112,13 @@ const Token* getCondTokFromEnd(const Token* endBlock);
 /**
  * Extract for loop values: loopvar varid, init value, step value, last value (inclusive)
  */
-bool extractForLoopValues(const Token *forToken,
-                          unsigned int * const varid,
-                          bool * const knownInitValue,
-                          long long * const initValue,
-                          bool * const partialCond,
-                          long long * const stepValue,
-                          long long * const lastValue);
+bool extractForLoopValues(const Token* forToken,
+                          unsigned int* const varid,
+                          bool* const knownInitValue,
+                          MathLib::bigint* const initValue,
+                          bool* const partialCond,
+                          MathLib::bigint* const stepValue,
+                          MathLib::bigint* const lastValue);
 
 bool precedes(const Token * tok1, const Token * tok2);
 

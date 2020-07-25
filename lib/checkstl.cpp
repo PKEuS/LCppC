@@ -624,7 +624,7 @@ bool CheckStl::checkIteratorPair(const Token* tok1, const Token* tok2)
             if (val1.lifetimeKind == ValueFlow::Value::LifetimeKind::Address)
                 return false;
             if (val1.lifetimeKind == ValueFlow::Value::LifetimeKind::Object &&
-                (!astIsContainer(val1.tokvalue) || !astIsContainer(val2.tokvalue)))
+                (!astGetContainer(val1.tokvalue) || !astGetContainer(val2.tokvalue)))
                 return false;
         }
         if (isSameExpression(true, false, val1.tokvalue, val2.tokvalue, mSettings->library, false, false))
@@ -713,14 +713,12 @@ void CheckStl::mismatchingContainerIterator()
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope * scope : symbolDatabase->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
-            if (!astIsContainer(tok))
-                continue;
-            if (!Token::Match(tok, "%var% . %name% ( !!)"))
+            const Library::Container* c = astGetContainer(tok);
+            if (!c || !Token::Match(tok, "%var% . %name% ( !!)"))
                 continue;
             const Token * const ftok = tok->tokAt(2);
             const std::vector<const Token *> args = getArguments(ftok);
 
-            const Library::Container * c = tok->valueType()->container;
             Library::Container::Action action = c->getAction(tok->strAt(2));
             const Token* iterTok = nullptr;
             if (action == Library::Container::Action::INSERT && args.size() == 2) {
@@ -806,7 +804,7 @@ void CheckStl::invalidContainer()
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (tok->varId() == 0)
                 continue;
-            if (!astIsContainer(tok))
+            if (!astGetContainer(tok))
                 continue;
             if (!isInvalidMethod(tok))
                 continue;
@@ -906,7 +904,7 @@ void CheckStl::invalidContainerLoop()
             const Token * blockEnd = blockStart->link();
             if (contTok->varId() == 0)
                 continue;
-            if (!astIsContainer(contTok))
+            if (!astGetContainer(contTok))
                 continue;
             unsigned int varid = contTok->varId();
             for (const Token* tok2 = blockStart; tok2 != blockEnd; tok2 = tok2->next()) {
@@ -1284,10 +1282,8 @@ static std::pair<const Token *, const Token *> isMapFind(const Token *tok)
         return {};
     if (!Token::simpleMatch(tok->astOperand1(), "."))
         return {};
-    if (!astIsContainer(tok->astOperand1()->astOperand1()))
-        return {};
-    const Token * contTok = tok->astOperand1()->astOperand1();
-    const Library::Container * container = contTok->valueType()->container;
+    const Token* contTok = tok->astOperand1()->astOperand1();
+    const Library::Container* container = astGetContainer(contTok);
     if (!container)
         return {};
     if (!container->stdAssociativeLike)

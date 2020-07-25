@@ -46,7 +46,7 @@ static const char ATTR_VALUE[] = "value";
 
 int CTU::maxCtuDepth = 2;
 
-std::string CTU::getFunctionId(const Tokenizer *tokenizer, const Function *function)
+static std::string getFunctionId(const Tokenizer *tokenizer, const Function *function)
 {
     return tokenizer->list.file(function->tokenDef) + ':' + MathLib::toString(function->tokenDef->linenr()) + ':' + MathLib::toString(function->tokenDef->column());
 }
@@ -425,7 +425,7 @@ std::list<CTU::CTUInfo::UnsafeUsage> CTU::getUnsafeUsage(const Tokenizer *tokeni
             for (const std::pair<const Token *, MathLib::bigint> &v : getUnsafeFunction(tokenizer, settings, &scope, argnr, check, isUnsafeUsage)) {
                 const Token *tok = v.first;
                 MathLib::bigint value = v.second;
-                unsafeUsage.emplace_back(CTU::getFunctionId(tokenizer, function), static_cast<unsigned int>(argnr+1), tok->str(), CTU::CTUInfo::Location(tokenizer,tok), value);
+                unsafeUsage.emplace_back(getFunctionId(tokenizer, function), static_cast<unsigned int>(argnr+1), tok->str(), CTU::CTUInfo::Location(tokenizer,tok), value);
             }
         }
     }

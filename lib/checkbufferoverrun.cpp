@@ -289,7 +289,7 @@ void CheckBufferOverrun::arrayIndex()
                 continue;
         }
 
-        if (astIsContainer(array))
+        if (astGetContainer(array))
             continue;
 
         std::vector<const Token *> indexTokens;

@@ -20,7 +20,39 @@
 
 #include <utility>
 #include <stack>
+#include <cctype>
+#include <array>
 
+
+bool isPrefixStringCharLiteral(const std::string& str, char q, const std::string& p)
+{
+    if (!endsWith(str, q))
+        return false;
+    if ((str.length() + 1) > p.length() && (str.compare(0, p.size() + 1, p + q) == 0))
+        return true;
+    return false;
+}
+
+static const std::array<std::string, 5> literal_suffixes{ "", "u8", "u", "U", "L" };
+bool isStringCharLiteral(const std::string& str, char q)
+{
+    for (const std::string& p : literal_suffixes) {
+        if (isPrefixStringCharLiteral(str, q, p))
+            return true;
+    }
+    return false;
+}
+
+const char* getOrdinalText(int i)
+{
+    if ((i % 10) == 1 && (i % 100) != 11)
+        return "st";
+    if ((i % 10) == 2 && (i % 100) != 12)
+        return "nd";
+    if ((i % 10) == 3 && (i % 100) != 13)
+        return "rd";
+    return "th";
+}
 
 int caseInsensitiveStringCompare(const std::string &lhs, const std::string &rhs)
 {

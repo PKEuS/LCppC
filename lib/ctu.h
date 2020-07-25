@@ -149,11 +149,9 @@ namespace CTU {
 
     extern int maxCtuDepth;
 
-    CPPCHECKLIB std::string getFunctionId(const Tokenizer *tokenizer, const Function *function);
+    std::list<CTUInfo::UnsafeUsage> getUnsafeUsage(const Tokenizer *tokenizer, const Settings *settings, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *_value));
 
-    CPPCHECKLIB std::list<CTUInfo::UnsafeUsage> getUnsafeUsage(const Tokenizer *tokenizer, const Settings *settings, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *value));
-
-    CPPCHECKLIB std::list<CTUInfo::UnsafeUsage> loadUnsafeUsageListFromXml(const tinyxml2::XMLElement *xmlElement);
+    std::list<CTUInfo::UnsafeUsage> loadUnsafeUsageListFromXml(const tinyxml2::XMLElement *xmlElement);
 }
 
 /// @}
