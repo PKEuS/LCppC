@@ -3560,7 +3560,7 @@ private:
               "    iterator it;\n"
               "    it->m_place = 0;\n"
               "    return it;\n"
-              "}\n", true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:18]: (error, inconclusive) Invalid iterator 'it' used.\n", errout.str());
     }
 
@@ -3568,36 +3568,31 @@ private:
         check("void foo() {\n"
               "    for(int& x:v)\n"
               "        x = 1;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (style) Consider using std::fill algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    for(int& x:v)\n"
               "        x = x + 1;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (style) Consider using std::transform algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo(int a, int b) {\n"
               "    for(int& x:v)\n"
               "        x = a + b;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (style) Consider using std::fill or std::generate algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    for(int& x:v)\n"
               "        x += 1;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (style) Consider using std::transform algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    for(int& x:v)\n"
               "        x = f();\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (style) Consider using std::generate algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
@@ -3605,8 +3600,7 @@ private:
               "        f();\n"
               "        x = 1;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void foo() {\n"
@@ -3614,8 +3608,7 @@ private:
               "        x = 1;\n"
               "        f();\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         // There should probably be a message for unconditional break
@@ -3624,15 +3617,13 @@ private:
               "        x = 1;\n"
               "        break;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void foo() {\n"
               "    for(int& x:v)\n"
               "        x = ++x;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -3641,32 +3632,28 @@ private:
               "    int n = 0;\n"
               "    for(int x:v)\n"
               "        n += x;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::accumulate algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    int n = 0;\n"
               "    for(int x:v)\n"
               "        n = n + x;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::accumulate algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    int n = 0;\n"
               "    for(int x:v)\n"
               "        n += 1;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::distance algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    int n = 0;\n"
               "    for(int x:v)\n"
               "        n = n + 1;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::distance algorithm instead of a raw loop.\n", errout.str());
 
         check("bool f(int);\n"
@@ -3674,8 +3661,7 @@ private:
               "    bool b = false;\n"
               "    for(int x:v)\n"
               "        b &= f(x);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:5]: (style) Consider using std::any_of, std::all_of, std::none_of, or std::accumulate algorithm instead of a raw loop.\n", errout.str());
 
         check("bool f(int);\n"
@@ -3683,8 +3669,7 @@ private:
               "    bool b = false;\n"
               "    for(int x:v)\n"
               "        b |= f(x);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:5]: (style) Consider using std::any_of, std::all_of, std::none_of, or std::accumulate algorithm instead of a raw loop.\n", errout.str());
 
         check("bool f(int);\n"
@@ -3692,8 +3677,7 @@ private:
               "    bool b = false;\n"
               "    for(int x:v)\n"
               "        b = b && f(x);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:5]: (style) Consider using std::any_of, std::all_of, std::none_of, or std::accumulate algorithm instead of a raw loop.\n", errout.str());
 
         check("bool f(int);\n"
@@ -3701,16 +3685,14 @@ private:
               "    bool b = false;\n"
               "    for(int x:v)\n"
               "        b = b || f(x);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:5]: (style) Consider using std::any_of, std::all_of, std::none_of, or std::accumulate algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    int n = 0;\n"
               "    for(int& x:v)\n"
               "        n = ++x;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -3719,64 +3701,56 @@ private:
               "    std::vector<int> c;\n"
               "    for(int x:v)\n"
               "        c.push_back(x);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::copy algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    std::vector<int> c;\n"
               "    for(int x:v)\n"
               "        c.push_back(f(x));\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::transform algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    std::vector<int> c;\n"
               "    for(int x:v)\n"
               "        c.push_back(x + 1);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::transform algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    std::vector<int> c;\n"
               "    for(int x:v)\n"
               "        c.push_front(x);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::copy algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    std::vector<int> c;\n"
               "    for(int x:v)\n"
               "        c.push_front(f(x));\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::transform algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    std::vector<int> c;\n"
               "    for(int x:v)\n"
               "        c.push_front(x + 1);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::transform algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    std::vector<int> c;\n"
               "    for(int x:v)\n"
               "        c.push_back(v);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void foo() {\n"
               "    std::vector<int> c;\n"
               "    for(int x:v)\n"
               "        c.push_back(0);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -3785,30 +3759,26 @@ private:
               "    int n = 0;\n"
               "    for(int x:v)\n"
               "        n++;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::distance algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    int n = 0;\n"
               "    for(int x:v)\n"
               "        ++n;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::distance algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    for(int& x:v)\n"
               "        x++;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (style) Consider using std::transform algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    for(int& x:v)\n"
               "        ++x;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (style) Consider using std::transform algorithm instead of a raw loop.\n", errout.str());
     }
 
@@ -3820,8 +3790,7 @@ private:
               "            x = 1;\n"
               "        }\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:5]: (style) Consider using std::replace_if algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3832,8 +3801,7 @@ private:
               "            n += x;\n"
               "        }\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:6]: (style) Consider using std::accumulate algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3844,8 +3812,7 @@ private:
               "            n += 1;\n"
               "        }\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:6]: (style) Consider using std::count_if algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3856,8 +3823,7 @@ private:
               "            n++;\n"
               "        }\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:6]: (style) Consider using std::count_if algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3867,8 +3833,7 @@ private:
               "            x = x + 1;\n"
               "        }\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:5]: (style) Consider using std::transform algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3879,8 +3844,7 @@ private:
               "            c.push_back(x);\n"
               "        }\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:6]: (style) Consider using std::copy_if algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3891,8 +3855,7 @@ private:
               "        }\n"
               "    }\n"
               "    return true;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::any_of algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3903,8 +3866,7 @@ private:
               "        }\n"
               "    }\n"
               "    return true;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::any_of algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3916,8 +3878,7 @@ private:
               "            break;\n"
               "        }\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:5]: (style) Consider using std::any_of algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3929,8 +3890,7 @@ private:
               "            break;\n"
               "        }\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:5]: (style) Consider using std::find_if algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3943,8 +3903,7 @@ private:
               "    }\n"
               "    if(b) {}\n"
               "    return true;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:6]: (style) Consider using std::any_of, std::all_of, std::none_of, or std::accumulate algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3956,8 +3915,7 @@ private:
               "        }\n"
               "    }\n"
               "    return true;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:6]: (style) Consider using std::any_of, std::all_of, std::none_of, or std::accumulate algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3969,8 +3927,7 @@ private:
               "        }\n"
               "    }\n"
               "    return true;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:6]: (style) Consider using std::any_of, std::all_of, std::none_of, or std::accumulate algorithm instead of a raw loop.\n", errout.str());
 
         check("bool pred(int x);\n"
@@ -3981,8 +3938,7 @@ private:
               "        }\n"
               "        return true;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         // There is no transform_if
@@ -3994,8 +3950,7 @@ private:
               "            c.push_back(x + 1);\n"
               "        }\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("bool pred(int x);\n"
@@ -4006,8 +3961,7 @@ private:
               "            x = 1;\n"
               "        }\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("bool pred(int x);\n"
@@ -4019,8 +3973,7 @@ private:
               "            break;\n"
               "        }\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -4029,40 +3982,35 @@ private:
               "    int n = 0;\n"
               "    for(int x:v)\n"
               "        n = x > n ? x : n;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::max_element algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    int n = 0;\n"
               "    for(int x:v)\n"
               "        n = x < n ? x : n;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::min_element algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    int n = 0;\n"
               "    for(int x:v)\n"
               "        n = x > n ? n : x;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::min_element algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo() {\n"
               "    int n = 0;\n"
               "    for(int x:v)\n"
               "        n = x < n ? n : x;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::max_element algorithm instead of a raw loop.\n", errout.str());
 
         check("void foo(int m) {\n"
               "    int n = 0;\n"
               "    for(int x:v)\n"
               "        n = x > m ? x : n;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::accumulate algorithm instead of a raw loop.\n", errout.str());
     }
 
@@ -4071,8 +4019,7 @@ private:
               "    auto v0 = v.begin();\n"
               "    v.push_back(123);\n"
               "    std::cout << *v0 << std::endl;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:1] -> [test.cpp:2] -> [test.cpp:3] -> [test.cpp:1] -> [test.cpp:4]: (error) Using iterator to local container 'v' that may be invalid.\n", errout.str());
 
         check("std::string e();\n"
@@ -4083,16 +4030,14 @@ private:
               "    std::string::const_iterator d = f.begin();\n"
               "    if (d != f.end()) {}\n"
               "  }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f(std::vector<int> &v) {\n"
               "    int *v0 = &v[0];\n"
               "    v.push_back(123);\n"
               "    std::cout << (*v0)[0] << std::endl;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:1] -> [test.cpp:2] -> [test.cpp:3] -> [test.cpp:1] -> [test.cpp:4]: (error) Using pointer to local variable 'v' that may be invalid.\n", errout.str());
 
         check("void f() {\n"
@@ -4100,8 +4045,7 @@ private:
               "    int &v0 = v.front();\n"
               "    v.push_back(123);\n"
               "    std::cout << v0 << std::endl;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS(
             "[test.cpp:3] -> [test.cpp:3] -> [test.cpp:4] -> [test.cpp:5]: (error) Reference to v that may be invalid.\n",
             errout.str());
@@ -4111,8 +4055,7 @@ private:
               "    int &v0 = v[0];\n"
               "    v.push_back(123);\n"
               "    std::cout << v0 << std::endl;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3] -> [test.cpp:4] -> [test.cpp:5]: (error) Reference to v that may be invalid.\n",
                       errout.str());
 
@@ -4120,8 +4063,7 @@ private:
               "    int &v0 = v.front();\n"
               "    v.push_back(123);\n"
               "    std::cout << v0 << std::endl;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS(
             "[test.cpp:2] -> [test.cpp:2] -> [test.cpp:1] -> [test.cpp:3] -> [test.cpp:4]: (error) Reference to v that may be invalid.\n",
             errout.str());
@@ -4130,8 +4072,7 @@ private:
               "    int &v0 = v[0];\n"
               "    v.push_back(123);\n"
               "    std::cout << v0 << std::endl;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS(
             "[test.cpp:2] -> [test.cpp:1] -> [test.cpp:3] -> [test.cpp:4]: (error) Reference to v that may be invalid.\n",
             errout.str());
@@ -4140,8 +4081,7 @@ private:
               "    std::vector<int> *v0 = &v;\n"
               "    v.push_back(123);\n"
               "    std::cout << (*v0)[0] << std::endl;\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("const std::vector<int> * g(int);\n"
@@ -4156,8 +4096,7 @@ private:
               "        const int &m = v->front();\n"
               "        if (m == 0) {}\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("std::vector<std::string> g();\n"
@@ -4167,7 +4106,7 @@ private:
               "    std::string z;\n"
               "    z += \"\";\n"
               "    z += y;\n"
-              "}\n",true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f(std::vector<char> v)\n"
@@ -4179,14 +4118,14 @@ private:
               "        cur = v.data();\n"
               "        end = cur + v.size();\n"
               "    }\n"
-              "}\n",true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         // #9598
         check("void f(std::vector<std::string> v) {\n"
               "    for (auto it = v.begin(); it != v.end(); it = v.erase(it))\n"
               "        *it;\n"
-              "}\n",true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         // #9714
@@ -4195,7 +4134,7 @@ private:
               "  std::string x;\n"
               "  v.push_back(x.insert(0, \"x\"));\n"
               "  v.push_back(\"y\");\n"
-              "}\n",true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         // #9796
@@ -4207,7 +4146,7 @@ private:
               "    A *b = v.back();\n"
               "    v.pop_back();\n"
               "    delete b;\n"
-              "}\n",true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("struct A {};\n"
@@ -4218,7 +4157,7 @@ private:
               "    A *b = v.back();\n"
               "    v.pop_back();\n"
               "    delete b;\n"
-              "}\n",true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("struct A {};\n"
@@ -4229,7 +4168,7 @@ private:
               "    std::shared_ptr<A> b = v.back();\n"
               "    v.pop_back();\n"
               "    delete b;\n"
-              "}\n",true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -4240,8 +4179,7 @@ private:
               "        if (i < 5)\n"
               "            v.push_back(i * 2);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:2] -> [test.cpp:4]: (error) Calling 'push_back' while iterating the container is invalid.\n", errout.str());
 
         // #9713
@@ -4253,8 +4191,7 @@ private:
               "      return;\n"
               "    }\n"
               "  }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (style) Consider using std::any_of algorithm instead of a raw loop.\n", errout.str());
 
     }
@@ -4264,8 +4201,7 @@ private:
               "    if (s.find(x) == s.end()) {\n"
               "        s.insert(x);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (performance) Searching before insertion is not necessary.\n", errout.str());
 
         check("void f2(std::map<unsigned, unsigned>& m, unsigned x) {\n"
@@ -4274,24 +4210,21 @@ private:
               "    } else {\n"
               "        m[x] = 1;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (performance) Searching before insertion is not necessary.\n", errout.str());
 
         check("void f3(std::map<unsigned, unsigned>& m, unsigned x) {\n"
               "    if (m.count(x) == 0) {\n"
               "        m.emplace(x, 1);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (performance) Searching before insertion is not necessary.\n", errout.str());
 
         check("void f4(std::set<unsigned>& s, unsigned x) {\n"
               "    if (s.find(x) == s.end()) {\n"
               "        s.insert(x);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (performance) Searching before insertion is not necessary.\n", errout.str());
 
         check("void f5(std::map<unsigned, unsigned>& m, unsigned x) {\n"
@@ -4300,24 +4233,21 @@ private:
               "    } else {\n"
               "        m[x] = 1;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (performance) Searching before insertion is not necessary.\n", errout.str());
 
         check("void f6(std::map<unsigned, unsigned>& m, unsigned x) {\n"
               "    if (m.count(x) == 0) {\n"
               "        m.emplace(x, 1);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (performance) Searching before insertion is not necessary.\n", errout.str());
 
         check("void f1(std::unordered_set<unsigned>& s, unsigned x) {\n"
               "    if (s.find(x) == s.end()) {\n"
               "        s.insert(x);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (performance) Searching before insertion is not necessary.\n", errout.str());
 
         check("void f2(std::unordered_map<unsigned, unsigned>& m, unsigned x) {\n"
@@ -4326,24 +4256,21 @@ private:
               "    } else {\n"
               "        m[x] = 1;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (performance) Searching before insertion is not necessary.\n", errout.str());
 
         check("void f3(std::unordered_map<unsigned, unsigned>& m, unsigned x) {\n"
               "    if (m.count(x) == 0) {\n"
               "        m.emplace(x, 1);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (performance) Searching before insertion is not necessary.\n", errout.str());
 
         check("void f4(std::unordered_set<unsigned>& s, unsigned x) {\n"
               "    if (s.find(x) == s.end()) {\n"
               "        s.insert(x);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (performance) Searching before insertion is not necessary.\n", errout.str());
 
         check("void f5(std::unordered_map<unsigned, unsigned>& m, unsigned x) {\n"
@@ -4352,16 +4279,14 @@ private:
               "    } else {\n"
               "        m[x] = 1;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (performance) Searching before insertion is not necessary.\n", errout.str());
 
         check("void f6(std::unordered_map<unsigned, unsigned>& m, unsigned x) {\n"
               "    if (m.count(x) == 0) {\n"
               "        m.emplace(x, 1);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (performance) Searching before insertion is not necessary.\n", errout.str());
 
         check("void g1(std::map<unsigned, unsigned>& m, unsigned x) {\n"
@@ -4370,8 +4295,7 @@ private:
               "    } else {\n"
               "        m[x] = 2;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void g1(std::map<unsigned, unsigned>& m, unsigned x) {\n"
@@ -4380,24 +4304,21 @@ private:
               "    } else {\n"
               "        m[x] = 2;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f1(QSet<unsigned>& s, unsigned x) {\n"
               "    if (s.find(x) == s.end()) {\n"
               "        s.insert(x);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f1(std::multiset<unsigned>& s, unsigned x) {\n"
               "    if (s.find(x) == s.end()) {\n"
               "        s.insert(x);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f2(std::multimap<unsigned, unsigned>& m, unsigned x) {\n"
@@ -4406,24 +4327,21 @@ private:
               "    } else {\n"
               "        m[x] = 1;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f3(std::multimap<unsigned, unsigned>& m, unsigned x) {\n"
               "    if (m.count(x) == 0) {\n"
               "        m.emplace(x, 1);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f4(std::multiset<unsigned>& s, unsigned x) {\n"
               "    if (s.find(x) == s.end()) {\n"
               "        s.insert(x);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f5(std::multimap<unsigned, unsigned>& m, unsigned x) {\n"
@@ -4432,16 +4350,14 @@ private:
               "    } else {\n"
               "        m[x] = 1;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f1(std::unordered_multiset<unsigned>& s, unsigned x) {\n"
               "    if (s.find(x) == s.end()) {\n"
               "        s.insert(x);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f2(std::unordered_multimap<unsigned, unsigned>& m, unsigned x) {\n"
@@ -4450,24 +4366,21 @@ private:
               "    } else {\n"
               "        m[x] = 1;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f3(std::unordered_multimap<unsigned, unsigned>& m, unsigned x) {\n"
               "    if (m.count(x) == 0) {\n"
               "        m.emplace(x, 1);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f4(std::unordered_multiset<unsigned>& s, unsigned x) {\n"
               "    if (s.find(x) == s.end()) {\n"
               "        s.insert(x);\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f5(std::unordered_multimap<unsigned, unsigned>& m, unsigned x) {\n"
@@ -4476,8 +4389,7 @@ private:
               "    } else {\n"
               "        m[x] = 1;\n"
               "    }\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -4485,53 +4397,46 @@ private:
         check("void f() {\n"
               "    static std::mutex m;\n"
               "    static std::lock_guard<std::mutex> g(m);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (warning) Lock guard is defined globally. Lock guards are intended to be local. A global lock guard could lead to a deadlock since it won't unlock until the end of the program.\n", errout.str());
 
         check("void f() {\n"
               "    static std::mutex m;\n"
               "    std::lock_guard<std::mutex> g(m);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
               "    static std::mutex m;\n"
               "    static std::unique_lock<std::mutex> g(m, std::defer_lock);\n"
               "    static std::lock(g);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (warning) Lock guard is defined globally. Lock guards are intended to be local. A global lock guard could lead to a deadlock since it won't unlock until the end of the program.\n", errout.str());
 
         check("void f() {\n"
               "    static std::mutex m;\n"
               "    std::unique_lock<std::mutex> g(m, std::defer_lock);\n"
               "    std::lock(g);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
               "    std::mutex m;\n"
               "    std::lock_guard<std::mutex> g(m);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (warning) The lock is ineffective because the mutex is locked at the same scope as the mutex itself.\n", errout.str());
 
         check("void f() {\n"
               "    std::mutex m;\n"
               "    std::unique_lock<std::mutex> g(m);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (warning) The lock is ineffective because the mutex is locked at the same scope as the mutex itself.\n", errout.str());
 
         check("void f() {\n"
               "    std::mutex m;\n"
               "    std::unique_lock<std::mutex> g(m, std::defer_lock);\n"
               "    std::lock(g);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:3]: (warning) The lock is ineffective because the mutex is locked at the same scope as the mutex itself.\n", errout.str());
 
         check("void g();\n"
@@ -4540,8 +4445,7 @@ private:
               "    m.lock();\n"
               "    g();\n"
               "    m.unlock();\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void g();\n"
@@ -4550,8 +4454,7 @@ private:
               "    m.lock();\n"
               "    g();\n"
               "    m.unlock();\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (warning) The lock is ineffective because the mutex is locked at the same scope as the mutex itself.\n", errout.str());
 
         check("class A {\n"
@@ -4559,8 +4462,7 @@ private:
               "    void f() {\n"
               "        std::lock_guard<std::mutex> g(m);\n"
               "    }\n"
-              "};\n",
-              true);
+              "};", true);
         ASSERT_EQUALS("", errout.str());
 
         check("class A {\n"
@@ -4571,8 +4473,7 @@ private:
               "        g();\n"
               "        m.unlock();\n"
               "    }\n"
-              "};\n",
-              true);
+              "};", true);
         ASSERT_EQUALS("", errout.str());
 
         check("class A {\n"
@@ -4580,16 +4481,14 @@ private:
               "    void f() {\n"
               "        static std::lock_guard<std::mutex> g(m);\n"
               "    }\n"
-              "};\n",
-              true);
+              "};", true);
         ASSERT_EQUALS("[test.cpp:4]: (warning) Lock guard is defined globally. Lock guards are intended to be local. A global lock guard could lead to a deadlock since it won't unlock until the end of the program.\n", errout.str());
 
         check("std::mutex& h();\n"
               "void f() {\n"
               "    auto& m = h();\n"
               "    std::lock_guard<std::mutex> g(m);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void g();\n"
@@ -4599,16 +4498,14 @@ private:
               "    m.lock();\n"
               "    g();\n"
               "    m.unlock();\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("std::mutex& h();\n"
               "void f() {\n"
               "    auto m = h();\n"
               "    std::lock_guard<std::mutex> g(m);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:4]: (warning) The lock is ineffective because the mutex is locked at the same scope as the mutex itself.\n", errout.str());
 
         check("void g();\n"
@@ -4618,8 +4515,7 @@ private:
               "    m.lock();\n"
               "    g();\n"
               "    m.unlock();\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("[test.cpp:5]: (warning) The lock is ineffective because the mutex is locked at the same scope as the mutex itself.\n", errout.str());
 
         check("void foo();\n"
@@ -4634,8 +4530,7 @@ private:
               "    m.lock();\n"
               "    bar();\n"
               "    m.unlock();\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
 
         check("void foo();\n"
@@ -4648,8 +4543,7 @@ private:
               "    });\n"
               "    std::unique_lock<std::mutex> g{m};\n"
               "    bar();\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
     }
 };

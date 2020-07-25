@@ -771,8 +771,7 @@ private:
         functionVariableUsage("undefined foo()\n"
                               "{\n"
                               "    undefined i = 0;\n"
-                              "}\n",
-                              "test.c");
+                              "}", "test.c");
         ASSERT_EQUALS("[test.c:3]: (style) Variable 'i' is assigned a value that is never used.\n", errout.str());
 
         functionVariableUsage("void foo()\n"
@@ -1128,8 +1127,7 @@ private:
                               "{\n"
                               "    undefined i;\n"
                               "    return i;\n"
-                              "}\n",
-                              "test.c");
+            "}", "test.c");
         ASSERT_EQUALS("[test.c:3]: (style) Variable 'i' is not assigned a value.\n", errout.str());
 
         functionVariableUsage("undefined *foo()\n"
@@ -3421,8 +3419,7 @@ private:
         functionVariableUsage("int foo() {\n"
                               "    A a;\n"
                               "    return 0;\n"
-                              "}\n",
-                              "test.c");
+            "}", "test.c");
         ASSERT_EQUALS("[test.c:2]: (style) Unused variable: a\n", errout.str());
 
         functionVariableUsage("struct A { int i; };\n"

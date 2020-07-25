@@ -1460,8 +1460,7 @@ private:
               "const int& bar(const std::unordered_map<int, int>& m, int k) {\n"
               "    auto x = 0;\n"
               "    return get_default(m, k, x);\n"
-              "}\n",
-              true);
+              "}", true);
         ASSERT_EQUALS(
             "[test.cpp:2] -> [test.cpp:4] -> [test.cpp:9] -> [test.cpp:9]: (error, inconclusive) Reference to local variable returned.\n",
             errout.str());
@@ -1474,8 +1473,7 @@ private:
               "}\n"
               "const int& bar(const std::unordered_map<int, int>& m, int k) {\n"
               "    return get_default(m, k, 0);\n"
-              "}\n",
-              true);
+            "}", true);
         ASSERT_EQUALS(
             "[test.cpp:2] -> [test.cpp:4] -> [test.cpp:8] -> [test.cpp:8]: (error, inconclusive) Reference to temporary returned.\n",
             errout.str());
@@ -1984,8 +1982,7 @@ private:
               "const int* bar(const std::unordered_map<int, int>& m, int k) {\n"
               "    auto x = 0;\n"
               "    return get_default(m, k, &x);\n"
-              "}\n",
-              true);
+            "}", true);
         TODO_ASSERT_EQUALS(
             "[test.cpp:9] -> [test.cpp:9] -> [test.cpp:8] -> [test.cpp:9]: (error, inconclusive) Returning pointer to local variable 'x' that will be invalid when returning.\n",
             "",

@@ -239,7 +239,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("[test.cpp:3]: (error) Uninitialized variable: a\n", errout.str());
 
@@ -247,7 +247,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "uninitvar");
         ASSERT_EQUALS("", errout.str());
 
@@ -255,7 +255,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    b++;\n"
-                       "}\n",
+                       "}",
                        "uninitvar");
         ASSERT_EQUALS("(information) Unmatched suppression: uninitvar\n", errout.str());
 
@@ -263,7 +263,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "uninitvar:test.cpp");
         ASSERT_EQUALS("", errout.str());
 
@@ -271,7 +271,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    b++;\n"
-                       "}\n",
+                       "}",
                        "uninitvar:test.cpp");
         ASSERT_EQUALS("[test.cpp]: (information) Unmatched suppression: uninitvar\n", errout.str());
 
@@ -279,7 +279,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "*:test.cpp");
         ASSERT_EQUALS("", errout.str());
 
@@ -287,7 +287,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    b++;\n"
-                       "}\n",
+                       "}",
                        "*:test.cpp");
         ASSERT_EQUALS("[test.cpp]: (information) Unmatched suppression: *\n", errout.str());
 
@@ -295,7 +295,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "uninitvar:test.cpp:3");
         ASSERT_EQUALS("", errout.str());
 
@@ -303,7 +303,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    b++;\n"
-                       "}\n",
+                       "}",
                        "uninitvar:test.cpp:3");
         ASSERT_EQUALS("[test.cpp:3]: (information) Unmatched suppression: uninitvar\n", errout.str());
 
@@ -312,7 +312,7 @@ private:
                        "    int a;\n"
                        "    // cppcheck-suppress uninitvar\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("", errout.str());
 
@@ -322,7 +322,7 @@ private:
                        "    // cppcheck-suppress uninitvar\n"
                        "\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("", errout.str());
 
@@ -330,7 +330,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    a++;// cppcheck-suppress uninitvar\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("", errout.str());
 
@@ -339,7 +339,7 @@ private:
                        "    int a;\n"
                        "    /* cppcheck-suppress uninitvar */\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("", errout.str());
 
@@ -349,7 +349,7 @@ private:
                        "    /* cppcheck-suppress uninitvar */\n"
                        "\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("", errout.str());
 
@@ -357,7 +357,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    a++;/* cppcheck-suppress uninitvar */\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("", errout.str());
 
@@ -366,7 +366,7 @@ private:
                        "    int a;\n"
                        "    // cppcheck-suppress[uninitvar]\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("", errout.str());
 
@@ -377,7 +377,7 @@ private:
                        "    a++;\n"
                        "\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("", errout.str());
 
@@ -385,7 +385,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    a++;// cppcheck-suppress[uninitvar]\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("", errout.str());
 
@@ -394,7 +394,7 @@ private:
                        "    int a;\n"
                        "    /* cppcheck-suppress[uninitvar]*/\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("", errout.str());
 
@@ -404,7 +404,7 @@ private:
                        "    /* cppcheck-suppress[uninitvar]*/\n"
                        "\n"
                        "    a++;\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("", errout.str());
 
@@ -412,7 +412,7 @@ private:
         (this->*check)("void f() {\n"
                        "    int a;\n"
                        "    a++;/* cppcheck-suppress[uninitvar]*/\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("", errout.str());
 
@@ -433,7 +433,7 @@ private:
                        "    int a;\n"
                        "    // cppcheck-suppress uninitvar\n"
                        "    b++;\n"
-                       "}\n",
+                       "}",
                        "");
         ASSERT_EQUALS("[test.cpp:4]: (information) Unmatched suppression: uninitvar\n", errout.str());
 
@@ -441,12 +441,12 @@ private:
         ASSERT_EQUALS(1U,
                       (this->*check)("int f() {\n"
                                      "  int a; return a;\n"
-                                     "}\n",
+                                     "}",
                                      ""));
         ASSERT_EQUALS(0U,
                       (this->*check)("int f() {\n"
                                      "  int a; return a;\n"
-                                     "}\n",
+                                     "}",
                                      "uninitvar"));
     }
 
@@ -514,7 +514,7 @@ private:
                          "    int a;\n"
                          "    /* cppcheck-suppress uninitvar symbolName=a */\n"
                          "    a++;\n"
-                         "}\n",
+                         "}",
                          "");
         ASSERT_EQUALS("", errout.str());
 
@@ -522,7 +522,7 @@ private:
                          "    int a,b;\n"
                          "    /* cppcheck-suppress uninitvar symbolName=b */\n"
                          "    a++; b++;\n"
-                         "}\n",
+                         "}",
                          "");
         ASSERT_EQUALS("[test.cpp:4]: (error) Uninitialized variable: a\n", errout.str());
     }

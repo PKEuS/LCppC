@@ -8319,7 +8319,7 @@ private:
               "void Fred::func1(int a, int b, int c) { }\n"
               "void Fred::func2(int c, int b, int a) { }\n"
               "void Fred::func3(int c, int b, int a) { }\n"
-              "void Fred::func4(int c, int b, int a) { }\n",
+              "void Fred::func4(int c, int b, int a) { }",
               nullptr, false, false);
         ASSERT_EQUALS("[test.cpp:3] -> [test.cpp:4]: (warning) Function 'func2' argument order different: declaration 'a, b, c' definition 'c, b, a'\n"
                       "[test.cpp:5] -> [test.cpp:6]: (warning) Function 'func3' argument order different: declaration ', b, c' definition 'c, b, a'\n"
