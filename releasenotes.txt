@@ -47,6 +47,8 @@ Improvements:
 
  - A couple of small performance and memory usage optimizations
 
+ - Support iterators in ValueType parsing. The type of iterator is defined by Library configuration
+
  - Avoid false positives caused by #if/ifdef in several checks (also in Cppcheck 2.2)
 
  - Improved std.cfg, wxwidgets.cfg and windows.cfg (also in Cppcheck 2.2)

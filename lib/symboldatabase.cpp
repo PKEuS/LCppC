@@ -5283,6 +5283,12 @@ void SymbolDatabase::setValueType(Token *tok, const ValueType &valuetype)
         return;
     }
 
+    if (vt1 && vt1->container && vt1->containerTypeToken && vt1->type == ValueType::ITERATOR && Token::simpleMatch(parent, ". second")) {
+        ValueType item;
+        if (vt1->container->iteratorType == Library::Container::IteratorType::STL_MAP && parsedecl(vt1->containerTypeToken, &item, mDefaultSignedness, mSettings))
+            setValueType(parent, item);
+    }
+
     if (vt1 && vt1->container && vt1->containerTypeToken && Token::Match(parent, ". %name% (") && vt1->container->getYield(parent->next()->str()) == Library::Container::Yield::ITEM) {
         ValueType item;
         if (parsedecl(vt1->containerTypeToken, &item, mDefaultSignedness, mSettings))
@@ -5372,6 +5378,13 @@ void SymbolDatabase::setValueType(Token *tok, const ValueType &valuetype)
         setValueType(parent, vt);
         return;
     }
+    if (parent->str() == "*" && !parent->astOperand2() && vt1->container && vt1->containerTypeToken && vt1->type == ValueType::ITERATOR) {
+        ValueType vtParent;
+        if (vt1->container->iteratorType == Library::Container::IteratorType::STL_DEFAULT && parsedecl(vt1->containerTypeToken, &vtParent, mDefaultSignedness, mSettings)) {
+            setValueType(parent, vtParent);
+            return;
+        }
+    }
     if (parent->str() == "*" && Token::simpleMatch(parent->astOperand2(), "[") && valuetype.pointer > 0U) {
         const Token *op1 = parent->astOperand2()->astOperand1();
         while (op1 && op1->str() == "[")
@@ -5391,6 +5404,13 @@ void SymbolDatabase::setValueType(Token *tok, const ValueType &valuetype)
 
     if ((parent->str() == "." || parent->str() == "::") &&
         parent->astOperand2() && parent->astOperand2()->isName()) {
+        if (vt1 && vt1->container && vt1->containerTypeToken && vt1->type == ValueType::ITERATOR) {
+            ValueType vtParent;
+            if (vt1->container->iteratorType == Library::Container::IteratorType::STL_DEFAULT && parsedecl(vt1->containerTypeToken, &vtParent, mDefaultSignedness, mSettings)) {
+                setValueType(parent, vtParent);
+                return;
+            }
+        }
         const Variable* var = parent->astOperand2()->variable();
         if (!var && valuetype.typeScope && vt1) {
             const std::string &name = parent->astOperand2()->str();

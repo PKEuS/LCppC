@@ -160,6 +160,8 @@ private:
         TEST_CASE(VariableValueType3);
         TEST_CASE(VariableValueType4); // smart pointer type
         TEST_CASE(VariableValueType5); // smart pointer type
+        TEST_CASE(VariableValueType6);
+        TEST_CASE(VariableValueType7);
 
         TEST_CASE(findVariableType1);
         TEST_CASE(findVariableType2);
@@ -965,6 +967,30 @@ private:
         ASSERT(p->valueType());
         ASSERT(p->valueType()->smartPointerTypeToken);
         ASSERT(p->valueType()->pointer == 1);
+    }
+
+    void VariableValueType6() {
+        GET_SYMBOL_DB("std::vector<int>::iterator i;\n"
+                      "int f() { return *i; }");
+
+        const Token* tok = Token::findsimplematch(tokenizer.tokens(), "*");
+        const Token* tok2 = tok->next();
+        ASSERT(tok2->valueType());
+        ASSERT(tok2->valueType()->type == ValueType::ITERATOR);
+        ASSERT(tok->valueType());
+        ASSERT(tok->valueType()->type == ValueType::INT);
+    }
+
+    void VariableValueType7() {
+        GET_SYMBOL_DB("std::map<std::string, int>::iterator i;\n"
+                      "int f() { return i.second; }");
+
+        const Token* tok = Token::findsimplematch(tokenizer.tokens(), ".");
+        const Token* tok2 = tok->previous();
+        ASSERT(tok2->valueType());
+        ASSERT(tok2->valueType()->type == ValueType::ITERATOR);
+        ASSERT(tok->valueType());
+        ASSERT(tok->valueType()->type == ValueType::INT);
     }
 
     void findVariableType1() {

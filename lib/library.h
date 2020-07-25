@@ -202,7 +202,8 @@ public:
             opLessAllowed(true),
             hasInitializerListConstructor(false),
             unstableErase(false),
-            unstableInsert(false) {
+            unstableInsert(false),
+            iteratorType(IteratorType::UNKNOWN) {
         }
 
         enum class Action : uint8_t {
@@ -228,6 +229,9 @@ public:
         bool hasInitializerListConstructor;
         bool unstableErase;
         bool unstableInsert;
+        enum class IteratorType : uint8_t {
+            STL_DEFAULT, STL_MAP, UNKNOWN
+        } iteratorType;
 
         Action getAction(const std::string& function) const {
             const std::map<std::string, Function>::const_iterator i = functions.find(function);

@@ -412,6 +412,16 @@ Library::Error Library::load(const tinyxml2::XMLDocument &doc)
             if (hasInitializerListConstructor)
                 container.hasInitializerListConstructor = std::string(hasInitializerListConstructor) == "true";
 
+            const char* const itType = node->Attribute("itType");
+            if (itType) {
+                if (strcmp(itType, "stl-default") == 0)
+                    container.iteratorType = Container::IteratorType::STL_DEFAULT;
+                else if (strcmp(itType, "stl-map") == 0)
+                    container.iteratorType = Container::IteratorType::STL_MAP;
+                else
+                    container.iteratorType = Container::IteratorType::UNKNOWN;
+            }
+
             for (const tinyxml2::XMLElement *containerNode = node->FirstChildElement(); containerNode; containerNode = containerNode->NextSiblingElement()) {
                 const std::string containerNodeName = containerNode->Name();
                 if (containerNodeName == "size" || containerNodeName == "access" || containerNodeName == "other") {
