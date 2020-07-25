@@ -2070,6 +2070,10 @@ static bool evalAssignment(ValueFlow::Value &lhsValue, const std::string &assign
             lhsValue.intvalue |= rhsValue.intvalue;
         else if (assign == "^=")
             lhsValue.intvalue ^= rhsValue.intvalue;
+        else if (assign == "<<=")
+            lhsValue.intvalue <<= rhsValue.intvalue;
+        else if (assign == ">>=")
+            lhsValue.intvalue >>= rhsValue.intvalue;
         else
             return false;
     } else if (lhsValue.isFloatValue()) {
