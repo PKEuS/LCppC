@@ -381,7 +381,7 @@ int main()
     fout << "lcppc: $(LIBOBJ) $(CLIOBJ) $(EXTOBJ)\n";
     fout << "\t$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ $(LIBS) $(LDFLAGS) $(RDYNAMIC)\n\n";
     fout << "all:\tlcppc testrunner\n\n";
-    fout << "testrunner: $(TESTOBJ) $(LIBOBJ) $(EXTOBJ) cli/threadexecutor.o cli/cmdlineparser.o cli/cppcheckexecutor.o cli/filelister.o\n";
+    fout << "testrunner: $(TESTOBJ) $(LIBOBJ) $(EXTOBJ) cli/cmdlineparser.o cli/cppcheckexecutor.o cli/filelister.o\n";
     fout << "\t$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ $(LIBS) $(LDFLAGS) $(RDYNAMIC)\n\n";
     fout << "test:\tall\n";
     fout << "\t./testrunner\n\n";

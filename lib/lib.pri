@@ -48,6 +48,7 @@ HEADERS += $${PWD}/analyzerinfo.h \
            $${PWD}/suppressions.h \
            $${PWD}/symboldatabase.h \
            $${PWD}/templatesimplifier.h \
+           $${PWD}/threadexecutor.h \
            $${PWD}/timer.h \
            $${PWD}/token.h \
            $${PWD}/tokenize.h \
@@ -100,6 +101,7 @@ SOURCES += $${PWD}/analyzerinfo.cpp \
            $${PWD}/suppressions.cpp \
            $${PWD}/symboldatabase.cpp \
            $${PWD}/templatesimplifier.cpp \
+           $${PWD}/threadexecutor.cpp \
            $${PWD}/timer.cpp \
            $${PWD}/token.cpp \
            $${PWD}/tokenize.cpp \

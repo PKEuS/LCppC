@@ -21,7 +21,7 @@
 //---------------------------------------------------------------------------
 
 #include "config.h"
-#include "Settings.h"
+#include "settings.h"
 
 #include <ctime>
 #include <map>
