@@ -618,7 +618,8 @@ bool CheckNullPointer::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInfo
                                           warning ? Severity::warning : Severity::error,
                                           "Null pointer dereference: " + unsafeUsage.myArgumentName,
                                           "ctunullpointer",
-                                          CWE_NULL_POINTER_DEREFERENCE, Certainty::safe);
+                                          Certainty::safe,
+                                          CWE_NULL_POINTER_DEREFERENCE);
                 errorLogger.reportErr(errmsg);
 
                 foundErrors = true;

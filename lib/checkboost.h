@@ -68,7 +68,7 @@ private:
         c.boostForeachError(nullptr);
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "Boost";
     }
 

@@ -159,7 +159,7 @@ private:
         c.doubleFreeError(nullptr, nullptr, "varname", 0);
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "LeaksAutoVar";
     }
 

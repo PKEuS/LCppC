@@ -358,7 +358,7 @@ private:
                            "{\n"
                            "    A ret;\n"
                            "    return ret;\n"
-                "}", "test.c");
+                           "}", "test.c");
             ASSERT_EQUALS("[test.c:4]: (error) Uninitialized variable: ret\n", errout.str());
 
             // #3916 - avoid false positive
@@ -420,7 +420,7 @@ private:
             checkUninitVar("int a() {\n"
                            "    int ret;\n"
                            "    int a = value >> ret;\n"
-                "}", "test.c");
+                           "}", "test.c");
             ASSERT_EQUALS("[test.c:3]: (error) Uninitialized variable: ret\n", errout.str());
 
             checkUninitVar("void foo() {\n"   // #3707
@@ -440,7 +440,7 @@ private:
             checkUninitVar("void a() {\n"
                            "    int ret;\n"
                            "    a = value << ret;\n"
-                "}", "test.c");
+                           "}", "test.c");
             ASSERT_EQUALS("[test.c:3]: (error) Uninitialized variable: ret\n", errout.str());
 
             // #4320

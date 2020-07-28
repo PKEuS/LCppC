@@ -34,52 +34,14 @@
 #include <iomanip>
 #include <fstream>
 
-InternalError::InternalError(const Token *tok, const std::string &errorMsg, Type type) :
-    token(tok), errorMessage(errorMsg), type(type)
-{
-    switch (type) {
-    case AST:
-        id = "internalAstError";
-        break;
-    case SYNTAX:
-        id = "syntaxError";
-        break;
-    case UNKNOWN_MACRO:
-        id = "unknownMacro";
-        break;
-    case INTERNAL:
-        id = "cppcheckError";
-        break;
-    case LIMIT:
-        id = "cppcheckLimit";
-        break;
-    case INSTANTIATION:
-        id = "instantiationError";
-        break;
-    }
-}
 
 ErrorMessage::ErrorMessage()
     : incomplete(false), severity(Severity::none), cwe(0U), certainty(Certainty::safe)
 {
 }
 
-ErrorMessage::ErrorMessage(const std::list<FileLocation> &callStack, const std::string& file1, Severity::SeverityType severity, const std::string &msg, const std::string &id, Certainty::CertaintyLevel certainty) :
-    callStack(callStack), // locations for this error message
-    id(id),               // set the message id
-    file0(file1),
-    incomplete(false),
-    severity(severity),   // severity for this error message
-    cwe(0U),
-    certainty(certainty)
-{
-    // set the summary and verbose messages
-    setmsg(msg);
-}
 
-
-
-ErrorMessage::ErrorMessage(const std::list<FileLocation> &callStack, const std::string& file1, Severity::SeverityType severity, const std::string &msg, const std::string &id, const CWE &cwe, Certainty::CertaintyLevel certainty) :
+ErrorMessage::ErrorMessage(const std::list<FileLocation> &callStack, const std::string& file1, Severity::SeverityType severity, const std::string &msg, const std::string &id, Certainty::CertaintyLevel certainty, CWE cwe) :
     callStack(callStack), // locations for this error message
     id(id),               // set the message id
     file0(file1),
@@ -92,17 +54,12 @@ ErrorMessage::ErrorMessage(const std::list<FileLocation> &callStack, const std::
     setmsg(msg);
 }
 
-ErrorMessage::ErrorMessage(const std::list<const Token*>& callstack, const TokenList* list, Severity::SeverityType severity, const std::string& id, const std::string& msg, Certainty::CertaintyLevel certainty)
-    : id(id), incomplete(false), severity(severity), cwe(0U), certainty(certainty)
+ErrorMessage::ErrorMessage(const Token* tok, const TokenList* list, Severity::SeverityType severity, const std::string& id, const std::string& msg, Certainty::CertaintyLevel certainty, CWE cwe)
+    : id(id), incomplete(false), severity(severity), cwe(cwe.id), certainty(certainty)
 {
     // Format callstack
-    for (std::list<const Token *>::const_iterator it = callstack.begin(); it != callstack.end(); ++it) {
-        // --errorlist can provide null values here
-        if (!(*it))
-            continue;
-
-        callStack.emplace_back(*it, list);
-    }
+    if (tok) // --errorlist can provide null values here
+        callStack.emplace_back(tok, list);
 
     if (list && !list->getFiles().empty())
         file0 = list->getFiles()[0];
@@ -110,8 +67,7 @@ ErrorMessage::ErrorMessage(const std::list<const Token*>& callstack, const Token
     setmsg(msg);
 }
 
-
-ErrorMessage::ErrorMessage(const std::list<const Token*>& callstack, const TokenList* list, Severity::SeverityType severity, const std::string& id, const std::string& msg, const CWE &cwe, Certainty::CertaintyLevel certainty)
+ErrorMessage::ErrorMessage(const std::list<const Token*>& callstack, const TokenList* list, Severity::SeverityType severity, const std::string& id, const std::string& msg, Certainty::CertaintyLevel certainty, CWE cwe)
     : id(id), incomplete(false), severity(severity), cwe(cwe.id), certainty(certainty)
 {
     // Format callstack
@@ -129,7 +85,7 @@ ErrorMessage::ErrorMessage(const std::list<const Token*>& callstack, const Token
     setmsg(msg);
 }
 
-ErrorMessage::ErrorMessage(const ErrorPath &errorPath, const TokenList *tokenList, Severity::SeverityType severity, const char id[], const std::string &msg, const CWE &cwe, Certainty::CertaintyLevel certainty)
+ErrorMessage::ErrorMessage(const ErrorPath &errorPath, const TokenList *tokenList, Severity::SeverityType severity, const char id[], const std::string &msg, Certainty::CertaintyLevel certainty, CWE cwe)
     : id(id), incomplete(false), severity(severity), cwe(cwe.id), certainty(certainty)
 {
     // Format callstack
@@ -238,11 +194,8 @@ std::string ErrorMessage::serialize() const
     oss << id.length() << " " << id;
     oss << Severity::toString(severity).length() << " " << Severity::toString(severity);
     oss << MathLib::toString(cwe.id).length() << " " << MathLib::toString(cwe.id);
-    if (certainty == Certainty::inconclusive) {
-        const std::string text("inconclusive");
-        oss << text.length() << " " << text;
-    } else if (certainty == Certainty::experimental) {
-        const std::string text("experimental");
+    if (certainty != Certainty::safe) {
+        const std::string text(Certainty::toString(certainty));
         oss << text.length() << " " << text;
     }
 
@@ -411,10 +364,8 @@ std::string ErrorMessage::toXML() const
     printer.PushAttribute("verbose", fixInvalidChars(mVerboseMessage).c_str());
     if (cwe.id)
         printer.PushAttribute("cwe", cwe.id);
-    if (certainty == Certainty::inconclusive)
-        printer.PushAttribute("certainty", "inconclusive");
-    else if (certainty == Certainty::experimental)
-        printer.PushAttribute("certainty", "experimental");
+    if (certainty != Certainty::safe)
+        printer.PushAttribute("certainty", Certainty::toString(certainty).c_str());
 
     for (std::list<FileLocation>::const_reverse_iterator it = callStack.rbegin(); it != callStack.rend(); ++it) {
         printer.OpenElement("location", false);
@@ -454,10 +405,8 @@ tinyxml2::XMLElement* ErrorMessage::toXMLElement(tinyxml2::XMLDocument* const do
     errmsg->SetAttribute("verbose", fixInvalidChars(mVerboseMessage).c_str());
     if (cwe.id)
         errmsg->SetAttribute("cwe", cwe.id);
-    if (certainty == Certainty::inconclusive)
-        errmsg->SetAttribute("certainty", "inconclusive");
-    else if (certainty == Certainty::experimental)
-        errmsg->SetAttribute("certainty", "experimental");
+    if (certainty != Certainty::safe)
+        errmsg->SetAttribute("certainty", Certainty::toString(certainty).c_str());
 
     for (std::list<FileLocation>::const_reverse_iterator it = callStack.rbegin(); it != callStack.rend(); ++it) {
         tinyxml2::XMLElement* location = doc->NewElement("location");
@@ -550,10 +499,8 @@ std::string ErrorMessage::toString(bool verbose, const std::string &templateForm
             result.erase(pos1, result.find('}', pos1 + 10) - pos1 + 1);
         else {
             findAndReplace(result, "{certainty:", emptyString);
-            if (certainty == Certainty::inconclusive)
-                findAndReplace(result, "certainty}", "inconclusive");
-            else if (certainty == Certainty::experimental)
-                findAndReplace(result, "certainty}", "experimental");
+            if (certainty != Certainty::safe)
+                findAndReplace(result, "certainty}", Certainty::toString(certainty));
         }
     }
     findAndReplace(result, "{severity}", Severity::toString(severity));

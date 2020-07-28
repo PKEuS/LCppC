@@ -147,7 +147,7 @@ private:
     }
 
     /** Short description of class (for --doc) */
-    static std::string myName() {
+    static const char* myName() {
         return "ExceptionSafety";
     }
 

@@ -122,7 +122,7 @@ private:
         c.uninitStructMemberError(nullptr, "a.b");
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "UninitVar";
     }
 

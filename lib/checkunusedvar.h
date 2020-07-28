@@ -90,7 +90,7 @@ private:
         c.unusedStructMemberError(nullptr, "structname", "variable");
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "UnusedVar";
     }
 

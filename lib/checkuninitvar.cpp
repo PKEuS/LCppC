@@ -1464,8 +1464,8 @@ bool CheckUninitVar::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInform
                                       Severity::error,
                                       "Using argument " + unsafeUsage.myArgumentName + " that points at uninitialized variable " + functionCall->callArgumentExpression,
                                       "ctuuninitvar",
-                                      CWE_USE_OF_UNINITIALIZED_VARIABLE,
-                                      Certainty::safe);
+                                      Certainty::safe,
+                                      CWE_USE_OF_UNINITIALIZED_VARIABLE);
             errorLogger.reportErr(errmsg);
 
             foundErrors = true;

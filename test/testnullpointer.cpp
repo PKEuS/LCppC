@@ -1474,7 +1474,7 @@ private:
               "}\n"
               "void h() {\n"
               "    g(0);\n"
-            "}", true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -1504,7 +1504,7 @@ private:
               "        count++;\n"
               "        ptr1++;\n"
               "    }\n"
-            "}", true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -1515,7 +1515,7 @@ private:
               "        v.push_back(x);\n"
               "        *x;\n"
               "    }\n"
-            "}", true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
     }
 

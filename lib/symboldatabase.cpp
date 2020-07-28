@@ -1726,9 +1726,8 @@ void SymbolDatabase::validateExecutableScopes() const
         const Scope* const scope = functionScopes[i];
         const Function* const function = scope->function;
         if (scope->isExecutable() && !function) {
-            const std::list<const Token*> callstack(1, scope->classDef);
             const std::string msg = std::string("Executable scope '") + scope->classDef->str() + "' with unknown function.";
-            const ErrorMessage errmsg(callstack, &mTokenizer->list, Severity::debug,
+            const ErrorMessage errmsg(scope->classDef, &mTokenizer->list, Severity::debug,
                                       "symbolDatabaseWarning",
                                       msg,
                                       Certainty::safe);
@@ -2831,8 +2830,7 @@ const std::string& Type::name() const
 void SymbolDatabase::debugMessage(const Token *tok, const std::string &msg) const
 {
     if (tok && mSettings->debugwarnings) {
-        const std::list<const Token*> locationList(1, tok);
-        const ErrorMessage errmsg(locationList, &mTokenizer->list,
+        const ErrorMessage errmsg(tok, &mTokenizer->list,
                                   Severity::debug,
                                   "debug",
                                   msg,

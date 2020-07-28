@@ -1121,8 +1121,9 @@ void CppCheck::tooManyConfigsError(const std::string &file, const std::size_t nu
                         emptyString,
                         Severity::information,
                         msg.str(),
-                        "toomanyconfigs", CWE398,
-                        Certainty::safe);
+                        "toomanyconfigs",
+                        Certainty::safe,
+                        CWE398);
 
     reportErr(errmsg);
 }

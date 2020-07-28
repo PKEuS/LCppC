@@ -2041,7 +2041,7 @@ private:
               "void test(){\n"
               "  int *pt = new int(1);\n"
               "  mList.push_back(std::shared_ptr<int>(pt));\n"
-            "}", true);
+              "}", true);
         ASSERT_EQUALS("", errout.str());
     }
 

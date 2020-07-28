@@ -71,7 +71,7 @@ private:
         c.assignmentInAssertError(nullptr, "var");
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "Assert";
     }
 

@@ -277,7 +277,7 @@ private:
         c.localMutexError(nullptr);
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "STL";
     }
 

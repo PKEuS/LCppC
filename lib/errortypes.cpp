@@ -18,6 +18,45 @@
 
 #include "errortypes.h"
 
+
+InternalError::InternalError(const Token* tok, const std::string& errorMsg, Type type) :
+    token(tok), errorMessage(errorMsg), type(type)
+{
+    switch (type) {
+    case AST:
+        id = "internalAstError";
+        break;
+    case SYNTAX:
+        id = "syntaxError";
+        break;
+    case UNKNOWN_MACRO:
+        id = "unknownMacro";
+        break;
+    case INTERNAL:
+        id = "cppcheckError";
+        break;
+    case LIMIT:
+        id = "cppcheckLimit";
+        break;
+    case INSTANTIATION:
+        id = "instantiationError";
+        break;
+    }
+}
+
+std::string Certainty::toString(Certainty::CertaintyLevel certainty)
+{
+    switch (certainty) {
+    case safe:
+        return "safe";
+    case inconclusive:
+        return "inconclusive";
+    case experimental:
+        return "experimental";
+    }
+    throw InternalError(nullptr, "Unknown certainty");
+}
+
 std::string Severity::toString(Severity::SeverityType severity)
 {
     switch (severity) {

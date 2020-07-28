@@ -75,7 +75,7 @@ private:
         c.returnPointerError(nullptr);
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "64BitPortability";
     }
 

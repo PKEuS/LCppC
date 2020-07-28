@@ -73,7 +73,7 @@ private:
         c.va_start_subsequentCallsError(nullptr, "vl");
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "Vaarg";
     }
 

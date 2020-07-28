@@ -100,7 +100,7 @@ private:
         c.floatToIntegerOverflowError(nullptr, f);
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "Type";
     }
 

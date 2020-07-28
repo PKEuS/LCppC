@@ -104,7 +104,7 @@ private:
         c.errorDanglingTemporaryLifetime(nullptr, nullptr);
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "AutoVariables";
     }
 

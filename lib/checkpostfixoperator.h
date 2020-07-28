@@ -70,7 +70,7 @@ private:
         c.postfixOperatorError(nullptr);
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "PostfixOperator";
     }
 

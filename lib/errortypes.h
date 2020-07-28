@@ -33,30 +33,29 @@ class Token;
 /** @brief Simple container to be thrown when internal error is detected. */
 struct InternalError {
     enum Type : uint8_t {AST, SYNTAX, UNKNOWN_MACRO, INTERNAL, LIMIT, INSTANTIATION};
-    InternalError(const Token *tok, const std::string &errorMsg, Type type = INTERNAL);
+    InternalError(const Token* tok, const std::string& errorMsg, Type type = INTERNAL);
     const Token *token;
     std::string errorMessage;
     std::string id;
     Type type;
 };
 
-class CPPCHECKLIB Certainty {
-public:
+namespace Certainty {
     enum CertaintyLevel : uint8_t {
         safe, inconclusive, experimental
     };
+
+    CPPCHECKLIB std::string toString(CertaintyLevel certainty);
 };
 
-class CPPCHECKLIB Output {
-public:
+namespace Output {
     enum OutputType : uint8_t {
         status, progress, verbose, config, findings
     };
 };
 
 /** @brief enum class for severity. Used when reporting errors. */
-class CPPCHECKLIB Severity {
-public:
+namespace Severity {
     /**
      * Message severities.
      */
@@ -112,12 +111,12 @@ public:
         debug
     };
 
-    static std::string toString(SeverityType severity);
-    static SeverityType fromString(const std::string &severity);
+    CPPCHECKLIB std::string toString(SeverityType severity);
+    CPPCHECKLIB SeverityType fromString(const std::string &severity);
 };
 
-struct CWE {
-    explicit CWE(unsigned short cweId) : id(cweId) {}
+struct CPPCHECKLIB CWE {
+    explicit constexpr CWE(unsigned short cweId) : id(cweId) {}
     unsigned short id;
 };
 

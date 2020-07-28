@@ -8637,8 +8637,11 @@ void Tokenizer::prepareTernaryOpForAST()
 
 void Tokenizer::reportError(const Token* tok, const Severity::SeverityType severity, const std::string& id, const std::string& msg, bool inconclusive) const
 {
-    const std::list<const Token*> callstack(1, tok);
-    reportError(callstack, severity, id, msg, inconclusive);
+    const ErrorMessage errmsg(tok, &list, severity, id, msg, inconclusive ? Certainty::inconclusive : Certainty::safe);
+    if (mErrorLogger)
+        mErrorLogger->reportErr(errmsg);
+    else
+        Check::reportError(errmsg);
 }
 
 void Tokenizer::reportError(const std::list<const Token*>& callstack, Severity::SeverityType severity, const std::string& id, const std::string& msg, bool inconclusive) const

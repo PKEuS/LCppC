@@ -137,7 +137,7 @@ private:
         c.memsetSizeArgumentAsCharError(nullptr);
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "Functions";
     }
 

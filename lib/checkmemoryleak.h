@@ -70,7 +70,7 @@ private:
      * @param msg text
      * @param cwe cwe number
      */
-    void reportErr(const Token *tok, Severity::SeverityType severity, const std::string &id, const std::string &msg, const CWE &cwe) const;
+    void reportErr(const Token *tok, Severity::SeverityType severity, const std::string &id, const std::string &msg, CWE cwe) const;
 
     /**
      * Report error. Similar with the function Check::reportError
@@ -80,7 +80,7 @@ private:
      * @param msg text
      * @param cwe cwe number
      */
-    void reportErr(const std::list<const Token *> &callstack, Severity::SeverityType severity, const std::string &id, const std::string &msg, const CWE &cwe) const;
+    void reportErr(const std::list<const Token *> &callstack, Severity::SeverityType severity, const std::string &id, const std::string &msg, CWE cwe) const;
 
 public:
     CheckMemoryLeak() = delete;
@@ -213,7 +213,7 @@ private:
      * Get name of class (--doc)
      * @return name of class
      */
-    static std::string myName() {
+    static const char* myName() {
         return "MemoryLeakInFunction";
     }
 
@@ -266,7 +266,7 @@ private:
         c.unsafeClassError(nullptr, "class", "class::varname");
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "MemoryLeakInClass";
     }
 
@@ -305,7 +305,7 @@ private:
     void getErrorMessages(ErrorLogger * /*errorLogger*/, const Settings * /*settings*/) const override {
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "MemoryLeakInStruct";
     }
 
@@ -366,7 +366,7 @@ private:
         c.unsafeArgAllocError(nullptr, "funcName", "shared_ptr", "int");
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "MemoryLeakReturnValue";
     }
 

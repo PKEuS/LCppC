@@ -100,7 +100,7 @@ private:
         c.checkRedundantTokCheckError(nullptr);
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "Internal";
     }
 

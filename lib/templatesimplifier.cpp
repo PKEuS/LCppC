@@ -2936,8 +2936,7 @@ bool TemplateSimplifier::simplifyTemplateInstantiations(
                     std::vector<std::string> typeStringsUsedInTemplateInstantiation;
                     const std::string typeForNewName = templateDeclaration.name() + "<" + getNewName(instantiation.token(), typeStringsUsedInTemplateInstantiation) + ">";
 
-                    const std::list<const Token*> callstack(1, instantiation.token());
-                    const ErrorMessage errmsg(callstack,
+                    const ErrorMessage errmsg(instantiation.token(),
                                               &mTokenizer->list,
                                               Severity::information,
                                               "templateRecursion",
@@ -3695,8 +3694,7 @@ void TemplateSimplifier::simplifyTemplates(
 
     if (passCount == passCountMax) {
         if (mSettings->debugwarnings) {
-            const std::list<const Token*> locationList(1, mTokenList.front());
-            const ErrorMessage errmsg(locationList, &mTokenizer->list,
+            const ErrorMessage errmsg(mTokenList.front(), &mTokenizer->list,
                                       Severity::debug,
                                       "debug",
                                       "TemplateSimplifier: pass count limit hit before simplifications were finished.",

@@ -162,7 +162,7 @@ private:
         c.wrongPrintfScanfPosixParameterPositionError(nullptr,  "printf", 2, 1);
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "IO";
     }
 

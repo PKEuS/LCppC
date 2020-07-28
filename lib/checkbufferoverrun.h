@@ -142,7 +142,7 @@ private:
     bool analyseWholeProgram1(const CTU::CTUInfo *ctu, const std::map<std::string, std::vector<const CTU::CTUInfo::CallBase *>> &callsMap, const CTU::CTUInfo::UnsafeUsage &unsafeUsage, int type, ErrorLogger &errorLogger);
 
 
-    static std::string myName() {
+    static const char* myName() {
         return "BufferOverrun";
     }
 

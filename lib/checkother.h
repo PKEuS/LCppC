@@ -346,7 +346,7 @@ private:
         c.checkModuloOfOneError(nullptr);
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "Other";
     }
 

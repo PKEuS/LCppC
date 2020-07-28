@@ -116,7 +116,7 @@ private:
     }
 
     /** Name of check */
-    static std::string myName() {
+    static const char* myName() {
         return "NullPointer";
     }
 

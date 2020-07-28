@@ -127,34 +127,30 @@ public:
                  const std::string& file1,
                  Severity::SeverityType severity,
                  const std::string &msg,
-                 const std::string &id, Certainty::CertaintyLevel certainty);
-    ErrorMessage(const std::list<FileLocation> &callStack,
-                 const std::string& file1,
-                 Severity::SeverityType severity,
-                 const std::string &msg,
                  const std::string &id,
-                 const CWE &cwe,
-                 Certainty::CertaintyLevel certainty);
+                 Certainty::CertaintyLevel certainty,
+                 CWE cwe = CWE(0U));
+    ErrorMessage(const Token* tok,
+                 const TokenList* list,
+                 Severity::SeverityType severity,
+                 const std::string& id,
+                 const std::string& msg,
+                 Certainty::CertaintyLevel certainty,
+                 CWE cwe = CWE(0U));
     ErrorMessage(const std::list<const Token*>& callstack,
                  const TokenList* list,
                  Severity::SeverityType severity,
                  const std::string& id,
                  const std::string& msg,
-                 Certainty::CertaintyLevel certainty);
-    ErrorMessage(const std::list<const Token*>& callstack,
-                 const TokenList* list,
-                 Severity::SeverityType severity,
-                 const std::string& id,
-                 const std::string& msg,
-                 const CWE &cwe,
-                 Certainty::CertaintyLevel certainty);
+                 Certainty::CertaintyLevel certainty,
+                 CWE cwe = CWE(0U));
     ErrorMessage(const ErrorPath &errorPath,
                  const TokenList *tokenList,
                  Severity::SeverityType severity,
                  const char id[],
                  const std::string &msg,
-                 const CWE &cwe,
-                 Certainty::CertaintyLevel certainty);
+                 Certainty::CertaintyLevel certainty,
+                 CWE cwe);
     ErrorMessage();
     explicit ErrorMessage(const tinyxml2::XMLElement * const errmsg);
 

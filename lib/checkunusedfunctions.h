@@ -67,7 +67,7 @@ private:
 
     void unusedFunctionError(ErrorLogger* const errorLogger, const std::string &filename, unsigned int lineNumber, const std::string &funcname);
 
-    static std::string myName() {
+    static const char* myName() {
         return "UnusedFunction";
     }
 

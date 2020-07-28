@@ -120,7 +120,7 @@ private:
         c.arithOperationsOnVoidPointerError(nullptr, "varname", "vartype");
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "Sizeof";
     }
 

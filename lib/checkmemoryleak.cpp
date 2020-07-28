@@ -285,7 +285,7 @@ void CheckMemoryLeak::memoryLeak(const Token *tok, const std::string &varname, A
 }
 //---------------------------------------------------------------------------
 
-void CheckMemoryLeak::reportErr(const Token *tok, Severity::SeverityType severity, const std::string &id, const std::string &msg, const CWE &cwe) const
+void CheckMemoryLeak::reportErr(const Token *tok, Severity::SeverityType severity, const std::string &id, const std::string &msg, CWE cwe) const
 {
     std::list<const Token *> callstack;
 
@@ -295,9 +295,9 @@ void CheckMemoryLeak::reportErr(const Token *tok, Severity::SeverityType severit
     reportErr(callstack, severity, id, msg, cwe);
 }
 
-void CheckMemoryLeak::reportErr(const std::list<const Token *> &callstack, Severity::SeverityType severity, const std::string &id, const std::string &msg, const CWE &cwe) const
+void CheckMemoryLeak::reportErr(const std::list<const Token *> &callstack, Severity::SeverityType severity, const std::string &id, const std::string &msg, CWE cwe) const
 {
-    const ErrorMessage errmsg(callstack, mTokenizer_ ? &mTokenizer_->list : nullptr, severity, id, msg, cwe, Certainty::safe);
+    const ErrorMessage errmsg(callstack, mTokenizer_ ? &mTokenizer_->list : nullptr, severity, id, msg, Certainty::safe, cwe);
     if (mErrorLogger_)
         mErrorLogger_->reportErr(errmsg);
     else

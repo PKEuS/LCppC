@@ -905,7 +905,8 @@ bool CheckBufferOverrun::analyseWholeProgram1(const CTU::CTUInfo *ctu, const std
                                     Severity::error,
                                     errmsg,
                                     errorId,
-                                    cwe, Certainty::safe);
+                                    Certainty::safe,
+                                    cwe);
     errorLogger.reportErr(errorMessage);
 
     return true;

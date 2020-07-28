@@ -229,7 +229,7 @@ private:
         c.unsafeClassRefMemberError(nullptr, "UnsafeClass::var");
     }
 
-    static std::string myName() {
+    static const char* myName() {
         return "Class";
     }
 
