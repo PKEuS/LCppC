@@ -30,6 +30,7 @@
 #include <map>
 #include <string>
 #include <stack>
+#include <vector>
 
 class Settings;
 class SymbolDatabase;
@@ -556,7 +557,7 @@ private:
      * report error message
      */
     void reportError(const Token* tok, const Severity::SeverityType severity, const std::string& id, const std::string& msg, bool inconclusive = false) const;
-    void reportError(const std::list<const Token*>& callstack, Severity::SeverityType severity, const std::string& id, const std::string& msg, bool inconclusive = false) const;
+    void reportError(const std::vector<const Token*>& callstack, Severity::SeverityType severity, const std::string& id, const std::string& msg, bool inconclusive = false) const;
 
     bool duplicateTypedef(Token *tok, const Token *name, const Token *typeDef, int& silenceUntil) const;
 

@@ -110,7 +110,7 @@ public:
         int line; // negative value means "no line"
         unsigned int column;
 
-        std::string getinfo() const {
+        const std::string& getinfo() const {
             return mInfo;
         }
         void setinfo(const std::string &i) {
@@ -137,7 +137,7 @@ public:
                  const std::string& msg,
                  Certainty::CertaintyLevel certainty,
                  CWE cwe = CWE(0U));
-    ErrorMessage(const std::list<const Token*>& callstack,
+    ErrorMessage(const std::vector<const Token*>& callstack,
                  const TokenList* list,
                  Severity::SeverityType severity,
                  const std::string& id,

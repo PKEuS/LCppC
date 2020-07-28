@@ -29,7 +29,6 @@
 #include "utils.h"
 
 #include <cstddef>
-#include <list>
 #include <vector>
 #include <utility>
 
@@ -71,7 +70,7 @@ void CheckString::stringLiteralWrite()
 
 void CheckString::stringLiteralWriteError(const Token *tok, const Token *strValue)
 {
-    std::list<const Token *> callstack;
+    std::vector<const Token *> callstack;
     callstack.push_back(tok);
     if (strValue)
         callstack.push_back(strValue);

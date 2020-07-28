@@ -27,7 +27,7 @@
 #include "token.h"
 #include "tokenize.h"
 
-#include <list>
+#include <vector>
 #include <string>
 
 class Settings;
@@ -128,7 +128,7 @@ private:
     /** Missing exception specification */
     void unhandledExceptionSpecificationError(const Token * const tok1, const Token * const tok2, const std::string & funcname) {
         const std::string str1(tok1 ? tok1->str() : "foo");
-        const std::list<const Token*> locationList = { tok1, tok2 };
+        const std::vector<const Token*> locationList = { tok1, tok2 };
         reportError(locationList, Severity::style, "unhandledExceptionSpecification",
                     "Unhandled exception specification when calling function " + str1 + "().\n"
                     "Unhandled exception specification when calling function " + str1 + "(). "

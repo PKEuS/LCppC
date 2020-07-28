@@ -30,7 +30,7 @@
 #include "valueflow.h"
 
 #include <cstddef>
-#include <list>
+#include <vector>
 #include <map>
 #include <set>
 #include <sstream>
@@ -262,7 +262,7 @@ void CheckStl::iteratorsError(const Token* tok, const std::string& containerName
 
 void CheckStl::iteratorsError(const Token* tok, const Token* containerTok, const std::string& containerName1, const std::string& containerName2)
 {
-    std::list<const Token*> callstack = { tok, containerTok };
+    std::vector<const Token*> callstack = { tok, containerTok };
     reportError(callstack, Severity::error, "iterators2",
                 "$symbol:" + containerName1 + "\n"
                 "$symbol:" + containerName2 + "\n"
@@ -271,7 +271,7 @@ void CheckStl::iteratorsError(const Token* tok, const Token* containerTok, const
 
 void CheckStl::iteratorsError(const Token* tok, const Token* containerTok, const std::string& containerName)
 {
-    std::list<const Token*> callstack = { tok, containerTok };
+    std::vector<const Token*> callstack = { tok, containerTok };
     reportError(callstack, Severity::error, "iterators3",
                 "$symbol:" + containerName + "\n"
                 "Same iterator is used with containers '" + containerName + "' that are defined in different scopes.", CWE664, Certainty::safe);
@@ -281,7 +281,7 @@ void CheckStl::iteratorsError(const Token* tok, const Token* containerTok, const
 void CheckStl::dereferenceErasedError(const Token *erased, const Token* deref, const std::string &itername, bool inconclusive)
 {
     if (erased) {
-        std::list<const Token*> callstack = { deref, erased };
+        std::vector<const Token*> callstack = { deref, erased };
         reportError(callstack, Severity::error, "eraseDereference",
                     "$symbol:" + itername + "\n"
                     "Iterator '$symbol' used after element has been erased.\n"
@@ -1587,7 +1587,7 @@ void CheckStl::missingComparison()
 
 void CheckStl::missingComparisonError(const Token *incrementToken1, const Token *incrementToken2)
 {
-    std::list<const Token*> callstack = { incrementToken1,incrementToken2 };
+    std::vector<const Token*> callstack = { incrementToken1,incrementToken2 };
 
     std::ostringstream errmsg;
     errmsg << "Missing bounds check for extra iterator increment in loop.\n"

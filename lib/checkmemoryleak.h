@@ -80,7 +80,7 @@ private:
      * @param msg text
      * @param cwe cwe number
      */
-    void reportErr(const std::list<const Token *> &callstack, Severity::SeverityType severity, const std::string &id, const std::string &msg, CWE cwe) const;
+    void reportErr(const std::vector<const Token *> &callstack, Severity::SeverityType severity, const std::string &id, const std::string &msg, CWE cwe) const;
 
 public:
     CheckMemoryLeak() = delete;
@@ -141,7 +141,7 @@ public:
     void deallocDeallocError(const Token *tok, const std::string &varname) const;
     void deallocuseError(const Token *tok, const std::string &varname) const;
     void mismatchSizeError(const Token *tok, const std::string &sz) const;
-    void mismatchAllocDealloc(const std::list<const Token *> &callstack, const std::string &varname) const;
+    void mismatchAllocDealloc(const std::vector<const Token *> &callstack, const std::string &varname) const;
     void memleakUponReallocFailureError(const Token *tok, const std::string &reallocfunction, const std::string &varname) const;
 
     /** What type of allocated memory does the given function return? */
@@ -204,7 +204,7 @@ private:
         c.deallocDeallocError(nullptr, "varname");
         c.deallocuseError(nullptr, "varname");
         c.mismatchSizeError(nullptr, "sz");
-        const std::list<const Token *> callstack;
+        const std::vector<const Token *> callstack;
         c.mismatchAllocDealloc(callstack, "varname");
         c.memleakUponReallocFailureError(nullptr, "realloc", "varname");
     }

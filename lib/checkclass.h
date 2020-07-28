@@ -25,7 +25,6 @@
 #include "config.h"
 #include "tokenize.h"
 
-#include <list>
 #include <map>
 #include <set>
 #include <string>
@@ -182,8 +181,8 @@ private:
     void initializerListError(const Token *tok1,const Token *tok2, const std::string & classname, const std::string &varname);
     void suggestInitializationList(const Token *tok, const std::string& varname);
     void selfInitializationError(const Token* tok, const std::string& varname);
-    void pureVirtualFunctionCallInConstructorError(const Function * scopeFunction, const std::list<const Token *> & tokStack, const std::string &purefuncname);
-    void virtualFunctionCallInConstructorError(const Function * scopeFunction, const std::list<const Token *> & tokStack, const std::string &funcname);
+    void pureVirtualFunctionCallInConstructorError(const Function * scopeFunction, const std::vector<const Token *> & tokStack, const std::string &purefuncname);
+    void virtualFunctionCallInConstructorError(const Function * scopeFunction, const std::vector<const Token *> & tokStack, const std::string &funcname);
     void duplInheritedMembersError(const Token* tok1, const Token* tok2, const std::string &derivedName, const std::string &baseName, const std::string &variableName, bool derivedIsStruct, bool baseIsStruct);
     void copyCtorAndEqOperatorError(const Token *tok, const std::string &classname, bool isStruct, bool hasCopyCtor);
     void overrideError(const Function *funcInBase, const Function *funcInDerived);
@@ -222,8 +221,8 @@ private:
         c.selfInitializationError(nullptr, "var");
         c.duplInheritedMembersError(nullptr, nullptr, "class", "class", "variable", false, false);
         c.copyCtorAndEqOperatorError(nullptr, "class", false, false);
-        c.pureVirtualFunctionCallInConstructorError(nullptr, std::list<const Token *>(), "f");
-        c.virtualFunctionCallInConstructorError(nullptr, std::list<const Token *>(), "f");
+        c.pureVirtualFunctionCallInConstructorError(nullptr, std::vector<const Token *>(), "f");
+        c.virtualFunctionCallInConstructorError(nullptr, std::vector<const Token *>(), "f");
         c.overrideError(nullptr, nullptr);
         c.thisUseAfterFree(nullptr, nullptr, nullptr);
         c.unsafeClassRefMemberError(nullptr, "UnsafeClass::var");
@@ -322,7 +321,7 @@ private:
      * @param scope pointer to variable Scope
      * @param usage reference to usage vector
      */
-    void initializeVarList(const Function &func, std::list<const Function *> &callstack, const Scope *scope, std::vector<Usage> &usage);
+    void initializeVarList(const Function &func, std::vector<const Function *> &callstack, const Scope *scope, std::vector<Usage> &usage);
 
     /**
      * @brief gives a list of tokens where virtual functions are called directly or indirectly
@@ -330,9 +329,9 @@ private:
      * @param virtualFunctionCallsMap map of results for already checked functions
      * @return list of tokens where pure virtual functions are called
      */
-    const std::list<const Token *> & getVirtualFunctionCalls(
+    const std::vector<const Token *> & getVirtualFunctionCalls(
         const Function & function,
-        std::map<const Function *, std::list<const Token *> > & virtualFunctionCallsMap);
+        std::map<const Function *, std::vector<const Token *> > & virtualFunctionCallsMap);
 
     /**
      * @brief looks for the first virtual function call stack
@@ -341,9 +340,9 @@ private:
      * @param[in,out] pureFuncStack list to append the stack
      */
     void getFirstVirtualFunctionCallStack(
-        std::map<const Function *, std::list<const Token *> > & virtualFunctionCallsMap,
+        std::map<const Function *, std::vector<const Token *> > & virtualFunctionCallsMap,
         const Token *callToken,
-        std::list<const Token *> & pureFuncStack);
+        std::vector<const Token *> & pureFuncStack);
 
     static bool canNotCopy(const Scope *scope);
 

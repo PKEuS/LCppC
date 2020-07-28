@@ -475,7 +475,7 @@ void CheckOther::checkRedundantAssignment()
 
 void CheckOther::redundantCopyError(const Token *tok1, const Token* tok2, const std::string& var)
 {
-    const std::list<const Token *> callstack = { tok1, tok2 };
+    const std::vector<const Token *> callstack = { tok1, tok2 };
     reportError(callstack, Severity::performance, "redundantCopy",
                 "$symbol:" + var + "\n"
                 "Buffer '$symbol' is being written before its old content has been used.", CWE563, Certainty::safe);
@@ -483,7 +483,7 @@ void CheckOther::redundantCopyError(const Token *tok1, const Token* tok2, const 
 
 void CheckOther::redundantCopyInSwitchError(const Token *tok1, const Token* tok2, const std::string &var)
 {
-    const std::list<const Token *> callstack = { tok1, tok2 };
+    const std::vector<const Token *> callstack = { tok1, tok2 };
     reportError(callstack, Severity::warning, "redundantCopyInSwitch",
                 "$symbol:" + var + "\n"
                 "Buffer '$symbol' is being written before its old content has been used. 'break;' missing?", CWE563, Certainty::safe);
@@ -2097,7 +2097,7 @@ void CheckOther::duplicateExpressionError(const Token *tok1, const Token *tok2, 
 
 void CheckOther::duplicateAssignExpressionError(const Token *tok1, const Token *tok2, bool inconclusive)
 {
-    const std::list<const Token *> toks = { tok2, tok1 };
+    const std::vector<const Token *> toks = { tok2, tok1 };
 
     const std::string& var1 = tok1 ? tok1->str() : "x";
     const std::string& var2 = tok2 ? tok2->str() : "x";
@@ -2895,7 +2895,7 @@ void CheckOther::checkFuncArgNamesDifferent()
 void CheckOther::funcArgNamesDifferent(const std::string & functionName, std::size_t index,
                                        const Token* declaration, const Token* definition)
 {
-    std::list<const Token *> tokens = { declaration,definition };
+    std::vector<const Token *> tokens = { declaration,definition };
     reportError(tokens, Severity::style, "funcArgNamesDifferent",
                 "$symbol:" + functionName + "\n"
                 "Function '$symbol' argument " + MathLib::toString(index + 1) + " names different: declaration '" +
@@ -2908,7 +2908,7 @@ void CheckOther::funcArgOrderDifferent(const std::string & functionName,
                                        const std::vector<const Token *> & declarations,
                                        const std::vector<const Token *> & definitions)
 {
-    std::list<const Token *> tokens = {
+    std::vector<const Token *> tokens = {
         declarations.size() ? declarations[0] ? declarations[0] : declaration : nullptr,
         definitions.size() ? definitions[0] ? definitions[0] : definition : nullptr
     };

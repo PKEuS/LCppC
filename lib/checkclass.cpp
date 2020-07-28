@@ -157,7 +157,7 @@ void CheckClass::constructors()
             // Mark all variables not used
             clearAllVar(usage);
 
-            std::list<const Function *> callstack;
+            std::vector<const Function *> callstack;
             initializeVarList(func, callstack, scope, usage);
 
             // Check if any variables are uninitialized
@@ -600,7 +600,7 @@ bool CheckClass::isBaseClassFunc(const Token *tok, const Scope *scope)
     return false;
 }
 
-void CheckClass::initializeVarList(const Function &func, std::list<const Function *> &callstack, const Scope *scope, std::vector<Usage> &usage)
+void CheckClass::initializeVarList(const Function &func, std::vector<const Function *> &callstack, const Scope *scope, std::vector<Usage> &usage)
 {
     if (!func.functionScope)
         throw InternalError(nullptr, "Internal Error: Invalid syntax"); // #5702
@@ -1264,7 +1264,7 @@ void CheckClass::checkMemsetType(const Scope *start, const Token *tok, const Sco
 
 void CheckClass::mallocOnClassWarning(const Token* tok, const std::string &memfunc, const Token* classTok)
 {
-    std::list<const Token *> toks = { tok, classTok };
+    std::vector<const Token *> toks = { tok, classTok };
     reportError(toks, Severity::warning, "mallocOnClassWarning",
                 "$symbol:" + memfunc +"\n"
                 "Memory for class instance allocated with $symbol(), but class provides constructors.\n"
@@ -1274,7 +1274,7 @@ void CheckClass::mallocOnClassWarning(const Token* tok, const std::string &memfu
 
 void CheckClass::mallocOnClassError(const Token* tok, const std::string &memfunc, const Token* classTok, const std::string &classname)
 {
-    std::list<const Token *> toks = { tok, classTok };
+    std::vector<const Token *> toks = { tok, classTok };
     reportError(toks, Severity::error, "mallocOnClassError",
                 "$symbol:" + memfunc +"\n"
                 "$symbol:" + classname +"\n"
@@ -2154,7 +2154,7 @@ void CheckClass::checkConstError(const Token *tok, const std::string &classname,
 
 void CheckClass::checkConstError2(const Token *tok1, const Token *tok2, const std::string &classname, const std::string &funcname, bool suggestStatic)
 {
-    std::list<const Token *> toks;
+    std::vector<const Token *> toks;
     toks.push_back(tok1);
     if (tok2)
         toks.push_back(tok2);
@@ -2249,7 +2249,7 @@ void CheckClass::initializerListOrder()
 
 void CheckClass::initializerListError(const Token *tok1, const Token *tok2, const std::string &classname, const std::string &varname)
 {
-    std::list<const Token *> toks = { tok1, tok2 };
+    std::vector<const Token *> toks = { tok1, tok2 };
     reportError(toks, Severity::style, "initializerList",
                 "$symbol:" + classname + "::" + varname +"\n"
                 "Member variable '$symbol' is in the wrong place in the initializer list.\n"
@@ -2298,16 +2298,16 @@ void CheckClass::checkVirtualFunctionCallInConstructor()
 {
     if (! mSettings->severity.isEnabled(Severity::warning))
         return;
-    std::map<const Function *, std::list<const Token *> > virtualFunctionCallsMap;
+    std::map<const Function *, std::vector<const Token *> > virtualFunctionCallsMap;
     for (const Scope *scope : mSymbolDatabase->functionScopes) {
         if (scope->function == nullptr || !scope->function->hasBody() ||
             !(scope->function->isConstructor() ||
               scope->function->isDestructor()))
             continue;
 
-        const std::list<const Token *> & virtualFunctionCalls = getVirtualFunctionCalls(*scope->function, virtualFunctionCallsMap);
+        const std::vector<const Token *> & virtualFunctionCalls = getVirtualFunctionCalls(*scope->function, virtualFunctionCallsMap);
         for (const Token *callToken : virtualFunctionCalls) {
-            std::list<const Token *> callstack(1, callToken);
+            std::vector<const Token *> callstack(1, callToken);
             getFirstVirtualFunctionCallStack(virtualFunctionCallsMap, callToken, callstack);
             if (callstack.empty())
                 continue;
@@ -2319,15 +2319,15 @@ void CheckClass::checkVirtualFunctionCallInConstructor()
     }
 }
 
-const std::list<const Token *> & CheckClass::getVirtualFunctionCalls(const Function & function,
-        std::map<const Function *, std::list<const Token *> > & virtualFunctionCallsMap)
+const std::vector<const Token *> & CheckClass::getVirtualFunctionCalls(const Function & function,
+        std::map<const Function *, std::vector<const Token *> > & virtualFunctionCallsMap)
 {
-    const std::map<const Function *, std::list<const Token *> >::const_iterator found = virtualFunctionCallsMap.find(&function);
+    const std::map<const Function *, std::vector<const Token *> >::const_iterator found = virtualFunctionCallsMap.find(&function);
     if (found != virtualFunctionCallsMap.end())
         return found->second;
 
-    virtualFunctionCallsMap[&function] = std::list<const Token *>();
-    std::list<const Token *> & virtualFunctionCalls = virtualFunctionCallsMap.find(&function)->second;
+    virtualFunctionCallsMap[&function] = std::vector<const Token *>();
+    std::vector<const Token *> & virtualFunctionCalls = virtualFunctionCallsMap.find(&function)->second;
 
     if (!function.hasBody())
         return virtualFunctionCalls;
@@ -2369,7 +2369,7 @@ const std::list<const Token *> & CheckClass::getVirtualFunctionCalls(const Funct
             continue;
         }
 
-        const std::list<const Token *> & virtualFunctionCallsOfTok = getVirtualFunctionCalls(*callFunction, virtualFunctionCallsMap);
+        const std::vector<const Token *> & virtualFunctionCallsOfTok = getVirtualFunctionCalls(*callFunction, virtualFunctionCallsMap);
         if (!virtualFunctionCallsOfTok.empty())
             virtualFunctionCalls.push_back(tok);
     }
@@ -2377,16 +2377,16 @@ const std::list<const Token *> & CheckClass::getVirtualFunctionCalls(const Funct
 }
 
 void CheckClass::getFirstVirtualFunctionCallStack(
-    std::map<const Function *, std::list<const Token *> > & virtualFunctionCallsMap,
+    std::map<const Function *, std::vector<const Token *> > & virtualFunctionCallsMap,
     const Token * callToken,
-    std::list<const Token *> & pureFuncStack)
+    std::vector<const Token *> & pureFuncStack)
 {
     const Function *callFunction = callToken->function();
     if (callFunction->isImplicitlyVirtual() && (!callFunction->isPure() || !callFunction->hasBody())) {
         pureFuncStack.push_back(callFunction->tokenDef);
         return;
     }
-    std::map<const Function *, std::list<const Token *> >::const_iterator found = virtualFunctionCallsMap.find(callFunction);
+    std::map<const Function *, std::vector<const Token *> >::const_iterator found = virtualFunctionCallsMap.find(callFunction);
     if (found == virtualFunctionCallsMap.end() || found->second.empty()) {
         pureFuncStack.clear();
         return;
@@ -2398,7 +2398,7 @@ void CheckClass::getFirstVirtualFunctionCallStack(
 
 void CheckClass::virtualFunctionCallInConstructorError(
     const Function * scopeFunction,
-    const std::list<const Token *> & tokStack,
+    const std::vector<const Token *> & tokStack,
     const std::string &funcname)
 {
     const char * scopeFunctionTypeName = scopeFunction ? getFunctionTypeName(scopeFunction->type) : "constructor";
@@ -2432,7 +2432,7 @@ void CheckClass::virtualFunctionCallInConstructorError(
 
 void CheckClass::pureVirtualFunctionCallInConstructorError(
     const Function * scopeFunction,
-    const std::list<const Token *> & tokStack,
+    const std::vector<const Token *> & tokStack,
     const std::string &purefuncname)
 {
     const char * scopeFunctionTypeName = scopeFunction ? getFunctionTypeName(scopeFunction->type) : "constructor";

@@ -287,7 +287,7 @@ void CheckMemoryLeak::memoryLeak(const Token *tok, const std::string &varname, A
 
 void CheckMemoryLeak::reportErr(const Token *tok, Severity::SeverityType severity, const std::string &id, const std::string &msg, CWE cwe) const
 {
-    std::list<const Token *> callstack;
+    std::vector<const Token *> callstack;
 
     if (tok)
         callstack.push_back(tok);
@@ -295,7 +295,7 @@ void CheckMemoryLeak::reportErr(const Token *tok, Severity::SeverityType severit
     reportErr(callstack, severity, id, msg, cwe);
 }
 
-void CheckMemoryLeak::reportErr(const std::list<const Token *> &callstack, Severity::SeverityType severity, const std::string &id, const std::string &msg, CWE cwe) const
+void CheckMemoryLeak::reportErr(const std::vector<const Token *> &callstack, Severity::SeverityType severity, const std::string &id, const std::string &msg, CWE cwe) const
 {
     const ErrorMessage errmsg(callstack, mTokenizer_ ? &mTokenizer_->list : nullptr, severity, id, msg, Certainty::safe, cwe);
     if (mErrorLogger_)
@@ -337,7 +337,7 @@ void CheckMemoryLeak::mismatchSizeError(const Token *tok, const std::string &sz)
     reportErr(tok, Severity::error, "mismatchSize", "The allocated size " + sz + " is not a multiple of the underlying type's size.", CWE(131U));
 }
 
-void CheckMemoryLeak::mismatchAllocDealloc(const std::list<const Token *> &callstack, const std::string &varname) const
+void CheckMemoryLeak::mismatchAllocDealloc(const std::vector<const Token *> &callstack, const std::string &varname) const
 {
     reportErr(callstack, Severity::error, "mismatchAllocDealloc", "$symbol:" + varname + "\nMismatching allocation and deallocation: $symbol", CWE(762U));
 }
@@ -650,7 +650,7 @@ void CheckMemoryLeakInClass::variable(const Scope *scope, const Token *tokVarnam
                             alloc = CheckMemoryLeak::Many;
 
                         if (alloc != CheckMemoryLeak::Many && memberDealloc != CheckMemoryLeak::No && memberDealloc != CheckMemoryLeak::Many && memberDealloc != alloc) {
-                            std::list<const Token *> callstack;
+                            std::vector<const Token *> callstack;
                             callstack.push_back(tok);
                             mismatchAllocDealloc(callstack, classname + "::" + varname);
                         }
@@ -677,7 +677,7 @@ void CheckMemoryLeakInClass::variable(const Scope *scope, const Token *tokVarnam
                         dealloc = CheckMemoryLeak::Many;
 
                     if (dealloc != CheckMemoryLeak::Many && memberAlloc != CheckMemoryLeak::No &&  memberAlloc != Many && memberAlloc != dealloc) {
-                        std::list<const Token *> callstack;
+                        std::vector<const Token *> callstack;
                         callstack.push_back(tok);
                         mismatchAllocDealloc(callstack, classname + "::" + varname);
                     }

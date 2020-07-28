@@ -26,6 +26,7 @@
 
 #include <list>
 #include <string>
+#include <vector>
 
 namespace tinyxml2 {
     class XMLElement;
@@ -139,7 +140,7 @@ protected:
     void reportError(const Token* tok, const Severity::SeverityType severity, const std::string& id, const std::string& msg, CWE cwe = CWE(0U), Certainty::CertaintyLevel certainty = Certainty::safe);
 
     /** report an error */
-    void reportError(const std::list<const Token*>& callstack, Severity::SeverityType severity, const std::string& id, const std::string& msg, CWE cwe, Certainty::CertaintyLevel certainty);
+    void reportError(const std::vector<const Token*>& callstack, Severity::SeverityType severity, const std::string& id, const std::string& msg, CWE cwe, Certainty::CertaintyLevel certainty);
 
     void reportError(const ErrorPath &errorPath, Severity::SeverityType severity, const char id[], const std::string &msg, CWE cwe, Certainty::CertaintyLevel certainty);
 

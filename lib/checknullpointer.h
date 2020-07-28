@@ -27,7 +27,7 @@
 #include "ctu.h"
 #include "valueflow.h"
 
-#include <list>
+#include <vector>
 #include <string>
 
 class ErrorLogger;
@@ -69,7 +69,7 @@ public:
      * @param library --library files data
      */
     static void parseFunctionCall(const Token &tok,
-                                  std::list<const Token *> &var,
+                                  std::vector<const Token *> &var,
                                   const Library *library);
 
     /**

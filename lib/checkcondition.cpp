@@ -32,7 +32,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <limits>
-#include <list>
+#include <vector>
 #include <ostream>
 #include <set>
 #include <utility>
@@ -196,7 +196,7 @@ void CheckCondition::assignIfError(const Token *tok1, const Token *tok2, const s
 {
     if (tok2 && diag(tok2->tokAt(2)))
         return;
-    std::list<const Token *> locations = { tok1, tok2 };
+    std::vector<const Token *> locations = { tok1, tok2 };
     reportError(locations,
                 Severity::style,
                 "assignIfError",
@@ -206,7 +206,7 @@ void CheckCondition::assignIfError(const Token *tok1, const Token *tok2, const s
 
 void CheckCondition::mismatchingBitAndError(const Token *tok1, const MathLib::bigint num1, const Token *tok2, const MathLib::bigint num2)
 {
-    std::list<const Token *> locations = { tok1, tok2 };
+    std::vector<const Token *> locations = { tok1, tok2 };
 
     std::ostringstream msg;
     msg << "Mismatching bitmasks. Result is always 0 ("
@@ -219,7 +219,7 @@ void CheckCondition::mismatchingBitAndError(const Token *tok1, const MathLib::bi
 }
 
 
-static void getnumchildren(const Token *tok, std::list<MathLib::bigint> &numchildren)
+static void getnumchildren(const Token *tok, std::vector<MathLib::bigint> &numchildren)
 {
     if (tok->astOperand1() && tok->astOperand1()->isNumber())
         numchildren.push_back(MathLib::toLongNumber(tok->astOperand1()->str()));
@@ -299,7 +299,7 @@ void CheckCondition::comparison()
             continue;
         if (!Token::Match(expr1,"[&|]"))
             continue;
-        std::list<MathLib::bigint> numbers;
+        std::vector<MathLib::bigint> numbers;
         getnumchildren(expr1, numbers);
         for (const MathLib::bigint num1 : numbers) {
             if (num1 < 0)

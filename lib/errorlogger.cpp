@@ -67,7 +67,7 @@ ErrorMessage::ErrorMessage(const Token* tok, const TokenList* list, Severity::Se
     setmsg(msg);
 }
 
-ErrorMessage::ErrorMessage(const std::list<const Token*>& callstack, const TokenList* list, Severity::SeverityType severity, const std::string& id, const std::string& msg, Certainty::CertaintyLevel certainty, CWE cwe)
+ErrorMessage::ErrorMessage(const std::vector<const Token*>& callstack, const TokenList* list, Severity::SeverityType severity, const std::string& id, const std::string& msg, Certainty::CertaintyLevel certainty, CWE cwe)
     : id(id), incomplete(false), severity(severity), cwe(cwe.id), certainty(certainty)
 {
     // Format callstack

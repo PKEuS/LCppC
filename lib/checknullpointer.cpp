@@ -54,7 +54,7 @@ static bool checkNullpointerFunctionCallPlausibility(const Function* func, unsig
  * @param var variables that the function read / write.
  * @param library --library files data
  */
-void CheckNullPointer::parseFunctionCall(const Token &tok, std::list<const Token *> &var, const Library *library)
+void CheckNullPointer::parseFunctionCall(const Token &tok, std::vector<const Token *> &var, const Library *library)
 {
     if (Token::Match(&tok, "%name% ( )") || !tok.tokAt(2))
         return;
@@ -156,7 +156,7 @@ bool CheckNullPointer::isPointerDeRef(const Token *tok, bool &unknown, const Set
             ftok = ftok->previous();
         }
         if (ftok && ftok->previous()) {
-            std::list<const Token *> varlist;
+            std::vector<const Token *> varlist;
             parseFunctionCall(*ftok->previous(), varlist, &settings->library);
             if (std::find(varlist.begin(), varlist.end(), tok) != varlist.end()) {
                 return true;
@@ -357,7 +357,7 @@ void CheckNullPointer::nullConstantDereference()
                     if (var && !var->isPointer() && !var->isArray() && var->isStlStringType())
                         nullPointerError(tok);
                 } else { // function call
-                    std::list<const Token *> var;
+                    std::vector<const Token *> var;
                     parseFunctionCall(*tok, var, &mSettings->library);
 
                     // is one of the var items a NULL pointer?

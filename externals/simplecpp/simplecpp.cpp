@@ -2440,7 +2440,7 @@ std::map<std::string, simplecpp::TokenList*> simplecpp::load(const simplecpp::To
 {
     std::map<std::string, simplecpp::TokenList*> ret;
 
-    std::list<const Token *> filelist;
+    std::vector<const Token *> filelist;
 
     // -include files
     for (std::vector<std::string>::const_iterator it = dui.includes.begin(); it != dui.includes.end(); ++it) {

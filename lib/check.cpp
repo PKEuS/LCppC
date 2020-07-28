@@ -64,7 +64,7 @@ void Check::reportError(const Token* tok, Severity::SeverityType severity, const
         reportError(errmsg);
 }
 
-void Check::reportError(const std::list<const Token*>& callstack, Severity::SeverityType severity, const std::string& id, const std::string& msg, CWE cwe, Certainty::CertaintyLevel certainty)
+void Check::reportError(const std::vector<const Token*>& callstack, Severity::SeverityType severity, const std::string& id, const std::string& msg, CWE cwe, Certainty::CertaintyLevel certainty)
 {
     const ErrorMessage errmsg(callstack, mTokenizer ? &mTokenizer->list : nullptr, severity, id, msg, certainty, cwe);
     if (mErrorLogger)

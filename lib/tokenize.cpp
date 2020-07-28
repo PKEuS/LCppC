@@ -2274,7 +2274,7 @@ bool Tokenizer::simplifyUsing()
                         str += tok3->str();
                     }
                     str += " ;";
-                    std::list<const Token *> callstack(1, usingStart);
+                    std::vector<const Token *> callstack(1, usingStart);
                     mErrorLogger->reportErr(ErrorMessage(callstack, &list, Severity::debug, "debug",
                                                          "Failed to parse \'" + str + "\'. The checking continues anyway.", Certainty::safe));
                 }
@@ -8644,7 +8644,7 @@ void Tokenizer::reportError(const Token* tok, const Severity::SeverityType sever
         Check::reportError(errmsg);
 }
 
-void Tokenizer::reportError(const std::list<const Token*>& callstack, Severity::SeverityType severity, const std::string& id, const std::string& msg, bool inconclusive) const
+void Tokenizer::reportError(const std::vector<const Token*>& callstack, Severity::SeverityType severity, const std::string& id, const std::string& msg, bool inconclusive) const
 {
     const ErrorMessage errmsg(callstack, &list, severity, id, msg, inconclusive ? Certainty::inconclusive : Certainty::safe);
     if (mErrorLogger)
