@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <list>
 #include <string>
+#include <vector>
 
 
 class TestCppcheck : public TestFixture {
@@ -35,7 +36,7 @@ private:
 
     class ErrorLogger2 : public ErrorLogger {
     public:
-        std::list<std::string> id;
+        std::vector<std::string> id;
 
         void reportOut(const std::string & /*outmsg*/) override {}
 
@@ -81,10 +82,8 @@ private:
 
         // Check if there are duplicate error ids in errorLogger.id
         std::string duplicate;
-        for (std::list<std::string>::iterator it = errorLogger.id.begin();
-             it != errorLogger.id.end();
-             ++it) {
-            if (std::find(errorLogger.id.begin(), it, *it) != it) {
+        for (std::vector<std::string>::const_iterator it = errorLogger.id.cbegin(); it != errorLogger.id.cend(); ++it) {
+            if (std::find(errorLogger.id.cbegin(), it, *it) != it) {
                 duplicate = "Duplicate ID: " + *it;
                 break;
             }

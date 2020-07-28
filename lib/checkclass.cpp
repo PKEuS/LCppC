@@ -1061,40 +1061,30 @@ void CheckClass::privateFunctions()
         if (Token::findsimplematch(scope->bodyStart, "; __property ;", scope->bodyEnd))
             continue;
 
-        std::list<const Function*> privateFuncs;
+        std::vector<const Function*> privateFuncs;
         for (const Function &func : scope->functionList) {
             // Get private functions..
-            if (func.type == Function::eFunction && func.access == AccessControl::Private && !func.isOperator()) // TODO: There are smarter ways to check private operator usage
-                privateFuncs.push_back(&func);
-        }
-
-        // Bailout for overridden virtual functions of base classes
-        if (!scope->definedType->derivedFrom.empty()) {
-            // Check virtual functions
-            for (std::list<const Function*>::iterator it = privateFuncs.begin(); it != privateFuncs.end();) {
-                if ((*it)->isImplicitlyVirtual(true)) // Give true as default value to be returned if we don't see all base classes
-                    privateFuncs.erase(it++);
-                else
-                    ++it;
+            if (func.type == Function::eFunction && func.access == AccessControl::Private && !func.isOperator()) { // TODO: There are smarter ways to check private operator usage
+                // Bailout for overridden virtual functions of base classes
+                if (scope->definedType->derivedFrom.empty() || !func.isImplicitlyVirtual(true)) // Give true as default value to be returned if we don't see all base classes
+                    privateFuncs.push_back(&func);
             }
         }
 
-        while (!privateFuncs.empty()) {
+        for (size_t i = 0; i < privateFuncs.size(); i++) {
             // Check that all private functions are used
-            bool used = checkFunctionUsage(privateFuncs.front(), scope); // Usage in this class
+            bool used = checkFunctionUsage(privateFuncs[i], scope); // Usage in this class
             // Check in friend classes
             const std::vector<Type::FriendInfo>& friendList = scope->definedType->friendList;
             for (std::size_t i = 0; i < friendList.size() && !used; i++) {
                 if (friendList[i].type)
-                    used = checkFunctionUsage(privateFuncs.front(), friendList[i].type->classScope);
+                    used = checkFunctionUsage(privateFuncs[i], friendList[i].type->classScope);
                 else
                     used = true; // Assume, it is used if we do not see friend class
             }
 
             if (!used)
-                unusedPrivateFunctionError(privateFuncs.front()->tokenDef, scope->className, privateFuncs.front()->name());
-
-            privateFuncs.pop_front();
+                unusedPrivateFunctionError(privateFuncs[i]->tokenDef, scope->className, privateFuncs[i]->name());
         }
     }
 }
@@ -1629,7 +1619,7 @@ void CheckClass::virtualDestructor()
     // * A class with any virtual functions should have a destructor that is either public and virtual or protected
     const bool printInconclusive = mSettings->certainty.isEnabled(Certainty::inconclusive);
 
-    std::list<const Function *> inconclusiveErrors;
+    std::vector<const Function *> inconclusiveErrors;
 
     for (const Scope * scope : mSymbolDatabase->classAndStructScopes) {
 
@@ -1743,9 +1733,9 @@ void CheckClass::virtualDestructor()
                         if (baseDestructor->access == AccessControl::Public) {
                             virtualDestructorError(baseDestructor->token, derivedFrom->name(), derivedClass->str(), false);
                             // check for duplicate error and remove it if found
-                            const std::list<const Function *>::iterator found = std::find(inconclusiveErrors.begin(), inconclusiveErrors.end(), baseDestructor);
+                            const std::vector<const Function *>::iterator found = std::find(inconclusiveErrors.begin(), inconclusiveErrors.end(), baseDestructor);
                             if (found != inconclusiveErrors.end())
-                                inconclusiveErrors.erase(found);
+                                *found = nullptr;
                         }
                     }
                 }
@@ -1754,7 +1744,8 @@ void CheckClass::virtualDestructor()
     }
 
     for (const Function *func : inconclusiveErrors)
-        virtualDestructorError(func->tokenDef, func->name(), emptyString, true);
+        if (func)
+            virtualDestructorError(func->tokenDef, func->name(), emptyString, true);
 }
 
 void CheckClass::virtualDestructorError(const Token *tok, const std::string &Base, const std::string &Derived, bool inconclusive)

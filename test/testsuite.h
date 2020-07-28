@@ -37,7 +37,6 @@ private:
     static std::size_t todos_counter;
     static std::size_t succeeded_todos_counter;
     static std::set<std::string> missingLibs;
-    bool mVerbose;
     std::string mTemplateFormat;
     std::string mTemplateLocation;
     std::string mTestname;
@@ -73,10 +72,6 @@ protected:
     void complainMissingLib(const char * const libname) const;
     std::string deleteLineNumber(const std::string &message) const;
 
-    void setVerbose(bool v) {
-        mVerbose = v;
-    }
-
     void setMultiline() {
         mTemplateFormat = "{file}:{line}:{severity}:{message}";
         mTemplateLocation = "{file}:{line}:note:{info}";
@@ -99,9 +94,9 @@ public:
 extern std::ostringstream errout;
 extern std::ostringstream output;
 
-#define TEST_CASE( NAME )  do { if ( prepareTest(#NAME) ) { setVerbose(false); NAME(); } } while(false)
+#define TEST_CASE( NAME )  do { if ( prepareTest(#NAME) ) { NAME(); } } while(false)
 #define ASSERT( CONDITION )  if (!assert_(__FILE__, __LINE__, (CONDITION))) return
-#define ASSERT_EQUALS( EXPECTED , ACTUAL )  if (!assertEquals(__FILE__, __LINE__, (EXPECTED), (ACTUAL))) return
+#define ASSERT_EQUALS( EXPECTED , ACTUAL )  assertEquals(__FILE__, __LINE__, (EXPECTED), (ACTUAL))
 #define ASSERT_EQUALS_WITHOUT_LINENUMBERS( EXPECTED , ACTUAL )  assertEqualsWithoutLineNumbers(__FILE__, __LINE__, EXPECTED, ACTUAL)
 #define ASSERT_EQUALS_DOUBLE( EXPECTED , ACTUAL, TOLERANCE )  assertEqualsDouble(__FILE__, __LINE__, EXPECTED, ACTUAL, TOLERANCE)
 #define ASSERT_EQUALS_MSG( EXPECTED , ACTUAL, MSG )  assertEquals(__FILE__, __LINE__, EXPECTED, ACTUAL, MSG)
@@ -111,7 +106,6 @@ extern std::ostringstream output;
 #define TODO_ASSERT_THROW( CMD, EXCEPTION ) do { try { CMD ; } catch (const EXCEPTION&) { } catch (...) { assertThrow(__FILE__, __LINE__); } } while(false)
 #define TODO_ASSERT( CONDITION ) do { const bool condition=(CONDITION); todoAssertEquals(__FILE__, __LINE__, true, false, condition); } while(false)
 #define TODO_ASSERT_EQUALS( WANTED , CURRENT , ACTUAL ) todoAssertEquals(__FILE__, __LINE__, WANTED, CURRENT, ACTUAL)
-#define EXPECT_EQ( EXPECTED, ACTUAL ) assertEquals(__FILE__, __LINE__, EXPECTED, ACTUAL)
 #define REGISTER_TEST( CLASSNAME ) namespace { CLASSNAME instance_##CLASSNAME; }
 
 #ifdef _WIN32

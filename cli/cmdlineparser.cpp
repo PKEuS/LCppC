@@ -135,7 +135,7 @@ std::string CmdLineParser::parseEnableList(const std::string& str, bool(*functio
     }
 
     bool enable = str[0] != '-';
-    if (str.size() == (enable ? 0 : 1))
+    if (str.size() == (enable ? 0U : 1U))
         return std::string("cppcheck: --enable parameter is empty");
 
     if (!function(*mSettings, enable ? str : str.substr(1), enable))

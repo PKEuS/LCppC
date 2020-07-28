@@ -189,7 +189,7 @@ private:
         settings.jointSuppressionReport = true;
         if (!suppression.empty()) {
             std::string r = settings.nomsg.addSuppressionLine(suppression);
-            EXPECT_EQ("", r);
+            ASSERT_EQUALS("", r);
         }
 
         unsigned int exitCode = 0;
@@ -217,7 +217,7 @@ private:
         settings.inlineSuppressions = true;
         settings.severity.enable(Severity::information);
         if (!suppression.empty()) {
-            EXPECT_EQ("", settings.nomsg.addSuppressionLine(suppression));
+            ASSERT_EQUALS("", settings.nomsg.addSuppressionLine(suppression));
         }
         ThreadExecutor executor(filemap, settings, *this);
         for (std::list<CTU::CTUInfo>::const_iterator i = filemap.begin(); i != filemap.end(); ++i)

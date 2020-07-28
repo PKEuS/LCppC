@@ -73,9 +73,8 @@ std::size_t TestFixture::succeeded_todos_counter = 0;
 std::set<std::string> TestFixture::missingLibs;
 
 TestFixture::TestFixture(const char * const _name)
-    :mVerbose(false),
-     quiet_tests(false),
-     classname(_name)
+    : quiet_tests(false)
+    , classname(_name)
 {
     TestRegistry::theInstance().addTest(this);
 }
@@ -83,7 +82,6 @@ TestFixture::TestFixture(const char * const _name)
 
 bool TestFixture::prepareTest(const char testname[])
 {
-    mVerbose = false;
     mTemplateFormat.clear();
     mTemplateLocation.clear();
 
@@ -375,7 +373,7 @@ void TestFixture::reportOut(const std::string & outmsg)
 
 void TestFixture::reportErr(const ErrorMessage &msg)
 {
-    const std::string errormessage(msg.toString(mVerbose, mTemplateFormat, mTemplateLocation));
+    const std::string errormessage(msg.toString(false, mTemplateFormat, mTemplateLocation));
     if (errout.str().find(errormessage) == std::string::npos)
         errout << errormessage << std::endl;
 }
