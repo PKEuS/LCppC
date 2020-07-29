@@ -99,14 +99,14 @@ private:
 
     void FileLocationDefaults() const {
         ErrorMessage::FileLocation loc;
-        ASSERT_EQUALS("", loc.getfile());
+        ASSERT_EQUALS("", loc.getFileNative());
         ASSERT_EQUALS(0, loc.line);
     }
 
     void FileLocationSetFile() const {
         ErrorMessage::FileLocation loc;
         loc.setfile("foo.cpp");
-        ASSERT_EQUALS("foo.cpp", loc.getfile());
+        ASSERT_EQUALS("foo.cpp", loc.getFileNative());
         ASSERT_EQUALS(0, loc.line);
     }
 
@@ -301,8 +301,8 @@ private:
 
         ErrorMessage msg2;
         msg2.deserialize(msg.serialize());
-        ASSERT_EQUALS("[]:;,()", msg2.callStack.front().getfile(false));
-        ASSERT_EQUALS(":/,;", msg2.callStack.front().getOrigFile(false));
+        ASSERT_EQUALS("[]:;,()", msg2.callStack.front().getFile());
+        ASSERT_EQUALS(":/,;", msg2.callStack.front().getOrigFile());
         ASSERT_EQUALS(654, msg2.callStack.front().line);
         ASSERT_EQUALS(33, msg2.callStack.front().column);
         ASSERT_EQUALS("abcd:/,", msg2.callStack.front().getinfo());

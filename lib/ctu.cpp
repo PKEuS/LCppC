@@ -75,7 +75,7 @@ tinyxml2::XMLElement* CTU::CTUInfo::FunctionCall::toXMLElement(tinyxml2::XMLDocu
 
     for (const ErrorMessage::FileLocation &loc : callValuePath) {
         tinyxml2::XMLElement* path = doc->NewElement("path");
-        entry->SetAttribute(ATTR_LOC_FILENAME, loc.getfile().c_str());
+        entry->SetAttribute(ATTR_LOC_FILENAME, loc.getFileNative().c_str());
         entry->SetAttribute(ATTR_LOC_LINENR, loc.line);
         entry->SetAttribute(ATTR_LOC_COLUMN, loc.column);
         entry->SetAttribute(ATTR_INFO, loc.getinfo().c_str());

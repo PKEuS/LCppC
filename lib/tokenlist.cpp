@@ -202,11 +202,11 @@ void TokenList::addtoken(std::string str, const unsigned int lineno, const unsig
     }
 
     if (mTokensFrontBack.back) {
-        mTokensFrontBack.back->insertToken(str);
+        mTokensFrontBack.back->insertToken(std::move(str));
     } else {
         mTokensFrontBack.front = new Token(&mTokensFrontBack);
         mTokensFrontBack.back = mTokensFrontBack.front;
-        mTokensFrontBack.back->str(str);
+        mTokensFrontBack.back->str(std::move(str));
     }
 
     mTokensFrontBack.back->linenr(lineno);
@@ -219,11 +219,11 @@ void TokenList::addtoken(std::string str, const Token *locationTok)
         return;
 
     if (mTokensFrontBack.back) {
-        mTokensFrontBack.back->insertToken(str);
+        mTokensFrontBack.back->insertToken(std::move(str));
     } else {
         mTokensFrontBack.front = new Token(&mTokensFrontBack);
         mTokensFrontBack.back = mTokensFrontBack.front;
-        mTokensFrontBack.back->str(str);
+        mTokensFrontBack.back->str(std::move(str));
     }
 
     mTokensFrontBack.back->linenr(locationTok->linenr());
@@ -391,20 +391,20 @@ void TokenList::createTokens(simplecpp::TokenList&& tokenList)
 
     determineCppC();
 
-    for (const simplecpp::Token *tok = tokenList.cfront(); tok;) {
+    for (simplecpp::Token *tok = tokenList.front(); tok;) {
 
-        std::string str = tok->str();
+        std::string str(std::move(tok->moveStr()));
 
         // Float literal
         if (str.size() > 1 && str[0] == '.' && std::isdigit(str[1]))
             str = '0' + str;
 
         if (mTokensFrontBack.back) {
-            mTokensFrontBack.back->insertToken(str);
+            mTokensFrontBack.back->insertToken(std::move(str));
         } else {
             mTokensFrontBack.front = new Token(&mTokensFrontBack);
             mTokensFrontBack.back = mTokensFrontBack.front;
-            mTokensFrontBack.back->str(str);
+            mTokensFrontBack.back->str(std::move(str));
         }
 
         mTokensFrontBack.back->fileIndex(tok->location.fileIndex);

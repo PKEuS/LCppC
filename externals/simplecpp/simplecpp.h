@@ -117,6 +117,9 @@ namespace simplecpp {
         const TokenString& str() const {
             return string;
         }
+        TokenString&& moveStr() {
+            return std::move(string);
+        }
         template<typename T>
         void setstr(T&& s) {
             string = s;

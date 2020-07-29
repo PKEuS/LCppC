@@ -83,17 +83,21 @@ public:
 
         /**
          * Return the filename.
-         * @param convert If true convert path to native separators.
          * @return filename.
          */
-        std::string getfile(bool convert = true) const;
+        std::string getFileNative() const;
+        const std::string& getFile() const {
+            return mFileName;
+        }
 
         /**
          * Filename with the whole path (no --rp)
-         * @param convert If true convert path to native separators.
          * @return filename.
          */
-        std::string getOrigFile(bool convert = true) const;
+        std::string getOrigFileNative() const;
+        const std::string& getOrigFile() const {
+            return mOrigFileName;
+        }
 
         /**
          * Set the filename.

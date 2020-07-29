@@ -781,7 +781,9 @@ public:
      * @param prepend Insert the new token before this token when it's not
      * the first one on the tokens list.
      */
-    void insertToken(const std::string &tokenStr, const std::string &originalNameStr=emptyString, bool prepend=false);
+    void insertToken(const char* tokenStr, const std::string& originalNameStr = emptyString, bool prepend = false);
+    void insertToken(std::string&& tokenStr, const std::string& originalNameStr = emptyString, bool prepend = false);
+    void insertToken(const std::string& tokenStr, const std::string& originalNameStr = emptyString, bool prepend = false);
 
     Token *previous() const {
         return mPrevious;

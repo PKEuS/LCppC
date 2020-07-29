@@ -1022,14 +1022,22 @@ void Token::function(const Function *f)
         tokType(eName);
 }
 
-void Token::insertToken(const std::string &tokenStr, const std::string &originalNameStr, bool prepend)
+void Token::insertToken(const char* tokenStr, const std::string& originalNameStr, bool prepend)
+{
+    insertToken(std::move(std::string(tokenStr)), originalNameStr, prepend);
+}
+void Token::insertToken(const std::string& tokenStr, const std::string& originalNameStr, bool prepend)
+{
+    insertToken(std::move(std::string(tokenStr)), originalNameStr, prepend);
+}
+void Token::insertToken(std::string&& tokenStr, const std::string &originalNameStr, bool prepend)
 {
     Token *newToken;
     if (mStr.empty())
         newToken = this;
     else
         newToken = new Token(mTokensFrontBack);
-    newToken->str(tokenStr);
+    newToken->str(std::move(tokenStr));
     if (!originalNameStr.empty())
         newToken->originalName(originalNameStr);
 
@@ -1114,7 +1122,6 @@ void Token::insertToken(const std::string &tokenStr, const std::string &original
 
                 if (!newScopeInfo->name.empty() && !nextScopeNameAddition.empty()) newScopeInfo->name.append(" :: ");
                 newScopeInfo->name.append(nextScopeNameAddition);
-                nextScopeNameAddition = "";
 
                 newToken->scopeInfo(newScopeInfo);
             } else if (newToken->str() == "}") {

@@ -657,7 +657,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
             loc.setfile(Path::toNativeSeparators(ctu->sourcefile));
             locationList.push_back(loc);
             ErrorMessage errmsg(locationList,
-                                loc.getfile(),
+                                loc.getFileNative(),
                                 Severity::information,
                                 msg,
                                 "noValidConfiguration",

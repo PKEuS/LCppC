@@ -178,7 +178,7 @@ Suppressions::ErrorMessage ErrorMessage::toSuppressionsErrorMessage() const
     Suppressions::ErrorMessage ret;
     ret.errorId = id;
     if (!callStack.empty()) {
-        ret.setFileName(callStack.back().getfile(false));
+        ret.setFileName(callStack.back().getFile());
         ret.lineNumber = callStack.back().line;
     }
     ret.certainty = certainty;
@@ -208,7 +208,7 @@ std::string ErrorMessage::serialize() const
 
     for (std::list<ErrorMessage::FileLocation>::const_iterator loc = callStack.begin(); loc != callStack.end(); ++loc) {
         std::ostringstream smallStream;
-        smallStream << (*loc).line << '\t' << (*loc).column << '\t' << (*loc).getfile(false) << '\t' << loc->getOrigFile(false) << '\t' << loc->getinfo();
+        smallStream << (*loc).line << '\t' << (*loc).column << '\t' << (*loc).getFile() << '\t' << loc->getOrigFile() << '\t' << loc->getinfo();
         oss << smallStream.str().length() << " " << smallStream.str();
     }
 
@@ -369,9 +369,9 @@ std::string ErrorMessage::toXML() const
 
     for (std::list<FileLocation>::const_reverse_iterator it = callStack.rbegin(); it != callStack.rend(); ++it) {
         printer.OpenElement("location", false);
-        if (!file0.empty() && (*it).getfile() != file0)
+        if (!file0.empty() && (*it).getFileNative() != file0)
             printer.PushAttribute("file0", Path::toNativeSeparators(file0).c_str());
-        printer.PushAttribute("file", (*it).getfile().c_str());
+        printer.PushAttribute("file", (*it).getFileNative().c_str());
         printer.PushAttribute("line", std::max((*it).line,0));
         printer.PushAttribute("column", (*it).column);
         if (!it->getinfo().empty())
@@ -410,9 +410,9 @@ tinyxml2::XMLElement* ErrorMessage::toXMLElement(tinyxml2::XMLDocument* const do
 
     for (std::list<FileLocation>::const_reverse_iterator it = callStack.rbegin(); it != callStack.rend(); ++it) {
         tinyxml2::XMLElement* location = doc->NewElement("location");
-        if (!file0.empty() && (*it).getfile() != file0)
+        if (!file0.empty() && (*it).getFileNative() != file0)
             location->SetAttribute("file0", Path::toNativeSeparators(file0).c_str());
-        location->SetAttribute("file", (*it).getfile().c_str());
+        location->SetAttribute("file", (*it).getFileNative().c_str());
         location->SetAttribute("line", std::max((*it).line, 0));
         location->SetAttribute("column", (*it).column);
         if (!it->getinfo().empty())
@@ -508,7 +508,7 @@ std::string ErrorMessage::toString(bool verbose, const std::string &templateForm
     findAndReplace(result, "{message}", verbose ? mVerboseMessage : mShortMessage);
     findAndReplace(result, "{callstack}", callStack.empty() ? emptyString : ErrorLogger::callStackToString(callStack));
     if (!callStack.empty()) {
-        findAndReplace(result, "{file}", callStack.back().getfile());
+        findAndReplace(result, "{file}", callStack.back().getFileNative());
         findAndReplace(result, "{line}", MathLib::toString(callStack.back().line));
         findAndReplace(result, "{column}", MathLib::toString(callStack.back().column));
         if (result.find("{code}") != std::string::npos) {
@@ -520,7 +520,7 @@ std::string ErrorMessage::toString(bool verbose, const std::string &templateForm
                 endl = "\r\n";
             else
                 endl = "\r";
-            findAndReplace(result, "{code}", readCode(callStack.back().getOrigFile(), callStack.back().line, callStack.back().column, endl));
+            findAndReplace(result, "{code}", readCode(callStack.back().getOrigFileNative(), callStack.back().line, callStack.back().column, endl));
         }
     } else {
         findAndReplace(result, "{file}", "nofile");
@@ -538,7 +538,7 @@ std::string ErrorMessage::toString(bool verbose, const std::string &templateForm
             findAndReplace(text, "\\r", "\r");
             findAndReplace(text, "\\t", "\t");
 
-            findAndReplace(text, "{file}", fileLocation.getfile());
+            findAndReplace(text, "{file}", fileLocation.getFileNative());
             findAndReplace(text, "{line}", MathLib::toString(fileLocation.line));
             findAndReplace(text, "{column}", MathLib::toString(fileLocation.column));
             findAndReplace(text, "{info}", fileLocation.getinfo().empty() ? mShortMessage : fileLocation.getinfo());
@@ -551,7 +551,7 @@ std::string ErrorMessage::toString(bool verbose, const std::string &templateForm
                     endl = "\r\n";
                 else
                     endl = "\r";
-                findAndReplace(text, "{code}", readCode(fileLocation.getOrigFile(), fileLocation.line, fileLocation.column, endl));
+                findAndReplace(text, "{code}", readCode(fileLocation.getOrigFileNative(), fileLocation.line, fileLocation.column, endl));
             }
             result += '\n' + text;
         }
@@ -613,24 +613,19 @@ ErrorMessage::FileLocation::FileLocation(const Token* tok, const std::string &in
 {
 }
 
-std::string ErrorMessage::FileLocation::getfile(bool convert) const
+std::string ErrorMessage::FileLocation::getFileNative() const
 {
-    if (convert)
-        return Path::toNativeSeparators(mFileName);
-    return mFileName;
+    return Path::toNativeSeparators(mFileName);
 }
 
-std::string ErrorMessage::FileLocation::getOrigFile(bool convert) const
+std::string ErrorMessage::FileLocation::getOrigFileNative() const
 {
-    if (convert)
-        return Path::toNativeSeparators(mOrigFileName);
-    return mOrigFileName;
+    return Path::toNativeSeparators(mOrigFileName);
 }
 
 void ErrorMessage::FileLocation::setfile(const std::string &file)
 {
-    mFileName = file;
-    mFileName = Path::fromNativeSeparators(mFileName);
+    mFileName = Path::fromNativeSeparators(file);
     mFileName = Path::simplifyPath(mFileName);
 }
 
