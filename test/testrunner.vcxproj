@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\lib\cppcheck.vcxproj">
+    <ProjectReference Include="..\lib\LCppC.vcxproj">
       <Project>{c183db5b-ad6c-423d-80ca-1f9549555a1a}</Project>
     </ProjectReference>
   </ItemGroup>
