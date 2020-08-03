@@ -295,13 +295,13 @@ Library::Error Library::load(const tinyxml2::XMLDocument &doc)
         }
 
         else if (nodename == "markup") {
-            const char * const extension = node->Attribute("ext");
-            if (!extension)
+            const char* const strExtension = node->Attribute("ext");
+            if (!strExtension)
                 return Error(MISSING_ATTRIBUTE, "ext");
-            mMarkupExtensions.insert(extension);
+            Extension& extension = mMarkupExtensions[strExtension];
 
-            mReportErrors[extension] = (node->Attribute("reporterrors", "true") != nullptr);
-            mProcessAfterCode[extension] = (node->Attribute("aftercode", "true") != nullptr);
+            extension.reportErrors = (node->Attribute("reporterrors", "true") != nullptr);
+            extension.processAfterCode = (node->Attribute("aftercode", "true") != nullptr);
 
             for (const tinyxml2::XMLElement *markupnode = node->FirstChildElement(); markupnode; markupnode = markupnode->NextSiblingElement()) {
                 const std::string markupnodename = markupnode->Name();
@@ -311,7 +311,7 @@ Library::Error Library::load(const tinyxml2::XMLDocument &doc)
                             const char* nodeName = librarynode->Attribute("name");
                             if (nodeName == nullptr)
                                 return Error(MISSING_ATTRIBUTE, "name");
-                            mKeywords[extension].insert(nodeName);
+                            extension.keywords.insert(nodeName);
                         } else
                             unknown_elements.insert(librarynode->Name());
                     }
@@ -343,7 +343,7 @@ Library::Error Library::load(const tinyxml2::XMLDocument &doc)
                 else if (markupnodename == "imported") {
                     for (const tinyxml2::XMLElement *librarynode = markupnode->FirstChildElement(); librarynode; librarynode = librarynode->NextSiblingElement()) {
                         if (strcmp(librarynode->Name(), "importer") == 0)
-                            mImporters[extension].insert(librarynode->GetText());
+                            extension.importers.insert(librarynode->GetText());
                         else
                             unknown_elements.insert(librarynode->Name());
                     }
@@ -355,17 +355,17 @@ Library::Error Library::load(const tinyxml2::XMLDocument &doc)
                         if (blocknodename == "block") {
                             const char * blockName = blocknode->Attribute("name");
                             if (blockName)
-                                mExecutableBlocks[extension].addBlock(blockName);
+                                extension.executableBlocks.addBlock(blockName);
                         } else if (blocknodename == "structure") {
                             const char * start = blocknode->Attribute("start");
                             if (start)
-                                mExecutableBlocks[extension].setStart(start);
+                                extension.executableBlocks.setStart(start);
                             const char * end = blocknode->Attribute("end");
                             if (end)
-                                mExecutableBlocks[extension].setEnd(end);
+                                extension.executableBlocks.setEnd(end);
                             const char * offset = blocknode->Attribute("offset");
                             if (offset)
-                                mExecutableBlocks[extension].setOffset(atoi(offset));
+                                extension.executableBlocks.setOffset(atoi(offset));
                         }
 
                         else
@@ -1440,68 +1440,63 @@ bool Library::markupFile(const std::string &path) const
 
 bool Library::processMarkupAfterCode(const std::string &path) const
 {
-    const std::map<std::string, bool>::const_iterator it = mProcessAfterCode.find(Path::getFilenameExtensionInLowerCase(path));
-    return (it == mProcessAfterCode.end() || it->second);
+    auto it = mMarkupExtensions.find(Path::getFilenameExtensionInLowerCase(path));
+    return (it == mMarkupExtensions.end() || it->second.processAfterCode);
 }
 
 bool Library::reportErrors(const std::string &path) const
 {
-    const std::map<std::string, bool>::const_iterator it = mReportErrors.find(Path::getFilenameExtensionInLowerCase(path));
-    return (it == mReportErrors.end() || it->second);
+    auto it = mMarkupExtensions.find(Path::getFilenameExtensionInLowerCase(path));
+    return (it == mMarkupExtensions.end() || it->second.reportErrors);
 }
 
 bool Library::isexecutableblock(const std::string &file, const std::string &token) const
 {
-    const std::map<std::string, CodeBlock>::const_iterator it = mExecutableBlocks.find(Path::getFilenameExtensionInLowerCase(file));
-    return (it != mExecutableBlocks.end() && it->second.isBlock(token));
+    auto it = mMarkupExtensions.find(Path::getFilenameExtensionInLowerCase(file));
+    return (it != mMarkupExtensions.end() && it->second.executableBlocks.isBlock(token));
 }
 
 int Library::blockstartoffset(const std::string &file) const
 {
     int offset = -1;
-    const std::map<std::string, CodeBlock>::const_iterator map_it
-        = mExecutableBlocks.find(Path::getFilenameExtensionInLowerCase(file));
+    auto map_it = mMarkupExtensions.find(Path::getFilenameExtensionInLowerCase(file));
 
-    if (map_it != mExecutableBlocks.end()) {
-        offset = map_it->second.offset();
+    if (map_it != mMarkupExtensions.end()) {
+        offset = map_it->second.executableBlocks.offset();
     }
     return offset;
 }
 
 const std::string& Library::blockstart(const std::string &file) const
 {
-    const std::map<std::string, CodeBlock>::const_iterator map_it
-        = mExecutableBlocks.find(Path::getFilenameExtensionInLowerCase(file));
+    auto map_it = mMarkupExtensions.find(Path::getFilenameExtensionInLowerCase(file));
 
-    if (map_it != mExecutableBlocks.end()) {
-        return map_it->second.start();
+    if (map_it != mMarkupExtensions.end()) {
+        return map_it->second.executableBlocks.start();
     }
     return emptyString;
 }
 
 const std::string& Library::blockend(const std::string &file) const
 {
-    const std::map<std::string, CodeBlock>::const_iterator map_it
-        = mExecutableBlocks.find(Path::getFilenameExtensionInLowerCase(file));
+    auto map_it = mMarkupExtensions.find(Path::getFilenameExtensionInLowerCase(file));
 
-    if (map_it != mExecutableBlocks.end()) {
-        return map_it->second.end();
+    if (map_it != mMarkupExtensions.end()) {
+        return map_it->second.executableBlocks.end();
     }
     return emptyString;
 }
 
 bool Library::iskeyword(const std::string &file, const std::string &keyword) const
 {
-    const std::map<std::string, std::set<std::string> >::const_iterator it =
-        mKeywords.find(Path::getFilenameExtensionInLowerCase(file));
-    return (it != mKeywords.end() && it->second.count(keyword));
+    auto it = mMarkupExtensions.find(Path::getFilenameExtensionInLowerCase(file));
+    return (it != mMarkupExtensions.end() && it->second.keywords.count(keyword));
 }
 
 bool Library::isimporter(const std::string& file, const std::string &importer) const
 {
-    const std::map<std::string, std::set<std::string> >::const_iterator it =
-        mImporters.find(Path::getFilenameExtensionInLowerCase(file));
-    return (it != mImporters.end() && it->second.count(importer) > 0);
+    auto it = mMarkupExtensions.find(Path::getFilenameExtensionInLowerCase(file));
+    return (it != mMarkupExtensions.end() && it->second.importers.count(importer) > 0);
 }
 
 bool Library::isSmartPointer(const Token *tok) const

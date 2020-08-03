@@ -40,9 +40,6 @@
 SymbolDatabase::SymbolDatabase(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
     : mTokenizer(tokenizer), mSettings(settings), mErrorLogger(errorLogger)
 {
-    if (!tokenizer || !tokenizer->tokens())
-        return;
-
     mIsCpp = isCPP();
 
     if (mSettings->defaultSign == 's' || mSettings->defaultSign == 'S')

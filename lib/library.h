@@ -289,6 +289,7 @@ public:
         };
         std::vector<MinSize> minsizes;
 
+        int          notuninit;
         enum class Direction : uint8_t {
             DIR_IN,     ///< Input to called function. Data is treated as read-only.
             DIR_OUT,    ///< Output to caller. Data is passed by reference or address and is potentially written.
@@ -296,7 +297,6 @@ public:
             DIR_UNKNOWN ///< direction not known / specified
         };
         Direction direction;
-        int          notuninit;
         bool         notbool;
         bool         notnull;
         bool         formatstr;
@@ -380,8 +380,11 @@ public:
 
     bool processMarkupAfterCode(const std::string &path) const;
 
-    const std::set<std::string> &markupExtensions() const {
-        return mMarkupExtensions;
+    std::set<std::string> markupExtensions() const {
+        std::set<std::string> s;
+        for (auto it = mMarkupExtensions.cbegin(); it != mMarkupExtensions.cend(); ++it)
+            s.insert(it->first);
+        return s;
     }
 
     bool reportErrors(const std::string &path) const;
@@ -568,13 +571,15 @@ private:
     std::map<std::string, std::string> mReturnValueType;
     std::map<std::string, int> mReturnValueContainer;
     std::map<std::string, std::vector<MathLib::bigint>> mUnknownReturnValues;
-    std::map<std::string, bool> mReportErrors;
-    std::map<std::string, bool> mProcessAfterCode;
-    std::set<std::string> mMarkupExtensions; // file extensions of markup files
-    std::map<std::string, std::set<std::string> > mKeywords; // keywords for code in the library
-    std::map<std::string, CodeBlock> mExecutableBlocks; // keywords for blocks of executable code
+    struct Extension {
+        std::set<std::string> keywords; // keywords for code in the library
+        std::set<std::string> importers; // keywords that import variables/functions
+        CodeBlock executableBlocks; // keywords for blocks of executable code
+        bool reportErrors;
+        bool processAfterCode;
+    };
+    std::map<std::string, Extension> mMarkupExtensions; // file extensions of markup files
     std::map<std::string, ExportedFunctions> mExporters; // keywords that export variables/functions to libraries (meta-code/macros)
-    std::map<std::string, std::set<std::string> > mImporters; // keywords that import variables/functions
     std::map<std::string, int> mReflection; // invocation of reflection
     std::map<std::string, struct PodType> mPodTypes; // pod types
     std::map<std::string, PlatformType> mPlatformTypes; // platform independent typedefs
