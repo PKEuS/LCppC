@@ -32,7 +32,7 @@ class options;
 class TestFixture : public ErrorLogger {
 private:
     static std::ostringstream errmsg;
-    static unsigned int countTests;
+    static std::size_t countTests;
     static std::size_t fails_counter;
     static std::size_t todos_counter;
     static std::size_t succeeded_todos_counter;
@@ -40,42 +40,40 @@ private:
     std::string mTemplateFormat;
     std::string mTemplateLocation;
     std::string mTestname;
-
-protected:
+    std::string mFilename;
     std::string testToRun;
     bool quiet_tests;
 
+protected:
+
     virtual void run() = 0;
 
-    bool prepareTest(const char testname[]);
-    void outputLocationStr(const char * const filename, const unsigned int linenr) const;
+    bool prepareTest(const char filename[], const char testname[]);
+    void outputLocationStr(const unsigned int linenr) const;
 
-    bool assert_(const char * const filename, const unsigned int linenr, const bool condition) const;
+    bool assert_(const unsigned int linenr, const bool condition) const;
 
-    bool assertEquals(const char * const filename, const unsigned int linenr, const std::string &expected, const std::string &actual, const std::string &msg = emptyString) const;
-    void assertEqualsWithoutLineNumbers(const char * const filename, const unsigned int linenr, const std::string &expected, const std::string &actual, const std::string &msg = emptyString) const;
-    bool assertEquals(const char * const filename, const unsigned int linenr, const char expected[], const std::string& actual, const std::string &msg = emptyString) const;
-    bool assertEquals(const char * const filename, const unsigned int linenr, const char expected[], const char actual[], const std::string &msg = emptyString) const;
-    bool assertEquals(const char * const filename, const unsigned int linenr, const std::string& expected, const char actual[], const std::string &msg = emptyString) const;
-    bool assertEquals(const char * const filename, const unsigned int linenr, const long long expected, const long long actual, const std::string &msg = emptyString) const;
-    void assertEqualsDouble(const char * const filename, const unsigned int linenr, const double expected, const double actual, const double tolerance, const std::string &msg = emptyString) const;
+    bool assertEquals(const unsigned int linenr, const std::string &expected, const std::string &actual, const std::string &msg = emptyString) const;
+    void assertEqualsWithoutLineNumbers(const unsigned int linenr, const std::string &expected, const std::string &actual, const std::string &msg = emptyString) const;
+    bool assertEquals(const unsigned int linenr, const char expected[], const std::string& actual, const std::string &msg = emptyString) const;
+    bool assertEquals(const unsigned int linenr, const char expected[], const char actual[], const std::string &msg = emptyString) const;
+    bool assertEquals(const unsigned int linenr, const std::string& expected, const char actual[], const std::string &msg = emptyString) const;
+    bool assertEquals(const unsigned int linenr, const long long expected, const long long actual, const std::string &msg = emptyString) const;
+    void assertEqualsDouble(const unsigned int linenr, const double expected, const double actual, const double tolerance, const std::string &msg = emptyString) const;
 
-    void todoAssertEquals(const char * const filename, const unsigned int linenr, const std::string &wanted,
+    void todoAssertEquals(const unsigned int linenr, const std::string &wanted,
                           const std::string &current, const std::string &actual) const;
-    void todoAssertEquals(const char * const filename, const unsigned int linenr, const char wanted[],
+    void todoAssertEquals(const unsigned int linenr, const char wanted[],
                           const char current[], const std::string &actual) const;
-    void todoAssertEquals(const char * const filename, const unsigned int linenr, const long long wanted,
+    void todoAssertEquals(const unsigned int linenr, const long long wanted,
                           const long long current, const long long actual) const;
-    void assertThrow(const char * const filename, const unsigned int linenr) const;
-    void assertThrowFail(const char * const filename, const unsigned int linenr) const;
-    void assertNoThrowFail(const char * const filename, const unsigned int linenr) const;
+    void assertThrow(const unsigned int linenr) const;
+    void assertThrowFail(const unsigned int linenr) const;
+    void assertNoThrowFail(const unsigned int linenr) const;
     void complainMissingLib(const char * const libname) const;
     std::string deleteLineNumber(const std::string &message) const;
 
-    void setMultiline() {
-        mTemplateFormat = "{file}:{line}:{severity}:{message}";
-        mTemplateLocation = "{file}:{line}:note:{info}";
-    }
+    void setMultiline();
 
     void processOptions(const options& args);
 public:
@@ -94,18 +92,18 @@ public:
 extern std::ostringstream errout;
 extern std::ostringstream output;
 
-#define TEST_CASE( NAME )  do { if ( prepareTest(#NAME) ) { NAME(); } } while(false)
-#define ASSERT( CONDITION )  if (!assert_(__FILE__, __LINE__, (CONDITION))) return
-#define ASSERT_EQUALS( EXPECTED , ACTUAL )  assertEquals(__FILE__, __LINE__, (EXPECTED), (ACTUAL))
-#define ASSERT_EQUALS_WITHOUT_LINENUMBERS( EXPECTED , ACTUAL )  assertEqualsWithoutLineNumbers(__FILE__, __LINE__, EXPECTED, ACTUAL)
-#define ASSERT_EQUALS_DOUBLE( EXPECTED , ACTUAL, TOLERANCE )  assertEqualsDouble(__FILE__, __LINE__, EXPECTED, ACTUAL, TOLERANCE)
-#define ASSERT_EQUALS_MSG( EXPECTED , ACTUAL, MSG )  assertEquals(__FILE__, __LINE__, EXPECTED, ACTUAL, MSG)
-#define ASSERT_THROW( CMD, EXCEPTION ) do { try { CMD ; assertThrowFail(__FILE__, __LINE__); } catch (const EXCEPTION&) { } catch (...) { assertThrowFail(__FILE__, __LINE__); } } while(false)
-#define ASSERT_THROW_EQUALS( CMD, EXCEPTION, EXPECTED ) do { try { CMD ; assertThrowFail(__FILE__, __LINE__); } catch (const EXCEPTION&e) { assertEquals(__FILE__, __LINE__, EXPECTED, e.errorMessage); } catch (...) { assertThrowFail(__FILE__, __LINE__); } } while(false)
-#define ASSERT_NO_THROW( CMD ) do { try { CMD ; } catch (...) { assertNoThrowFail(__FILE__, __LINE__); } } while(false)
-#define TODO_ASSERT_THROW( CMD, EXCEPTION ) do { try { CMD ; } catch (const EXCEPTION&) { } catch (...) { assertThrow(__FILE__, __LINE__); } } while(false)
-#define TODO_ASSERT( CONDITION ) do { const bool condition=(CONDITION); todoAssertEquals(__FILE__, __LINE__, true, false, condition); } while(false)
-#define TODO_ASSERT_EQUALS( WANTED , CURRENT , ACTUAL ) todoAssertEquals(__FILE__, __LINE__, WANTED, CURRENT, ACTUAL)
+#define TEST_CASE( NAME )  do { if ( prepareTest(__FILE__, #NAME) ) { NAME(); } } while(false)
+#define ASSERT( CONDITION )  if (!assert_(__LINE__, (CONDITION))) return
+#define ASSERT_EQUALS( EXPECTED , ACTUAL )  assertEquals(__LINE__, (EXPECTED), (ACTUAL))
+#define ASSERT_EQUALS_WITHOUT_LINENUMBERS( EXPECTED , ACTUAL )  assertEqualsWithoutLineNumbers(__LINE__, EXPECTED, ACTUAL)
+#define ASSERT_EQUALS_DOUBLE( EXPECTED , ACTUAL, TOLERANCE )  assertEqualsDouble(__LINE__, EXPECTED, ACTUAL, TOLERANCE)
+#define ASSERT_EQUALS_MSG( EXPECTED , ACTUAL, MSG )  assertEquals(__LINE__, EXPECTED, ACTUAL, MSG)
+#define ASSERT_THROW( CMD, EXCEPTION ) do { try { CMD ; assertThrowFail(__LINE__); } catch (const EXCEPTION&) { } catch (...) { assertThrowFail(__LINE__); } } while(false)
+#define ASSERT_THROW_EQUALS( CMD, EXCEPTION, EXPECTED ) do { try { CMD ; assertThrowFail(__LINE__); } catch (const EXCEPTION& e) { assertEquals(__LINE__, EXPECTED, e.errorMessage); } catch (...) { assertThrowFail(__LINE__); } } while(false)
+#define ASSERT_NO_THROW( CMD ) do { try { CMD ; } catch (...) { assertNoThrowFail(__LINE__); } } while(false)
+#define TODO_ASSERT_THROW( CMD, EXCEPTION ) do { try { CMD ; } catch (const EXCEPTION&) { } catch (...) { assertThrow(__LINE__); } } while(false)
+#define TODO_ASSERT( CONDITION ) do { const bool condition=(CONDITION); todoAssertEquals(__LINE__, true, false, condition); } while(false)
+#define TODO_ASSERT_EQUALS( WANTED , CURRENT , ACTUAL ) todoAssertEquals(__LINE__, WANTED, CURRENT, ACTUAL)
 #define REGISTER_TEST( CLASSNAME ) namespace { CLASSNAME instance_##CLASSNAME; }
 
 #ifdef _WIN32

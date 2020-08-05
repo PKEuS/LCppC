@@ -883,7 +883,7 @@ private:
 
     void loadLibError(const char xmldata [], Library::ErrorCode errorcode, const char* file, unsigned line) const {
         Library library;
-        assertEquals(file, line, errorcode, readLibrary(library, xmldata).errorcode);
+        assertEquals(line, errorcode, readLibrary(library, xmldata).errorcode);
     }
 
 #define LOADLIBERROR(xmldata, errorcode) loadLibError(xmldata, errorcode, __FILE__, __LINE__)

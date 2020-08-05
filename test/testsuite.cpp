@@ -21,6 +21,7 @@
 #include "options.h"
 #include "redirect.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <iostream>
 #include <string>
@@ -32,15 +33,8 @@ std::ostringstream output;
  * TestRegistry
  **/
 
-struct CompareFixtures {
-    bool operator()(const TestFixture* lhs, const TestFixture* rhs) const {
-        return lhs->classname < rhs->classname;
-    }
-};
-
-typedef std::set<TestFixture*, CompareFixtures> TestSet;
 class TestRegistry {
-    TestSet _tests;
+    std::vector<TestFixture*> _tests;
 public:
 
     static TestRegistry &theInstance() {
@@ -49,10 +43,14 @@ public:
     }
 
     void addTest(TestFixture *t) {
-        _tests.insert(t);
+        _tests.push_back(t);
     }
 
-    const TestSet &tests() const {
+    void sortTests() {
+        std::sort(_tests.begin(), _tests.end(), [](TestFixture* l, TestFixture* r) -> bool { return l->classname < r->classname; });
+    }
+
+    const std::vector<TestFixture*>&tests() const {
         return _tests;
     }
 };
@@ -65,8 +63,7 @@ public:
  **/
 
 std::ostringstream TestFixture::errmsg;
-unsigned int       TestFixture::countTests;
-
+std::size_t TestFixture::countTests;
 std::size_t TestFixture::fails_counter = 0;
 std::size_t TestFixture::todos_counter = 0;
 std::size_t TestFixture::succeeded_todos_counter = 0;
@@ -80,7 +77,7 @@ TestFixture::TestFixture(const char * const _name)
 }
 
 
-bool TestFixture::prepareTest(const char testname[])
+bool TestFixture::prepareTest(const char filename[], const char testname[])
 {
     mTemplateFormat.clear();
     mTemplateLocation.clear();
@@ -88,6 +85,7 @@ bool TestFixture::prepareTest(const char testname[])
     // Check if tests should be executed
     if (testToRun.empty() || testToRun == testname) {
         // Tests will be executed - prepare them
+        mFilename = filename;
         mTestname = testname;
         ++countTests;
         if (quiet_tests) {
@@ -101,9 +99,9 @@ bool TestFixture::prepareTest(const char testname[])
     return false;
 }
 
-void TestFixture::outputLocationStr(const char * const filename, const unsigned int linenr) const
+void TestFixture::outputLocationStr(const unsigned int linenr) const
 {
-    errmsg << filename << ':' << linenr << '(' << classname << "::" << mTestname << ')';
+    errmsg << mFilename << ':' << linenr << '(' << classname << "::" << mTestname << ')';
 }
 
 static std::string writestr(const std::string &str, bool gccStyle = false)
@@ -130,21 +128,21 @@ static std::string writestr(const std::string &str, bool gccStyle = false)
     return ostr.str();
 }
 
-bool TestFixture::assert_(const char * const filename, const unsigned int linenr, const bool condition) const
+bool TestFixture::assert_(const unsigned int linenr, const bool condition) const
 {
     if (!condition) {
         ++fails_counter;
-        outputLocationStr(filename, linenr);
+        outputLocationStr(linenr);
         errmsg << ": Assertion failed." << std::endl << "_____" << std::endl;
     }
     return condition;
 }
 
-bool TestFixture::assertEquals(const char * const filename, const unsigned int linenr, const std::string &expected, const std::string &actual, const std::string &msg) const
+bool TestFixture::assertEquals(const unsigned int linenr, const std::string &expected, const std::string &actual, const std::string &msg) const
 {
     if (expected != actual) {
         ++fails_counter;
-        outputLocationStr(filename, linenr);
+        outputLocationStr(linenr);
         errmsg << ": Assertion failed. " << std::endl
                << "Expected: " <<  std::endl
                << writestr(expected)  << std::endl
@@ -181,104 +179,110 @@ std::string TestFixture::deleteLineNumber(const std::string &message) const
     return result;
 }
 
-void TestFixture::assertEqualsWithoutLineNumbers(const char * const filename, const unsigned int linenr, const std::string &expected, const std::string &actual, const std::string &msg) const
+void TestFixture::setMultiline()
 {
-    assertEquals(filename, linenr, deleteLineNumber(expected), deleteLineNumber(actual), msg);
+    mTemplateFormat = "{file}:{line}:{severity}:{message}";
+    mTemplateLocation = "{file}:{line}:note:{info}";
 }
 
-bool TestFixture::assertEquals(const char * const filename, const unsigned int linenr, const char expected[], const std::string& actual, const std::string &msg) const
+void TestFixture::assertEqualsWithoutLineNumbers(const unsigned int linenr, const std::string &expected, const std::string &actual, const std::string &msg) const
 {
-    return assertEquals(filename, linenr, std::string(expected), actual, msg);
-}
-bool TestFixture::assertEquals(const char * const filename, const unsigned int linenr, const char expected[], const char actual[], const std::string &msg) const
-{
-    return assertEquals(filename, linenr, std::string(expected), std::string(actual), msg);
-}
-bool TestFixture::assertEquals(const char * const filename, const unsigned int linenr, const std::string& expected, const char actual[], const std::string &msg) const
-{
-    return assertEquals(filename, linenr, expected, std::string(actual), msg);
+    assertEquals(linenr, deleteLineNumber(expected), deleteLineNumber(actual), msg);
 }
 
-bool TestFixture::assertEquals(const char * const filename, const unsigned int linenr, const long long expected, const long long actual, const std::string &msg) const
+bool TestFixture::assertEquals(const unsigned int linenr, const char expected[], const std::string& actual, const std::string &msg) const
+{
+    return assertEquals(linenr, std::string(expected), actual, msg);
+}
+bool TestFixture::assertEquals(const unsigned int linenr, const char expected[], const char actual[], const std::string &msg) const
+{
+    return assertEquals(linenr, std::string(expected), std::string(actual), msg);
+}
+bool TestFixture::assertEquals(const unsigned int linenr, const std::string& expected, const char actual[], const std::string &msg) const
+{
+    return assertEquals(linenr, expected, std::string(actual), msg);
+}
+
+bool TestFixture::assertEquals(const unsigned int linenr, const long long expected, const long long actual, const std::string &msg) const
 {
     if (expected != actual) {
         std::ostringstream ostr1;
         ostr1 << expected;
         std::ostringstream ostr2;
         ostr2 << actual;
-        assertEquals(filename, linenr, ostr1.str(), ostr2.str(), msg);
+        assertEquals(linenr, ostr1.str(), ostr2.str(), msg);
     }
     return expected == actual;
 }
 
-void TestFixture::assertEqualsDouble(const char * const filename, const unsigned int linenr, const double expected, const double actual, const double tolerance, const std::string &msg) const
+void TestFixture::assertEqualsDouble(const unsigned int linenr, const double expected, const double actual, const double tolerance, const std::string &msg) const
 {
     if (expected < (actual - tolerance) || expected > (actual + tolerance)) {
         std::ostringstream ostr1;
         ostr1 << expected;
         std::ostringstream ostr2;
         ostr2 << actual;
-        assertEquals(filename, linenr, ostr1.str(), ostr2.str(), msg);
+        assertEquals(linenr, ostr1.str(), ostr2.str(), msg);
     }
 }
 
-void TestFixture::todoAssertEquals(const char * const filename, const unsigned int linenr,
+void TestFixture::todoAssertEquals(const unsigned int linenr,
                                    const std::string &wanted,
                                    const std::string &current,
                                    const std::string &actual) const
 {
     if (wanted == actual) {
-        outputLocationStr(filename, linenr);
+        outputLocationStr(linenr);
         errmsg << ": Assertion succeeded unexpectedly. "
                << "Result: " << writestr(wanted, true)  << std::endl << "_____" << std::endl;
 
         ++succeeded_todos_counter;
     } else {
-        assertEquals(filename, linenr, current, actual);
+        assertEquals(linenr, current, actual);
         ++todos_counter;
     }
 }
 
-void TestFixture::todoAssertEquals(const char* const filename, const unsigned int linenr,
+void TestFixture::todoAssertEquals(const unsigned int linenr,
                                    const char wanted[],
                                    const char current[],
                                    const std::string& actual) const
 {
-    todoAssertEquals(filename, linenr, std::string(wanted), std::string(current), actual);
+    todoAssertEquals(linenr, std::string(wanted), std::string(current), actual);
 }
 
 
-void TestFixture::todoAssertEquals(const char * const filename, const unsigned int linenr, const long long wanted, const long long current, const long long actual) const
+void TestFixture::todoAssertEquals(const unsigned int linenr, const long long wanted, const long long current, const long long actual) const
 {
     std::ostringstream wantedStr, currentStr, actualStr;
     wantedStr << wanted;
     currentStr << current;
     actualStr << actual;
-    todoAssertEquals(filename, linenr, wantedStr.str(), currentStr.str(), actualStr.str());
+    todoAssertEquals(linenr, wantedStr.str(), currentStr.str(), actualStr.str());
 }
 
-void TestFixture::assertThrow(const char * const filename, const unsigned int linenr) const
+void TestFixture::assertThrow(const unsigned int linenr) const
 {
     ++fails_counter;
-    outputLocationStr(filename, linenr);
+    outputLocationStr(linenr);
     errmsg << ": Assertion succeeded. "
            << "The expected exception was thrown" << std::endl << "_____" << std::endl;
 
 }
 
-void TestFixture::assertThrowFail(const char * const filename, const unsigned int linenr) const
+void TestFixture::assertThrowFail(const unsigned int linenr) const
 {
     ++fails_counter;
-    outputLocationStr(filename, linenr);
+    outputLocationStr(linenr);
     errmsg << ": Assertion failed. "
            << "The expected exception was not thrown"  << std::endl << "_____" << std::endl;
 
 }
 
-void TestFixture::assertNoThrowFail(const char * const filename, const unsigned int linenr) const
+void TestFixture::assertNoThrowFail(const unsigned int linenr) const
 {
     ++fails_counter;
-    outputLocationStr(filename, linenr);
+    outputLocationStr(linenr);
     errmsg << ": Assertion failed. "
            << "Unexpected exception was thrown"  << std::endl << "_____" << std::endl;
 
@@ -328,8 +332,9 @@ void TestFixture::processOptions(const options& args)
 std::size_t TestFixture::runTests(const options& args)
 {
     countTests = 0;
-    errmsg.str("");
+    errmsg.str(emptyString);
 
+    TestRegistry::theInstance().sortTests();
     for (std::string classname : args.which_test()) {
         std::string testname;
         if (classname.find("::") != std::string::npos) {

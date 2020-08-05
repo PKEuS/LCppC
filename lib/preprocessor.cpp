@@ -443,7 +443,7 @@ static void getConfigs(const simplecpp::TokenList &tokens, std::set<std::string>
         } else if (cmdtok->str() == "error") {
             if (!configs_ifndef.empty() && !configs_ifndef.back().empty()) {
                 if (configs_ifndef.size() == 1U)
-                    ret.erase("");
+                    ret.erase(emptyString);
                 std::vector<std::string> configs(configs_if);
                 configs.push_back(configs_ifndef.back());
                 ret.erase(cfg(configs, userDefines));
@@ -458,7 +458,7 @@ static void getConfigs(const simplecpp::TokenList &tokens, std::set<std::string>
                     ret.erase(cfg(configs, userDefines));
                     configs[configs.size() - 1U] = last.substr(0,last.size()-2U);
                     if (configs.size() == 1U)
-                        ret.erase("");
+                        ret.erase(emptyString);
                     if (!elseError.empty())
                         elseError += ';';
                     elseError += cfg(configs, userDefines);

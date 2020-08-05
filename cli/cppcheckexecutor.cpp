@@ -172,12 +172,12 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
             std::cout << "cppcheck: Maybe all paths were ignored?" << std::endl;
         return false;
     } else if (!mSettings.fileFilter.empty()) {
-        std::map<std::string, std::size_t> newMap;
-        for (std::map<std::string, std::size_t>::const_iterator i = files.begin(); i != files.end(); ++i)
-            if (!matchglob(mSettings.fileFilter, i->first)) {
-                newMap[i->first] = i->second;
-            }
-        files = newMap;
+        for (std::map<std::string, std::size_t>::const_iterator i = files.begin(); i != files.end();) {
+            if (matchglob(mSettings.fileFilter, i->first))
+                i = files.erase(i);
+            else
+                ++i;
+        }
         if (files.empty()) {
             std::cout << "cppcheck: error: could not find any files matching the filter." << std::endl;
             return false;

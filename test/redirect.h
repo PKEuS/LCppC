@@ -60,7 +60,7 @@ public:
     /** Normally called after getOutput() to prevent same text to be returned
     twice. */
     void clearOutput() {
-        _out.str("");
+        _out.str(emptyString);
     }
 
     /** Return what would be printed to cerr. See also clearErrout() */
@@ -71,7 +71,7 @@ public:
     /** Normally called after getErrout() to prevent same text to be returned
     twice. */
     void clearErrout() {
-        _err.str("");
+        _err.str(emptyString);
     }
 
 private:

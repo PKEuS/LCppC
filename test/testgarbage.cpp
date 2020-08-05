@@ -372,7 +372,7 @@ private:
         std::istringstream istr(code);
         try {
             tokenizer.tokenize(istr, "test.cpp");
-            assertThrowFail(__FILE__, __LINE__);
+            assertThrowFail(__LINE__);
         } catch (InternalError& e) {
             ASSERT_EQUALS("syntax error", e.errorMessage);
             ASSERT_EQUALS("syntaxError", e.id);

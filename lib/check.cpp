@@ -97,15 +97,8 @@ bool Check::wrongData(const Token *tok, bool condition, const char *str)
 
 std::list<Check *> &Check::instances()
 {
-#ifdef __SVR4
-    // Under Solaris, destructors are called in wrong order which causes a segmentation fault.
-    // This fix ensures pointer remains valid and reachable until program terminates.
-    static std::list<Check *> *_instances= new std::list<Check *>;
-    return *_instances;
-#else
     static std::list<Check *> _instances;
     return _instances;
-#endif
 }
 
 std::string Check::getMessageId(const ValueFlow::Value &value, const char id[])
