@@ -1,0 +1,41 @@
+#include "../lib/version.h"
+#include "winresrc.h"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION CPPCHECK_VERSION
+ PRODUCTVERSION CPPCHECK_VERSION
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS (0x1L|VS_FF_PRERELEASE)
+#elif CPPCHECK_MINOR != CPPCHECK_DEVMINOR
+ FILEFLAGS (0x0L|VS_FF_PRERELEASE)
+#else
+ FILEFLAGS (0x0L)
+#endif
+ FILEOS VOS__WINDOWS32
+ FILETYPE VFT_APP
+ FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "FileDescription", "C/C++ static code analysis tool (graphical user interface)"
+            VALUE "FileVersion", CPPCHECK_VERSION_STRING
+            VALUE "InternalName", PROGRAMNAME
+            VALUE "LegalCopyright", LEGALCOPYRIGHT
+            VALUE "OriginalFilename", "lcppc.exe"
+            VALUE "ProductName", PROGRAMNAME
+            VALUE "ProductVersion", CPPCHECK_VERSION_STRING
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+// GUI Icon
+//aaaIDI_ICON1               ICON    DISCARDABLE     "lcppc.ico"
+
+#include "wx/msw/wx.rc"
