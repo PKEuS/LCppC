@@ -2800,6 +2800,7 @@ std::string lifetimeType(const Token *tok, const ValueFlow::Value *val)
         result = "iterator";
         break;
     case ValueFlow::Value::LifetimeKind::Object:
+    case ValueFlow::Value::LifetimeKind::SubObject:
     case ValueFlow::Value::LifetimeKind::Address:
         if (astIsPointer(tok))
             result = "pointer";
@@ -2822,6 +2823,7 @@ std::string lifetimeMessage(const Token *tok, const ValueFlow::Value *val, Error
         const Variable * var = vartok->variable();
         if (var) {
             switch (val->lifetimeKind) {
+            case ValueFlow::Value::LifetimeKind::SubObject:
             case ValueFlow::Value::LifetimeKind::Object:
             case ValueFlow::Value::LifetimeKind::Address:
                 if (type == "pointer")
@@ -3046,7 +3048,7 @@ static bool isLifetimeBorrowed(const ValueType *vt, const ValueType *vtParent)
         return false;
     if (!vt)
         return false;
-    if (vt->type != ValueType::UNKNOWN_TYPE && vtParent->type != ValueType::UNKNOWN_TYPE) {
+    if (vt->type != ValueType::UNKNOWN_TYPE && vtParent->type != ValueType::UNKNOWN_TYPE && vtParent->container == vt->container) {
         if (vtParent->pointer > vt->pointer)
             return true;
         if (vtParent->pointer < vt->pointer && vtParent->isIntegral())
@@ -3187,7 +3189,7 @@ static void valueFlowForwardLifetime(Token * tok, TokenList *tokenlist, ErrorLog
 
             for (ValueFlow::Value& val : values) {
                 if (val.lifetimeKind == ValueFlow::Value::LifetimeKind::Address)
-                    val.lifetimeKind = ValueFlow::Value::LifetimeKind::Object;
+                    val.lifetimeKind = ValueFlow::Value::LifetimeKind::SubObject;
             }
         }
         for (const Variable* var : vars) {

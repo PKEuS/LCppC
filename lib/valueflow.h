@@ -252,7 +252,7 @@ namespace ValueFlow {
         /** kind of moved  */
         enum class MoveKind : uint8_t { NonMovedVariable, MovedVariable, ForwardedVariable } moveKind;
 
-        enum class LifetimeKind : uint8_t {Object, Lambda, Iterator, Address} lifetimeKind;
+        enum class LifetimeKind : uint8_t {Object, SubObject, Lambda, Iterator, Address} lifetimeKind;
 
         enum class LifetimeScope : uint8_t { Local, Argument } lifetimeScope;
 

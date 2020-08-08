@@ -2551,10 +2551,11 @@ void Tokenizer::combineOperators()
                 t->deleteThis();
                 t->deleteThis();
                 t->deleteNext();
+                tok->str(".");
+            } else {
+                tok->str(".");
+                tok->originalName("->");
             }
-
-            tok->str(".");
-            tok->originalName("->");
         }
     }
 }
