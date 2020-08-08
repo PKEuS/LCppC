@@ -32,6 +32,11 @@ else
     CPPFILESDIR=
 endif
 
+ifdef WX_CONFIG
+    WX_LIBS=$(shell $(WX_CONFIG) --libs std,stc)
+    WX_CXXFLAGS=$(shell $(WX_CONFIG) --cxxflags)
+endif
+
 RDYNAMIC=-rdynamic
 LDFLAGS+=-pthread
 # Set the CPPCHK_GLIBCXX_DEBUG flag. This flag is not used in release builds.
@@ -103,6 +108,7 @@ ifeq (clang++, $(findstring clang++,$(CXX)))
 endif
 CXXFLAGS_PCH_HEADER=-x c++-header
 CXXFLAGS_PCH=-include lib/precompiled.h
+CXXFLAGS_PCH_GUI=-include gui/precompiled.h
 # debug or release build
 ifdef DEBUG
     override CXXFLAGS += -march=native -mtune=native -Og $(CPPCHK_GLIBCXX_DEBUG) -g
@@ -206,6 +212,13 @@ CLIOBJ =      cli/cmdlineparser.o \
               cli/filelister.o \
               cli/main.o
 
+GUIOBJ =      gui/CheckExecutor.o \
+              gui/CppField.o \
+              gui/MainWindow.o \
+              gui/Scratchpad.o \
+              gui/UIErrorLogger.o \
+              gui/precompiled.o
+
 TESTOBJ =     test/options.o \
               test/test64bit.o \
               test/testassert.o \
@@ -275,12 +288,19 @@ TESTOBJ =     test/options.o \
 lcppc: $(LIBOBJ) $(CLIOBJ) $(EXTOBJ)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ $(LIBS) $(LDFLAGS) $(RDYNAMIC)
 
-all:	lcppc testrunner
+lcppc-gui: $(LIBOBJ) $(GUIOBJ) $(EXTOBJ)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(WX_CXXFLAGS) -o $@ $^ $(LIBS) $(WX_LIBS) $(LDFLAGS) $(RDYNAMIC)
+
+all:	lcppc lcppc-gui testrunner
+
+cli:	lcppc
+
+gui:	lcppc-gui
 
 testrunner: $(TESTOBJ) $(LIBOBJ) $(EXTOBJ) cli/cmdlineparser.o cli/cppcheckexecutor.o cli/filelister.o
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ $(LIBS) $(LDFLAGS) $(RDYNAMIC)
 
-test:	all
+test:	testrunner
 	./testrunner
 
 check:	all
@@ -386,6 +406,9 @@ validateRules:
 
 lib/precompiled.h.gch:  externals/tinyxml/tinyxml2.h lib/check.h lib/config.h lib/errortypes.h lib/library.h lib/mathlib.h lib/platform.h lib/precompiled.h lib/settings.h lib/standards.h lib/suppressions.h lib/symboldatabase.h lib/token.h lib/tokenize.h lib/tokenlist.h lib/utils.h lib/valueflow.h
 	$(CXX) ${INCLUDE_FOR_LIB} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH_HEADER) $(UNDEF_STRICT_ANSI) lib/precompiled.h
+
+gui/precompiled.h.gch:  gui/precompiled.h lib/config.h
+	$(CXX) ${INCLUDE_FOR_GUI} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH_HEADER) $(WX_CXXFLAGS) $(UNDEF_STRICT_ANSI) gui/precompiled.h
 
 $(libcppdir)/analyzerinfo.o: lib/analyzerinfo.cpp lib/analyzerinfo.h lib/check.h lib/config.h lib/ctu.h lib/errorlogger.h lib/errortypes.h lib/mathlib.h lib/path.h lib/suppressions.h lib/utils.h lib/valueflow.h lib/precompiled.h.gch
 	$(CXX) ${INCLUDE_FOR_LIB} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH) $(UNDEF_STRICT_ANSI) -c -o $(libcppdir)/analyzerinfo.o $(libcppdir)/analyzerinfo.cpp
@@ -554,6 +577,24 @@ cli/filelister.o: cli/filelister.cpp cli/filelister.h lib/config.h lib/path.h li
 
 cli/main.o: cli/main.cpp cli/cppcheckexecutor.h lib/analyzerinfo.h lib/check.h lib/config.h lib/ctu.h lib/errorlogger.h lib/errortypes.h lib/library.h lib/mathlib.h lib/platform.h lib/settings.h lib/standards.h lib/suppressions.h lib/utils.h lib/valueflow.h lib/precompiled.h.gch
 	$(CXX) ${INCLUDE_FOR_CLI} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH) $(UNDEF_STRICT_ANSI) -c -o cli/main.o cli/main.cpp
+
+gui/CheckExecutor.o: gui/CheckExecutor.cpp gui/CheckExecutor.h gui/precompiled.h lib/analyzerinfo.h lib/check.h lib/config.h lib/cppcheck.h lib/ctu.h lib/errorlogger.h lib/errortypes.h lib/library.h lib/mathlib.h lib/path.h lib/platform.h lib/settings.h lib/standards.h lib/suppressions.h lib/threadexecutor.h lib/utils.h lib/valueflow.h gui/precompiled.h.gch
+	$(CXX) ${INCLUDE_FOR_GUI} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH_GUI) $(WX_CXXFLAGS) $(UNDEF_STRICT_ANSI) -c -o gui/CheckExecutor.o gui/CheckExecutor.cpp
+
+gui/CppField.o: gui/CppField.cpp gui/CppField.h gui/precompiled.h lib/config.h gui/precompiled.h.gch
+	$(CXX) ${INCLUDE_FOR_GUI} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH_GUI) $(WX_CXXFLAGS) $(UNDEF_STRICT_ANSI) -c -o gui/CppField.o gui/CppField.cpp
+
+gui/MainWindow.o: gui/MainWindow.cpp gui/CheckExecutor.h gui/CppField.h gui/MainWindow.h gui/Scratchpad.h gui/UIErrorLogger.h gui/precompiled.h lib/config.h lib/errorlogger.h lib/errortypes.h lib/library.h lib/mathlib.h lib/platform.h lib/settings.h lib/standards.h lib/suppressions.h lib/utils.h lib/version.h gui/precompiled.h.gch
+	$(CXX) ${INCLUDE_FOR_GUI} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH_GUI) $(WX_CXXFLAGS) $(UNDEF_STRICT_ANSI) -c -o gui/MainWindow.o gui/MainWindow.cpp
+
+gui/Scratchpad.o: gui/Scratchpad.cpp gui/CppField.h gui/MainWindow.h gui/Scratchpad.h gui/precompiled.h lib/config.h lib/errortypes.h lib/library.h lib/mathlib.h lib/platform.h lib/settings.h lib/standards.h lib/suppressions.h lib/utils.h gui/precompiled.h.gch
+	$(CXX) ${INCLUDE_FOR_GUI} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH_GUI) $(WX_CXXFLAGS) $(UNDEF_STRICT_ANSI) -c -o gui/Scratchpad.o gui/Scratchpad.cpp
+
+gui/UIErrorLogger.o: gui/UIErrorLogger.cpp gui/UIErrorLogger.h gui/precompiled.h lib/config.h lib/errorlogger.h lib/errortypes.h lib/suppressions.h gui/precompiled.h.gch
+	$(CXX) ${INCLUDE_FOR_GUI} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH_GUI) $(WX_CXXFLAGS) $(UNDEF_STRICT_ANSI) -c -o gui/UIErrorLogger.o gui/UIErrorLogger.cpp
+
+gui/precompiled.o: gui/precompiled.cpp gui/precompiled.h lib/config.h gui/precompiled.h.gch
+	$(CXX) ${INCLUDE_FOR_GUI} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH_GUI) $(WX_CXXFLAGS) $(UNDEF_STRICT_ANSI) -c -o gui/precompiled.o gui/precompiled.cpp
 
 test/options.o: test/options.cpp test/options.h lib/precompiled.h.gch
 	$(CXX) ${INCLUDE_FOR_TEST} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH) $(UNDEF_STRICT_ANSI) -c -o test/options.o test/options.cpp
@@ -735,10 +776,10 @@ test/testvalueflow.o: test/testvalueflow.cpp externals/simplecpp/simplecpp.h lib
 test/testvarid.o: test/testvarid.cpp lib/config.h lib/errorlogger.h lib/errortypes.h lib/library.h lib/mathlib.h lib/platform.h lib/settings.h lib/standards.h lib/suppressions.h lib/token.h lib/tokenize.h lib/tokenlist.h lib/utils.h lib/valueflow.h test/testsuite.h lib/precompiled.h.gch
 	$(CXX) ${INCLUDE_FOR_TEST} $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH) $(UNDEF_STRICT_ANSI) -c -o test/testvarid.o test/testvarid.cpp
 
-externals/simplecpp/simplecpp.o: externals/simplecpp/simplecpp.cpp externals/simplecpp/simplecpp.h lib/precompiled.h.gch
+externals/simplecpp/simplecpp.o: externals/simplecpp/simplecpp.cpp externals/simplecpp/simplecpp.h
 	$(CXX)  $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS)  -w $(UNDEF_STRICT_ANSI) -c -o externals/simplecpp/simplecpp.o externals/simplecpp/simplecpp.cpp
 
-externals/tinyxml/tinyxml2.o: externals/tinyxml/tinyxml2.cpp externals/tinyxml/tinyxml2.h lib/precompiled.h.gch
+externals/tinyxml/tinyxml2.o: externals/tinyxml/tinyxml2.cpp externals/tinyxml/tinyxml2.h
 	$(CXX)  $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS)  -w $(UNDEF_STRICT_ANSI) -c -o externals/tinyxml/tinyxml2.o externals/tinyxml/tinyxml2.cpp
 
 tools/clang-ast.o: tools/clang-ast.cpp lib/precompiled.h.gch

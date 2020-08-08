@@ -19,6 +19,7 @@
 // Generate Makefile for LCppC
 
 #include <algorithm>
+#include <array>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -60,16 +61,16 @@ static std::string objfiles(const std::vector<std::string> &files)
 
 static void getDeps(const std::string &filename, std::vector<std::string> &depfiles)
 {
-    static const std::vector<std::string> externalfolders = {"externals",
-                                                             "externals/simplecpp",
-                                                             "externals/tinyxml"
-                                                            };
+    static const std::array<std::string, 3> externalfolders = {"externals",
+                                                               "externals/simplecpp",
+                                                               "externals/tinyxml"
+                                                              };
 
     // Is the dependency already included?
     if (std::find(depfiles.begin(), depfiles.end(), filename) != depfiles.end())
         return;
 
-    std::ifstream f(filename.c_str());
+    std::ifstream f(filename);
     if (! f.is_open()) {
         /*
          * Recursively search for includes in other directories.
@@ -117,7 +118,7 @@ static void getDeps(const std::string &filename, std::vector<std::string> &depfi
     }
 }
 
-static void compilefiles(std::ostream &fout, const std::vector<std::string> &files, const std::string &args, bool pch)
+static void compilefiles(std::ostream &fout, const std::vector<std::string> &files, const std::string &args, bool pch, bool gui)
 {
     for (const std::string &file : files) {
         bool external(file.compare(0,10,"externals/") == 0);
@@ -127,12 +128,18 @@ static void compilefiles(std::ostream &fout, const std::vector<std::string> &fil
         std::sort(depfiles.begin(), depfiles.end());
         for (const std::string &depfile : depfiles)
             fout << " " << depfile;
-        fout << " lib/precompiled.h.gch";
-        fout << "\n\t$(CXX) " << args << " $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) " << (pch?"$(CXXFLAGS_PCH) ":"") << (external?" -w ":"") << "$(UNDEF_STRICT_ANSI) -c -o " << objfile(file) << " " << builddir(file) << "\n\n";
+        const char* pchstr = "";
+        if (pch) {
+            fout << (gui?" gui/precompiled.h.gch":" lib/precompiled.h.gch");
+            pchstr = (gui?"$(CXXFLAGS_PCH_GUI) ":"$(CXXFLAGS_PCH) ");
+        }
+        fout << "\n\t$(CXX) " << args << " $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) "
+             << pchstr << (external?" -w ":"") << (gui ? "$(WX_CXXFLAGS) ":"")
+             << "$(UNDEF_STRICT_ANSI) -c -o " << objfile(file) << " " << builddir(file) << "\n\n";
     }
 }
 
-static void compilePCH(std::ostream &fout, const std::string& file, const std::string &args)
+static void compilePCH(std::ostream &fout, const std::string& file, const std::string &args, bool gui)
 {
     fout << pchfile(file) << ": ";
     std::vector<std::string> depfiles;
@@ -140,15 +147,15 @@ static void compilePCH(std::ostream &fout, const std::string& file, const std::s
     std::sort(depfiles.begin(), depfiles.end());
     for (const std::string &depfile : depfiles)
         fout << " " << depfile;
-    fout << "\n\t$(CXX) " << args << " $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH_HEADER) $(UNDEF_STRICT_ANSI) " << file << "\n\n";
+    fout << "\n\t$(CXX) " << args << " $(CPPFLAGS) $(CPPFILESDIR) $(CXXFLAGS) $(CXXFLAGS_PCH_HEADER) "  << (gui ? "$(WX_CXXFLAGS) ":"") << "$(UNDEF_STRICT_ANSI) " << file << "\n\n";
 }
 
 static void getCppFiles(std::vector<std::string> &files, const std::string &path, bool recursive)
 {
     std::map<std::string,size_t> filemap;
-    const std::set<std::string> extra;
-    const std::vector<std::string> masks;
-    const PathMatch matcher(masks);
+    static const std::set<std::string> extra;
+    static const std::vector<std::string> masks;
+    static const PathMatch matcher(masks);
     FileLister::addFiles(filemap, path, extra, recursive, matcher);
 
     // add *.cpp files to the "files" vector..
@@ -178,6 +185,9 @@ int main()
 
     std::vector<std::string> clifiles;
     getCppFiles(clifiles, "cli/", false);
+
+    std::vector<std::string> guifiles;
+    getCppFiles(guifiles, "gui/", false);
 
     std::vector<std::string> testfiles;
     getCppFiles(testfiles, "test/", false);
@@ -260,6 +270,12 @@ int main()
          << "    CPPFILESDIR=\n"
          << "endif\n\n";
 
+    // wxWidgets
+    fout << "ifdef WX_CONFIG\n"
+         << "    WX_LIBS=$(shell $(WX_CONFIG) --libs std,stc)\n"
+         << "    WX_CXXFLAGS=$(shell $(WX_CONFIG) --cxxflags)\n"
+         << "endif\n\n";
+
     // enable backtrac
     fout << "RDYNAMIC=-rdynamic\n";
 
@@ -338,7 +354,8 @@ int main()
          << "endif\n";
 
     fout << "CXXFLAGS_PCH_HEADER=-x c++-header\n"
-         << "CXXFLAGS_PCH=-include lib/precompiled.h\n";
+         << "CXXFLAGS_PCH=-include lib/precompiled.h\n"
+         << "CXXFLAGS_PCH_GUI=-include gui/precompiled.h\n";
 
     // Debug/Release mode
     fout <<
@@ -374,16 +391,21 @@ int main()
     fout << "LIBOBJ =      " << objfiles(libfiles) << "\n\n";
     fout << "EXTOBJ =      " << objfiles(extfiles) << "\n\n";
     fout << "CLIOBJ =      " << objfiles(clifiles) << "\n\n";
+    fout << "GUIOBJ =      " << objfiles(guifiles) << "\n\n";
     fout << "TESTOBJ =     " << objfiles(testfiles) << "\n\n";
 
     fout << ".PHONY: run-dmake tags\n\n";
     fout << "\n###### Targets\n\n";
     fout << "lcppc: $(LIBOBJ) $(CLIOBJ) $(EXTOBJ)\n";
     fout << "\t$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ $(LIBS) $(LDFLAGS) $(RDYNAMIC)\n\n";
-    fout << "all:\tlcppc testrunner\n\n";
+    fout << "lcppc-gui: $(LIBOBJ) $(GUIOBJ) $(EXTOBJ)\n";
+    fout << "\t$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(WX_CXXFLAGS) -o $@ $^ $(LIBS) $(WX_LIBS) $(LDFLAGS) $(RDYNAMIC)\n\n";
+    fout << "all:\tlcppc lcppc-gui testrunner\n\n";
+    fout << "cli:\tlcppc\n\n";
+    fout << "gui:\tlcppc-gui\n\n";
     fout << "testrunner: $(TESTOBJ) $(LIBOBJ) $(EXTOBJ) cli/cmdlineparser.o cli/cppcheckexecutor.o cli/filelister.o\n";
     fout << "\t$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ $(LIBS) $(LDFLAGS) $(RDYNAMIC)\n\n";
-    fout << "test:\tall\n";
+    fout << "test:\ttestrunner\n";
     fout << "\t./testrunner\n\n";
     fout << "check:\tall\n";
     fout << "\t./testrunner -q\n\n";
@@ -473,12 +495,14 @@ int main()
 
     fout << "\n###### Build\n\n";
 
-    compilePCH(fout, "lib/precompiled.h", "${INCLUDE_FOR_LIB}");
-    compilefiles(fout, libfiles, "${INCLUDE_FOR_LIB}", true);
-    compilefiles(fout, clifiles, "${INCLUDE_FOR_CLI}", true);
-    compilefiles(fout, testfiles, "${INCLUDE_FOR_TEST}", true);
-    compilefiles(fout, extfiles, "", false);
-    compilefiles(fout, toolsfiles, "${INCLUDE_FOR_LIB}", true);
+    compilePCH(fout, "lib/precompiled.h", "${INCLUDE_FOR_LIB}", false);
+    compilePCH(fout, "gui/precompiled.h", "${INCLUDE_FOR_GUI}", true);
+    compilefiles(fout, libfiles, "${INCLUDE_FOR_LIB}", true, false);
+    compilefiles(fout, clifiles, "${INCLUDE_FOR_CLI}", true, false);
+    compilefiles(fout, guifiles, "${INCLUDE_FOR_GUI}", true, true);
+    compilefiles(fout, testfiles, "${INCLUDE_FOR_TEST}", true, false);
+    compilefiles(fout, extfiles, "", false, false);
+    compilefiles(fout, toolsfiles, "${INCLUDE_FOR_LIB}", true, false);
 
     return 0;
 }
