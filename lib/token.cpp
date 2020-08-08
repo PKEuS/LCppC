@@ -1024,11 +1024,11 @@ void Token::function(const Function *f)
 
 void Token::insertToken(const char* tokenStr, const std::string& originalNameStr, bool prepend)
 {
-    insertToken(std::move(std::string(tokenStr)), originalNameStr, prepend);
+    insertToken(std::string(tokenStr), originalNameStr, prepend);
 }
 void Token::insertToken(const std::string& tokenStr, const std::string& originalNameStr, bool prepend)
 {
-    insertToken(std::move(std::string(tokenStr)), originalNameStr, prepend);
+    insertToken(std::string(tokenStr), originalNameStr, prepend);
 }
 void Token::insertToken(std::string&& tokenStr, const std::string &originalNameStr, bool prepend)
 {

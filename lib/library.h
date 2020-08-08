@@ -254,8 +254,8 @@ public:
     public:
         ArgumentChecks() :
             iteratorInfo(),
-            direction(Direction::DIR_UNKNOWN),
             notuninit(-1),
+            direction(Direction::DIR_UNKNOWN),
             notbool(false),
             notnull(false),
             formatstr(false),

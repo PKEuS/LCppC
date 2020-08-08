@@ -1,3 +1,4 @@
+
 /*
  * Cppcheck - A tool for static C/C++ code analysis
  * Copyright (C) 2007-2020 Cppcheck team.
@@ -52,7 +53,6 @@ static const struct CWE CWE362(362U);   // Concurrent Execution using Shared Res
 static const struct CWE CWE369(369U);   // Divide By Zero
 static const struct CWE CWE398(398U);   // Indicator of Poor Code Quality
 static const struct CWE CWE475(475U);   // Undefined Behavior for Input to API
-static const struct CWE CWE482(482U);   // Comparing instead of Assigning
 static const struct CWE CWE561(561U);   // Dead Code
 static const struct CWE CWE563(563U);   // Assignment to Variable without Use ('Unused Variable')
 static const struct CWE CWE570(570U);   // Expression is Always False
@@ -60,7 +60,6 @@ static const struct CWE CWE571(571U);   // Expression is Always True
 static const struct CWE CWE672(672U);   // Operation on a Resource after Expiration or Release
 static const struct CWE CWE628(628U);   // Function Call with Incorrectly Specified Arguments
 static const struct CWE CWE683(683U);   // Function Call With Incorrect Order of Arguments
-static const struct CWE CWE686(686U);   // Function Call With Incorrect Argument Type
 static const struct CWE CWE704(704U);   // Incorrect Type Conversion or Cast
 static const struct CWE CWE758(758U);   // Reliance on Undefined, Unspecified, or Implementation-Defined Behavior
 static const struct CWE CWE768(768U);   // Incorrect Short Circuit Evaluation
