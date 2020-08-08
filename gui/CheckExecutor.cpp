@@ -49,13 +49,13 @@ void CheckExecutor::init(Settings& settings)
         const std::string msg("Failed to load " + std::string(!std ? "std.cfg" : !posix ? "posix.cfg" : "windows.cfg") + ". Your Cppcheck installation is broken, please re-install.");
 #ifdef FILESDIR
         const std::string details("The Cppcheck binary was compiled with FILESDIR set to \""
-            FILESDIR "\" and will therefore search for "
-            "std.cfg in " FILESDIR "/cfg.");
+                                  FILESDIR "\" and will therefore search for "
+                                  "std.cfg in " FILESDIR "/cfg.");
 #else
         const std::string cfgfolder(Path::fromNativeSeparators(Path::getPathFromFilename(exepath.ToStdString())) + "cfg"); // TODO
         const std::string details("The Cppcheck binary was compiled without FILESDIR set. Either the "
-            "std.cfg should be available in " + cfgfolder + " or the FILESDIR "
-            "should be configured.");
+                                  "std.cfg should be available in " + cfgfolder + " or the FILESDIR "
+                                  "should be configured.");
 #endif
         ErrorMessage errmsg(callstack, emptyString, Severity::information, msg + " " + details, "failedToLoadCfg", Certainty::safe);
         errorlogger->reportErr(errmsg);

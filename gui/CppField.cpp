@@ -33,10 +33,10 @@ CppField::CppField(wxWindow* parent_, wxWindowID id)
     StyleSetBold(wxSTC_C_COMMENTDOCKEYWORD, true);
 
     SetKeyWords(0, wxT("alignas alignof auto bool char char8_t char16_t char32_t class concept const consteval constexpr constinit const_cast "
-        "decltype delete double dynamic_cast  enum explicit export extern false float friend inline int long mutable namespace new "
-        "noexcept nullptr operator private protected public register reinterpret_cast requires short signed sizeof static "
-        "static_assert static_cast struct template this thread_local true typedef typeid typename union unsigned using virtual "
-        "void volatile wchar_t"));
+                       "decltype delete double dynamic_cast  enum explicit export extern false float friend inline int long mutable namespace new "
+                       "noexcept nullptr operator private protected public register reinterpret_cast requires short signed sizeof static "
+                       "static_assert static_cast struct template this thread_local true typedef typeid typename union unsigned using virtual "
+                       "void volatile wchar_t"));
     SetKeyWords(1, wxT("break case catch continue co_await co_return co_yield default do else switch for goto if return throw try while"));
 
     SetScrollWidth(1);

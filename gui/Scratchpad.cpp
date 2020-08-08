@@ -1,22 +1,22 @@
 #include "Scratchpad.h"
 #include "MainWindow.h"
 #include "CppField.h"
-#include "../lib/Settings.h"
+#include "../lib/settings.h"
 
-enum
-{
+enum {
     ID_CHECK = 50
 };
 
 wxBEGIN_EVENT_TABLE(Scratchpad, wxFrame)
-EVT_BUTTON(ID_CHECK, Scratchpad::OnCheck)
+    EVT_BUTTON(ID_CHECK, Scratchpad::OnCheck)
 wxEND_EVENT_TABLE()
 
 static const char* stdStrings[] = { "C++20", "C++17", "C++14", "C++11", "C++03", "C11", "C99", "C89" };
 static const wxString platformStrings[] = { "Unix32", "Unix64", "Win32A", "Win32W", "Win64", _("Native"), _("Unspecified") };
 static const cppcheck::Platform::PlatformType platforms[] = {
     cppcheck::Platform::Unix32, cppcheck::Platform::Unix64, cppcheck::Platform::Win32A,
-    cppcheck::Platform::Win32W, cppcheck::Platform::Win64, cppcheck::Platform::Native, cppcheck::Platform::Unspecified };
+    cppcheck::Platform::Win32W, cppcheck::Platform::Win64, cppcheck::Platform::Native, cppcheck::Platform::Unspecified
+};
 
 Scratchpad::Scratchpad(MainWindow& parent_, const wxPoint& pos, const wxSize& size)
     : wxFrame(&parent_, wxID_ANY, _("Scratchpad"), pos, size)
@@ -129,8 +129,7 @@ void Scratchpad::fillSettings(Settings& settings) const
             endPos = str.find("\"", startPos + 1);
             if (endPos < str.size())
                 endPos++;
-        }
-        else {
+        } else {
             endPos = str.find(';', startPos + 1);
         }
         if (endPos == wxString::npos) {
@@ -140,10 +139,8 @@ void Scratchpad::fillSettings(Settings& settings) const
         settings.userUndefs.emplace(str.substr(startPos, endPos - startPos));
         startPos = str.find_first_not_of(";", endPos);
     }
-    for (size_t i = 0; i < sizeof(platforms) / sizeof(*platforms); i++)
-    {
-        if (platformStrings[i] == platform->GetValue())
-        {
+    for (size_t i = 0; i < sizeof(platforms) / sizeof(*platforms); i++) {
+        if (platformStrings[i] == platform->GetValue()) {
             settings.platform(platforms[i]);
             break;
         }

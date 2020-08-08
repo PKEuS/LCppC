@@ -833,7 +833,7 @@ void CheckStl::invalidContainer()
                 if (skipVarIds.count(info.tok->varId()) > 0)
                     return false;
                 // if (Token::simpleMatch(info.tok->next(), "."))
-                    // return false;
+                // return false;
                 if (Token::Match(info.tok->astParent(), "%assign%") && astIsLHS(info.tok))
                     skipVarIds.insert(info.tok->varId());
                 if (info.tok->variable()->isReference() &&

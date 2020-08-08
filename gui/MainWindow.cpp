@@ -6,8 +6,7 @@
 #include "../lib/settings.h"
 #include "../lib/errorlogger.h"
 
-enum
-{
+enum {
     ID_NEW_PROJECT = 2, ID_OPEN_PROJECT, ID_SAVE_PROJECT, ID_SAVE_PROJECT_AS,
     ID_CHECK, ID_RECHECK, ID_CHECK_DIRECTORY, ID_SCRATCHPAD,
     ID_PROJECT_SETTINGS, ID_LCPPC_SETTINGS,
@@ -15,12 +14,12 @@ enum
 };
 
 wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
-EVT_MENU(ID_SCRATCHPAD, MainWindow::OnScratchpad)
-EVT_MENU(ID_CHECK, MainWindow::OnCheck)
-EVT_MENU(ID_RECHECK, MainWindow::OnReCheck)
-EVT_MENU(wxID_EXIT, MainWindow::OnExit)
-EVT_MENU(wxID_ABOUT, MainWindow::OnAbout)
-EVT_TREELIST_SELECTION_CHANGED(ID_RESULTSTREE, MainWindow::OnResultSelect)
+    EVT_MENU(ID_SCRATCHPAD, MainWindow::OnScratchpad)
+    EVT_MENU(ID_CHECK, MainWindow::OnCheck)
+    EVT_MENU(ID_RECHECK, MainWindow::OnReCheck)
+    EVT_MENU(wxID_EXIT, MainWindow::OnExit)
+    EVT_MENU(wxID_ABOUT, MainWindow::OnAbout)
+    EVT_TREELIST_SELECTION_CHANGED(ID_RESULTSTREE, MainWindow::OnResultSelect)
 wxEND_EVENT_TABLE()
 
 MainWindow::MainWindow(const wxPoint& pos, const wxSize& size)
@@ -30,42 +29,42 @@ MainWindow::MainWindow(const wxPoint& pos, const wxSize& size)
 
     wxMenu* menuFile = new wxMenu;
     menuFile->Append(ID_NEW_PROJECT,
-        _("&New Project...\tCtrl-N"),
-        _("Create a new project file, using a wizard to configure it."));
+                     _("&New Project...\tCtrl-N"),
+                     _("Create a new project file, using a wizard to configure it."));
     menuFile->Append(ID_OPEN_PROJECT,
-        _("&Open Project...\tCtrl-O"),
-        _("Open an existing project file."));
+                     _("&Open Project...\tCtrl-O"),
+                     _("Open an existing project file."));
     menuFile->Append(ID_SAVE_PROJECT,
-        _("&Save Project\tCtrl-S"),
-        _("Save project file."))->Enable(false);
+                     _("&Save Project\tCtrl-S"),
+                     _("Save project file."))->Enable(false);
     menuFile->Append(ID_SAVE_PROJECT_AS,
-        _("&Save Project As..."),
-        _("Select file name when saving the project file."))->Enable(false);
+                     _("&Save Project As..."),
+                     _("Select file name when saving the project file."))->Enable(false);
     menuFile->AppendSeparator();
     menuFile->Append(wxID_EXIT);
     wxMenu* menuCheck = new wxMenu;
     checkItem = menuCheck->Append(ID_CHECK,
-        _("&Check\tF5"),
-        _("(Incremental) check of given source code."));
+                                  _("&Check\tF5"),
+                                  _("(Incremental) check of given source code."));
     checkItem->Enable(false);
     reCheckItem = menuCheck->Append(ID_RECHECK,
-        _("&Full Re-Check\tCtrl-F5"),
-        _("Full check of given source code."));
+                                    _("&Full Re-Check\tCtrl-F5"),
+                                    _("Full check of given source code."));
     reCheckItem->Enable(false);
     menuCheck->AppendSeparator();
     menuCheck->Append(ID_CHECK_DIRECTORY,
-        _("&Check directory..."),
-        _("Check a directory directly without a project file."));
+                      _("&Check directory..."),
+                      _("Check a directory directly without a project file."));
     menuCheck->Append(ID_SCRATCHPAD,
-        _("&Open Scratchpad...\tF8"),
-        _("Scratchpad can be used to enter code directly and view the results."));
+                      _("&Open Scratchpad...\tF8"),
+                      _("Scratchpad can be used to enter code directly and view the results."));
     wxMenu* menuConfigure = new wxMenu;
     menuConfigure->Append(ID_PROJECT_SETTINGS,
-        _("&Project settings..."),
-        _("Configure open project file."))->Enable(false);
+                          _("&Project settings..."),
+                          _("Configure open project file."))->Enable(false);
     menuConfigure->Append(ID_LCPPC_SETTINGS,
-        _("&LCppC settings..."),
-        _("Configure LCppC GUI."));
+                          _("&LCppC settings..."),
+                          _("Configure LCppC GUI."));
     wxMenu* menuHelp = new wxMenu;
     menuHelp->Append(wxID_ABOUT);
     wxMenuBar* menuBar = new wxMenuBar;
@@ -129,15 +128,13 @@ void MainWindow::OnScratchpad(wxCommandEvent&)
 void MainWindow::OnResultSelect(wxTreeListEvent& event)
 {
     const UIErrorMessage* msg = dynamic_cast<const UIErrorMessage*>(errorlogger->getResultsTree()->GetItemData(event.GetItem()));
-    if (msg)
-    {
+    if (msg) {
         verboseMessage->SetValue(msg->verboseMessage());
         if (msg->callStack.empty())
             codeView->SetFirstVisibleLine(0);
         else
             codeView->SetFirstVisibleLine(std::max(msg->callStack.back().line-3, 0));
-    }
-    else
+    } else
         verboseMessage->SetValue("");
 }
 

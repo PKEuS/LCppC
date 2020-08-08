@@ -5,8 +5,7 @@ class MainWindow;
 class CppField;
 class Settings;
 
-class Scratchpad : public wxFrame
-{
+class Scratchpad : public wxFrame {
 public:
     Scratchpad(MainWindow& parent_, const wxPoint& pos, const wxSize& size);
 

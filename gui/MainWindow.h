@@ -6,8 +6,7 @@ class CppField;
 class UIErrorLogger;
 
 
-class MainWindow : public wxFrame
-{
+class MainWindow : public wxFrame {
     wxWeakRef<Scratchpad> scratchpad;
     wxSharedPtr<UIErrorLogger> errorlogger;
     wxTextCtrl* verboseMessage;
