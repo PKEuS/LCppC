@@ -13,8 +13,35 @@ enum {
     ID_RESULTSTREE
 };
 
+class StatusProgressBar : public wxStatusBar {
+public:
+    wxGauge* progressBar;
+
+    StatusProgressBar(wxWindow* parent)
+        : wxStatusBar(parent, wxID_ANY, wxSTB_ELLIPSIZE_END | wxSTB_SHOW_TIPS | wxFULL_REPAINT_ON_RESIZE) {
+        progressBar = new wxGauge(this, wxID_ANY, 100, wxDefaultPosition, wxSize(200, GetSize().GetHeight() - 6));
+        int widths[2] = { -1, 200 };
+        SetFieldsCount(2, widths);
+    }
+
+    void OnSize(wxSizeEvent& w) {
+        wxRect rect;
+        GetFieldRect(1, rect);
+        progressBar->Move(rect.x, rect.y);
+        progressBar->SetSize(rect.width, rect.height);
+        w.Skip();
+    }
+
+    wxDECLARE_EVENT_TABLE();
+};
+
+wxBEGIN_EVENT_TABLE(StatusProgressBar, wxStatusBar)
+    EVT_SIZE(StatusProgressBar::OnSize)
+wxEND_EVENT_TABLE()
+
 wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
     EVT_MENU(ID_SCRATCHPAD, MainWindow::OnScratchpad)
+    EVT_MENU(ID_CHECK_DIRECTORY, MainWindow::OnCheckDirectory)
     EVT_MENU(ID_CHECK, MainWindow::OnCheck)
     EVT_MENU(ID_RECHECK, MainWindow::OnReCheck)
     EVT_MENU(wxID_EXIT, MainWindow::OnExit)
@@ -30,10 +57,10 @@ MainWindow::MainWindow(const wxPoint& pos, const wxSize& size)
     wxMenu* menuFile = new wxMenu;
     menuFile->Append(ID_NEW_PROJECT,
                      _("&New Project...\tCtrl-N"),
-                     _("Create a new project file, using a wizard to configure it."));
+                     _("Create a new project file, using a wizard to configure it."))->Enable(false);
     menuFile->Append(ID_OPEN_PROJECT,
                      _("&Open Project...\tCtrl-O"),
-                     _("Open an existing project file."));
+                     _("Open an existing project file."))->Enable(false);
     menuFile->Append(ID_SAVE_PROJECT,
                      _("&Save Project\tCtrl-S"),
                      _("Save project file."))->Enable(false);
@@ -53,7 +80,7 @@ MainWindow::MainWindow(const wxPoint& pos, const wxSize& size)
     reCheckItem->Enable(false);
     menuCheck->AppendSeparator();
     menuCheck->Append(ID_CHECK_DIRECTORY,
-                      _("&Check directory..."),
+                      _("&Check directory...\tF9"),
                       _("Check a directory directly without a project file."));
     menuCheck->Append(ID_SCRATCHPAD,
                       _("&Open Scratchpad...\tF8"),
@@ -73,12 +100,15 @@ MainWindow::MainWindow(const wxPoint& pos, const wxSize& size)
     menuBar->Append(menuConfigure, _("&Configure"));
     menuBar->Append(menuHelp, _("&Help"));
     SetMenuBar(menuBar);
-    CreateStatusBar();
+
+    StatusProgressBar* statusbar = new StatusProgressBar(this);
+    progressBar = statusbar->progressBar;
+    SetStatusBar(statusbar);
     SetStatusText(_("Welcome to LCppC GUI! Open or create a project file or use the scratchpad to continue..."));
 
     wxPanel* panel = new wxPanel(this);
 
-    errorlogger = new UIErrorLogger(panel, ID_RESULTSTREE);
+    errorlogger = new UIErrorLogger(panel, ID_RESULTSTREE, progressBar);
     CheckExecutor::setErrorLogger(errorlogger.get());
     verboseMessage = new wxTextCtrl(panel, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE | wxTE_RICH | wxTE_READONLY | wxNO_BORDER | wxTE_BESTWRAP);
     codeView = new CppField(panel, wxID_ANY);
@@ -124,6 +154,12 @@ void MainWindow::OnScratchpad(wxCommandEvent&)
     if (!scratchpad)
         scratchpad = new Scratchpad(*this, wxDefaultPosition, wxSize(600, 450));
     scratchpad->Show();
+}
+void MainWindow::OnCheckDirectory(wxCommandEvent&)
+{
+    wxDirDialog dlg(this, _("Choose directory"), wxEmptyString, wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+    if (dlg.ShowModal() == wxID_OK) {
+    }
 }
 void MainWindow::OnResultSelect(wxTreeListEvent& event)
 {

@@ -11,8 +11,9 @@ public:
 
 class UIErrorLogger : public ErrorLogger {
     wxTreeListCtrl* control;
+    wxSharedPtr<wxGauge> progress;
 public:
-    UIErrorLogger(wxWindow* parent, wxWindowID id);
+    UIErrorLogger(wxWindow* parent, wxWindowID id, wxGauge* progress_);
 
     wxTreeListCtrl* getResultsTree() {
         return control;
@@ -21,6 +22,6 @@ public:
 
     void reportOut(const std::string& outmsg) final;
     void reportErr(const ErrorMessage& msg) final;
-    void reportProgress(const std::string& filename, const char stage[], const std::size_t value) final;
     void reportInfo(const ErrorMessage& msg) final;
+    void reportStatus(std::size_t fileindex, std::size_t filecount, std::size_t sizedone, std::size_t sizetotal) final;
 };

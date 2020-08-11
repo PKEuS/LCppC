@@ -13,6 +13,6 @@ public:
         errorlogger = errorLogger;
     }
     static void init(Settings& settings);
-    static void check(Settings& settings);
+    static void check(Settings& settings, const wxString& directory);
     static void check(Settings& settings, const wxString& filename, const wxString& code);
 };

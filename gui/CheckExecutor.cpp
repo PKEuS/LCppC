@@ -7,10 +7,11 @@
 
 
 ErrorLogger* CheckExecutor::errorlogger = nullptr;
-
+static size_t libcount = 0;
 
 bool tryLoadLibrary(Library& destination, const char* basepath, const char* filename)
 {
+    libcount++;
     const Library::Error err = destination.load(basepath, filename);
 
     if (err.errorcode != Library::OK) {
@@ -22,6 +23,7 @@ bool tryLoadLibrary(Library& destination, const char* basepath, const char* file
 
 void CheckExecutor::init(Settings& settings)
 {
+    libcount = 0;
     wxString exepath = wxStandardPaths::Get().GetExecutablePath();
 
     // Load libraries
@@ -62,7 +64,7 @@ void CheckExecutor::init(Settings& settings)
         return;
     }
 }
-void CheckExecutor::check(Settings& settings)
+void CheckExecutor::check(Settings& settings, const wxString& directory)
 {
     AnalyzerInformation analyzerInformation;
 
@@ -75,12 +77,21 @@ void CheckExecutor::check(Settings& settings)
 }
 void CheckExecutor::check(Settings& settings, const wxString& filename, const wxString& code)
 {
+    std::size_t status_init = libcount * 1024; // Assume initialization is equivalent to a 1024 bytes file per library loaded
+    std::size_t status_wpa = (std::size_t)(code.size() * 0.02); // Assume whole program analysis is 2% of runtime
+
     AnalyzerInformation analyzerInformation;
     CTU::CTUInfo& ctu = analyzerInformation.addCTU(filename.ToStdString(), code.size(), emptyString);
 
     CppCheck cppcheck(*errorlogger, settings, false);
 
+    errorlogger->reportStatus(1, 1, status_init, status_init + status_wpa + code.size());
+
     cppcheck.check(&ctu, code.ToStdString());
 
+    errorlogger->reportStatus(1, 1, status_init + code.size(), status_init + status_wpa + code.size());
+
     cppcheck.analyseWholeProgram(analyzerInformation);
+
+    errorlogger->reportStatus(1, 1, status_init + status_wpa + code.size(), status_init + status_wpa + code.size());
 }

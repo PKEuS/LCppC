@@ -14,3 +14,4 @@
 #include <wx/aboutdlg.h>
 
 #include "../lib/config.h"
+#include "../lib/settings.h"

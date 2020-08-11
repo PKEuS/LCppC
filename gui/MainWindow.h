@@ -12,6 +12,7 @@ class MainWindow : public wxFrame {
     wxTextCtrl* verboseMessage;
     CppField* codeView;
     wxMenuItem* checkItem, *reCheckItem;
+    wxGauge* progressBar;
 
 public:
     MainWindow(const wxPoint& pos, const wxSize& size);
@@ -23,6 +24,7 @@ public:
 
 private:
     void OnScratchpad(wxCommandEvent& event);
+    void OnCheckDirectory(wxCommandEvent& event);
     void OnCheck(wxCommandEvent& event);
     void OnReCheck(wxCommandEvent& event);
     void OnExit(wxCommandEvent& event);
