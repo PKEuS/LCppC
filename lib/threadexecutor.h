@@ -49,7 +49,6 @@ public:
 
     void reportOut(const std::string &outmsg) override;
     void reportErr(const ErrorMessage &msg) override;
-    void reportInfo(const ErrorMessage &msg) override;
 
     /**
      * @brief Add content to a file, to be used in unit testing.
@@ -66,8 +65,6 @@ private:
     ErrorLogger &mErrorLogger;
 
 private:
-    enum class MessageType {REPORT_ERROR, REPORT_INFO};
-
     std::map<std::string, std::string> mFileContents;
     std::list<CTU::CTUInfo>::iterator mItNextCTU;
     std::mutex mFileSync;
@@ -82,8 +79,6 @@ private:
     std::atomic<std::size_t> mProcessedSize;
     std::atomic<std::size_t> mTotalFileSize;
     std::atomic<unsigned int> mResult;
-
-    void report(const ErrorMessage &msg, MessageType msgType);
 
     void threadProc();
 };

@@ -22,6 +22,5 @@ public:
 
     void reportOut(const std::string& outmsg) final;
     void reportErr(const ErrorMessage& msg) final;
-    void reportInfo(const ErrorMessage& msg) final;
     void reportStatus(std::size_t fileindex, std::size_t filecount, std::size_t sizedone, std::size_t sizetotal) final;
 };

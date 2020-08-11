@@ -1204,13 +1204,6 @@ void CppCheck::reportProgress(const std::string &filename, const char stage[], c
     mErrorLogger.reportProgress(filename, stage, value);
 }
 
-void CppCheck::reportInfo(const ErrorMessage &msg)
-{
-    const Suppressions::ErrorMessage &errorMessage = msg.toSuppressionsErrorMessage();
-    if (!mSettings.nomsg.isSuppressed(errorMessage))
-        mErrorLogger.reportInfo(msg);
-}
-
 void CppCheck::getErrorMessages()
 {
     Settings s(mSettings);

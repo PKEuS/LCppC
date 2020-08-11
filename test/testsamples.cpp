@@ -123,7 +123,7 @@ private:
             errMessage.setmsg(*i);
 
             // no xml option
-            exec.reportInfo(errMessage);
+            exec.reportErr(errMessage);
 
 #ifdef _WIN32
             // expect changes through code page translation except for the 'ASCII' case
@@ -143,7 +143,7 @@ private:
             CLEAR_REDIRECT_ERROUT;
             // possible change of msg for xml option
             // with ErrorMessage::fixInvalidChars(), plus additional XML formatting
-            execXML.reportInfo(errMessage);
+            execXML.reportErr(errMessage);
             // undo the effects of "ErrorMessage::fixInvalidChars()"
             // replacing octal constants with characters
             std::string myErr;

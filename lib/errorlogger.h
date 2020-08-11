@@ -278,14 +278,6 @@ public:
     }
 
     /**
-     * Output information messages.
-     * @param msg Location and other information about the found error.
-     */
-    virtual void reportInfo(const ErrorMessage &msg) {
-        reportErr(msg);
-    }
-
-    /**
      * Information about how many files have been checked
      *
      * @param fileindex This many files have been checked.

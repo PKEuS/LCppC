@@ -125,16 +125,6 @@ void ThreadExecutor::reportOut(const std::string &outmsg)
 }
 void ThreadExecutor::reportErr(const ErrorMessage &msg)
 {
-    report(msg, MessageType::REPORT_ERROR);
-}
-
-void ThreadExecutor::reportInfo(const ErrorMessage &msg)
-{
-    (void)msg;
-}
-
-void ThreadExecutor::report(const ErrorMessage &msg, MessageType msgType)
-{
     if (mSettings.nomsg.isSuppressed(msg.toSuppressionsErrorMessage()))
         return;
 
@@ -152,14 +142,7 @@ void ThreadExecutor::report(const ErrorMessage &msg, MessageType msgType)
     if (reportError) {
         mReportSync.lock();
 
-        switch (msgType) {
-        case MessageType::REPORT_ERROR:
-            mErrorLogger.reportErr(msg);
-            break;
-        case MessageType::REPORT_INFO:
-            mErrorLogger.reportInfo(msg);
-            break;
-        }
+        mErrorLogger.reportErr(msg);
 
         mReportSync.unlock();
     }

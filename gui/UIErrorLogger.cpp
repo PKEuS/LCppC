@@ -34,10 +34,6 @@ void UIErrorLogger::reportErr(const ErrorMessage& msg)
     control->SetItemData(item, new UIErrorMessage(msg));
 }
 
-void UIErrorLogger::reportInfo(const ErrorMessage& msg)
-{
-}
-
 void UIErrorLogger::reportStatus(std::size_t fileindex, std::size_t filecount, std::size_t sizedone, std::size_t sizetotal)
 {
     progress->SetRange(sizetotal);

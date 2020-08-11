@@ -72,13 +72,13 @@ Bugfixes:
  - Lots of other bugs were fixed
 
 
- Notes:
+Notes:
  
-  - The check for correct return type of operator=, removed in Cppcheck 2.2, was kept in LCppC.
+ - The check for correct return type of operator=, removed in Cppcheck 2.2, was kept in LCppC.
 
-  - LCppC retained the approach on comparison of boolean expressions with integers from CppCheck 2.1 and earlier.
+ - LCppC retained the approach on comparison of boolean expressions with integers from CppCheck 2.1 and earlier.
 
-  - The message hash introduced in Cppcheck 2.2 is not part of LCppC.
+ - The message hash introduced in Cppcheck 2.2 is not part of LCppC.
 
 
 -----------------------------

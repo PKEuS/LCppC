@@ -837,7 +837,7 @@ void Preprocessor::missingInclude(const std::string &filename, unsigned int line
                             "Include file: \"" + header + "\" not found.",
                             (headerType==SystemHeader) ? "missingIncludeSystem" : "missingInclude",
                             Certainty::safe);
-        mErrorLogger->reportInfo(errmsg);
+        mErrorLogger->reportErr(errmsg);
     }
 }
 
@@ -878,7 +878,7 @@ void Preprocessor::validateCfgError(const std::string &file, const unsigned int 
     const ErrorMessage::FileLocation loc(file, line, 0);
     locationList.push_back(loc);
     const ErrorMessage errmsg(locationList, mFile0, Severity::information, "Skipping configuration '" + cfg + "' since the value of '" + macro + "' is unknown. Use -D if you want to check it. You can use -U to skip it explicitly.", id, Certainty::safe);
-    mErrorLogger->reportInfo(errmsg);
+    mErrorLogger->reportErr(errmsg);
 }
 
 void Preprocessor::getErrorMessages(ErrorLogger *errorLogger, const Settings *settings)
