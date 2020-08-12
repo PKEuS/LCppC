@@ -44,7 +44,6 @@ Settings::Settings()
       force(false),
       inlineSuppressions(false),
       jobs(1),
-      jointSuppressionReport(false),
       maxConfigs(12),
       maxCtuDepth(2),
       maxTemplateRecursion(100),

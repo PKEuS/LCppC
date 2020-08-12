@@ -911,56 +911,18 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
         reportErr(ErrorMessage::getXMLHeader());
     }
 
-    unsigned int returnValue = 0;
-    if (mSettings.jobs == 1) {
-        // Single process
-        mSettings.jointSuppressionReport = true;
-
-        std::size_t totalfilesize = 0;
-        for (auto i = mAnalyzerInformation.getCTUs().cbegin(); i != mAnalyzerInformation.getCTUs().cend(); ++i) {
-            totalfilesize += i->filesize;
-        }
-
-        std::size_t processedsize = 0;
-        unsigned int c = 0;
-        for (auto i = mAnalyzerInformation.getCTUs().begin(); i != mAnalyzerInformation.getCTUs().end(); ++i) {
-            if (!mSettings.library.markupFile(i->sourcefile)
-                || !mSettings.library.processMarkupAfterCode(i->sourcefile)) {
-                returnValue += cppcheck.check(&*i);
-                processedsize += i->filesize;
-                if (mSettings.output.isEnabled(Output::progress))
-                    reportStatus(c + 1, mAnalyzerInformation.getCTUs().size(), processedsize, totalfilesize);
-                c++;
-            }
-        }
-
-        // second loop to parse all markup files which may not work until all
-        // c/cpp files have been parsed and checked
-        for (auto i = mAnalyzerInformation.getCTUs().begin(); i != mAnalyzerInformation.getCTUs().end(); ++i) {
-            if (mSettings.library.markupFile(i->sourcefile) && mSettings.library.processMarkupAfterCode(i->sourcefile)) {
-                returnValue += cppcheck.check(&*i);
-                processedsize += i->filesize;
-                if (mSettings.output.isEnabled(Output::progress))
-                    reportStatus(c + 1, mAnalyzerInformation.getCTUs().size(), processedsize, totalfilesize);
-                c++;
-            }
-        }
-    } else {
-        // Multiple processes
-        ThreadExecutor executor(mAnalyzerInformation.getCTUs(), mSettings, *this);
-        returnValue = executor.check();
-    }
+    // Check, possibly using multiple processes
+    ThreadExecutor executor(mAnalyzerInformation.getCTUs(), mSettings, *this);
+    unsigned int returnValue = executor.check();
 
     if (cppcheck.analyseWholeProgram(mAnalyzerInformation))
         returnValue++;
 
     if (mSettings.severity.isEnabled(Severity::information) || mSettings.checkConfiguration) {
-        if (mSettings.jointSuppressionReport) {
-            for (auto i = mAnalyzerInformation.getCTUs().begin(); i != mAnalyzerInformation.getCTUs().end(); ++i) {
-                const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(i->sourcefile));
-                if (err && returnValue == 0)
-                    returnValue = mSettings.exitCode;
-            }
+        for (auto i = mAnalyzerInformation.getCTUs().begin(); i != mAnalyzerInformation.getCTUs().end(); ++i) {
+            const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(i->sourcefile));
+            if (err && returnValue == 0)
+                returnValue = mSettings.exitCode;
         }
 
         const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedGlobalSuppressions());

@@ -213,11 +213,6 @@ public:
         time. Default is 1. (-j N) */
     unsigned int jobs;
 
-    /** @brief Collect unmatched suppressions in one run.
-      * This delays the reporting until all files are checked.
-      * It is needed by checks that analyse the whole code base. */
-    bool jointSuppressionReport;
-
     /** @brief --library= */
     std::vector<std::string> libraries;
 

@@ -731,12 +731,6 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
         mExitCode=1; // e.g. reflect a syntax error
     }
 
-    // In jointSuppressionReport mode, unmatched suppressions are
-    // collected after all files are processed
-    if (!mSettings.jointSuppressionReport && (mSettings.severity.isEnabled(Severity::information) || mSettings.checkConfiguration)) {
-        reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(ctu->sourcefile));
-    }
-
     mErrorList.clear();
 
     return mExitCode;

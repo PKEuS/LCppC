@@ -80,7 +80,7 @@ private:
     std::atomic<std::size_t> mTotalFileSize;
     std::atomic<unsigned int> mResult;
 
-    void threadProc();
+    void threadProc(bool markupStage);
 };
 
 /// @}

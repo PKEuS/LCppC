@@ -65,25 +65,47 @@ unsigned int ThreadExecutor::check()
         mTotalFileSize += i->filesize;
     }
 
-    std::vector<std::thread> threadHandles;
-    threadHandles.reserve(jobs);
-    for (unsigned int i = 0; i < jobs; ++i) {
-        threadHandles.emplace_back(std::bind(&ThreadExecutor::threadProc, this));
-    }
+    if (jobs != 1) {
+        std::vector<std::thread> threadHandles;
+        threadHandles.reserve(jobs);
+        for (unsigned int i = 0; i < jobs; ++i) {
+            threadHandles.emplace_back(std::bind(&ThreadExecutor::threadProc, this, false));
+        }
+        for (unsigned int i = 0; i < jobs; ++i) {
+            threadHandles[i].join();
+        }
 
-    for (unsigned int i = 0; i < jobs; ++i) {
-        threadHandles[i].join();
+        // Second stage: Some markup files need to be processed after all c/cpp files were checked
+        if (!mSettings.library.markupExtensions().empty()) {
+            mItNextCTU = mCTUs.begin();
+            threadHandles.clear();
+            for (unsigned int i = 0; i < jobs; ++i) {
+                threadHandles.emplace_back(std::bind(&ThreadExecutor::threadProc, this, true));
+            }
+            for (unsigned int i = 0; i < jobs; ++i) {
+                threadHandles[i].join();
+            }
+        }
+    }
+    else
+    {
+        threadProc(false);
+
+        // Second stage: Some markup files need to be processed after all c/cpp files were checked
+        if (!mSettings.library.markupExtensions().empty()) {
+            mItNextCTU = mCTUs.begin();
+            threadProc(true);
+        }
     }
 
     return mResult;
 }
 
-void ThreadExecutor::threadProc()
+void ThreadExecutor::threadProc(bool markupStage)
 {
-    Settings settings = mSettings; // Create one copy per thread to avoid side effects across threads. Might be unnecessary.
-    CppCheck fileChecker(*this, settings, false);
+    CppCheck fileChecker(*this, mSettings, false);
 
-    for (;;) {
+    while (!mSettings.terminated()) {
         mFileSync.lock();
         if (mItNextCTU == mCTUs.end()) {
             mFileSync.unlock();
@@ -94,6 +116,9 @@ void ThreadExecutor::threadProc()
         ++mItNextCTU;
 
         mFileSync.unlock();
+
+        if (markupStage != mSettings.library.processMarkupAfterCode(ctu->sourcefile))
+            continue;
 
         const std::map<std::string, std::string>::const_iterator fileContent = mFileContents.find(ctu->sourcefile);
         if (fileContent != mFileContents.cend()) {
@@ -123,6 +148,7 @@ void ThreadExecutor::reportOut(const std::string &outmsg)
 
     mReportSync.unlock();
 }
+
 void ThreadExecutor::reportErr(const ErrorMessage &msg)
 {
     if (mSettings.nomsg.isSuppressed(msg.toSuppressionsErrorMessage()))

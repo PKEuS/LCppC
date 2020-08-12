@@ -1441,7 +1441,7 @@ bool Library::markupFile(const std::string &path) const
 bool Library::processMarkupAfterCode(const std::string &path) const
 {
     auto it = mMarkupExtensions.find(Path::getFilenameExtensionInLowerCase(path));
-    return (it == mMarkupExtensions.end() || it->second.processAfterCode);
+    return (it != mMarkupExtensions.end() && it->second.processAfterCode);
 }
 
 bool Library::reportErrors(const std::string &path) const

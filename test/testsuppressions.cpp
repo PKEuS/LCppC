@@ -157,10 +157,8 @@ private:
     }
 
     void reportSuppressions(const Settings &settings, const std::map<std::string, std::string> &files) {
-        if (settings.jointSuppressionReport) {
-            for (std::map<std::string, std::string>::const_iterator i = files.begin(); i != files.end(); ++i) {
-                reportUnmatchedSuppressions(settings.nomsg.getUnmatchedLocalSuppressions(i->first));
-            }
+        for (std::map<std::string, std::string>::const_iterator i = files.begin(); i != files.end(); ++i) {
+            reportUnmatchedSuppressions(settings.nomsg.getUnmatchedLocalSuppressions(i->first));
         }
 
         reportUnmatchedSuppressions(settings.nomsg.getUnmatchedGlobalSuppressions());
@@ -186,7 +184,6 @@ private:
         if (suppression != "unusedFunction")
             settings.checks.setEnabled("unusedFunction", false);
         settings.severity.enable(Severity::information);
-        settings.jointSuppressionReport = true;
         if (!suppression.empty()) {
             std::string r = settings.nomsg.addSuppressionLine(suppression);
             ASSERT_EQUALS("", r);
