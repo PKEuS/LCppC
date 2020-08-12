@@ -214,7 +214,7 @@ public:
     unsigned int jobs;
 
     /** @brief --library= */
-    std::vector<std::string> libraries;
+    std::set<std::string> libraries;
 
     /** Library */
     Library library;
@@ -372,10 +372,12 @@ public:
     */
     bool isEnabled(const ValueFlow::Value *value, bool inconclusiveCheck=false) const;
 
-    /** Is posix library specified? */
-    bool posix() const {
-        return std::find(libraries.begin(), libraries.end(), "posix") != libraries.end();
+    /** Is particular library specified? */
+    bool hasLibrary(const char* lib) const {
+        return libraries.find(lib) != libraries.end();
     }
+
+    void addLibrary(const std::string& libname);
 
     /** @brief Request termination of checking */
     static void terminate(bool t = true) {

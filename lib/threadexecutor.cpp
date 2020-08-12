@@ -86,9 +86,7 @@ unsigned int ThreadExecutor::check()
                 threadHandles[i].join();
             }
         }
-    }
-    else
-    {
+    } else {
         threadProc(false);
 
         // Second stage: Some markup files need to be processed after all c/cpp files were checked

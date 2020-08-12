@@ -863,41 +863,33 @@ int CppCheckExecutor::check_wrapper(CppCheck& cppcheck, int argc, const char* co
  * */
 int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const char* const argv[])
 {
-    const bool std = tryLoadLibrary(mSettings.library, argv[0], "std.cfg");
+    mSettings.libraries.emplace("std");
+    if (mSettings.isWindowsPlatform())
+        mSettings.libraries.emplace("windows");
 
     for (const std::string &lib : mSettings.libraries) {
         if (!tryLoadLibrary(mSettings.library, argv[0], lib.c_str())) {
-            const std::string msg("Failed to load the library " + lib);
+            std::string msg, details;
+            if (lib == "std" || lib == "windows") {
+                msg = "Failed to load '" + lib + ".cfg'. Your Cppcheck installation is broken, please re-install. ";
+#ifdef FILESDIR
+                details = "The " PROGRAMNAME " binary was compiled with FILESDIR set to \""
+                          FILESDIR "\" and will therefore search for "
+                          "std.cfg in " FILESDIR "/cfg.";
+#else
+                const std::string cfgfolder(Path::fromNativeSeparators(Path::getPathFromFilename(argv[0])) + "cfg");
+                details = "The " PROGRAMNAME " binary was compiled without FILESDIR set. Either the "
+                          "std.cfg should be available in " + cfgfolder + " or the FILESDIR "
+                          "should be configured.";
+#endif
+            } else {
+                msg = "Failed to load '" + lib + ".cfg'.";
+            }
             const std::list<ErrorMessage::FileLocation> callstack;
-            ErrorMessage errmsg(callstack, emptyString, Severity::information, msg, "failedToLoadCfg", Certainty::safe);
+            ErrorMessage errmsg(callstack, emptyString, Severity::information, msg + " " + details, "failedToLoadCfg", Certainty::safe);
             reportErr(errmsg);
             return EXIT_FAILURE;
         }
-    }
-
-    bool posix = true;
-    if (mSettings.posix())
-        posix = tryLoadLibrary(mSettings.library, argv[0], "posix.cfg");
-    bool windows = true;
-    if (mSettings.isWindowsPlatform())
-        windows = tryLoadLibrary(mSettings.library, argv[0], "windows.cfg");
-
-    if (!std || !posix || !windows) {
-        const std::list<ErrorMessage::FileLocation> callstack;
-        const std::string msg("Failed to load " + std::string(!std ? "std.cfg" : !posix ? "posix.cfg" : "windows.cfg") + ". Your Cppcheck installation is broken, please re-install.");
-#ifdef FILESDIR
-        const std::string details("The Cppcheck binary was compiled with FILESDIR set to \""
-                                  FILESDIR "\" and will therefore search for "
-                                  "std.cfg in " FILESDIR "/cfg.");
-#else
-        const std::string cfgfolder(Path::fromNativeSeparators(Path::getPathFromFilename(argv[0])) + "cfg");
-        const std::string details("The Cppcheck binary was compiled without FILESDIR set. Either the "
-                                  "std.cfg should be available in " + cfgfolder + " or the FILESDIR "
-                                  "should be configured.");
-#endif
-        ErrorMessage errmsg(callstack, emptyString, Severity::information, msg+" "+details, "failedToLoadCfg", Certainty::safe);
-        reportErr(errmsg);
-        return EXIT_FAILURE;
     }
 
     if (mSettings.output.isEnabled(Output::progress))

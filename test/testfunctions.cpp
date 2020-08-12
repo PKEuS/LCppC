@@ -39,7 +39,7 @@ private:
         settings.severity.enable(Severity::warning);
         settings.severity.enable(Severity::portability);
         settings.certainty.enable(Certainty::inconclusive);
-        settings.libraries.emplace_back("posix");
+        settings.libraries.emplace("posix");
         settings.standards.c = Standards::C11;
         settings.standards.cpp = Standards::CPP11;
         LOAD_LIB_2(settings.library, "std.cfg");

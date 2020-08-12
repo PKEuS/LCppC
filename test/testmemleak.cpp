@@ -2112,7 +2112,7 @@ private:
 
     void run() override {
         settings.certainty.setEnabled(Certainty::inconclusive, true);
-        settings.libraries.emplace_back("posix");
+        settings.libraries.emplace("posix");
         settings.severity.enable(Severity::warning);
 
         LOAD_LIB_2(settings.library, "std.cfg");

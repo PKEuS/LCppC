@@ -594,7 +594,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 
             // --library
             else if (std::strncmp(argv[i], "--library=", 10) == 0) {
-                mSettings->libraries.emplace_back(argv[i] + 10);
+                mSettings->addLibrary(argv[i] + 10);
             }
 
             // Set maximum number of #ifdef configurations to check

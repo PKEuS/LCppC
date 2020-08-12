@@ -68,3 +68,11 @@ bool Settings::isEnabled(const ValueFlow::Value *value, bool inconclusiveCheck) 
         return false;
     return true;
 }
+
+void Settings::addLibrary(const std::string& libname)
+{
+    if (libname.ends_with(".cfg"))
+        libraries.emplace(libname.substr(0, libname.size()-4));
+    else
+        libraries.emplace(libname);
+}
