@@ -29,6 +29,8 @@
 #include <string>
 #include <mutex>
 #include <atomic>
+#include <thread>
+#include <functional>
 
 
 class Settings;
@@ -45,7 +47,9 @@ public:
     ThreadExecutor(std::list<CTU::CTUInfo>& files, Settings &settings, ErrorLogger &errorLogger);
     ThreadExecutor(const ThreadExecutor &) = delete;
     void operator=(const ThreadExecutor &) = delete;
-    unsigned int check();
+
+    unsigned int checkSync();
+    std::thread checkAsync(std::function<void(unsigned int)> callback);
 
     void reportOut(const std::string &outmsg) override;
     void reportErr(const ErrorMessage &msg) override;

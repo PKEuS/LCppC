@@ -220,7 +220,7 @@ private:
         for (std::list<CTU::CTUInfo>::const_iterator i = filemap.begin(); i != filemap.end(); ++i)
             executor.addFileContent(i->sourcefile, code);
 
-        const unsigned int exitCode = executor.check();
+        const unsigned int exitCode = executor.checkSync();
 
         std::map<std::string, std::string> files_for_report;
         for (std::list<CTU::CTUInfo>::const_iterator file = filemap.begin(); file != filemap.end(); ++file)

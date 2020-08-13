@@ -905,7 +905,7 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
 
     // Check, possibly using multiple processes
     ThreadExecutor executor(mAnalyzerInformation.getCTUs(), mSettings, *this);
-    unsigned int returnValue = executor.check();
+    unsigned int returnValue = executor.checkSync();
 
     if (cppcheck.analyseWholeProgram(mAnalyzerInformation))
         returnValue++;

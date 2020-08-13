@@ -28,9 +28,6 @@
 #include <cstring>
 #include <iostream>
 #include <vector>
-#include <thread>
-#include <future>
-#include <functional>
 
 
 ThreadExecutor::ThreadExecutor(std::list<CTU::CTUInfo>& files, Settings &settings, ErrorLogger &errorLogger)
@@ -47,7 +44,7 @@ void ThreadExecutor::addFileContent(const std::string &path, const std::string &
     mFileContents[path] = content;
 }
 
-unsigned int ThreadExecutor::check()
+unsigned int ThreadExecutor::checkSync()
 {
     mItNextCTU = mCTUs.begin();
 
@@ -97,6 +94,14 @@ unsigned int ThreadExecutor::check()
     }
 
     return mResult;
+}
+
+std::thread ThreadExecutor::checkAsync(std::function<void(unsigned int)> callback)
+{
+    return std::thread([&]() {
+        unsigned int retval = checkSync();
+        callback(retval);
+    });
 }
 
 void ThreadExecutor::threadProc(bool markupStage)

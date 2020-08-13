@@ -54,7 +54,7 @@ private:
         for (std::list<CTU::CTUInfo>::const_iterator i = filemap.begin(); i != filemap.end(); ++i)
             executor.addFileContent(i->sourcefile, data);
 
-        ASSERT_EQUALS(result, executor.check());
+        ASSERT_EQUALS(result, executor.checkSync());
     }
 
     void run() override {
