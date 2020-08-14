@@ -228,10 +228,11 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
+        std::size_t count = std::strlen(value);
         for (const Token *tok = tokenizer.tokens(); tok; tok = tok->next()) {
             if (tok->str() == "x" && tok->linenr() == linenr) {
                 for (const ValueFlow::Value &v : tok->values()) {
-                    if (v.valueType == type && Token::simpleMatch(v.tokvalue, value, strlen(value)))
+                    if (v.valueType == type && Token::simpleMatch(v.tokvalue, value, count))
                         return true;
                 }
             }
@@ -326,7 +327,9 @@ private:
 
     std::vector<ValueFlow::Value> tokenValues(const char code[], const char tokstr[], ValueFlow::Value::ValueType vt, const Settings *s = nullptr) {
         std::vector<ValueFlow::Value> values = tokenValues(code, tokstr, s);
-        values.erase(std::remove_if(values.begin(), values.end(), [&](const ValueFlow::Value& v) { return v.valueType != vt; }), values.end());
+        values.erase(std::remove_if(values.begin(), values.end(), [&](const ValueFlow::Value& v) {
+            return v.valueType != vt;
+        }), values.end());
         return values;
     }
 

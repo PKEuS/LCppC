@@ -182,9 +182,9 @@ static void setConditionalValues(const Token *tok,
         const char* lessThan = "<=";
         if (invert)
             std::swap(greaterThan, lessThan);
-        if (Token::simpleMatch(tok, greaterThan, strlen(greaterThan))) {
+        if (tok->str() == greaterThan) {
             false_value = ValueFlow::Value{tok, value - 1};
-        } else if (Token::simpleMatch(tok, lessThan, strlen(lessThan))) {
+        } else if (tok->str() == lessThan) {
             false_value = ValueFlow::Value{tok, value + 1};
         } else {
             false_value = ValueFlow::Value{tok, value};
@@ -194,10 +194,10 @@ static void setConditionalValues(const Token *tok,
         const char* lessThan = "<";
         if (invert)
             std::swap(greaterThan, lessThan);
-        if (Token::simpleMatch(tok, greaterThan, strlen(greaterThan))) {
+        if (tok->str() == greaterThan) {
             true_value = ValueFlow::Value{tok, value + 1};
             false_value = ValueFlow::Value{tok, value};
-        } else if (Token::simpleMatch(tok, lessThan, strlen(lessThan))) {
+        } else if (tok->str() == lessThan) {
             true_value = ValueFlow::Value{tok, value - 1};
             false_value = ValueFlow::Value{tok, value};
         }
@@ -5609,8 +5609,10 @@ struct ContainerVariableForwardAnalyzer : VariableForwardAnalyzer {
             if (rhs->tokType() == Token::eString)
                 return Action::Read | Action::Write;
             if (rhs->valueType() && rhs->valueType()->container && rhs->valueType()->container->stdStringLike) {
-                if (std::any_of(rhs->values().begin(), rhs->values().end(), [&](const ValueFlow::Value &rhsval) { return rhsval.isKnown() && rhsval.isContainerSizeValue(); }))
-                    return Action::Read | Action::Write;
+                if (std::any_of(rhs->values().begin(), rhs->values().end(), [&](const ValueFlow::Value &rhsval) {
+                return rhsval.isKnown() && rhsval.isContainerSizeValue();
+                }))
+                return Action::Read | Action::Write;
             }
         } else if (Token::Match(tok, "%name% . %name% (")) {
             Library::Container::Action action = tok->valueType()->container->getAction(tok->strAt(2));

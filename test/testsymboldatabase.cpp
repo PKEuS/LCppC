@@ -6576,8 +6576,9 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
         const Token* tok;
+        std::size_t count = std::strlen(pattern);
         for (tok = tokenizer.list.back(); tok; tok = tok->previous())
-            if (Token::simpleMatch(tok, pattern, strlen(pattern)))
+            if (Token::simpleMatch(tok, pattern, count-1))
                 break;
         return tok->valueType() ? tok->valueType()->str() : std::string();
     }
