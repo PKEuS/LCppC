@@ -6578,7 +6578,7 @@ private:
         const Token* tok;
         std::size_t count = std::strlen(pattern);
         for (tok = tokenizer.list.back(); tok; tok = tok->previous())
-            if (Token::simpleMatch(tok, pattern, count-1))
+            if (Token::simpleMatch(tok, pattern, count))
                 break;
         return tok->valueType() ? tok->valueType()->str() : std::string();
     }

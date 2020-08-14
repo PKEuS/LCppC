@@ -157,9 +157,6 @@ public:
     /** Check for incomplete info in library files? */
     bool checkLibrary;
 
-    /** @brief check unknown function return values */
-    std::set<std::string> checkUnknownFunctionReturn;
-
     /** @brief include paths excluded from checking the configuration */
     std::set<std::string> configExcludePaths;
 

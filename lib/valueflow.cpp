@@ -6217,34 +6217,6 @@ static void valueFlowSafeFunctions(TokenList *tokenlist, SymbolDatabase *symbold
     }
 }
 
-static void valueFlowUnknownFunctionReturn(TokenList *tokenlist, const Settings *settings)
-{
-    if (settings->checkUnknownFunctionReturn.empty())
-        return;
-    for (Token *tok = tokenlist->front(); tok; tok = tok->next()) {
-        if (!tok->astParent() || tok->str() != "(" || !tok->previous()->isName())
-            continue;
-        if (settings->checkUnknownFunctionReturn.find(tok->previous()->str()) == settings->checkUnknownFunctionReturn.end())
-            continue;
-        std::vector<MathLib::bigint> unknownValues = settings->library.unknownReturnValues(tok->astOperand1());
-        if (unknownValues.empty())
-            continue;
-
-        // Get min/max values for return type
-        const std::string &typestr = settings->library.returnValueType(tok->previous());
-        MathLib::bigint minvalue, maxvalue;
-        if (!getMinMaxValues(typestr, settings, &minvalue, &maxvalue))
-            continue;
-
-        for (MathLib::bigint value : unknownValues) {
-            if (value < minvalue)
-                value = minvalue;
-            else if (value > maxvalue)
-                value = maxvalue;
-            setTokenValue(const_cast<Token *>(tok), ValueFlow::Value(value), settings);
-        }
-    }
-}
 
 ValueFlow::Value::Value(const Token* c, long long val)
     : valueType(INT),
@@ -6330,7 +6302,6 @@ void ValueFlow::setValues(TokenList *tokenlist, SymbolDatabase* symboldatabase, 
     valueFlowNumber(tokenlist);
     valueFlowString(tokenlist);
     valueFlowArray(tokenlist);
-    valueFlowUnknownFunctionReturn(tokenlist, settings);
     valueFlowGlobalConstVar(tokenlist, settings);
     valueFlowGlobalStaticVar(tokenlist, settings);
     valueFlowPointerAlias(tokenlist);

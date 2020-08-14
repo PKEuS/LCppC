@@ -128,7 +128,6 @@ private:
         TEST_CASE(valueFlowDynamicBufferSize);
 
         TEST_CASE(valueFlowSafeFunctionParameterValues);
-        TEST_CASE(valueFlowUnknownFunctionReturn);
 
         TEST_CASE(valueFlowPointerAliasDeref);
 
@@ -4573,19 +4572,6 @@ private:
         ASSERT_EQUALS(100, values.back().intvalue);
     }
 
-
-    void valueFlowUnknownFunctionReturn() {
-        std::vector<ValueFlow::Value> values;
-        Settings s;
-        LOAD_LIB_2(s.library, "std.cfg");
-        s.checkUnknownFunctionReturn.insert("rand");
-
-        const char* code = "x = rand();";
-        values = tokenValues(code, "(", &s);
-        ASSERT_EQUALS(2, values.size());
-        ASSERT_EQUALS(INT_MIN, values.front().intvalue);
-        ASSERT_EQUALS(INT_MAX, values.back().intvalue);
-    }
 
     void valueFlowPointerAliasDeref() {
         const char* code;
