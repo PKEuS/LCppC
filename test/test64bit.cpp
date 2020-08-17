@@ -30,9 +30,10 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        settings.severity.enable(Severity::portability);
+        project.severity.enable(Severity::portability);
 
         TEST_CASE(novardecl);
         TEST_CASE(functionpar);
@@ -47,12 +48,12 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check char variable usage..
-        Check64BitPortability check64BitPortability(&tokenizer, &settings, this);
+        Check64BitPortability check64BitPortability(&tokenizer, &settings, this, &project);
         check64BitPortability.pointerassignment();
     }
 

@@ -33,17 +33,18 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        settings.severity.enable(Severity::style);
-        settings.severity.enable(Severity::warning);
-        settings.severity.enable(Severity::portability);
-        settings.certainty.enable(Certainty::inconclusive);
-        settings.libraries.emplace("posix");
-        settings.standards.c = Standards::C11;
-        settings.standards.cpp = Standards::CPP11;
-        LOAD_LIB_2(settings.library, "std.cfg");
-        LOAD_LIB_2(settings.library, "posix.cfg");
+        project.severity.enable(Severity::style);
+        project.severity.enable(Severity::warning);
+        project.severity.enable(Severity::portability);
+        project.certainty.enable(Certainty::inconclusive);
+        project.libraries.emplace("posix");
+        project.standards.c = Standards::C11;
+        project.standards.cpp = Standards::CPP11;
+        LOAD_LIB_2(project.library, "std.cfg");
+        LOAD_LIB_2(project.library, "posix.cfg");
 
         // Prohibited functions
         TEST_CASE(prohibitedFunctions_posix);
@@ -86,20 +87,20 @@ private:
         TEST_CASE(negativeMemoryAllocationSizeError); // #389
     }
 
-    void check(const char code[], const char filename[]="test.cpp", const Settings* settings_=nullptr) {
+    void check(const char code[], const char filename[]="test.cpp", const Project* project_=nullptr) {
         // Clear the error buffer..
         errout.str("");
 
-        if (!settings_)
-            settings_ = &settings;
+        if (!project_)
+            project_ = &project;
 
         // Tokenize..
-        Tokenizer tokenizer(settings_, this);
+        Tokenizer tokenizer(&settings, project_, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
 
-        CheckFunctions checkFunctions(&tokenizer, settings_, this);
-        checkFunctions.runChecks(&tokenizer, settings_, this);
+        CheckFunctions checkFunctions(&tokenizer, &settings, this, project_);
+        checkFunctions.runChecks(&tokenizer, &settings, this, project_);
     }
 
     void prohibitedFunctions_posix() {
@@ -241,8 +242,8 @@ private:
               "}", "test.c");
         ASSERT_EQUALS("[test.c:3]: (warning) Obsolete function 'alloca' called. In C99 and later it is recommended to use a variable length array instead.\n", errout.str());
 
-        settings.standards.c = Standards::C89;
-        settings.standards.cpp = Standards::CPP03;
+        project.standards.c = Standards::C89;
+        project.standards.cpp = Standards::CPP03;
         check("void f()\n"
               "{\n"
               "    char *x = alloca(10);\n"
@@ -260,8 +261,8 @@ private:
               "    char *x = alloca(10);\n"
               "}", "test.c");
         ASSERT_EQUALS("", errout.str());
-        settings.standards.c = Standards::C11;
-        settings.standards.cpp = Standards::CPP11;
+        project.standards.c = Standards::C11;
+        project.standards.cpp = Standards::CPP11;
     }
 
     // ticket #3121
@@ -1094,8 +1095,8 @@ private:
     }
 
     void checkIgnoredReturnValue() {
-        Settings settings2;
-        settings2.severity.enable(Severity::warning);
+        Project project2;
+        project2.severity.enable(Severity::warning);
         const char xmldata[] = "<?xml version=\"1.0\"?>\n"
                                "<def version=\"2\">\n"
                                "  <function name=\"mystrcmp,foo::mystrcmp\">\n"
@@ -1106,71 +1107,71 @@ private:
                                "</def>";
         tinyxml2::XMLDocument doc;
         doc.Parse(xmldata, sizeof(xmldata));
-        settings2.library.load(doc);
+        project2.library.load(doc);
 
         check("void foo() {\n"
               "  mystrcmp(a, b);\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("[test.cpp:2]: (warning) Return value of function mystrcmp() is not used.\n", errout.str());
 
         check("void foo() {\n"
               "  foo::mystrcmp(a, b);\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("[test.cpp:2]: (warning) Return value of function foo::mystrcmp() is not used.\n", errout.str());
 
         check("void f() {\n"
               "  foo x;\n"
               "  x.mystrcmp(a, b);\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("[test.cpp:3]: (warning) Return value of function x.mystrcmp() is not used.\n", errout.str());
 
         check("bool mystrcmp(char* a, char* b);\n" // cppcheck sees a custom strcmp definition, but it returns a value. Assume it is the one specified in the library.
               "void foo() {\n"
               "    mystrcmp(a, b);\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("[test.cpp:3]: (warning) Return value of function mystrcmp() is not used.\n", errout.str());
 
         check("void mystrcmp(char* a, char* b);\n" // cppcheck sees a custom strcmp definition which returns void!
               "void foo() {\n"
               "    mystrcmp(a, b);\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("", errout.str());
 
         check("void foo() {\n"
               "    class mystrcmp { mystrcmp() {} };\n" // strcmp is a constructor definition here
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("", errout.str());
 
         check("void foo() {\n"
               "    return mystrcmp(a, b);\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("", errout.str());
 
         check("void foo() {\n"
               "    return foo::mystrcmp(a, b);\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("", errout.str());
 
         check("void foo() {\n"
               "    if(mystrcmp(a, b));\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("", errout.str());
 
         check("void foo() {\n"
               "    bool b = mystrcmp(a, b);\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("", errout.str());
 
         // #6194
         check("void foo() {\n"
               "    MyStrCmp mystrcmp(x, y);\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("", errout.str());
 
         // #6197
         check("void foo() {\n"
               "    abc::def.mystrcmp(a,b);\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("", errout.str());
 
         // #6233
@@ -1193,18 +1194,18 @@ private:
         // #7447
         check("void foo() {\n"
               "   int x{mystrcmp(a,b)};\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("", errout.str());
 
         // #7905
         check("void foo() {\n"
               "   int x({mystrcmp(a,b)});\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("", errout.str());
 
         check("void foo() {\n" // don't crash
               "  DEBUG(123)(mystrcmp(a,b))(fd);\n"
-              "}", "test.c", &settings2);
+              "}", "test.c", &project2);
         check("struct teststruct {\n"
               "    int testfunc1() __attribute__ ((warn_unused_result)) { return 1; }\n"
               "    [[nodiscard]] int testfunc2() { return 1; }\n"
@@ -1214,7 +1215,7 @@ private:
               "    teststruct TestStruct1;\n"
               "    TestStruct1.testfunc1();\n"
               "    TestStruct1.testfunc2();\n"
-              "}", "test.cpp", &settings2);
+              "}", "test.cpp", &project2);
         ASSERT_EQUALS("[test.cpp:4]: (warning) Return value of function testfunc1() is not used.\n"
                       "[test.cpp:4]: (warning) Return value of function testfunc2() is not used.\n"
                       "[test.cpp:8]: (warning) Return value of function TestStruct1.testfunc1() is not used.\n"

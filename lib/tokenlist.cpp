@@ -38,9 +38,10 @@
 static const int AST_MAX_DEPTH = 50;
 
 
-TokenList::TokenList(const Settings* settings) :
+TokenList::TokenList(const Settings* settings, const Project* project) :
     mTokensFrontBack(),
     mSettings(settings),
+    mProject(project),
     mIsC(false),
     mIsCpp(false)
 {
@@ -109,12 +110,12 @@ void TokenList::deallocateTokens()
 
 void TokenList::determineCppC()
 {
-    if (!mSettings) {
+    if (!mProject) {
         mIsC = Path::isC(getSourceFilePath());
         mIsCpp = Path::isCPP(getSourceFilePath());
     } else {
-        mIsC = mSettings->enforcedLang == Settings::C || (mSettings->enforcedLang == Settings::None && Path::isC(getSourceFilePath()));
-        mIsCpp = mSettings->enforcedLang == Settings::CPP || (mSettings->enforcedLang == Settings::None && Path::isCPP(getSourceFilePath()));
+        mIsC = mProject->enforcedLang == Project::C || (mProject->enforcedLang == Project::None && Path::isC(getSourceFilePath()));
+        mIsCpp = mProject->enforcedLang == Project::CPP || (mProject->enforcedLang == Project::None && Path::isCPP(getSourceFilePath()));
     }
 
     if (mIsCpp) {
@@ -419,7 +420,7 @@ void TokenList::createTokens(simplecpp::TokenList&& tokenList)
 
     if (mSettings && mSettings->relativePaths) {
         for (std::string & mFile : mFiles)
-            mFile = Path::getRelativePath(mFile, mSettings->basePaths);
+            mFile = Path::getRelativePath(mFile, mProject->basePaths);
     }
 
     Token::assignProgressValues(mTokensFrontBack.front);
@@ -1652,17 +1653,17 @@ bool TokenList::validateToken(const Token* tok) const
 
 void TokenList::simplifyPlatformTypes()
 {
-    const bool isCPP11  = mSettings->standards.cpp >= Standards::CPP11;
+    const bool isCPP11  = mProject->standards.cpp >= Standards::CPP11;
 
     enum { isLongLong, isLong, isInt } type;
 
     /** @todo This assumes a flat address space. Not true for segmented address space (FAR *). */
 
-    if (mSettings->sizeof_size_t == mSettings->sizeof_long)
+    if (mProject->sizeof_size_t == mProject->sizeof_long)
         type = isLong;
-    else if (mSettings->sizeof_size_t == mSettings->sizeof_long_long)
+    else if (mProject->sizeof_size_t == mProject->sizeof_long_long)
         type = isLongLong;
-    else if (mSettings->sizeof_size_t == mSettings->sizeof_int)
+    else if (mProject->sizeof_size_t == mProject->sizeof_int)
         type = isInt;
     else
         return;
@@ -1715,13 +1716,13 @@ void TokenList::simplifyPlatformTypes()
         }
     }
 
-    const std::string platform_type(mSettings->platformString());
+    const std::string platform_type(mProject->platformString());
 
     for (Token *tok = front(); tok; tok = tok->next()) {
         if (tok->tokType() != Token::eType && tok->tokType() != Token::eName)
             continue;
 
-        const Library::PlatformType * const platformtype = mSettings->library.platform_type(tok->str(), platform_type);
+        const Library::PlatformType * const platformtype = mProject->library.platform_type(tok->str(), platform_type);
 
         if (platformtype) {
             // check for namespace
@@ -1766,7 +1767,7 @@ void TokenList::simplifyPlatformTypes()
 void TokenList::simplifyStdType()
 {
     for (Token *tok = front(); tok; tok = tok->next()) {
-        if (Token::Match(tok, "char|short|int|long|unsigned|signed|double|float") || (mSettings->standards.c >= Standards::C99 && Token::Match(tok, "complex|_Complex"))) {
+        if (Token::Match(tok, "char|short|int|long|unsigned|signed|double|float") || (mProject->standards.c >= Standards::C99 && Token::Match(tok, "complex|_Complex"))) {
             bool isFloat= false;
             bool isSigned = false;
             bool isUnsigned = false;
@@ -1789,7 +1790,7 @@ void TokenList::simplifyStdType()
                 else if (Token::Match(tok2, "float|double")) {
                     isFloat = true;
                     typeSpec = tok2;
-                } else if (mSettings->standards.c >= Standards::C99 && Token::Match(tok2, "complex|_Complex"))
+                } else if (mProject->standards.c >= Standards::C99 && Token::Match(tok2, "complex|_Complex"))
                     isComplex = !isFloat || tok2->str() == "_Complex" || Token::Match(tok2->next(), "*|&|%name%"); // Ensure that "complex" is not the variables name
                 else if (Token::Match(tok2, "char|int")) {
                     if (!typeSpec)

@@ -140,15 +140,15 @@ namespace {
  */
 bool CheckNullPointer::isPointerDeRef(const Token *tok, bool &unknown) const
 {
-    return isPointerDeRef(tok, unknown, mSettings);
+    return isPointerDeRef(tok, unknown, mProject);
 }
 
-bool CheckNullPointer::isPointerDeRef(const Token *tok, bool &unknown, const Settings *settings)
+bool CheckNullPointer::isPointerDeRef(const Token *tok, bool &unknown, const Project* project)
 {
     unknown = false;
 
     // Is pointer used as function parameter?
-    if (Token::Match(tok->previous(), "[(,] %name% [,)]") && settings) {
+    if (Token::Match(tok->previous(), "[(,] %name% [,)]") && project) {
         const Token *ftok = tok->previous();
         while (ftok && ftok->str() != "(") {
             if (ftok->str() == ")")
@@ -157,7 +157,7 @@ bool CheckNullPointer::isPointerDeRef(const Token *tok, bool &unknown, const Set
         }
         if (ftok && ftok->previous()) {
             std::vector<const Token *> varlist;
-            parseFunctionCall(*ftok->previous(), varlist, &settings->library);
+            parseFunctionCall(*ftok->previous(), varlist, &project->library);
             if (std::find(varlist.begin(), varlist.end(), tok) != varlist.end()) {
                 return true;
             }
@@ -171,7 +171,7 @@ bool CheckNullPointer::isPointerDeRef(const Token *tok, bool &unknown, const Set
     if (!parent)
         return false;
     if (parent->str() == "." && parent->astOperand2() == tok)
-        return isPointerDeRef(parent, unknown, settings);
+        return isPointerDeRef(parent, unknown, project);
     const bool firstOperand = parent->astOperand1() == tok;
     while (parent->str() == "(" && (parent->astOperand2() == nullptr && parent->strAt(1) != ")")) { // Skip over casts
         parent = parent->astParent();
@@ -278,7 +278,7 @@ static bool isNullablePointer(const Token* tok, const Settings* settings)
 
 void CheckNullPointer::nullPointerByDeRefAndChec()
 {
-    const bool printInconclusive = (mSettings->certainty.isEnabled(Certainty::inconclusive));
+    const bool printInconclusive = (mProject->certainty.isEnabled(Certainty::inconclusive));
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
         if (Token::Match(tok, "sizeof|decltype|typeid|typeof (")) {
@@ -358,7 +358,7 @@ void CheckNullPointer::nullConstantDereference()
                         nullPointerError(tok);
                 } else { // function call
                     std::vector<const Token *> var;
-                    parseFunctionCall(*tok, var, &mSettings->library);
+                    parseFunctionCall(*tok, var, &mProject->library);
 
                     // is one of the var items a NULL pointer?
                     for (const Token *vartok : var) {
@@ -377,7 +377,7 @@ void CheckNullPointer::nullConstantDereference()
                         continue;
                     if (argtok->values().front().intvalue != 0)
                         continue;
-                    if (mSettings->library.isnullargbad(tok, argnr+1))
+                    if (mProject->library.isnullargbad(tok, argnr+1))
                         nullPointerError(argtok);
                 }
             }
@@ -434,7 +434,7 @@ void CheckNullPointer::nullPointerError(const Token *tok, const std::string &var
         return;
     }
 
-    if (!mSettings->isEnabled(value, inconclusive))
+    if (!mProject->isEnabled(value, inconclusive))
         return;
 
     const ErrorPath errorPath = getErrorPath(tok, value, "Null pointer dereference");
@@ -479,9 +479,9 @@ void CheckNullPointer::arithmetic()
             const ValueFlow::Value* value = pointerOperand->getValue(0);
             if (!value)
                 continue;
-            if (!mSettings->certainty.isEnabled(Certainty::inconclusive) && value->isInconclusive())
+            if (!mProject->certainty.isEnabled(Certainty::inconclusive) && value->isInconclusive())
                 continue;
-            if (value->condition && !mSettings->severity.isEnabled(Severity::warning))
+            if (value->condition && !mProject->severity.isEnabled(Severity::warning))
                 continue;
             if (value->condition)
                 redundantConditionWarning(tok, value, value->condition, value->isInconclusive());
@@ -562,10 +562,10 @@ static bool isUnsafeUsage(const Check *check, const Token *vartok, MathLib::bigi
     return checkNullPointer && checkNullPointer->isPointerDeRef(vartok, unknown);
 }
 
-Check::FileInfo *CheckNullPointer::getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const
+Check::FileInfo *CheckNullPointer::getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const
 {
-    CheckNullPointer check(tokenizer, settings, nullptr);
-    const std::list<CTU::CTUInfo::UnsafeUsage> &unsafeUsage = CTU::getUnsafeUsage(tokenizer, settings, &check, ::isUnsafeUsage);
+    CheckNullPointer check(tokenizer, settings, nullptr, project);
+    const std::list<CTU::CTUInfo::UnsafeUsage> &unsafeUsage = CTU::getUnsafeUsage(tokenizer, project, &check, ::isUnsafeUsage);
     if (unsafeUsage.empty())
         return nullptr;
 
@@ -585,7 +585,7 @@ Check::FileInfo * CheckNullPointer::loadFileInfoFromXml(const tinyxml2::XMLEleme
     return fileInfo;
 }
 
-bool CheckNullPointer::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger)
+bool CheckNullPointer::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project)
 {
     if (!ctu)
         return false;
@@ -600,7 +600,7 @@ bool CheckNullPointer::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInfo
             continue;
         for (const CTU::CTUInfo::UnsafeUsage &unsafeUsage : fi->unsafeUsage) {
             for (int warning = 0; warning <= 1; warning++) {
-                if (warning == 1 && !settings.severity.isEnabled(Severity::warning))
+                if (warning == 1 && !project->severity.isEnabled(Severity::warning))
                     break;
 
                 const std::list<ErrorMessage::FileLocation> &locationList =

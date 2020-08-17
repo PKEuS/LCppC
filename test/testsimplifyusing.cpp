@@ -34,13 +34,14 @@ public:
 
 
 private:
-    Settings settings0;
-    Settings settings1;
-    Settings settings2;
+    Settings settings;
+    Project project0;
+    Project project1;
+    Project project2;
 
     void run() override {
-        settings0.severity.enable(Severity::style);
-        settings2.severity.enable(Severity::style);
+        project0.severity.enable(Severity::style);
+        project2.severity.enable(Severity::style);
 
         TEST_CASE(simplifyUsing1);
         TEST_CASE(simplifyUsing2);
@@ -72,13 +73,13 @@ private:
         TEST_CASE(simplifyUsing9757);
     }
 
-    std::string tok(const char code[], bool simplify = true, Settings::PlatformType type = Settings::Native, bool debugwarnings = true) {
+    std::string tok(const char code[], bool simplify = true, Project::PlatformType type = Project::Native, bool debugwarnings = true) {
         errout.str("");
 
-        settings0.certainty.enable(Certainty::inconclusive);
-        settings0.debugwarnings = debugwarnings;
-        settings0.platform(type);
-        Tokenizer tokenizer(&settings0, this);
+        project0.certainty.enable(Certainty::inconclusive);
+        settings.debugwarnings = debugwarnings;
+        project0.platform(type);
+        Tokenizer tokenizer(&settings, &project0, this);
 
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
@@ -380,7 +381,7 @@ private:
                             "    FP_M(val);"
                             "};";
 
-        TODO_ASSERT_THROW(tok(code, true, Settings::Native, false), InternalError); // TODO: Do not throw AST validation exception
+        TODO_ASSERT_THROW(tok(code, true, Project::Native, false), InternalError); // TODO: Do not throw AST validation exception
         //ASSERT_EQUALS("", errout.str());
     }
 
@@ -471,11 +472,11 @@ private:
 
         const char exp[] = "int i ;";
 
-        ASSERT_EQUALS(exp, tok(code, true, Settings::Unix32));
-        ASSERT_EQUALS(exp, tok(code, true, Settings::Unix64));
-        ASSERT_EQUALS(exp, tok(code, true, Settings::Win32A));
-        ASSERT_EQUALS(exp, tok(code, true, Settings::Win32W));
-        ASSERT_EQUALS(exp, tok(code, true, Settings::Win64));
+        ASSERT_EQUALS(exp, tok(code, true, Project::Unix32));
+        ASSERT_EQUALS(exp, tok(code, true, Project::Unix64));
+        ASSERT_EQUALS(exp, tok(code, true, Project::Win32A));
+        ASSERT_EQUALS(exp, tok(code, true, Project::Win32W));
+        ASSERT_EQUALS(exp, tok(code, true, Project::Win64));
     }
 
     void simplifyUsing9042() {
@@ -494,7 +495,7 @@ private:
                            "c ( ) { i -- ; } "
                            "} ;";
 
-        ASSERT_EQUALS(exp, tok(code, true, Settings::Win64));
+        ASSERT_EQUALS(exp, tok(code, true, Project::Win64));
     }
 
     void simplifyUsing9191() {

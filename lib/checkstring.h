@@ -45,13 +45,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckString(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckString(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        CheckString checkString(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckString checkString(tokenizer, settings, errorLogger, project);
 
         // Checks
         checkString.strPlusChar();
@@ -96,8 +96,8 @@ private:
     void suspiciousStringCompareError_char(const Token* tok, const std::string& var);
     void overlappingStrcmpError(const Token* eq0, const Token *ne0);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckString c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckString c(nullptr, settings, errorLogger, project);
 
         c.stringLiteralWriteError(nullptr, nullptr);
         c.sprintfOverlappingDataError(nullptr, nullptr, "varname");

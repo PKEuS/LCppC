@@ -47,13 +47,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckIO(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckIO(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
     /** @brief Run checks on the normal token list */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        CheckIO checkIO(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckIO checkIO(tokenizer, settings, errorLogger, project);
 
         checkIO.checkWrongPrintfScanfArguments();
         checkIO.checkCoutCerrMisusage();
@@ -76,7 +76,7 @@ public:
 private:
     class ArgumentInfo {
     public:
-        ArgumentInfo(const Token *arg, const Settings *settings, bool _isCPP);
+        ArgumentInfo(const Token *arg, const Project* project, bool _isCPP);
         ~ArgumentInfo();
 
         bool isArrayOrPointer() const;
@@ -84,7 +84,7 @@ private:
         bool isKnownType() const;
         bool isStdVectorOrString();
         bool isStdContainer(const Token *tok);
-        bool isLibraryType(const Settings *settings) const;
+        bool isLibraryType(const Library& library) const;
 
         const Variable *variableInfo;
         const Token *typeToken;
@@ -135,8 +135,8 @@ private:
     static void argumentType(std::ostream & os, const ArgumentInfo * argInfo);
     static Severity::SeverityType getSeverity(const ArgumentInfo *argInfo);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckIO c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckIO c(nullptr, settings, errorLogger, project);
 
         c.coutCerrMisusageError(nullptr,  "cout");
         c.fflushOnInputStreamError(nullptr,  "stdin");

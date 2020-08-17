@@ -44,16 +44,16 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckBoost(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckBoost(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
         if (!tokenizer->isCPP())
             return;
 
-        CheckBoost checkBoost(tokenizer, settings, errorLogger);
+        CheckBoost checkBoost(tokenizer, settings, errorLogger, project);
         checkBoost.checkBoostForeachModification();
     }
 
@@ -63,8 +63,8 @@ public:
 private:
     void boostForeachError(const Token *tok);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckBoost c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckBoost c(nullptr, settings, errorLogger, project);
         c.boostForeachError(nullptr);
     }
 

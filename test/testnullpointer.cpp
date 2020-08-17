@@ -41,10 +41,11 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        LOAD_LIB_2(settings.library, "std.cfg");
-        settings.severity.enable(Severity::warning);
+        LOAD_LIB_2(project.library, "std.cfg");
+        project.severity.enable(Severity::warning);
 
         TEST_CASE(nullpointerAfterLoop);
         TEST_CASE(nullpointer1);
@@ -138,24 +139,24 @@ private:
         // Clear the error buffer..
         errout.str("");
 
-        settings.certainty.setEnabled(Certainty::inconclusive, inconclusive);
+        project.certainty.setEnabled(Certainty::inconclusive, inconclusive);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         if (!tokenizer.tokenize(istr, filename))
             return;
 
         // Check for null pointer dereferences..
         CheckNullPointer checkNullPointer;
-        checkNullPointer.runChecks(&tokenizer, &settings, this);
+        checkNullPointer.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void checkP(const char code[]) {
         // Clear the error buffer..
         errout.str("");
 
-        settings.certainty.setEnabled(Certainty::inconclusive, false);
+        project.certainty.setEnabled(Certainty::inconclusive, false);
 
         // Raw tokens..
         std::vector<std::string> files(1, "test.cpp");
@@ -168,14 +169,14 @@ private:
         simplecpp::preprocess(tokens2, tokens1, files, filedata, simplecpp::DUI());
 
         // Tokenizer..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         tokenizer.createTokens(std::move(tokens2));
         tokenizer.simplifyTokens0("");
         tokenizer.simplifyTokens1();
 
         // Check for null pointer dereferences..
         CheckNullPointer checkNullPointer;
-        checkNullPointer.runChecks(&tokenizer, &settings, this);
+        checkNullPointer.runChecks(&tokenizer, &settings, this, &project);
     }
 
 
@@ -2941,8 +2942,8 @@ private:
     }
 
     void functioncalllibrary() {
-        Settings settings1;
-        Tokenizer tokenizer(&settings1,this);
+        Project project1;
+        Tokenizer tokenizer(&settings, &project1, this);
         std::istringstream code("void f() { int a,b,c; x(a,b,c); }");
         tokenizer.tokenize(code,"test.c");
         const Token *xtok = Token::findsimplematch(tokenizer.tokens(), "x");
@@ -3271,18 +3272,18 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Prepare..
-        CheckNullPointer check(&tokenizer, &settings, this);
+        CheckNullPointer check(&tokenizer, &settings, this, &project);
         AnalyzerInformation ai;
         CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
         ctu.parseTokens(&tokenizer);
 
         // Check code..
-        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings);
+        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings, &project);
         if (!fi1)
             return;
         tinyxml2::XMLDocument doc;
@@ -3291,7 +3292,7 @@ private:
 
         Check::FileInfo* fi2 = check.loadFileInfoFromXml(e);
         ctu.addCheckInfo(check.name(), fi2);
-        check.analyseWholeProgram(&ctu, ai, settings, *this);
+        check.analyseWholeProgram(&ctu, ai, settings, *this, &project);
     }
 
     void ctu() {

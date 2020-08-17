@@ -29,23 +29,24 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void check(const char code[]) {
         // Clear the error buffer..
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
         CheckVaarg checkVaarg;
-        checkVaarg.runChecks(&tokenizer, &settings, this);
+        checkVaarg.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void run() override {
-        settings.severity.enable(Severity::warning);
+        project.severity.enable(Severity::warning);
 
         TEST_CASE(wrongParameterTo_va_start);
         TEST_CASE(referenceAs_va_start);

@@ -33,6 +33,7 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     /**
      * Execute check using n jobs for y files which are have
@@ -50,7 +51,7 @@ private:
         }
 
         settings.jobs = jobs;
-        ThreadExecutor executor(filemap, settings, *this);
+        ThreadExecutor executor(filemap, settings, project, *this);
         for (std::list<CTU::CTUInfo>::const_iterator i = filemap.begin(); i != filemap.end(); ++i)
             executor.addFileContent(i->sourcefile, data);
 
@@ -58,7 +59,7 @@ private:
     }
 
     void run() override {
-        LOAD_LIB_2(settings.library, "std.cfg");
+        LOAD_LIB_2(project.library, "std.cfg");
 
         TEST_CASE(deadlock_with_many_errors);
         TEST_CASE(many_threads);

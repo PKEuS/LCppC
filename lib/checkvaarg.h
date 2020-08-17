@@ -44,12 +44,12 @@ public:
     CheckVaarg() : Check(myName()) {
     }
 
-    CheckVaarg(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckVaarg(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        CheckVaarg check(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckVaarg check(tokenizer, settings, errorLogger, project);
         check.va_start_argument();
         check.va_list_usage();
     }
@@ -64,8 +64,8 @@ private:
     void va_list_usedBeforeStartedError(const Token *tok, const std::string& varname);
     void va_start_subsequentCallsError(const Token *tok, const std::string& varname);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckVaarg c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckVaarg c(nullptr, settings, errorLogger, project);
         c.wrongParameterTo_va_start_error(nullptr, "arg1", "arg2");
         c.referenceAs_va_start_error(nullptr, "arg1");
         c.va_end_missingError(nullptr, "vl");

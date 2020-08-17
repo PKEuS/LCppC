@@ -50,12 +50,12 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckCondition(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckCondition(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        CheckCondition checkCondition(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckCondition checkCondition(tokenizer, settings, errorLogger, project);
         checkCondition.multiCondition();
         checkCondition.clarifyCondition();   // not simplified because ifAssign
         checkCondition.multiCondition2();
@@ -160,8 +160,8 @@ private:
 
     void duplicateConditionalAssignError(const Token *condTok, const Token* assignTok);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckCondition c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckCondition c(nullptr, settings, errorLogger, project);
 
         ErrorPath errorPath;
 

@@ -30,9 +30,10 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        settings.severity.fill();
+        project.severity.fill();
 
         TEST_CASE(destructors);
         TEST_CASE(deallocThrow1);
@@ -57,16 +58,16 @@ private:
         // Clear the error buffer..
         errout.str("");
 
-        settings.certainty.setEnabled(Certainty::inconclusive, inconclusive);
+        project.certainty.setEnabled(Certainty::inconclusive, inconclusive);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check char variable usage..
-        CheckExceptionSafety checkExceptionSafety(&tokenizer, &settings, this);
-        checkExceptionSafety.runChecks(&tokenizer, &settings, this);
+        CheckExceptionSafety checkExceptionSafety(&tokenizer, &settings, this, &project);
+        checkExceptionSafety.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void destructors() {

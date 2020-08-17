@@ -64,12 +64,12 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckBufferOverrun(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckBufferOverrun(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        CheckBufferOverrun checkBufferOverrun(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckBufferOverrun checkBufferOverrun(tokenizer, settings, errorLogger, project);
         checkBufferOverrun.arrayIndex();
         checkBufferOverrun.pointerArithmetic();
         checkBufferOverrun.bufferOverflow();
@@ -80,8 +80,8 @@ public:
         checkBufferOverrun.checkInsecureCmdLineArgs();
     }
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckBufferOverrun c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckBufferOverrun c(nullptr, settings, errorLogger, project);
         c.arrayIndexError(nullptr, std::vector<Dimension>(), std::vector<const ValueFlow::Value *>());
         c.pointerArithmeticError(nullptr, nullptr, nullptr);
         c.negativeIndexError(nullptr, std::vector<Dimension>(), std::vector<const ValueFlow::Value *>());
@@ -95,12 +95,12 @@ public:
     }
 
     /** @brief Parse current TU and extract file info */
-    Check::FileInfo *getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const override;
+    Check::FileInfo* getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const override;
 
     Check::FileInfo* loadFileInfoFromXml(const tinyxml2::XMLElement* xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger) override;
+    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project) override;
 
 private:
 

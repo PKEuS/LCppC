@@ -781,14 +781,14 @@ unsigned int Token::getStrArraySize(const Token *tok)
     return sizeofstring;
 }
 
-unsigned int Token::getStrSize(const Token *tok, const Settings *settings)
+unsigned int Token::getStrSize(const Token *tok, const Project* project)
 {
     assert(tok != nullptr && tok->tokType() == eString);
     unsigned int sizeofType = 1;
     if (tok->valueType()) {
         ValueType vt(*tok->valueType());
         vt.pointer = 0;
-        sizeofType = ValueFlow::getSizeOf(vt, settings);
+        sizeofType = ValueFlow::getSizeOf(vt, project);
     }
     return getStrArraySize(tok) * sizeofType;
 }
@@ -1743,7 +1743,7 @@ void Token::printValueFlow(bool xml, std::ostream &out) const
         out << "  </valueflow>" << std::endl;
 }
 
-const ValueFlow::Value * Token::getValueLE(const MathLib::bigint val, const Settings *settings) const
+const ValueFlow::Value * Token::getValueLE(const MathLib::bigint val, const Project* project) const
 {
     if (!mImpl->mValues)
         return nullptr;
@@ -1759,16 +1759,16 @@ const ValueFlow::Value * Token::getValueLE(const MathLib::bigint val, const Sett
                 break;
         }
     }
-    if (settings && ret) {
-        if (ret->isInconclusive() && !settings->certainty.isEnabled(Certainty::inconclusive))
+    if (project && ret) {
+        if (ret->isInconclusive() && !project->certainty.isEnabled(Certainty::inconclusive))
             return nullptr;
-        if (ret->condition && !settings->severity.isEnabled(Severity::warning))
+        if (ret->condition && !project->severity.isEnabled(Severity::warning))
             return nullptr;
     }
     return ret;
 }
 
-const ValueFlow::Value * Token::getValueGE(const MathLib::bigint val, const Settings *settings) const
+const ValueFlow::Value * Token::getValueGE(const MathLib::bigint val, const Project* project) const
 {
     if (!mImpl->mValues)
         return nullptr;
@@ -1784,26 +1784,26 @@ const ValueFlow::Value * Token::getValueGE(const MathLib::bigint val, const Sett
                 break;
         }
     }
-    if (settings && ret) {
-        if (ret->isInconclusive() && !settings->certainty.isEnabled(Certainty::inconclusive))
+    if (project && ret) {
+        if (ret->isInconclusive() && !project->certainty.isEnabled(Certainty::inconclusive))
             return nullptr;
-        if (ret->condition && !settings->severity.isEnabled(Severity::warning))
+        if (ret->condition && !project->severity.isEnabled(Severity::warning))
             return nullptr;
     }
     return ret;
 }
 
-const ValueFlow::Value * Token::getInvalidValue(const Token *ftok, unsigned int argnr, const Settings *settings) const
+const ValueFlow::Value * Token::getInvalidValue(const Token *ftok, unsigned int argnr, const Project* project) const
 {
-    if (!mImpl->mValues || !settings)
+    if (!mImpl->mValues || !project)
         return nullptr;
     const ValueFlow::Value *ret = nullptr;
     std::vector<ValueFlow::Value>::const_iterator it;
     for (it = mImpl->mValues->begin(); it != mImpl->mValues->end(); ++it) {
         if (it->isImpossible())
             continue;
-        if ((it->isIntValue() && !settings->library.isIntArgValid(ftok, argnr, it->intvalue)) ||
-            (it->isFloatValue() && !settings->library.isFloatArgValid(ftok, argnr, it->floatValue))) {
+        if ((it->isIntValue() && !project->library.isIntArgValid(ftok, argnr, it->intvalue)) ||
+            (it->isFloatValue() && !project->library.isFloatArgValid(ftok, argnr, it->floatValue))) {
             if (!ret || ret->isInconclusive() || (ret->condition && !it->isInconclusive()))
                 ret = &(*it);
             if (!ret->isInconclusive() && !ret->condition)
@@ -1811,15 +1811,15 @@ const ValueFlow::Value * Token::getInvalidValue(const Token *ftok, unsigned int 
         }
     }
     if (ret) {
-        if (ret->isInconclusive() && !settings->certainty.isEnabled(Certainty::inconclusive))
+        if (ret->isInconclusive() && !project->certainty.isEnabled(Certainty::inconclusive))
             return nullptr;
-        if (ret->condition && !settings->severity.isEnabled(Severity::warning))
+        if (ret->condition && !project->severity.isEnabled(Severity::warning))
             return nullptr;
     }
     return ret;
 }
 
-const Token *Token::getValueTokenMinStrSize(const Settings *settings) const
+const Token *Token::getValueTokenMinStrSize(const Project* project) const
 {
     if (!mImpl->mValues)
         return nullptr;
@@ -1828,7 +1828,7 @@ const Token *Token::getValueTokenMinStrSize(const Settings *settings) const
     std::vector<ValueFlow::Value>::const_iterator it;
     for (it = mImpl->mValues->begin(); it != mImpl->mValues->end(); ++it) {
         if (it->isTokValue() && it->tokvalue && it->tokvalue->tokType() == Token::eString) {
-            const int size = getStrSize(it->tokvalue, settings);
+            const int size = getStrSize(it->tokvalue, project);
             if (!ret || size < minsize) {
                 minsize = size;
                 ret = it->tokvalue;

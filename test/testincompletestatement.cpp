@@ -32,12 +32,13 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void check(const char code[], bool inconclusive = false) {
         // Clear the error buffer..
         errout.str("");
 
-        settings.certainty.setEnabled(Certainty::inconclusive, inconclusive);
+        project.certainty.setEnabled(Certainty::inconclusive, inconclusive);
 
         // Raw tokens..
         std::vector<std::string> files(1, "test.cpp");
@@ -50,18 +51,18 @@ private:
         simplecpp::preprocess(tokens2, tokens1, files, filedata, simplecpp::DUI());
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         tokenizer.createTokens(std::move(tokens2));
         tokenizer.simplifyTokens0("");
         tokenizer.simplifyTokens1();
 
         // Check for incomplete statements..
-        CheckOther checkOther(&tokenizer, &settings, this);
+        CheckOther checkOther(&tokenizer, &settings, this, &project);
         checkOther.checkIncompleteStatement();
     }
 
     void run() override {
-        settings.severity.enable(Severity::warning);
+        project.severity.enable(Severity::warning);
 
         TEST_CASE(test1);
         TEST_CASE(test2);

@@ -44,7 +44,7 @@ static const struct CWE CWE398(398U);   // Indicator of Poor Code Quality
 
 void CheckPostfixOperator::postfixOperator()
 {
-    if (!mSettings->severity.isEnabled(Severity::performance))
+    if (!mProject->severity.isEnabled(Severity::performance))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();

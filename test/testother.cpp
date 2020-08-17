@@ -37,10 +37,11 @@ public:
     }
 
 private:
+    Project _project;
     Settings _settings;
 
     void run() override {
-        LOAD_LIB_2(_settings.library, "std.cfg");
+        LOAD_LIB_2(_project.library, "std.cfg");
 
 
         TEST_CASE(emptyBrackets);
@@ -245,52 +246,52 @@ private:
         TEST_CASE(sameExpressionPointers);
     }
 
-    void check(const char code[], const char *filename = nullptr, bool experimental = false, bool inconclusive = true, bool runSimpleChecks=true, bool verbose=false, Settings* settings = nullptr) {
+    void check(const char code[], const char *filename = nullptr, bool experimental = false, bool inconclusive = true, bool runSimpleChecks=true, bool verbose=false, Project* project = nullptr) {
         // Clear the error buffer..
         errout.str("");
 
-        if (!settings) {
-            settings = &_settings;
+        if (!project) {
+            project = &_project;
         }
-        settings->severity.enable(Severity::style);
-        settings->severity.enable(Severity::warning);
-        settings->severity.enable(Severity::portability);
-        settings->severity.enable(Severity::performance);
-        settings->standards.c = Standards::CLatest;
-        settings->standards.cpp = Standards::CPPLatest;
-        settings->certainty.setEnabled(Certainty::inconclusive, inconclusive);
-        settings->certainty.setEnabled(Certainty::experimental, experimental);
-        settings->verbose = verbose;
+        project->severity.enable(Severity::style);
+        project->severity.enable(Severity::warning);
+        project->severity.enable(Severity::portability);
+        project->severity.enable(Severity::performance);
+        project->standards.c = Standards::CLatest;
+        project->standards.cpp = Standards::CPPLatest;
+        project->certainty.setEnabled(Certainty::inconclusive, inconclusive);
+        project->certainty.setEnabled(Certainty::experimental, experimental);
+        _settings.verbose = verbose;
 
         // Tokenize..
-        Tokenizer tokenizer(settings, this);
+        Tokenizer tokenizer(&_settings, project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename ? filename : "test.cpp");
 
         // Check..
-        CheckOther checkOther(&tokenizer, settings, this);
-        checkOther.runChecks(&tokenizer, settings, this);
+        CheckOther checkOther(&tokenizer, &_settings, this, project);
+        checkOther.runChecks(&tokenizer, &_settings, this, project);
 
         (void)runSimpleChecks; // TODO Remove this
     }
 
-    void check(const char code[], Settings *s) {
-        check(code,"test.cpp",false,true,true,false,s);
+    void check(const char code[], Project* p) {
+        check(code,"test.cpp",false,true,true,false,p);
     }
 
     void checkP(const char code[], const char *filename = "test.cpp") {
         // Clear the error buffer..
         errout.str("");
 
-        Settings* settings = &_settings;
-        settings->severity.enable(Severity::style);
-        settings->severity.enable(Severity::warning);
-        settings->severity.enable(Severity::portability);
-        settings->severity.enable(Severity::performance);
-        settings->standards.c = Standards::CLatest;
-        settings->standards.cpp = Standards::CPPLatest;
-        settings->certainty.enable(Certainty::inconclusive);
-        settings->certainty.disable(Certainty::experimental);
+        Project* project = &_project;
+        project->severity.enable(Severity::style);
+        project->severity.enable(Severity::warning);
+        project->severity.enable(Severity::portability);
+        project->severity.enable(Severity::performance);
+        project->standards.c = Standards::CLatest;
+        project->standards.cpp = Standards::CPPLatest;
+        project->certainty.enable(Certainty::inconclusive);
+        project->certainty.disable(Certainty::experimental);
 
         // Raw tokens..
         std::vector<std::string> files(1, filename);
@@ -302,26 +303,26 @@ private:
         std::map<std::string, simplecpp::TokenList*> filedata;
         simplecpp::preprocess(tokens2, tokens1, files, filedata, simplecpp::DUI());
 
-        Preprocessor preprocessor(*settings, nullptr);
+        Preprocessor preprocessor(_settings, *project, nullptr);
         preprocessor.setDirectives(tokens1);
 
         // Tokenizer..
-        Tokenizer tokenizer(settings, this);
+        Tokenizer tokenizer(&_settings, project, this);
         tokenizer.createTokens(std::move(tokens2));
         tokenizer.simplifyTokens0("");
         tokenizer.simplifyTokens1();
         tokenizer.setPreprocessor(&preprocessor);
 
         // Check..
-        CheckOther checkOther(&tokenizer, settings, this);
-        checkOther.runChecks(&tokenizer, settings, this);
+        CheckOther checkOther(&tokenizer, &_settings, this, project);
+        checkOther.runChecks(&tokenizer, &_settings, this, project);
     }
 
     void checkInterlockedDecrement(const char code[]) {
-        static Settings settings;
-        settings.platformType = Settings::Win32A;
+        static Project project;
+        project.platformType = Project::Win32A;
 
-        check(code, nullptr, false, false, true, false, &settings);
+        check(code, nullptr, false, false, true, false, &project);
     }
 
     void emptyBrackets() {
@@ -1244,16 +1245,16 @@ private:
         // Clear the error buffer..
         errout.str("");
 
-        static Settings settings;
-        settings.severity.enable(Severity::style);
-        settings.standards.cpp = Standards::CPP03; // #5560
+        static Project project;
+        project.severity.enable(Severity::style);
+        project.standards.cpp = Standards::CPP03; // #5560
 
         // Tokenize..
-        Tokenizer tokenizerCpp(&settings, this);
+        Tokenizer tokenizerCpp(&_settings, &project, this);
         std::istringstream istr(code);
         tokenizerCpp.tokenize(istr, "test.cpp");
 
-        CheckOther checkOtherCpp(&tokenizerCpp, &settings, this);
+        CheckOther checkOtherCpp(&tokenizerCpp, &_settings, this, &project);
         checkOtherCpp.warningOldStylePointerCast();
     }
 
@@ -1385,19 +1386,19 @@ private:
         // Clear the error buffer..
         errout.str("");
 
-        Settings settings;
-        settings.severity.enable(Severity::warning);
+        Project project;
+        project.severity.enable(Severity::warning);
         if (portability)
-            settings.severity.enable(Severity::portability);
-        settings.certainty.setEnabled(Certainty::inconclusive, inconclusive);
+            project.severity.enable(Severity::portability);
+        project.certainty.setEnabled(Certainty::inconclusive, inconclusive);
 
-        settings.defaultSign = 's';
+        project.defaultSign = 's';
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&_settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CheckOther checkOtherCpp(&tokenizer, &settings, this);
+        CheckOther checkOtherCpp(&tokenizer, &_settings, this, &project);
         checkOtherCpp.invalidPointerCast();
     }
 
@@ -1714,12 +1715,12 @@ private:
                                 "};\n"
                                 "void f(X x) {}";
 
-            Settings s32(_settings);
+            Project s32(_project);
             s32.platform(cppcheck::Platform::Unix32);
             check(code, &s32);
             ASSERT_EQUALS("[test.cpp:5]: (performance) Function parameter 'x' should be passed by const reference.\n", errout.str());
 
-            Settings s64(_settings);
+            Project s64(_project);
             s64.platform(cppcheck::Platform::Unix64);
             check(code, &s64);
             ASSERT_EQUALS("", errout.str());
@@ -3167,13 +3168,13 @@ private:
               "}", nullptr, false, false, false);
         ASSERT_EQUALS("[test.cpp:3]: (style) Consecutive return, break, continue, goto or throw statements are unnecessary.\n", errout.str());
 
-        Settings settings;
-        settings.library.setnoreturn("exit", true);
-        settings.library.functions["exit"].argumentChecks[1] = Library::ArgumentChecks();
+        Project project;
+        project.library.setnoreturn("exit", true);
+        project.library.functions["exit"].argumentChecks[1] = Library::ArgumentChecks();
         check("void foo() {\n"
               "    exit(0);\n"
               "    break;\n"
-              "}", nullptr, false, false, false, false, &settings);
+              "}", nullptr, false, false, false, false, &project);
         ASSERT_EQUALS("[test.cpp:3]: (style) Consecutive return, break, continue, goto or throw statements are unnecessary.\n", errout.str());
 
         check("class NeonSession {\n"
@@ -3182,16 +3183,16 @@ private:
               "void NeonSession::exit()\n"
               "{\n"
               "    SAL_INFO(\"ucb.ucp.webdav\", \"neon commands cannot be aborted\");\n"
-              "}", nullptr, false, false, false, false, &settings);
+              "}", nullptr, false, false, false, false, &project);
         ASSERT_EQUALS("", errout.str());
 
         check("void NeonSession::exit()\n"
               "{\n"
               "    SAL_INFO(\"ucb.ucp.webdav\", \"neon commands cannot be aborted\");\n"
-              "}", nullptr, false, false, false, false, &settings);
+              "}", nullptr, false, false, false, false, &project);
         ASSERT_EQUALS("", errout.str());
 
-        check("void foo() { xResAccess->exit(); }", nullptr, false, false, false, false, &settings);
+        check("void foo() { xResAccess->exit(); }", nullptr, false, false, false, false, &project);
         ASSERT_EQUALS("", errout.str());
 
         check("void foo(int a)\n"
@@ -3438,13 +3439,13 @@ private:
         check("void foo() {\n"
               "    (beat < 100) ? (void)0 : exit(0);\n"
               "    bar();\n"
-              "}", nullptr, false, false, false, false, &settings);
+              "}", nullptr, false, false, false, false, &project);
         ASSERT_EQUALS("", errout.str());
 
         check("void foo() {\n"
               "    (beat < 100) ? exit(0) : (void)0;\n"
               "    bar();\n"
-              "}", nullptr, false, false, false, false, &settings);
+              "}", nullptr, false, false, false, false, &project);
         ASSERT_EQUALS("", errout.str());
 
         // #8261
@@ -3452,7 +3453,7 @@ private:
         TODO_ASSERT_THROW(check("void foo() {\n"
                                 "    (beat < 100) ? (void)0 : throw(0);\n"
                                 "    bar();\n"
-                                "}", nullptr, false, false, false, false, &settings), InternalError);
+                                "}", nullptr, false, false, false, false, &project), InternalError);
         //ASSERT_EQUALS("", errout.str());
     }
 
@@ -4502,7 +4503,7 @@ private:
     }
 
     void duplicateExpression3() {
-        Settings settings;
+        Project project;
         const char xmldata[] = "<?xml version=\"1.0\"?>\n"
                                "<def>\n"
                                "  <function name=\"mystrcmp\">\n"
@@ -4513,7 +4514,7 @@ private:
                                "</def>";
         tinyxml2::XMLDocument doc;
         doc.Parse(xmldata, sizeof(xmldata));
-        settings.library.load(doc);
+        project.library.load(doc);
 
         check("void foo() {\n"
               "    if (x() || x()) {}\n"
@@ -4562,7 +4563,7 @@ private:
 
         check("void foo() {\n"
               "    if ((mystrcmp(a, b) == 0) || (mystrcmp(a, b) == 0)) {}\n"
-              "}", "test.cpp", false, false, true, false, &settings);
+              "}", "test.cpp", false, false, true, false, &project);
         ASSERT_EQUALS("[test.cpp:2]: (style) Same expression on both sides of '||'.\n", errout.str());
 
         check("void GetValue() { return rand(); }\n"
@@ -4999,18 +5000,18 @@ private:
             const char code[] = "void foo(bool flag) {\n"
                                 "  bar( (flag) ? ~0u : ~0ul);\n"
                                 "}";
-            Settings settings = _settings;
-            settings.sizeof_int = 4;
-            settings.int_bit = 32;
+            Project project = _project;
+            project.sizeof_int = 4;
+            project.int_bit = 32;
 
-            settings.sizeof_long = 4;
-            settings.long_bit = 32;
-            check(code, &settings);
+            project.sizeof_long = 4;
+            project.long_bit = 32;
+            check(code, &project);
             ASSERT_EQUALS("[test.cpp:2]: (style) Same value in both branches of ternary operator.\n", errout.str());
 
-            settings.sizeof_long = 8;
-            settings.long_bit = 64;
-            check(code, &settings);
+            project.sizeof_long = 8;
+            project.long_bit = 64;
+            check(code, &project);
             ASSERT_EQUALS("", errout.str());
         }
     }
@@ -5746,13 +5747,13 @@ private:
         ASSERT_EQUALS("[test.cpp:3]: (style) Checking if unsigned expression 'value' is less than zero.\n", errout.str());
 
         // #9040
-        Settings settings1;
-        settings1.platform(Settings::Win64);
+        Project project1;
+        project1.platform(Project::Win64);
         check("using BOOL = unsigned;\n"
               "int i;\n"
               "bool f() {\n"
               "    return i >= 0;\n"
-              "}\n", &settings1);
+              "}\n", &project1);
         ASSERT_EQUALS("", errout.str());
     }
 

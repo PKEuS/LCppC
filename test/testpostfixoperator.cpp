@@ -30,24 +30,24 @@ public:
 
 private:
     Settings settings;
-
+    Project project;
 
     void check(const char code[]) {
         // Clear the error buffer..
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for postfix operators..
-        CheckPostfixOperator checkPostfixOperator(&tokenizer, &settings, this);
+        CheckPostfixOperator checkPostfixOperator(&tokenizer, &settings, this, &project);
         checkPostfixOperator.postfixOperator();
     }
 
     void run() override {
-        settings.severity.enable(Severity::performance);
+        project.severity.enable(Severity::performance);
 
         TEST_CASE(testsimple);
         TEST_CASE(testfor);

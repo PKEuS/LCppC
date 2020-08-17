@@ -320,7 +320,7 @@ void CTU::CTUInfo::parseTokens(const Tokenizer *tokenizer)
                     functionCall.location = CTUInfo::Location(tokenizer, tok);
                     functionCall.callArgNr = argnr + 1;
                     functionCall.callArgumentExpression = argtok->expressionString();
-                    functionCall.callArgValue = argtok->variable()->dimension(0) * argtok->valueType()->typeSize(*tokenizer->getSettings());
+                    functionCall.callArgValue = argtok->variable()->dimension(0) * argtok->valueType()->typeSize(*tokenizer->list.getProject());
                     functionCall.warning = false;
                     functionCalls.push_back(functionCall);
                 }
@@ -333,7 +333,7 @@ void CTU::CTUInfo::parseTokens(const Tokenizer *tokenizer)
                     functionCall.location = CTUInfo::Location(tokenizer, tok);
                     functionCall.callArgNr = argnr + 1;
                     functionCall.callArgumentExpression = argtok->expressionString();
-                    functionCall.callArgValue = argtok->astOperand1()->valueType()->typeSize(*tokenizer->getSettings());
+                    functionCall.callArgValue = argtok->astOperand1()->valueType()->typeSize(*tokenizer->list.getProject());
                     functionCall.warning = false;
                     functionCalls.push_back(functionCall);
                 }
@@ -376,7 +376,7 @@ void CTU::CTUInfo::parseTokens(const Tokenizer *tokenizer)
     }
 }
 
-static std::vector<std::pair<const Token *, MathLib::bigint>> getUnsafeFunction(const Tokenizer *tokenizer, const Settings *settings, const Scope *scope, std::size_t argnr, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *value))
+static std::vector<std::pair<const Token *, MathLib::bigint>> getUnsafeFunction(const Tokenizer *tokenizer, const Project* project, const Scope *scope, std::size_t argnr, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *value))
 {
     std::vector<std::pair<const Token *, MathLib::bigint>> ret;
     const Variable * const argvar = scope->function->getArgumentVar(argnr);
@@ -390,7 +390,7 @@ static std::vector<std::pair<const Token *, MathLib::bigint>> getUnsafeFunction(
             int indirect = 0;
             if (argvar->valueType())
                 indirect = argvar->valueType()->pointer;
-            if (isVariableChanged(tok2->link(), tok2, indirect, argvar->declarationId(), false, settings, tokenizer->isCPP()))
+            if (isVariableChanged(tok2->link(), tok2, indirect, argvar->declarationId(), false, project, tokenizer->isCPP()))
                 return ret;
         }
         if (Token::Match(tok2, "%oror%|&&|?")) {
@@ -408,7 +408,7 @@ static std::vector<std::pair<const Token *, MathLib::bigint>> getUnsafeFunction(
     return ret;
 }
 
-std::list<CTU::CTUInfo::UnsafeUsage> CTU::getUnsafeUsage(const Tokenizer *tokenizer, const Settings *settings, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *_value))
+std::list<CTU::CTUInfo::UnsafeUsage> CTU::getUnsafeUsage(const Tokenizer *tokenizer, const Project* project, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *_value))
 {
     std::list<CTU::CTUInfo::UnsafeUsage> unsafeUsage;
 
@@ -422,7 +422,7 @@ std::list<CTU::CTUInfo::UnsafeUsage> CTU::getUnsafeUsage(const Tokenizer *tokeni
 
         // "Unsafe" functions unconditionally reads data before it is written..
         for (std::size_t argnr = 0; argnr < function->argCount(); ++argnr) {
-            for (const std::pair<const Token *, MathLib::bigint> &v : getUnsafeFunction(tokenizer, settings, &scope, argnr, check, isUnsafeUsage)) {
+            for (const std::pair<const Token *, MathLib::bigint> &v : getUnsafeFunction(tokenizer, project, &scope, argnr, check, isUnsafeUsage)) {
                 const Token *tok = v.first;
                 MathLib::bigint value = v.second;
                 unsafeUsage.emplace_back(getFunctionId(tokenizer, function), static_cast<unsigned int>(argnr+1), tok->str(), CTU::CTUInfo::Location(tokenizer,tok), value);

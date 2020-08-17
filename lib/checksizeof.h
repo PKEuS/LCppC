@@ -45,13 +45,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckSizeof(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckSizeof(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger) override {
-        CheckSizeof checkSizeof(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckSizeof checkSizeof(tokenizer, settings, errorLogger, project);
 
         // Checks
         checkSizeof.sizeofsizeof();
@@ -103,8 +103,8 @@ private:
     void sizeofDereferencedVoidPointerError(const Token *tok, const std::string &varname);
     void arithOperationsOnVoidPointerError(const Token* tok, const std::string &varname, const std::string &vartype);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings) const override {
-        CheckSizeof c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckSizeof c(nullptr, settings, errorLogger, project);
 
         c.sizeofForArrayParameterError(nullptr);
         c.sizeofForPointerError(nullptr, "varname");

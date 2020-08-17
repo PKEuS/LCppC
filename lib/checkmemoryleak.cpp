@@ -113,7 +113,7 @@ CheckMemoryLeak::AllocType CheckMemoryLeak::getAllocationType(const Token *tok2,
             return New;
         }
 
-        if (mSettings_->hasLibrary("posix")) {
+        if (mProject_->hasLibrary("posix")) {
             if (Token::Match(tok2, "open|openat|creat|mkstemp|mkostemp|socket (")) {
                 // simple sanity check of function parameters..
                 // TODO: Make such check for all these functions
@@ -132,11 +132,11 @@ CheckMemoryLeak::AllocType CheckMemoryLeak::getAllocationType(const Token *tok2,
         }
 
         // Does tok2 point on a Library allocation function?
-        const int alloctype = mSettings_->library.getAllocId(tok2, -1);
+        const int alloctype = mProject_->library.getAllocId(tok2, -1);
         if (alloctype > 0) {
-            if (alloctype == mSettings_->library.deallocId("free"))
+            if (alloctype == mProject_->library.deallocId("free"))
                 return Malloc;
-            if (alloctype == mSettings_->library.deallocId("fclose"))
+            if (alloctype == mProject_->library.deallocId("fclose"))
                 return File;
             return Library::ismemory(alloctype) ? OtherMem : OtherRes;
         }
@@ -177,7 +177,7 @@ CheckMemoryLeak::AllocType CheckMemoryLeak::getReallocationType(const Token *tok
     if (!Token::Match(tok2, "%name% ("))
         return No;
 
-    const Library::AllocFunc *f = mSettings_->library.getReallocFuncInfo(tok2);
+    const Library::AllocFunc *f = mProject_->library.getReallocFuncInfo(tok2);
     if (!(f && f->reallocArg > 0 && f->reallocArg <= numberOfArguments(tok2)))
         return No;
     const Token* arg = getArguments(tok2).at(f->reallocArg - 1);
@@ -188,11 +188,11 @@ CheckMemoryLeak::AllocType CheckMemoryLeak::getReallocationType(const Token *tok
     if (varid > 0 && !Token::Match(arg, "%varid% [,)]", varid))
         return No;
 
-    const int realloctype = mSettings_->library.getReallocId(tok2, -1);
+    const int realloctype = mProject_->library.getReallocId(tok2, -1);
     if (realloctype > 0) {
-        if (realloctype == mSettings_->library.deallocId("free"))
+        if (realloctype == mProject_->library.deallocId("free"))
             return Malloc;
-        if (realloctype == mSettings_->library.deallocId("fclose"))
+        if (realloctype == mProject_->library.deallocId("fclose"))
             return File;
         return Library::ismemory(realloctype) ? OtherMem : OtherRes;
     }
@@ -231,7 +231,7 @@ CheckMemoryLeak::AllocType CheckMemoryLeak::getDeallocationType(const Token *tok
                 if (tok->str() == "realloc" && Token::simpleMatch(vartok->next(), ", 0 )"))
                     return Malloc;
 
-                if (mSettings_->hasLibrary("posix")) {
+                if (mProject_->hasLibrary("posix")) {
                     if (tok->str() == "close")
                         return Fd;
                     if (tok->str() == "pclose")
@@ -239,11 +239,11 @@ CheckMemoryLeak::AllocType CheckMemoryLeak::getDeallocationType(const Token *tok
                 }
 
                 // Does tok point on a Library deallocation function?
-                const int dealloctype = mSettings_->library.getDeallocId(tok, argNr);
+                const int dealloctype = mProject_->library.getDeallocId(tok, argNr);
                 if (dealloctype > 0) {
-                    if (dealloctype == mSettings_->library.deallocId("free"))
+                    if (dealloctype == mProject_->library.deallocId("free"))
                         return Malloc;
-                    if (dealloctype == mSettings_->library.deallocId("fclose"))
+                    if (dealloctype == mProject_->library.deallocId("fclose"))
                         return File;
                     return Library::ismemory(dealloctype) ? OtherMem : OtherRes;
                 }
@@ -258,7 +258,7 @@ CheckMemoryLeak::AllocType CheckMemoryLeak::getDeallocationType(const Token *tok
 bool CheckMemoryLeak::isReopenStandardStream(const Token *tok) const
 {
     if (getReallocationType(tok, 0) == File) {
-        const Library::AllocFunc *f = mSettings_->library.getReallocFuncInfo(tok);
+        const Library::AllocFunc *f = mProject_->library.getReallocFuncInfo(tok);
         if (f && f->reallocArg > 0 && f->reallocArg <= numberOfArguments(tok)) {
             const Token* arg = getArguments(tok).at(f->reallocArg - 1);
             if (Token::Match(arg, "stdin|stdout|stderr"))
@@ -488,9 +488,9 @@ static bool ifvar(const Token *tok, unsigned int varid, const std::string &comp,
     return (vartok && vartok->varId() == varid);
 }
 
-bool CheckMemoryLeakInFunction::test_white_list(const std::string &funcname, const Settings *settings, bool cpp)
+bool CheckMemoryLeakInFunction::test_white_list(const std::string &funcname, const Library& library, bool cpp)
 {
-    return ((call_func_white_list.find(funcname)!=call_func_white_list.end()) || settings->library.isLeakIgnore(funcname) || (cpp && funcname == "delete"));
+    return ((call_func_white_list.find(funcname)!=call_func_white_list.end()) || library.isLeakIgnore(funcname) || (cpp && funcname == "delete"));
 }
 
 
@@ -521,8 +521,8 @@ void CheckMemoryLeakInFunction::checkReallocUsage()
                 const Token *const reallocTok = parTok->astOperand1();
                 if (!reallocTok)
                     continue;
-                const Library::AllocFunc* f = mSettings->library.getReallocFuncInfo(reallocTok);
-                if (!(f && f->arg == -1 && mSettings->library.isnotnoreturn(reallocTok)))
+                const Library::AllocFunc* f = mProject->library.getReallocFuncInfo(reallocTok);
+                if (!(f && f->arg == -1 && mProject->library.isnotnoreturn(reallocTok)))
                     continue;
 
                 const AllocType allocType = getReallocationType(reallocTok, tok->varId());
@@ -687,7 +687,7 @@ void CheckMemoryLeakInClass::variable(const Scope *scope, const Token *tokVarnam
 
                 // Function call .. possible deallocation
                 else if (Token::Match(tok->previous(), "[{};] %name% (")) {
-                    if (!CheckMemoryLeakInFunction::test_white_list(tok->str(), mSettings, mTokenizer->isCPP())) {
+                    if (!CheckMemoryLeakInFunction::test_white_list(tok->str(), mProject->library, mTokenizer->isCPP())) {
                         return;
                     }
                 }
@@ -704,7 +704,7 @@ void CheckMemoryLeakInClass::variable(const Scope *scope, const Token *tokVarnam
 
 void CheckMemoryLeakInClass::unsafeClassError(const Token *tok, const std::string &classname, const std::string &varname)
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     reportError(tok, Severity::style, "unsafeClassCanLeak",
@@ -720,7 +720,7 @@ void CheckMemoryLeakInClass::checkPublicFunctions(const Scope *scope, const Toke
     // Check that public functions deallocate the pointers that they allocate.
     // There is no checking how these functions are used and therefore it
     // isn't established if there is real leaks or not.
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const int varid = classtok->varId();
@@ -922,7 +922,7 @@ void CheckMemoryLeakStructMember::checkStructVariable(const Variable * const var
                 // using struct in a function call..
                 else if (Token::Match(tok3, "%name% (")) {
                     // Calling non-function / function that doesn't deallocate?
-                    if (CheckMemoryLeakInFunction::test_white_list(tok3->str(), mSettings, mTokenizer->isCPP()))
+                    if (CheckMemoryLeakInFunction::test_white_list(tok3->str(), mProject->library, mTokenizer->isCPP()))
                         continue;
 
                     // Check if the struct is used..
@@ -999,7 +999,7 @@ void CheckMemoryLeakNoVar::checkForUnreleasedInputArgument(const Scope *scope)
             functionName == "return")
             continue;
 
-        if (!CheckMemoryLeakInFunction::test_white_list(functionName, mSettings, mTokenizer->isCPP()))
+        if (!CheckMemoryLeakInFunction::test_white_list(functionName, mProject->library, mTokenizer->isCPP()))
             continue;
 
         const std::vector<const Token *> args = getArguments(tok);
@@ -1071,7 +1071,7 @@ void CheckMemoryLeakNoVar::checkForUnusedReturnValue(const Scope *scope)
 void CheckMemoryLeakNoVar::checkForUnsafeArgAlloc(const Scope *scope)
 {
     // This test only applies to C++ source
-    if (!mTokenizer->isCPP() || !mSettings->certainty.isEnabled(Certainty::inconclusive) || !mSettings->severity.isEnabled(Severity::warning))
+    if (!mTokenizer->isCPP() || !mProject->certainty.isEnabled(Certainty::inconclusive) || !mProject->severity.isEnabled(Severity::warning))
         return;
 
     for (const Token *tok = scope->bodyStart; tok != scope->bodyEnd; tok = tok->next()) {

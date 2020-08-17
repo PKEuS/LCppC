@@ -29,10 +29,11 @@ class givenACodeSampleToTokenize {
 private:
     Tokenizer tokenizer;
     static const Settings settings;
+    static const Project project;
 
 public:
     explicit givenACodeSampleToTokenize(const char sample[], bool createOnly = false, bool cpp = true)
-        : tokenizer(&settings, nullptr) {
+        : tokenizer(&settings, &project, nullptr) {
         std::istringstream iss(sample);
         if (createOnly)
             tokenizer.list.createTokens(iss, cpp ? "test.cpp" : "test.c");
@@ -48,18 +49,18 @@ public:
 
 class SimpleSuppressor : public ErrorLogger {
 public:
-    SimpleSuppressor(Settings &settings, ErrorLogger *next)
-        : settings(settings), next(next) {
+    SimpleSuppressor(Project& project, ErrorLogger *next)
+        : project(project), next(next) {
     }
     void reportOut(const std::string &outmsg) override {
         next->reportOut(outmsg);
     }
     void reportErr(const ErrorMessage &msg) override {
-        if (!msg.callStack.empty() && !settings.nomsg.isSuppressed(msg.toSuppressionsErrorMessage()))
+        if (!msg.callStack.empty() && !project.nomsg.isSuppressed(msg.toSuppressionsErrorMessage()))
             next->reportErr(msg);
     }
 private:
-    Settings &settings;
+    Project& project;
     ErrorLogger *next;
 };
 

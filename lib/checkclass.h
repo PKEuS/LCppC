@@ -50,14 +50,14 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckClass(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger);
+    CheckClass(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project);
 
     /** @brief Run checks on the normal token list */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
         if (tokenizer->isC())
             return;
 
-        CheckClass checkClass(tokenizer, settings, errorLogger);
+        CheckClass checkClass(tokenizer, settings, errorLogger, project);
 
         // can't be a simplified check .. the 'sizeof' is used.
         checkClass.checkMemset();
@@ -190,8 +190,8 @@ private:
     void thisUseAfterFree(const Token *self, const Token *free, const Token *use);
     void unsafeClassRefMemberError(const Token *tok, const std::string &varname);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckClass c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckClass c(nullptr, settings, errorLogger, project);
         c.noConstructorError(nullptr, "classname", false);
         c.noExplicitConstructorError(nullptr, "classname", false);
         //c.copyConstructorMallocError(nullptr, 0, "var");

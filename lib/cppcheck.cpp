@@ -265,8 +265,10 @@ bool CppCheck::executeCommand(const std::string& exe, const std::vector<std::str
 
 CppCheck::CppCheck(ErrorLogger &errorLogger,
                    Settings& settings,
+                   Project& project,
                    bool useGlobalSuppressions)
     : mSettings(settings)
+    , mProject(project)
     , mErrorLogger(errorLogger)
     , mCTU(nullptr)
     , mExitCode(0)
@@ -323,24 +325,24 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
         mErrorLogger.reportOut(std::string("Checking ") + fixedpath + std::string("..."));
 
         if (mSettings.verbose) {
-            mErrorLogger.reportOut("Defines:" + mSettings.userDefines);
+            mErrorLogger.reportOut("Defines:" + mProject.userDefines);
             std::string undefs;
-            for (const std::string& U : mSettings.userUndefs) {
+            for (const std::string& U : mProject.userUndefs) {
                 if (!undefs.empty())
                     undefs += ';';
                 undefs += ' ' + U;
             }
             mErrorLogger.reportOut("Undefines:" + undefs);
             std::string includePaths;
-            for (const std::string &I : mSettings.includePaths)
+            for (const std::string &I : mProject.includePaths)
                 includePaths += " -I" + I;
             mErrorLogger.reportOut("Includes:" + includePaths);
-            mErrorLogger.reportOut(std::string("Platform:") + mSettings.platformString());
+            mErrorLogger.reportOut(std::string("Platform:") + mProject.platformString());
         }
     }
 
     try {
-        Preprocessor preprocessor(mSettings, this);
+        Preprocessor preprocessor(mSettings, mProject, this);
         std::set<std::string> configurations;
 
         simplecpp::OutputList outputList;
@@ -368,7 +370,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
             if (err) {
                 std::string file = Path::fromNativeSeparators(output.location.file());
                 if (mSettings.relativePaths)
-                    file = Path::getRelativePath(file, mSettings.basePaths);
+                    file = Path::getRelativePath(file, mProject.basePaths);
 
                 const ErrorMessage::FileLocation loc1(file, output.location.line, output.location.col);
                 std::list<ErrorMessage::FileLocation> callstack(1, loc1);
@@ -390,10 +392,10 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
         // write dump file xml prolog
         std::ofstream fdump;
         std::string dumpFile;
-        if (mSettings.dump || !mSettings.addons.empty()) {
+        if (mSettings.dump || !mProject.addons.empty()) {
             if (!mSettings.dumpFile.empty())
                 dumpFile = mSettings.dumpFile;
-            else if (!mSettings.dump && !mSettings.buildDir.empty())
+            else if (!mSettings.dump && !mProject.buildDir.empty())
                 dumpFile = ctu->analyzerfile + ".dump";
             else
                 dumpFile = ctu->sourcefile + ".dump";
@@ -403,13 +405,13 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 fdump << "<?xml version=\"1.0\"?>" << std::endl;
                 fdump << "<dumps>" << std::endl;
                 fdump << "  <platform"
-                      << " name=\"" << mSettings.platformString() << '\"'
-                      << " char_bit=\"" << mSettings.char_bit << '\"'
-                      << " short_bit=\"" << mSettings.short_bit << '\"'
-                      << " int_bit=\"" << mSettings.int_bit << '\"'
-                      << " long_bit=\"" << mSettings.long_bit << '\"'
-                      << " long_long_bit=\"" << mSettings.long_long_bit << '\"'
-                      << " pointer_bit=\"" << (mSettings.sizeof_pointer * mSettings.char_bit) << '\"'
+                      << " name=\"" << mProject.platformString() << '\"'
+                      << " char_bit=\"" << mProject.char_bit << '\"'
+                      << " short_bit=\"" << mProject.short_bit << '\"'
+                      << " int_bit=\"" << mProject.int_bit << '\"'
+                      << " long_bit=\"" << mProject.long_bit << '\"'
+                      << " long_long_bit=\"" << mProject.long_long_bit << '\"'
+                      << " pointer_bit=\"" << (mProject.sizeof_pointer * mProject.char_bit) << '\"'
                       << "/>\n";
                 fdump << "  <rawtokens>" << std::endl;
                 for (std::size_t i = 0; i < files.size(); ++i)
@@ -428,20 +430,20 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
 
         // Parse comments and then remove them
         preprocessor.inlineSuppressions(tokens1);
-        if ((mSettings.dump || !mSettings.addons.empty()) && fdump.is_open()) {
-            mSettings.nomsg.dump(fdump);
+        if ((mSettings.dump || !mProject.addons.empty()) && fdump.is_open()) {
+            mProject.nomsg.dump(fdump);
         }
         tokens1.removeComments();
         preprocessor.removeComments();
 
-        if (!mSettings.buildDir.empty()) {
+        if (!mProject.buildDir.empty()) {
             // Get toolinfo
             std::ostringstream toolinfo;
             toolinfo << CPPCHECK_VERSION_STRING;
-            toolinfo << mSettings.severity.intValue() << ' ';
-            toolinfo << mSettings.certainty.intValue();
-            toolinfo << mSettings.userDefines;
-            mSettings.nomsg.dump(toolinfo);
+            toolinfo << mProject.severity.intValue() << ' ';
+            toolinfo << mProject.certainty.intValue();
+            toolinfo << mProject.userDefines;
+            mProject.nomsg.dump(toolinfo);
 
             // Calculate checksum so it can be compared with old checksum / future checksums
             const uint32_t checksum = preprocessor.calculateChecksum(tokens1, toolinfo.str());
@@ -459,11 +461,11 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
         preprocessor.setPlatformInfo(&tokens1);
 
         // Get configurations..
-        if ((mSettings.checkAllConfigurations && mSettings.userDefines.empty()) || mSettings.force) {
+        if ((mProject.checkAllConfigurations && mProject.userDefines.empty()) || mProject.force) {
             Timer t("Preprocessor::getConfigs", mSettings.showtime);
             configurations = preprocessor.getConfigs(tokens1);
         } else {
-            configurations.insert(mSettings.userDefines);
+            configurations.insert(mProject.userDefines);
         }
 
         if (mSettings.checkConfiguration) {
@@ -474,7 +476,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
         }
 
         // Run define rules on raw code
-        for (const Settings::Rule &rule : mSettings.rules) {
+        for (const Project::Rule &rule : mProject.rules) {
             if (rule.tokenlist != "define")
                 continue;
 
@@ -484,15 +486,15 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 if (dir.str.compare(0,8,"#define ") == 0)
                     code += "#line " + MathLib::toString(dir.linenr) + " \"" + dir.file + "\"\n" + dir.str + '\n';
             }
-            Tokenizer tokenizer2(&mSettings, this);
+            Tokenizer tokenizer2(&mSettings, &mProject, this);
             std::istringstream istr2(code);
             tokenizer2.list.createTokens(istr2);
             executeRules("define", tokenizer2);
             break;
         }
 
-        if (!mSettings.force && configurations.size() > mSettings.maxConfigs) {
-            if (mSettings.severity.isEnabled(Severity::information)) {
+        if (!mProject.force && configurations.size() > mProject.maxConfigs) {
+            if (mProject.severity.isEnabled(Severity::information)) {
                 tooManyConfigsError(Path::toNativeSeparators(ctu->sourcefile),configurations.size());
             } else {
                 mTooManyConfigs = true;
@@ -511,12 +513,12 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
 
             // Check only a few configurations (default 12), after that bail out, unless --force
             // was used.
-            if (!mSettings.force && ++checkCount > mSettings.maxConfigs)
+            if (!mProject.force && ++checkCount > mProject.maxConfigs)
                 break;
 
-            if (!mSettings.userDefines.empty()) {
-                mCurrentConfig = mSettings.userDefines;
-                const std::vector<std::string> v1(split(mSettings.userDefines, ";"));
+            if (!mProject.userDefines.empty()) {
+                mCurrentConfig = mProject.userDefines;
+                const std::vector<std::string> v1(split(mProject.userDefines, ";"));
                 for (const std::string &cfg: split(currCfg, ";")) {
                     if (std::find(v1.begin(), v1.end(), cfg) == v1.end()) {
                         mCurrentConfig += ";" + cfg;
@@ -526,7 +528,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 mCurrentConfig = currCfg;
             }
 
-            if (mSettings.preprocessOnly) {
+            if (mProject.preprocessOnly) {
                 Timer t("Preprocessor::getcode", mSettings.showtime);
                 std::string codeWithoutCfg = preprocessor.getcode(tokens1, mCurrentConfig, files, true);
                 t.stop();
@@ -546,7 +548,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 continue;
             }
 
-            Tokenizer tokenizer(&mSettings, this);
+            Tokenizer tokenizer(&mSettings, &mProject, this);
             tokenizer.setPreprocessor(&preprocessor);
 
             try {
@@ -580,7 +582,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                     continue;
 
                 // Skip if we already met the same token list
-                if (mSettings.force || mSettings.maxConfigs > 1) {
+                if (mProject.force || mProject.maxConfigs > 1) {
                     const uint64_t checksum = tokenizer.list.calculateChecksum();
                     if (!checksums0.insert(checksum).second) {
                         if (mSettings.debugwarnings)
@@ -593,11 +595,11 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                     continue;
 
                 // dump xml if --dump
-                if ((mSettings.dump || !mSettings.addons.empty()) && fdump.is_open()) {
+                if ((mSettings.dump || !mProject.addons.empty()) && fdump.is_open()) {
                     fdump << "<dump cfg=\"" << ErrorLogger::toxml(mCurrentConfig) << "\">" << std::endl;
                     fdump << "  <standards>" << std::endl;
-                    fdump << "    <c version=\"" << mSettings.standards.getC() << "\"/>" << std::endl;
-                    fdump << "    <cpp version=\"" << mSettings.standards.getCPP() << "\"/>" << std::endl;
+                    fdump << "    <c version=\"" << mProject.standards.getC() << "\"/>" << std::endl;
+                    fdump << "    <cpp version=\"" << mProject.standards.getCPP() << "\"/>" << std::endl;
                     fdump << "  </standards>" << std::endl;
                     preprocessor.dump(fdump);
                     tokenizer.dump(fdump);
@@ -605,7 +607,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                 }
 
                 // Skip if we already met the same simplified token list
-                if (mSettings.force || mSettings.maxConfigs > 1) {
+                if (mProject.force || mProject.maxConfigs > 1) {
                     const uint64_t checksum = tokenizer.list.calculateChecksum();
                     if (!checksums1.insert(checksum).second) {
                         if (mSettings.debugwarnings)
@@ -641,12 +643,12 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
                                     e.id,
                                     Certainty::safe);
 
-                if (errmsg.severity == Severity::error || mSettings.severity.isEnabled(errmsg.severity))
+                if (errmsg.severity == Severity::error || mProject.severity.isEnabled(errmsg.severity))
                     reportErr(errmsg);
             }
         }
 
-        if (!hasValidConfig && configurations.size() > 1 && mSettings.severity.isEnabled(Severity::information)) {
+        if (!hasValidConfig && configurations.size() > 1 && mProject.severity.isEnabled(Severity::information)) {
             std::string msg = "This file is not analyzed. Cppcheck failed to extract a valid configuration. Use -v for more details.\n"
                               "This file is not analyzed. Cppcheck failed to extract a valid configuration. The tested configurations have these preprocessor errors:";
             for (const std::string &s : configurationError)
@@ -666,13 +668,13 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
         }
 
         // dumped all configs, close root </dumps> element now
-        if ((mSettings.dump || !mSettings.addons.empty()) && fdump.is_open())
+        if ((mSettings.dump || !mProject.addons.empty()) && fdump.is_open())
             fdump << "</dumps>" << std::endl;
 
-        if (!mSettings.addons.empty()) {
+        if (!mProject.addons.empty()) {
             fdump.close();
 
-            for (const std::string &addon : mSettings.addons) {
+            for (const std::string &addon : mProject.addons) {
                 struct AddonInfo addonInfo;
                 const std::string &failedToGetAddonInfo = addonInfo.getAddonInfo(addon, mSettings.exename);
                 if (!failedToGetAddonInfo.empty()) {
@@ -720,7 +722,7 @@ unsigned int CppCheck::checkCTU(CTU::CTUInfo* ctu, std::istream& fileStream)
             std::remove(dumpFile.c_str());
         }
 
-        if (!mSettings.buildDir.empty())
+        if (!mProject.buildDir.empty())
             ctu->writeFile();
     } catch (const std::runtime_error &e) {
         internalError(ctu->sourcefile, e.what());
@@ -741,7 +743,7 @@ void CppCheck::internalError(const std::string &filename, const std::string &msg
     const std::string fixedpath = Path::toNativeSeparators(filename);
     const std::string fullmsg("Bailing out from checking " + fixedpath + " since there was an internal error: " + msg);
 
-    if (mSettings.severity.isEnabled(Severity::information)) {
+    if (mProject.severity.isEnabled(Severity::information)) {
         const ErrorMessage::FileLocation loc1(filename, 0, 0);
         std::list<ErrorMessage::FileLocation> callstack(1, loc1);
 
@@ -777,7 +779,7 @@ void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
     // Analyse the tokens..
     mCTU->parseTokens(&tokenizer);
     for (const Check *check : Check::instances()) {
-        Check::FileInfo *fi = check->getFileInfo(&tokenizer, &mSettings);
+        Check::FileInfo *fi = check->getFileInfo(&tokenizer, &mSettings, &mProject);
         if (fi != nullptr) {
             mCTU->addCheckInfo(check->name(), fi);
         }
@@ -791,11 +793,11 @@ void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
         if (Tokenizer::isMaxTime())
             return;
 
-        if (!mSettings.checks.isEnabled(check->name()))
+        if (!mProject.checks.isEnabled(check->name()))
             continue;
 
         Timer timerRunChecks(check->name() + "::runChecks", mSettings.showtime);
-        check->runChecks(&tokenizer, &mSettings, this);
+        check->runChecks(&tokenizer, &mSettings, this, &mProject);
     }
 
     executeRules("normal", tokenizer);
@@ -807,7 +809,7 @@ void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
 bool CppCheck::hasRule(const std::string &tokenlist) const
 {
 #ifdef HAVE_RULES
-    for (const Settings::Rule &rule : mSettings.rules) {
+    for (const Project::Rule &rule : mProject.rules) {
         if (rule.tokenlist == tokenlist)
             return true;
     }
@@ -968,7 +970,7 @@ void CppCheck::executeRules(const std::string &tokenlist, const Tokenizer &token
         ostr << " " << tok->str();
     const std::string str(ostr.str());
 
-    for (const Settings::Rule &rule : mSettings.rules) {
+    for (const Project::Rule &rule : mProject.rules) {
         if (rule.pattern.empty() || rule.id.empty() || rule.severity == Severity::none || rule.tokenlist != tokenlist)
             continue;
 
@@ -1082,12 +1084,12 @@ void CppCheck::executeRules(const std::string &tokenlist, const Tokenizer &token
 
 void CppCheck::tooManyConfigsError(const std::string &file, const std::size_t numberOfConfigurations)
 {
-    if (!mSettings.severity.isEnabled(Severity::information) && !mTooManyConfigs)
+    if (!mProject.severity.isEnabled(Severity::information) && !mTooManyConfigs)
         return;
 
     mTooManyConfigs = false;
 
-    if (mSettings.severity.isEnabled(Severity::information) && file.empty())
+    if (mProject.severity.isEnabled(Severity::information) && file.empty())
         return;
 
     std::list<ErrorMessage::FileLocation> loclist;
@@ -1098,8 +1100,8 @@ void CppCheck::tooManyConfigsError(const std::string &file, const std::size_t nu
     }
 
     std::ostringstream msg;
-    msg << "Too many #ifdef configurations - cppcheck only checks " << mSettings.maxConfigs;
-    if (numberOfConfigurations > mSettings.maxConfigs)
+    msg << "Too many #ifdef configurations - cppcheck only checks " << mProject.maxConfigs;
+    if (numberOfConfigurations > mProject.maxConfigs)
         msg << " of " << numberOfConfigurations << " configurations. Use --force to check all configurations.\n";
     if (file.empty())
         msg << " configurations. Use --force to check all configurations. For more details, use --enable=information.\n";
@@ -1126,7 +1128,7 @@ void CppCheck::purgedConfigurationMessage(const std::string &file, const std::st
 {
     mTooManyConfigs = false;
 
-    if (mSettings.severity.isEnabled(Severity::information) && file.empty())
+    if (mProject.severity.isEnabled(Severity::information) && file.empty())
         return;
 
     std::list<ErrorMessage::FileLocation> loclist;
@@ -1152,7 +1154,7 @@ void CppCheck::reportErr(const ErrorMessage &msg)
 {
     mSuppressInternalErrorFound = false;
 
-    if (!mSettings.library.reportErrors(msg.file0))
+    if (!mProject.library.reportErrors(msg.file0))
         return;
 
     const std::string errmsg = msg.toString(mSettings.verbose);
@@ -1166,18 +1168,18 @@ void CppCheck::reportErr(const ErrorMessage &msg)
     const Suppressions::ErrorMessage errorMessage = msg.toSuppressionsErrorMessage();
 
     if (mUseGlobalSuppressions) {
-        if (mSettings.nomsg.isSuppressed(errorMessage)) {
+        if (mProject.nomsg.isSuppressed(errorMessage)) {
             mSuppressInternalErrorFound = true;
             return;
         }
     } else {
-        if (mSettings.nomsg.isSuppressedLocal(errorMessage)) {
+        if (mProject.nomsg.isSuppressedLocal(errorMessage)) {
             mSuppressInternalErrorFound = true;
             return;
         }
     }
 
-    if (!mSettings.nofail.isSuppressed(errorMessage) && !mSettings.nomsg.isSuppressed(errorMessage)) {
+    if (!mProject.nofail.isSuppressed(errorMessage) && !mProject.nomsg.isSuppressed(errorMessage)) {
         mExitCode = 1;
     }
 
@@ -1201,11 +1203,12 @@ void CppCheck::reportProgress(const std::string &filename, const char stage[], c
 void CppCheck::getErrorMessages()
 {
     Settings s(mSettings);
-    s.severity.enable(Severity::warning);
-    s.severity.enable(Severity::style);
-    s.severity.enable(Severity::portability);
-    s.severity.enable(Severity::performance);
-    s.severity.enable(Severity::information);
+    Project p(mProject);
+    p.severity.enable(Severity::warning);
+    p.severity.enable(Severity::style);
+    p.severity.enable(Severity::portability);
+    p.severity.enable(Severity::performance);
+    p.severity.enable(Severity::information);
 
     purgedConfigurationMessage("","");
 
@@ -1214,9 +1217,9 @@ void CppCheck::getErrorMessages()
 
     // call all "getErrorMessages" in all registered Check classes
     for (std::list<Check *>::const_iterator it = Check::instances().begin(); it != Check::instances().end(); ++it)
-        (*it)->getErrorMessages(this, &s);
+        (*it)->getErrorMessages(this, &s, &p);
 
-    Preprocessor::getErrorMessages(this, &s);
+    Preprocessor::getErrorMessages(this, &s, &p);
 }
 
 bool CppCheck::analyseWholeProgram(AnalyzerInformation& analyzerInformation)
@@ -1224,7 +1227,7 @@ bool CppCheck::analyseWholeProgram(AnalyzerInformation& analyzerInformation)
     bool errors = false;
 
     // Init CTU
-    CTU::maxCtuDepth = mSettings.maxCtuDepth;
+    CTU::maxCtuDepth = mProject.maxCtuDepth;
     // Analyse the tokens
     CTU::CTUInfo combinedCTU(emptyString, 0, emptyString); /// TODO: Remove this
     for (auto it = analyzerInformation.getCTUs().cbegin(); it != analyzerInformation.getCTUs().cend(); ++it) {
@@ -1232,6 +1235,6 @@ bool CppCheck::analyseWholeProgram(AnalyzerInformation& analyzerInformation)
         combinedCTU.nestedCalls.insert(combinedCTU.nestedCalls.end(), it->nestedCalls.begin(), it->nestedCalls.end());
     }
     for (Check* check : Check::instances())
-        errors |= check->analyseWholeProgram(&combinedCTU, analyzerInformation, mSettings, *this);
+        errors |= check->analyseWholeProgram(&combinedCTU, analyzerInformation, mSettings, *this, &mProject);
     return errors && (mExitCode > 0);
 }

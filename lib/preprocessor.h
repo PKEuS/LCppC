@@ -82,7 +82,7 @@ public:
     /** character that is inserted in expanded macros */
     static char macroChar;
 
-    explicit Preprocessor(Settings& settings, ErrorLogger *errorLogger = nullptr);
+    explicit Preprocessor(Settings& settings, Project& project, ErrorLogger *errorLogger = nullptr);
     virtual ~Preprocessor();
 
     static std::atomic<bool> missingIncludeFlag;
@@ -195,7 +195,7 @@ private:
 public:
 
 
-    static void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings);
+    static void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project);
 
     void setFile0(const std::string &f) {
         mFile0 = f;
@@ -213,6 +213,7 @@ private:
     void error(const std::string &filename, unsigned int linenr, const std::string &msg);
 
     Settings& mSettings;
+    Project& mProject;
     ErrorLogger *mErrorLogger;
 
     /** list of all directives met while preprocessing file */

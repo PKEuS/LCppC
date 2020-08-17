@@ -43,26 +43,26 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckUnusedFunctions(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckUnusedFunctions(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
     /** @brief Parse current TU and extract file info */
-    Check::FileInfo* getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const override;
+    Check::FileInfo* getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const override;
 
     Check::FileInfo* loadFileInfoFromXml(const tinyxml2::XMLElement* xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger) override;
+    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project) override;
 
 private:
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings * settings) const override {
-        CheckUnusedFunctions c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckUnusedFunctions c(nullptr, settings, errorLogger, project);
         c.unusedFunctionError(errorLogger, emptyString, 0, "funcName");
     }
 
-    void runChecks(const Tokenizer * /*tokenizer*/, const Settings * /*settings*/, ErrorLogger * /*errorLogger*/) override {
+    void runChecks(const Tokenizer * /*tokenizer*/, const Settings * /*settings*/, ErrorLogger * /*errorLogger*/, const Project*) override {
     }
 
     void unusedFunctionError(ErrorLogger* const errorLogger, const std::string &filename, unsigned int lineNumber, const std::string &funcname);

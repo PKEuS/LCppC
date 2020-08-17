@@ -49,7 +49,7 @@ static bool isBool(const Variable* var)
 //---------------------------------------------------------------------------
 void CheckBool::checkIncrementBoolean()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -80,12 +80,12 @@ void CheckBool::incrementBooleanError(const Token *tok)
 //---------------------------------------------------------------------------
 void CheckBool::checkBitwiseOnBoolean()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     // danmar: this is inconclusive because I don't like that there are
     //         warnings for calculations. Example: set_flag(a & b);
-    if (!mSettings->certainty.isEnabled(Certainty::inconclusive))
+    if (!mProject->certainty.isEnabled(Certainty::inconclusive))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -117,7 +117,7 @@ void CheckBool::bitwiseOnBooleanError(const Token *tok, const std::string &expre
 
 void CheckBool::checkComparisonOfBoolWithInt()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning) || !mTokenizer->isCPP())
+    if (!mProject->severity.isEnabled(Severity::warning) || !mTokenizer->isCPP())
         return;
 
     const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -166,7 +166,7 @@ static bool tokenIsFunctionReturningBool(const Token* tok)
 
 void CheckBool::checkComparisonOfFuncReturningBool()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     if (!mTokenizer->isCPP())
@@ -225,10 +225,10 @@ void CheckBool::checkComparisonOfBoolWithBool()
 {
     // FIXME: This checking is "experimental" because of the false positives
     //        when self checking lib/tokenize.cpp (#2617)
-    if (!mSettings->certainty.isEnabled(Certainty::experimental))
+    if (!mProject->certainty.isEnabled(Certainty::experimental))
         return;
 
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     if (!mTokenizer->isCPP())
@@ -297,7 +297,7 @@ void CheckBool::assignBoolToPointerError(const Token *tok)
 //-----------------------------------------------------------------------------
 void CheckBool::checkComparisonOfBoolExpressionWithInt()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase* symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -415,7 +415,7 @@ void CheckBool::checkAssignBoolToFloat()
 {
     if (!mTokenizer->isCPP())
         return;
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope * scope : symbolDatabase->functionScopes) {
@@ -435,7 +435,7 @@ void CheckBool::assignBoolToFloatError(const Token *tok)
 
 void CheckBool::returnValueOfFunctionReturningBool()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     const SymbolDatabase * const symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -452,7 +452,7 @@ void CheckBool::returnValueOfFunctionReturningBool()
             } else if (tok->scope()->isClassOrStruct())
                 tok = tok->scope()->bodyEnd;
             else if (Token::simpleMatch(tok, "return") && tok->astOperand1() &&
-                     (tok->astOperand1()->getValueGE(2, mSettings) || tok->astOperand1()->getValueLE(-1, mSettings)) &&
+                     (tok->astOperand1()->getValueGE(2, mProject) || tok->astOperand1()->getValueLE(-1, mProject)) &&
                      !(tok->astOperand1()->astOperand1() && Token::Match(tok->astOperand1(), "&|%or%")))
                 returnValueBoolError(tok);
         }

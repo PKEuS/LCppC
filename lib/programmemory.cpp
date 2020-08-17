@@ -110,12 +110,12 @@ bool conditionIsTrue(const Token *condition, const ProgramMemory &programMemory)
     return !error && result == 1;
 }
 
-static void programMemoryParseCondition(ProgramMemory& pm, const Token* tok, const Token* endTok, const Settings* settings, bool then)
+static void programMemoryParseCondition(ProgramMemory& pm, const Token* tok, const Token* endTok, const Project* project, bool then)
 {
     if (tok->varId() != 0) {
         if (then && !astIsPointer(tok) && !astIsBool(tok))
             return;
-        if (endTok && isVariableChanged(tok->next(), endTok, tok->varId(), false, settings, true))
+        if (endTok && isVariableChanged(tok->next(), endTok, tok->varId(), false, project, true))
             return;
         pm.setIntValue(tok->varId(), then);
     } else if (Token::Match(tok, "==|>=|<=|<|>|!=")) {
@@ -132,28 +132,28 @@ static void programMemoryParseCondition(ProgramMemory& pm, const Token* tok, con
             return;
         if (!truevalue.isIntValue())
             return;
-        if (endTok && isVariableChanged(tok->next(), endTok, vartok->varId(), false, settings, true))
+        if (endTok && isVariableChanged(tok->next(), endTok, vartok->varId(), false, project, true))
             return;
         pm.setIntValue(vartok->varId(),  then ? truevalue.intvalue : falsevalue.intvalue);
     } else if (Token::simpleMatch(tok, "!")) {
-        programMemoryParseCondition(pm, tok->astOperand1(), endTok, settings, !then);
+        programMemoryParseCondition(pm, tok->astOperand1(), endTok, project, !then);
     } else if (then && Token::simpleMatch(tok, "&&")) {
-        programMemoryParseCondition(pm, tok->astOperand1(), endTok, settings, then);
-        programMemoryParseCondition(pm, tok->astOperand2(), endTok, settings, then);
+        programMemoryParseCondition(pm, tok->astOperand1(), endTok, project, then);
+        programMemoryParseCondition(pm, tok->astOperand2(), endTok, project, then);
     } else if (!then && Token::simpleMatch(tok, "||")) {
-        programMemoryParseCondition(pm, tok->astOperand1(), endTok, settings, then);
-        programMemoryParseCondition(pm, tok->astOperand2(), endTok, settings, then);
+        programMemoryParseCondition(pm, tok->astOperand1(), endTok, project, then);
+        programMemoryParseCondition(pm, tok->astOperand2(), endTok, project, then);
     }
 }
 
-static void fillProgramMemoryFromConditions(ProgramMemory& pm, const Scope* scope, const Token* endTok, const Settings* settings)
+static void fillProgramMemoryFromConditions(ProgramMemory& pm, const Scope* scope, const Token* endTok, const Project* project)
 {
     if (!scope)
         return;
     if (!scope->isLocal())
         return;
     assert(scope != scope->nestedIn);
-    fillProgramMemoryFromConditions(pm, scope->nestedIn, endTok, settings);
+    fillProgramMemoryFromConditions(pm, scope->nestedIn, endTok, project);
     if (scope->type == Scope::eIf || scope->type == Scope::eWhile || scope->type == Scope::eElse) {
         const Token * bodyStart = scope->bodyStart;
         if (scope->type == Scope::eElse) {
@@ -170,13 +170,13 @@ static void fillProgramMemoryFromConditions(ProgramMemory& pm, const Scope* scop
         if (!Token::Match(condStartTok->previous(), "if|while ("))
             return;
         const Token * condTok = condStartTok->astOperand2();
-        programMemoryParseCondition(pm, condTok, endTok, settings, scope->type != Scope::eElse);
+        programMemoryParseCondition(pm, condTok, endTok, project, scope->type != Scope::eElse);
     }
 }
 
-static void fillProgramMemoryFromConditions(ProgramMemory& pm, const Token* tok, const Settings* settings)
+static void fillProgramMemoryFromConditions(ProgramMemory& pm, const Token* tok, const Project* project)
 {
-    fillProgramMemoryFromConditions(pm, tok->scope(), tok, settings);
+    fillProgramMemoryFromConditions(pm, tok->scope(), tok, project);
 }
 
 static void fillProgramMemoryFromAssignments(ProgramMemory& pm, const Token* tok, const ProgramMemory& state, ProgramMemory::Map vars)

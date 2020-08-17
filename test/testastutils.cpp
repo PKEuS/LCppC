@@ -46,7 +46,8 @@ private:
 
     bool findLambdaEndToken(const char code[]) {
         Settings settings;
-        Tokenizer tokenizer(&settings, this);
+        Project project;
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
         const Token * const tokEnd = ::findLambdaEndToken(tokenizer.tokens());
@@ -79,7 +80,8 @@ private:
 
     bool findLambdaStartToken(const char code[]) {
         Settings settings;
-        Tokenizer tokenizer(&settings, this);
+        Project project;
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
         const Token * const tokStart = ::findLambdaStartToken(tokenizer.list.back());
@@ -111,7 +113,8 @@ private:
 
     bool isNullOperand(const char code[]) {
         Settings settings;
-        Tokenizer tokenizer(&settings, this);
+        Project project;
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
         return ::isNullOperand(tokenizer.tokens());
@@ -132,7 +135,8 @@ private:
 
     bool isReturnScope(const char code[], int offset) {
         Settings settings;
-        Tokenizer tokenizer(&settings, this);
+        Project project;
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
         const Token * const tok = (offset < 0)
@@ -162,15 +166,15 @@ private:
 
     bool isSameExpression(const char code[], const char tokStr1[], const char tokStr2[]) {
         Settings settings;
-        Library library;
-        Tokenizer tokenizer(&settings, this);
+        Project project;
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
         tokenizer.simplifyTokens0("");
         tokenizer.simplifyTokens1();
         const Token * const tok1 = Token::findsimplematch(tokenizer.tokens(), tokStr1, strlen(tokStr1));
         const Token * const tok2 = Token::findsimplematch(tok1->next(), tokStr2, strlen(tokStr2));
-        return ::isSameExpression(false, false, tok1, tok2, library, false, true, nullptr);
+        return ::isSameExpression(false, false, tok1, tok2, project.library, false, true, nullptr);
     }
 
     void isSameExpression() {
@@ -202,12 +206,13 @@ private:
 
     bool isVariableChanged(const char code[], const char startPattern[], const char endPattern[]) {
         Settings settings;
-        Tokenizer tokenizer(&settings, this);
+        Project project;
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
         const Token * const tok1 = Token::findsimplematch(tokenizer.tokens(), startPattern, strlen(startPattern));
         const Token * const tok2 = Token::findsimplematch(tokenizer.tokens(), endPattern, strlen(endPattern));
-        return ::isVariableChanged(tok1,tok2,1,false,&settings,true);
+        return ::isVariableChanged(tok1,tok2,1,false,&project,true);
     }
 
     void isVariableChanged() {
@@ -224,11 +229,12 @@ private:
 
     bool isVariableChangedByFunctionCall(const char code[], const char pattern[], bool *inconclusive) {
         Settings settings;
-        Tokenizer tokenizer(&settings, this);
+        Project project;
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
         const Token * const argtok = Token::findmatch(tokenizer.tokens(), pattern);
-        return ::isVariableChangedByFunctionCall(argtok, 0, &settings, inconclusive);
+        return ::isVariableChangedByFunctionCall(argtok, 0, &project, inconclusive);
     }
 
     void isVariableChangedByFunctionCall() {
@@ -246,7 +252,8 @@ private:
 
     bool nextAfterAstRightmostLeaf(const char code[], const char parentPattern[], const char rightPattern[]) {
         Settings settings;
-        Tokenizer tokenizer(&settings, this);
+        Project project;
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
         const Token * tok = Token::findsimplematch(tokenizer.tokens(), parentPattern, strlen(parentPattern));

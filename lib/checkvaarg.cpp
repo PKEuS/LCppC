@@ -48,7 +48,7 @@ void CheckVaarg::va_start_argument()
 {
     const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
     const std::size_t functions = symbolDatabase->functionScopes.size();
-    const bool printWarnings = mSettings->severity.isEnabled(Severity::warning);
+    const bool printWarnings = mProject->severity.isEnabled(Severity::warning);
 
     for (std::size_t i = 0; i < functions; ++i) {
         const Scope* scope = symbolDatabase->functionScopes[i];

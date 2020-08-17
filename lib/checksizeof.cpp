@@ -40,7 +40,7 @@ static const struct CWE CWE682(682U);   // Incorrect Calculation
 //---------------------------------------------------------------------------
 void CheckSizeof::checkSizeofForNumericParameter()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -68,7 +68,7 @@ void CheckSizeof::sizeofForNumericParameterError(const Token *tok)
 //---------------------------------------------------------------------------
 void CheckSizeof::checkSizeofForArrayParameter()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope * scope : symbolDatabase->functionScopes) {
@@ -106,7 +106,7 @@ void CheckSizeof::sizeofForArrayParameterError(const Token *tok)
 
 void CheckSizeof::checkSizeofForPointerSize()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -254,7 +254,7 @@ void CheckSizeof::divideBySizeofError(const Token *tok, const std::string &memfu
 //-----------------------------------------------------------------------------
 void CheckSizeof::sizeofsizeof()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
@@ -278,10 +278,10 @@ void CheckSizeof::sizeofsizeofError(const Token *tok)
 
 void CheckSizeof::sizeofCalculation()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
-    const bool printInconclusive = mSettings->certainty.isEnabled(Certainty::inconclusive);
+    const bool printInconclusive = mProject->certainty.isEnabled(Certainty::inconclusive);
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
         if (!Token::simpleMatch(tok, "sizeof ("))
@@ -322,7 +322,7 @@ void CheckSizeof::sizeofCalculationError(const Token *tok, bool inconclusive)
 
 void CheckSizeof::sizeofFunction()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
@@ -363,7 +363,7 @@ void CheckSizeof::sizeofFunctionError(const Token *tok)
 //-----------------------------------------------------------------------------
 void CheckSizeof::suspiciousSizeofCalculation()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning) || !mSettings->certainty.isEnabled(Certainty::inconclusive))
+    if (!mProject->severity.isEnabled(Severity::warning) || !mProject->certainty.isEnabled(Certainty::inconclusive))
         return;
 
     // TODO: Use AST here. This should be possible as soon as sizeof without brackets is correctly parsed
@@ -396,7 +396,7 @@ void CheckSizeof::divideSizeofError(const Token *tok)
 
 void CheckSizeof::sizeofVoid()
 {
-    if (!mSettings->severity.isEnabled(Severity::portability))
+    if (!mProject->severity.isEnabled(Severity::portability))
         return;
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {

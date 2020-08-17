@@ -40,23 +40,24 @@ public:
     }
 
 private:
-    Settings settings0;
+    Settings settings;
+    Project project0;
 
     void check(const char code[], bool experimental = true, const char filename[] = "test.cpp") {
         // Clear the error buffer..
         errout.str("");
 
-        settings0.certainty.enable(Certainty::inconclusive);
-        settings0.certainty.setEnabled(Certainty::experimental, experimental);
+        project0.certainty.enable(Certainty::inconclusive);
+        project0.certainty.setEnabled(Certainty::experimental, experimental);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
 
         // Check for buffer overruns..
         CheckBufferOverrun check;
-        check.runChecks(&tokenizer, &settings0, this);
+        check.runChecks(&tokenizer, &settings, this, &project0);
 
         // Prepare..
         AnalyzerInformation ai;
@@ -64,7 +65,7 @@ private:
         ctu.parseTokens(&tokenizer);
 
         // Check code..
-        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings0);
+        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings, &project0);
         if (!fi1)
             return;
         tinyxml2::XMLDocument doc;
@@ -73,11 +74,11 @@ private:
 
         Check::FileInfo* fi2 = check.loadFileInfoFromXml(e);
         ctu.addCheckInfo(check.name(), fi2);
-        check.analyseWholeProgram(&ctu, ai, settings0, *this);
+        check.analyseWholeProgram(&ctu, ai, settings, *this, &project0);
     }
 
-    void check(const char code[], const Settings &settings, const char filename[] = "test.cpp") {
-        Tokenizer tokenizer(&settings, this);
+    void check(const char code[], const Project& project, const char filename[] = "test.cpp") {
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
 
@@ -85,16 +86,16 @@ private:
         errout.str("");
 
         // Check for buffer overruns..
-        CheckBufferOverrun checkBufferOverrun(&tokenizer, &settings, this);
-        checkBufferOverrun.runChecks(&tokenizer, &settings, this);
+        CheckBufferOverrun checkBufferOverrun(&tokenizer, &settings, this, &project);
+        checkBufferOverrun.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void run() override {
-        LOAD_LIB_2(settings0.library, "std.cfg");
+        LOAD_LIB_2(project0.library, "std.cfg");
 
-        settings0.severity.enable(Severity::warning);
-        settings0.severity.enable(Severity::style);
-        settings0.severity.enable(Severity::portability);
+        project0.severity.enable(Severity::warning);
+        project0.severity.enable(Severity::style);
+        project0.severity.enable(Severity::portability);
 
         TEST_CASE(noerr1);
         TEST_CASE(noerr2);
@@ -902,7 +903,7 @@ private:
 
     void array_index_24() {
         // ticket #1492 and #1539
-        const std::string charMaxPlusOne(settings0.defaultSign == 'u' ? "256" : "128");
+        const std::string charMaxPlusOne(project0.defaultSign == 'u' ? "256" : "128");
         check(("void f(char n) {\n"
                "    int a[n];\n"     // n <= CHAR_MAX
                "    a[-1] = 0;\n"    // negative index
@@ -2091,7 +2092,7 @@ private:
               "    char str[6] = \"\\0\";\n"
               "    unsigned short port = 65535;\n"
               "    snprintf(str, sizeof(str), \"%hu\", port);\n"
-              "}", settings0, "test.c");
+              "}", project0, "test.c");
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -2642,7 +2643,7 @@ private:
 
     void buffer_overrun_errorpath() {
         setMultiline();
-        settings0.templateLocation = "{file}:{line}:note:{info}";
+        settings.templateLocation = "{file}:{line}:note:{info}";
 
         check("void f() {\n"
               "    char *p = malloc(10);\n"
@@ -2802,7 +2803,7 @@ private:
     }
 
     void buffer_overrun_readSizeFromCfg() {
-        Settings settings;
+        Project project;
         const char xmldata[] = "<?xml version=\"1.0\"?>\n"
                                "<def>\n"
                                "  <podtype name=\"u8\" sign=\"u\" size=\"1\"/>\n"
@@ -2816,32 +2817,32 @@ private:
                                "</def>";
         tinyxml2::XMLDocument doc;
         doc.Parse(xmldata, sizeof(xmldata));
-        settings.library.load(doc);
+        project.library.load(doc);
 
         // Attempt to get size from Cfg files, no false positives if size is not specified
         check("void f() {\n"
               "  u8 str[256];\n"
               "  mystrcpy(str, \"abcd\");\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
               "  u8 str[2];\n"
               "  mystrcpy(str, \"abcd\");\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: str\n", errout.str());
 
         // The same for structs, where the message comes from a different check
         check("void f() {\n"
               "    struct { u8 str[256]; } ms;\n"
               "    mystrcpy(ms.str, \"abcd\");\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
               "    struct { u8 str[2]; } ms;\n"
               "    mystrcpy(ms.str, \"abcd\");\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: ms.str\n", errout.str());
     }
 
@@ -3329,7 +3330,7 @@ private:
         }
     */
     void minsize_argvalue() {
-        Settings settings;
+        Project project;
         const char xmldata[] = "<?xml version=\"1.0\"?>\n"
                                "<def>\n"
                                "  <function name=\"mymemset\">\n"
@@ -3343,20 +3344,20 @@ private:
                                "</def>";
         tinyxml2::XMLDocument doc;
         doc.Parse(xmldata, sizeof(xmldata));
-        settings.library.load(doc);
-        settings.severity.enable(Severity::warning);
-        settings.sizeof_wchar_t = 4;
+        project.library.load(doc);
+        project.severity.enable(Severity::warning);
+        project.sizeof_wchar_t = 4;
 
         check("void f() {\n"
               "    char c[10];\n"
               "    mymemset(c, 0, 10);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
               "    char c[10];\n"
               "    mymemset(c, 0, 11);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: c\n", errout.str());
 
         check("struct S {\n"
@@ -3365,78 +3366,78 @@ private:
               "void f() {\n"
               "    S s;\n"
               "    mymemset(s.a, 0, 10);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:6]: (error) Buffer is accessed out of bounds: s.a\n", errout.str());
 
         check("void foo() {\n"
               "    char s[10];\n"
               "    mymemset(s, 0, '*');\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: s\n", errout.str());
 
         // ticket #836
         check("void f(void) {\n"
               "  char a[10];\n"
               "  mymemset(a+5, 0, 10);\n"
-              "}", settings);
+              "}", project);
         TODO_ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: a\n", "", errout.str());
 
         // Ticket #909
         check("void f(void) {\n"
               "    char str[] = \"abcd\";\n"
               "    mymemset(str, 0, 6);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: str\n", errout.str());
 
         check("void f(void) {\n"
               "    char str[] = \"abcd\";\n"
               "    mymemset(str, 0, 5);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("void f(void) {\n"
               "    wchar_t str[] = L\"abcd\";\n"
               "    mymemset(str, 0, 21);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: str\n", errout.str());
 
         check("void f(void) {\n"
               "    wchar_t str[] = L\"abcd\";\n"
               "    mymemset(str, 0, 20);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         // ticket #1659 - overflowing variable when using memcpy
         check("void f(void) {\n"
               "  char c;\n"
               "  mymemset(&c, 0, 4);\n"
-              "}", settings);
+              "}", project);
         TODO_ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: c\n", "", errout.str());
 
         // ticket #2121 - buffer access out of bounds when using uint32_t
         check("void f(void) {\n"
               "    unknown_type_t buf[4];\n"
               "    mymemset(buf, 0, 100);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         // #3124 - multidimension array
         check("int main() {\n"
               "    char b[5][6];\n"
               "    mymemset(b, 0, 5 * 6);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("int main() {\n"
               "    char b[5][6];\n"
               "    mymemset(b, 0, 6 * 6);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: b\n", errout.str());
 
         check("int main() {\n"
               "    char b[5][6];\n"
               "    mymemset(b, 0, 31);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: b\n", errout.str());
 
         // #4968 - not standard function
@@ -3445,29 +3446,29 @@ private:
               "    foo.mymemset(str, 0, 100);\n"
               "    foo::mymemset(str, 0, 100);\n"
               "    std::mymemset(str, 0, 100);\n"
-              "}", settings);
+              "}", project);
         TODO_ASSERT_EQUALS("[test.cpp:5]: (error) Buffer is accessed out of bounds: str\n", "", errout.str());
 
         // #5257 - check strings
         check("void f() {\n"
               "  mymemset(\"abc\", 0, 20);\n"
-              "}", settings);
+              "}", project);
         // TODO ASSERT_EQUALS("[test.cpp:2]: (error) Buffer is accessed out of bounds.\n", errout.str());
 
         check("void f() {\n"
               "  mymemset(temp, \"abc\", 4);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n" // #6816 - fp when array has known string value
               "    char c[10] = \"c\";\n"
               "    mymemset(c, 0, 10);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
     }
 
     void minsize_sizeof() {
-        Settings settings;
+        Project project;
         const char xmldata[] = "<?xml version=\"1.0\"?>\n"
                                "<def>\n"
                                "  <function name=\"mystrncpy\">\n"
@@ -3482,53 +3483,53 @@ private:
                                "</def>";
         tinyxml2::XMLDocument doc;
         doc.Parse(xmldata, sizeof(xmldata));
-        settings.library.load(doc);
+        project.library.load(doc);
 
         check("void f() {\n"
               "    char c[7];\n"
               "    mystrncpy(c, \"hello\", 7);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
               " char c[6];\n"
               " mystrncpy(c,\"hello\",6);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
               " char c[5];\n"
               " mystrncpy(c,\"hello\",6);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: c\n", errout.str());
 
         check("void f() {\n"
               "    char c[6];\n"
               "    mystrncpy(c,\"hello!\",7);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: c\n", errout.str());
 
         check("void f(unsigned int addr) {\n"
               "    memset((void *)addr, 0, 1000);\n"
-              "}", settings0);
+              "}", project0);
         ASSERT_EQUALS("", errout.str());
 
         check("struct AB { char a[10]; };\n"
               "void foo(AB *ab) {\n"
               "    mystrncpy(x, ab->a, 100);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("void a(char *p) { mystrncpy(p,\"hello world!\",10); }\n" // #3168
               "void b() {\n"
               "    char buf[5];\n"
               "    a(buf);"
-              "}", settings);
+              "}", project);
         TODO_ASSERT_EQUALS("[test.cpp:4] -> [test.cpp:1]: (error) Buffer is accessed out of bounds: buf\n", "", errout.str());
     }
 
     void minsize_strlen() {
-        Settings settings;
+        Project project;
         const char xmldata[] = "<?xml version=\"1.0\"?>\n"
                                "<def>\n"
                                "  <function name=\"mysprintf\">\n"
@@ -3544,19 +3545,19 @@ private:
                                "</def>";
         tinyxml2::XMLDocument doc;
         doc.Parse(xmldata, sizeof(xmldata));
-        settings.library.load(doc);
+        project.library.load(doc);
 
         // formatstr..
         check("void f() {\n"
               "    char str[3];\n"
               "    mysprintf(str, \"test\");\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: str\n", errout.str());
 
         check("void f() {\n"
               "    char str[5];\n"
               "    mysprintf(str, \"%s\", \"abcde\");\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: str\n", errout.str());
 
         check("int getnumber();\n"
@@ -3564,51 +3565,51 @@ private:
               "{\n"
               "    char str[5];\n"
               "    mysprintf(str, \"%d: %s\", getnumber(), \"abcde\");\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:5]: (error) Buffer is accessed out of bounds: str\n", errout.str());
 
         check("void f() {\n"
               "    char str[5];\n"
               "    mysprintf(str, \"test%s\", \"\");\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
               "    char *str = new char[5];\n"
               "    mysprintf(str, \"abcde\");\n"
-              "}", settings);
+              "}", project);
         TODO_ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds.\n", "", errout.str());
 
         check("void f(int condition) {\n"
               "    char str[5];\n"
               "    mysprintf(str, \"test%s\", condition ? \"12\" : \"34\");\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("void f(int condition) {\n"
               "    char str[5];\n"
               "    mysprintf(str, \"test%s\", condition ? \"12\" : \"345\");\n"
-              "}", settings);
+              "}", project);
         TODO_ASSERT_EQUALS("error", "", errout.str());
 
         check("struct Foo { char a[1]; };\n"
               "void f() {\n"
               "  struct Foo x;\n"
               "  mysprintf(x.a, \"aa\");\n"
-              "}", settings);
+              "}", project);
         TODO_ASSERT_EQUALS("[test.cpp:4]: (error) Buffer is accessed out of bounds: x.a\n", "", errout.str());
 
         // ticket #900
         check("void f() {\n"
               "  char *a = new char(30);\n"
               "  mysprintf(a, \"a\");\n"
-              "}", settings);
+              "}", project);
         TODO_ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds.\n", "", errout.str());
 
         check("void f(char value) {\n"
               "  char *a = new char(value);\n"
               "  mysprintf(a, \"a\");\n"
-              "}", settings);
+              "}", project);
         TODO_ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds.\n", "", errout.str());
 
         // This is out of bounds if 'sizeof(ABC)' is 1 (No padding)
@@ -3616,14 +3617,14 @@ private:
               "void f() {\n"
               "  struct Foo *x = malloc(sizeof(Foo));\n"
               "  mysprintf(x.a, \"aa\");\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str()); // TODO: Inconclusive error?
 
         check("struct Foo { char a[1]; };\n"
               "void f() {\n"
               "  struct Foo *x = malloc(sizeof(Foo) + 10);\n"
               "  mysprintf(x.a, \"aa\");\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("struct Foo {\n" // #6668 - unknown size
@@ -3632,12 +3633,12 @@ private:
               "};"
               "void Foo::f() {\n"
               "  mysprintf(a, \"abcd\");\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
     }
 
     void minsize_mul() {
-        Settings settings;
+        Project project;
         const char xmldata[] = "<?xml version=\"1.0\"?>\n"
                                "<def>\n"
                                "  <function name=\"myfread\">\n"
@@ -3651,18 +3652,18 @@ private:
                                "</def>";
         tinyxml2::XMLDocument doc;
         doc.Parse(xmldata, sizeof(xmldata));
-        settings.library.load(doc);
+        project.library.load(doc);
 
         check("void f() {\n"
               "    char c[5];\n"
               "    myfread(c, 1, 5, stdin);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("void f() {\n"
               "    char c[5];\n"
               "    myfread(c, 1, 6, stdin);\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: c\n", errout.str());
     }
 
@@ -4118,7 +4119,7 @@ private:
     void getErrorMessages() {
         // Ticket #2292: segmentation fault when using --errorlist
         CheckBufferOverrun c;
-        c.getErrorMessages(this, nullptr);
+        c.getErrorMessages(this, nullptr, nullptr);
     }
 
     void arrayIndexThenCheck() {
@@ -4459,15 +4460,15 @@ private:
 
     void checkPipeParameterSize() { // #3521
 
-        Settings settings;
-        LOAD_LIB_2(settings.library, "posix.cfg");
+        Project project;
+        LOAD_LIB_2(project.library, "posix.cfg");
 
         check("void f(){\n"
               "int pipefd[1];\n" // <--  array of two integers is needed
               "if (pipe(pipefd) == -1) {\n"
               "    return;\n"
               "  }\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: pipefd\n", errout.str());
 
         check("void f(){\n"
@@ -4475,7 +4476,7 @@ private:
               "if (pipe(pipefd) == -1) {\n"
               "    return;\n"
               "  }\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
 
         check("void f(){\n"
@@ -4483,7 +4484,7 @@ private:
               "if (pipe((int*)pipefd) == -1) {\n"
               "    return;\n"
               "  }\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("[test.cpp:3]: (error) Buffer is accessed out of bounds: (int*)pipefd\n", errout.str());
 
         check("void f(){\n"
@@ -4491,7 +4492,7 @@ private:
               "if (pipe((int*)pipefd) == -1) {\n"
               "    return;\n"
               "  }\n"
-              "}", settings);
+              "}", project);
         ASSERT_EQUALS("", errout.str());
     }
 };

@@ -1074,7 +1074,7 @@ void CheckUnusedVar::checkFunctionVariableUsage_iterateScopes(const Scope* const
 
 void CheckUnusedVar::checkFunctionVariableUsage()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     // Parse all executing scopes..
@@ -1187,7 +1187,7 @@ void CheckUnusedVar::checkFunctionVariableUsage()
                     (!op1Var->valueType() || op1Var->valueType()->type == ValueType::Type::UNKNOWN_TYPE)) {
                     // Check in the library if we should bailout or not..
                     const std::string typeName = op1Var->getTypeName();
-                    switch (mSettings->library.getTypeCheck("unusedvar", typeName)) {
+                    switch (mProject->library.getTypeCheck("unusedvar", typeName)) {
                     case Library::TypeCheck::def:
                         bailoutTypeName = typeName;
                         break;
@@ -1208,10 +1208,10 @@ void CheckUnusedVar::checkFunctionVariableUsage()
             if (tok->previous() && tok->previous()->variable() && tok->previous()->variable()->nameToken()->scope()->type == Scope::eUnion)
                 continue;
 
-            FwdAnalysis fwdAnalysis(mTokenizer->isCPP(), mSettings->library);
+            FwdAnalysis fwdAnalysis(mTokenizer->isCPP(), mProject->library);
             if (fwdAnalysis.unusedValue(expr, start, scope->bodyEnd)) {
                 if (!bailoutTypeName.empty() && bailoutTypeName != "auto") {
-                    if (mSettings->checkLibrary && mSettings->severity.isEnabled(Severity::information)) {
+                    if (mSettings->checkLibrary && mProject->severity.isEnabled(Severity::information)) {
                         reportError(tok,
                                     Severity::information,
                                     "checkLibraryCheckType",
@@ -1301,7 +1301,7 @@ void CheckUnusedVar::unassignedVariableError(const Token *tok, const std::string
 //---------------------------------------------------------------------------
 void CheckUnusedVar::checkStructMemberUsage()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();

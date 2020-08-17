@@ -156,12 +156,12 @@ private:
         ASSERT_EQUALS(true, suppressions.isSuppressed(errorMessage("errorid", "x/../a.c", 123)));
     }
 
-    void reportSuppressions(const Settings &settings, const std::map<std::string, std::string> &files) {
+    void reportSuppressions(const Project & project, const std::map<std::string, std::string> &files) {
         for (std::map<std::string, std::string>::const_iterator i = files.begin(); i != files.end(); ++i) {
-            reportUnmatchedSuppressions(settings.nomsg.getUnmatchedLocalSuppressions(i->first));
+            reportUnmatchedSuppressions(project.nomsg.getUnmatchedLocalSuppressions(i->first));
         }
 
-        reportUnmatchedSuppressions(settings.nomsg.getUnmatchedGlobalSuppressions());
+        reportUnmatchedSuppressions(project.nomsg.getUnmatchedGlobalSuppressions());
     }
 
     // Check the suppression
@@ -178,14 +178,15 @@ private:
         errout.str("");
 
         Settings settings;
-        CppCheck cppCheck(*this, settings, true);
+        Project project;
+        CppCheck cppCheck(*this, settings, project, true);
         settings.exitCode = 1;
-        settings.inlineSuppressions = true;
+        project.inlineSuppressions = true;
         if (suppression != "unusedFunction")
-            settings.checks.setEnabled("unusedFunction", false);
-        settings.severity.enable(Severity::information);
+            project.checks.setEnabled("unusedFunction", false);
+        project.severity.enable(Severity::information);
         if (!suppression.empty()) {
-            std::string r = settings.nomsg.addSuppressionLine(suppression);
+            std::string r = project.nomsg.addSuppressionLine(suppression);
             ASSERT_EQUALS("", r);
         }
 
@@ -197,7 +198,7 @@ private:
         //if (suppression == "unusedFunction" && cppCheck.analyseWholeProgram())
         //    exitCode |= settings.exitCode;
 
-        reportSuppressions(settings, files);
+        reportSuppressions(project, files);
 
         return exitCode;
     }
@@ -210,13 +211,14 @@ private:
         filemap.emplace_back("test.cpp", 1, emptyString);
 
         Settings settings;
+        Project project;
         settings.jobs = 1;
-        settings.inlineSuppressions = true;
-        settings.severity.enable(Severity::information);
+        project.inlineSuppressions = true;
+        project.severity.enable(Severity::information);
         if (!suppression.empty()) {
-            ASSERT_EQUALS("", settings.nomsg.addSuppressionLine(suppression));
+            ASSERT_EQUALS("", project.nomsg.addSuppressionLine(suppression));
         }
-        ThreadExecutor executor(filemap, settings, *this);
+        ThreadExecutor executor(filemap, settings, project, *this);
         for (std::list<CTU::CTUInfo>::const_iterator i = filemap.begin(); i != filemap.end(); ++i)
             executor.addFileContent(i->sourcefile, code);
 
@@ -226,7 +228,7 @@ private:
         for (std::list<CTU::CTUInfo>::const_iterator file = filemap.begin(); file != filemap.end(); ++file)
             files_for_report[file->sourcefile] = "";
 
-        reportSuppressions(settings, files_for_report);
+        reportSuppressions(project, files_for_report);
 
         return exitCode;
     }
@@ -626,8 +628,9 @@ private:
         errout.str("");
 
         Settings settings;
-        CppCheck cppCheck(*this, settings, false); // <- do not "use global suppressions". pretend this is a thread that just checks a file.
-        settings.nomsg.addSuppressionLine("uninitvar");
+        Project project;
+        CppCheck cppCheck(*this, settings, project, false); // <- do not "use global suppressions". pretend this is a thread that just checks a file.
+        project.nomsg.addSuppressionLine("uninitvar");
         settings.exitCode = 1;
 
         const char code[] = "int f() { int a; return a; }";
@@ -662,11 +665,12 @@ private:
         errout.str("");
 
         Settings settings;
-        CppCheck cppCheck(*this, settings, true);
-        settings.severity.enable(Severity::style);
-        settings.inlineSuppressions = true;
+        Project project;
+        CppCheck cppCheck(*this, settings, project, true);
+        project.severity.enable(Severity::style);
+        project.inlineSuppressions = true;
         settings.relativePaths = true;
-        settings.basePaths.emplace_back("/somewhere");
+        project.basePaths.emplace_back("/somewhere");
         const char code[] =
             "struct Point\n"
             "{\n"

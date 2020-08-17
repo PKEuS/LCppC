@@ -41,7 +41,7 @@ namespace {
 
 void Check64BitPortability::pointerassignment()
 {
-    if (!mSettings->severity.isEnabled(Severity::portability))
+    if (!mProject->severity.isEnabled(Severity::portability))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();

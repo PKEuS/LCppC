@@ -34,15 +34,16 @@ public:
 
 
 private:
-    Settings settings0;
-    Settings settings_std;
-    Settings settings_windows;
+    Settings settings;
+    Project project0;
+    Project project_std;
+    Project project_windows;
 
     void run() override {
-        LOAD_LIB_2(settings_std.library, "std.cfg");
-        LOAD_LIB_2(settings_windows.library, "windows.cfg");
-        settings0.severity.enable(Severity::portability);
-        settings_windows.severity.enable(Severity::portability);
+        LOAD_LIB_2(project_std.library, "std.cfg");
+        LOAD_LIB_2(project_windows.library, "windows.cfg");
+        project0.severity.enable(Severity::portability);
+        project_windows.severity.enable(Severity::portability);
 
         TEST_CASE(combine_strings);
         TEST_CASE(combine_wstrings);
@@ -122,11 +123,11 @@ private:
         TEST_CASE(simplifyNamespaceAliases);
     }
 
-    std::string tok(const char code[], bool simplify = true, Settings::PlatformType type = Settings::Native) {
+    std::string tok(const char code[], bool simplify = true, Project::PlatformType type = Project::Native) {
         errout.str("");
 
-        settings0.platform(type);
-        Tokenizer tokenizer(&settings0, this);
+        project0.platform(type);
+        Tokenizer tokenizer(&settings, &project0, this);
 
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
@@ -140,11 +141,11 @@ private:
         return tokenizer.tokens()->stringifyList(nullptr, !simplify);
     }
 
-    std::string tokWithWindows(const char code[], bool simplify = true, Settings::PlatformType type = Settings::Native) {
+    std::string tokWithWindows(const char code[], bool simplify = true, Project::PlatformType type = Project::Native) {
         errout.str("");
 
-        settings_windows.platform(type);
-        Tokenizer tokenizer(&settings_windows, this);
+        project_windows.platform(type);
+        Tokenizer tokenizer(&settings, &project_windows, this);
 
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
@@ -155,7 +156,7 @@ private:
     std::string tok(const char code[], const char filename[]) {
         errout.str("");
 
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
 
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
@@ -166,7 +167,7 @@ private:
     std::string tokWithNewlines(const char code[]) {
         errout.str("");
 
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
 
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
@@ -177,7 +178,7 @@ private:
     std::string tokWithStdLib(const char code[]) {
         errout.str("");
 
-        Tokenizer tokenizer(&settings_std, this);
+        Tokenizer tokenizer(&settings, &project_std, this);
 
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
@@ -188,7 +189,7 @@ private:
     std::string tokenizeDebugListing(const char code[], const char filename[] = "test.cpp") {
         errout.str("");
 
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
 
@@ -217,10 +218,10 @@ private:
         ASSERT_EQUALS(tok(code2), tok(code1));
 
         const char code3[] = "x = L\"1\" TEXT(\"2\") L\"3\";";
-        ASSERT_EQUALS("x = L\"123\" ;", tok(code3, false, Settings::Win64));
+        ASSERT_EQUALS("x = L\"123\" ;", tok(code3, false, Project::Win64));
 
         const char code4[] = "x = TEXT(\"1\") L\"2\";";
-        ASSERT_EQUALS("x = L\"1\" L\"2\" ;", tok(code4, false, Settings::Win64));
+        ASSERT_EQUALS("x = L\"1\" L\"2\" ;", tok(code4, false, Project::Win64));
     }
 
     void combine_wstrings() {
@@ -228,7 +229,7 @@ private:
 
         const char expected[] =  "a = L\"hello world\" ;";
 
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -240,7 +241,7 @@ private:
 
         const char expected[] =  "abcd = u\"abcd\" ;";
 
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -252,7 +253,7 @@ private:
 
         const char expected[] =  "abcd = U\"abcd\" ;";
 
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -264,7 +265,7 @@ private:
 
         const char expected[] =  "abcd = u8\"abcd\" ;";
 
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -276,7 +277,7 @@ private:
 
         const char expected[] =  "abcdef = L\"abcdef\" ;";
 
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -765,7 +766,7 @@ private:
         {
             // Ticket #1997
             const char code[] = "void * operator new[](size_t);";
-            ASSERT_EQUALS("void * operatornew[] ( long ) ;", tok(code, true, Settings::Win32A));
+            ASSERT_EQUALS("void * operatornew[] ( long ) ;", tok(code, true, Project::Win32A));
         }
 
         ASSERT_EQUALS("; a [ 0 ] ;", tok(";a[0*(*p)];"));
@@ -838,7 +839,7 @@ private:
     }
 
     void duplicateDefinition() { // #3565 - wrongly detects duplicate definition
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr("{ x ; return a not_eq x; }");
         tokenizer.tokenize(istr, "test.c");
         Token *x_token = tokenizer.list.front()->tokAt(5);
@@ -1253,12 +1254,12 @@ private:
         ASSERT_EQUALS("int f ( ) ;", tok("int __far __syscall f();", true));
         ASSERT_EQUALS("int f ( ) ;", tok("int __far __pascal f();", true));
         ASSERT_EQUALS("int f ( ) ;", tok("int __far __fortran f();", true));
-        ASSERT_EQUALS("int f ( ) ;", tok("int WINAPI f();", true, Settings::Win32A));
-        ASSERT_EQUALS("int f ( ) ;", tok("int APIENTRY f();", true, Settings::Win32A));
-        ASSERT_EQUALS("int f ( ) ;", tok("int CALLBACK f();", true, Settings::Win32A));
+        ASSERT_EQUALS("int f ( ) ;", tok("int WINAPI f();", true, Project::Win32A));
+        ASSERT_EQUALS("int f ( ) ;", tok("int APIENTRY f();", true, Project::Win32A));
+        ASSERT_EQUALS("int f ( ) ;", tok("int CALLBACK f();", true, Project::Win32A));
 
         // don't simplify Microsoft defines in unix code (#7554)
-        ASSERT_EQUALS("enum E { CALLBACK } ;", tok("enum E { CALLBACK } ;", true, Settings::Unix32));
+        ASSERT_EQUALS("enum E { CALLBACK } ;", tok("enum E { CALLBACK } ;", true, Project::Unix32));
     }
 
     void simplifyFunctorCall() {

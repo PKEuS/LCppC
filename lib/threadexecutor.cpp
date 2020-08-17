@@ -30,8 +30,8 @@
 #include <vector>
 
 
-ThreadExecutor::ThreadExecutor(std::list<CTU::CTUInfo>& files, Settings &settings, ErrorLogger &errorLogger)
-    : mCTUs(files), mSettings(settings), mErrorLogger(errorLogger)
+ThreadExecutor::ThreadExecutor(std::list<CTU::CTUInfo>& files, Settings& settings, Project& project, ErrorLogger& errorLogger)
+    : mCTUs(files), mSettings(settings), mProject(project), mErrorLogger(errorLogger)
 {
     mProcessedFiles = 0;
     mTotalFiles = 0;
@@ -73,7 +73,7 @@ unsigned int ThreadExecutor::checkSync()
         }
 
         // Second stage: Some markup files need to be processed after all c/cpp files were checked
-        if (!mSettings.library.markupExtensions().empty()) {
+        if (!mProject.library.markupExtensions().empty()) {
             mItNextCTU = mCTUs.begin();
             threadHandles.clear();
             for (unsigned int i = 0; i < jobs; ++i) {
@@ -87,7 +87,7 @@ unsigned int ThreadExecutor::checkSync()
         threadProc(false);
 
         // Second stage: Some markup files need to be processed after all c/cpp files were checked
-        if (!mSettings.library.markupExtensions().empty()) {
+        if (!mProject.library.markupExtensions().empty()) {
             mItNextCTU = mCTUs.begin();
             threadProc(true);
         }
@@ -106,7 +106,7 @@ std::thread ThreadExecutor::checkAsync(std::function<void(unsigned int)> callbac
 
 void ThreadExecutor::threadProc(bool markupStage)
 {
-    CppCheck fileChecker(*this, mSettings, false);
+    CppCheck fileChecker(*this, mSettings, mProject, false);
 
     while (!mSettings.terminated()) {
         mFileSync.lock();
@@ -120,7 +120,7 @@ void ThreadExecutor::threadProc(bool markupStage)
 
         mFileSync.unlock();
 
-        if (markupStage != mSettings.library.processMarkupAfterCode(ctu->sourcefile))
+        if (markupStage != mProject.library.processMarkupAfterCode(ctu->sourcefile))
             continue;
 
         const std::map<std::string, std::string>::const_iterator fileContent = mFileContents.find(ctu->sourcefile);
@@ -154,7 +154,7 @@ void ThreadExecutor::reportOut(const std::string &outmsg)
 
 void ThreadExecutor::reportErr(const ErrorMessage &msg)
 {
-    if (mSettings.nomsg.isSuppressed(msg.toSuppressionsErrorMessage()))
+    if (mProject.nomsg.isSuppressed(msg.toSuppressionsErrorMessage()))
         return;
 
     // Alert only about unique errors

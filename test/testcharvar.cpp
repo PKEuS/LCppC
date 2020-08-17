@@ -31,11 +31,12 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        settings.platform(Settings::Unspecified);
-        settings.severity.enable(Severity::warning);
-        settings.severity.enable(Severity::portability);
+        project.platform(Project::Unspecified);
+        project.severity.enable(Severity::warning);
+        project.severity.enable(Severity::portability);
 
         TEST_CASE(array_index_1);
         TEST_CASE(array_index_2);
@@ -47,12 +48,12 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check char variable usage..
-        CheckOther checkOther(&tokenizer, &settings, this);
+        CheckOther checkOther(&tokenizer, &settings, this, &project);
         checkOther.checkCharVariable();
     }
 

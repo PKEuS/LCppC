@@ -1246,14 +1246,14 @@ bool isReturnScope(const Token* const endToken, const Library* library, const To
     return false;
 }
 
-bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, unsigned int varid, const Settings *settings, bool *inconclusive)
+bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, unsigned int varid, const Project* project, bool *inconclusive)
 {
     if (!tok)
         return false;
     if (tok->varId() == varid)
-        return isVariableChangedByFunctionCall(tok, indirect, settings, inconclusive);
-    return isVariableChangedByFunctionCall(tok->astOperand1(), indirect, varid, settings, inconclusive) ||
-           isVariableChangedByFunctionCall(tok->astOperand2(), indirect, varid, settings, inconclusive);
+        return isVariableChangedByFunctionCall(tok, indirect, project, inconclusive);
+    return isVariableChangedByFunctionCall(tok->astOperand1(), indirect, varid, project, inconclusive) ||
+           isVariableChangedByFunctionCall(tok->astOperand2(), indirect, varid, project, inconclusive);
 }
 
 bool isScopeBracket(const Token* tok)
@@ -1359,7 +1359,7 @@ static const Variable* getArgumentVar(const Token* tok, int argnr)
     return nullptr;
 }
 
-bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, const Settings *settings, bool *inconclusive)
+bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, const Project* project, bool *inconclusive)
 {
     if (!tok)
         return false;
@@ -1403,8 +1403,8 @@ bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, co
 
     if (!tok->function() && !tok->variable() && tok->isName()) {
         // Check if direction (in, out, inout) is specified in the library configuration and use that
-        if (!addressOf && settings) {
-            const Library::ArgumentChecks::Direction argDirection = settings->library.getArgDirection(tok, 1 + argnr);
+        if (!addressOf && project) {
+            const Library::ArgumentChecks::Direction argDirection = project->library.getArgDirection(tok, 1 + argnr);
             if (argDirection == Library::ArgumentChecks::Direction::DIR_IN)
                 return false;
             else if (argDirection == Library::ArgumentChecks::Direction::DIR_OUT ||
@@ -1419,7 +1419,7 @@ bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, co
 
         // if the library says 0 is invalid
         // => it is assumed that parameter is an in parameter (TODO: this is a bad heuristic)
-        if (!addressOf && settings && settings->library.isnullargbad(tok, 1+argnr))
+        if (!addressOf && project && project->library.isnullargbad(tok, 1+argnr))
             return false;
         // possible pass-by-reference => inconclusive
         if (possiblyPassedByReference) {
@@ -1449,13 +1449,13 @@ bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, co
     return !arg->isConst() && arg->isReference();
 }
 
-bool isVariableChangedByFunctionCall(const Token* tok, unsigned int indirect, const Settings* settings)
+bool isVariableChangedByFunctionCall(const Token* tok, unsigned int indirect, const Project* project)
 {
     bool inconclusive = false;
-    return isVariableChangedByFunctionCall(tok, indirect, settings, &inconclusive) || inconclusive;
+    return isVariableChangedByFunctionCall(tok, indirect, project, &inconclusive) || inconclusive;
 }
 
-bool isVariableChanged(const Token *tok, int indirect, const Settings *settings, bool cpp, int depth)
+bool isVariableChanged(const Token *tok, int indirect, const Project* project, bool cpp, int depth)
 {
     if (!tok)
         return false;
@@ -1483,7 +1483,7 @@ bool isVariableChanged(const Token *tok, int indirect, const Settings *settings,
         // Check if assigning to a non-const lvalue
         const Variable * var = getLHSVariable(tok2->astParent());
         if (var && var->isReference() && !var->isConst() && var->nameToken() && var->nameToken()->next() == tok2->astParent()) {
-            if (!var->isLocal() || isVariableChanged(var, settings, cpp, depth - 1))
+            if (!var->isLocal() || isVariableChanged(var, project, cpp, depth - 1))
                 return true;
         }
     }
@@ -1520,7 +1520,7 @@ bool isVariableChanged(const Token *tok, int indirect, const Settings *settings,
         while (Token::Match(ptok->astParent(), ".|::|["))
             ptok = ptok->astParent();
         bool inconclusive = false;
-        bool isChanged = isVariableChangedByFunctionCall(ptok, indirect, settings, &inconclusive);
+        bool isChanged = isVariableChangedByFunctionCall(ptok, indirect, project, &inconclusive);
         isChanged |= inconclusive;
         if (isChanged)
             return true;
@@ -1539,24 +1539,24 @@ bool isVariableChanged(const Token *tok, int indirect, const Settings *settings,
         const Variable * loopVar = varTok->variable();
         if (!loopVar)
             return false;
-        if (!loopVar->isConst() && loopVar->isReference() && isVariableChanged(loopVar, settings, cpp, depth - 1))
+        if (!loopVar->isConst() && loopVar->isReference() && isVariableChanged(loopVar, project, cpp, depth - 1))
             return true;
         return false;
     }
     return false;
 }
 
-bool isVariableChanged(const Token *start, const Token *end, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth)
+bool isVariableChanged(const Token *start, const Token *end, const unsigned int varid, bool globalvar, const Project* project, bool cpp, int depth)
 {
-    return findVariableChanged(start, end, 0, varid, globalvar, settings, cpp, depth) != nullptr;
+    return findVariableChanged(start, end, 0, varid, globalvar, project, cpp, depth) != nullptr;
 }
 
-bool isVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth)
+bool isVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Project* project, bool cpp, int depth)
 {
-    return findVariableChanged(start, end, indirect, varid, globalvar, settings, cpp, depth) != nullptr;
+    return findVariableChanged(start, end, indirect, varid, globalvar, project, cpp, depth) != nullptr;
 }
 
-Token* findVariableChanged(Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth)
+Token* findVariableChanged(Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Project* project, bool cpp, int depth)
 {
     if (!precedes(start, end))
         return nullptr;
@@ -1569,18 +1569,18 @@ Token* findVariableChanged(Token *start, const Token *end, int indirect, const u
                 return tok;
             continue;
         }
-        if (isVariableChanged(tok, indirect, settings, cpp, depth))
+        if (isVariableChanged(tok, indirect, project, cpp, depth))
             return tok;
     }
     return nullptr;
 }
 
-const Token* findVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth)
+const Token* findVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Project* project, bool cpp, int depth)
 {
-    return findVariableChanged(const_cast<Token*>(start), end, indirect, varid, globalvar, settings, cpp, depth);
+    return findVariableChanged(const_cast<Token*>(start), end, indirect, varid, globalvar, project, cpp, depth);
 }
 
-bool isVariableChanged(const Variable * var, const Settings *settings, bool cpp, int depth)
+bool isVariableChanged(const Variable * var, const Project* project, bool cpp, int depth)
 {
     if (!var)
         return false;
@@ -1591,14 +1591,14 @@ bool isVariableChanged(const Variable * var, const Settings *settings, bool cpp,
         return false;
     if (Token::Match(start, "; %varid% =", var->declarationId()))
         start = start->tokAt(2);
-    return isVariableChanged(start->next(), var->scope()->bodyEnd, var->declarationId(), var->isGlobal(), settings, cpp, depth);
+    return isVariableChanged(start->next(), var->scope()->bodyEnd, var->declarationId(), var->isGlobal(), project, cpp, depth);
 }
 
 bool isVariablesChanged(const Token* start,
                         const Token* end,
                         int indirect,
                         std::vector<const Variable*> vars,
-                        const Settings* settings,
+                        const Project* project,
                         bool cpp)
 {
     std::set<unsigned int> varids;
@@ -1615,13 +1615,13 @@ bool isVariablesChanged(const Token* start,
                 return true;
             continue;
         }
-        if (isVariableChanged(tok, indirect, settings, cpp))
+        if (isVariableChanged(tok, indirect, project, cpp))
             return true;
     }
     return false;
 }
 
-bool isThisChanged(const Token* start, const Token* end, int indirect, const Settings* settings, bool cpp)
+bool isThisChanged(const Token* start, const Token* end, int indirect, const Project* project, bool cpp)
 {
     for (const Token* tok = start; tok != end; tok = tok->next()) {
         if (!exprDependsOnThis(tok))
@@ -1636,7 +1636,7 @@ bool isThisChanged(const Token* start, const Token* end, int indirect, const Set
                 return true;
             }
         }
-        if (isVariableChanged(tok, indirect, settings, cpp))
+        if (isVariableChanged(tok, indirect, project, cpp))
             return true;
     }
     return false;

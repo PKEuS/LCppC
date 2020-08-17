@@ -163,6 +163,11 @@ private:
     Settings mSettings;
 
     /**
+     * Project checked in this instance
+     */
+    Project mProject;
+
+    /**
      * Used to filter out duplicate error messages.
      */
     std::set<std::string> mShownErrors;

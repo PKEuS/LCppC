@@ -91,7 +91,7 @@ CppCheckExecutor::~CppCheckExecutor()
 
 bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* const argv[])
 {
-    CmdLineParser parser(&mSettings);
+    CmdLineParser parser(&mSettings, &mProject);
     const bool success = parser.parseFromArgs(argc, argv);
 
     if (success) {
@@ -121,17 +121,17 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
 
     // Check that all include paths exist
     {
-        for (std::vector<std::string>::iterator iter = mSettings.includePaths.begin();
-             iter != mSettings.includePaths.end();
+        for (std::vector<std::string>::iterator iter = mProject.includePaths.begin();
+             iter != mProject.includePaths.end();
             ) {
             const std::string path(Path::toNativeSeparators(*iter));
             if (FileLister::isDirectory(path))
                 ++iter;
             else {
                 // If the include path is not found, warn user and remove the non-existing path from the list.
-                if (mSettings.severity.isEnabled(Severity::information))
+                if (mProject.severity.isEnabled(Severity::information))
                     std::cout << "(information) Couldn't find path given by -I '" << path << '\'' << std::endl;
-                iter = mSettings.includePaths.erase(iter);
+                iter = mProject.includePaths.erase(iter);
             }
         }
     }
@@ -163,7 +163,7 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
         // Execute recursiveAddFiles() to each given file parameter
         const PathMatch matcher(ignored, caseSensitive);
         for (const std::string &pathname : pathnames)
-            FileLister::recursiveAddFiles(files, Path::toNativeSeparators(pathname), mSettings.library.markupExtensions(), matcher);
+            FileLister::recursiveAddFiles(files, Path::toNativeSeparators(pathname), mProject.library.markupExtensions(), matcher);
     }
 
     if (files.empty()) {
@@ -171,9 +171,9 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
         if (!ignored.empty())
             std::cout << "cppcheck: Maybe all paths were ignored?" << std::endl;
         return false;
-    } else if (!mSettings.fileFilter.empty()) {
+    } else if (!mProject.fileFilter.empty()) {
         for (std::map<std::string, std::size_t>::const_iterator i = files.begin(); i != files.end();) {
-            if (matchglob(mSettings.fileFilter, i->first))
+            if (matchglob(mProject.fileFilter, i->first))
                 i = files.erase(i);
             else
                 ++i;
@@ -184,7 +184,7 @@ bool CppCheckExecutor::parseFromArgs(CppCheck *cppcheck, int argc, const char* c
         }
     }
 
-    mAnalyzerInformation.createCTUs(mSettings.buildDir, files);
+    mAnalyzerInformation.createCTUs(mProject.buildDir, files);
 
     return true;
 }
@@ -194,7 +194,7 @@ int CppCheckExecutor::check(int argc, const char* const argv[])
     Preprocessor::missingIncludeFlag = false;
     Preprocessor::missingSystemIncludeFlag = false;
 
-    CppCheck cppCheck(*this, mSettings, true);
+    CppCheck cppCheck(*this, mSettings, mProject, true);
 
     if (!parseFromArgs(&cppCheck, argc, argv)) {
         return EXIT_FAILURE;
@@ -863,12 +863,12 @@ int CppCheckExecutor::check_wrapper(CppCheck& cppcheck, int argc, const char* co
  * */
 int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const char* const argv[])
 {
-    mSettings.libraries.emplace("std");
-    if (mSettings.isWindowsPlatform())
-        mSettings.libraries.emplace("windows");
+    mProject.libraries.emplace("std");
+    if (mProject.isWindowsPlatform())
+        mProject.libraries.emplace("windows");
 
-    for (const std::string &lib : mSettings.libraries) {
-        if (!tryLoadLibrary(mSettings.library, argv[0], lib.c_str())) {
+    for (const std::string &lib : mProject.libraries) {
+        if (!tryLoadLibrary(mProject.library, argv[0], lib.c_str())) {
             std::string msg, details;
             if (lib == "std" || lib == "windows") {
                 msg = "Failed to load '" + lib + ".cfg'. Your Cppcheck installation is broken, please re-install. ";
@@ -895,8 +895,8 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
     if (mSettings.output.isEnabled(Output::progress))
         mLatestProgressOutputTime = std::time(nullptr);
 
-    if (!mSettings.outputFile.empty()) {
-        mErrorOutput = new std::ofstream(mSettings.outputFile);
+    if (!mProject.outputFile.empty()) {
+        mErrorOutput = new std::ofstream(mProject.outputFile);
     }
 
     if (mSettings.xml) {
@@ -904,20 +904,20 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
     }
 
     // Check, possibly using multiple processes
-    ThreadExecutor executor(mAnalyzerInformation.getCTUs(), mSettings, *this);
+    ThreadExecutor executor(mAnalyzerInformation.getCTUs(), mSettings, mProject, *this);
     unsigned int returnValue = executor.checkSync();
 
     if (cppcheck.analyseWholeProgram(mAnalyzerInformation))
         returnValue++;
 
-    if (mSettings.severity.isEnabled(Severity::information) || mSettings.checkConfiguration) {
+    if (mProject.severity.isEnabled(Severity::information) || mSettings.checkConfiguration) {
         for (auto i = mAnalyzerInformation.getCTUs().begin(); i != mAnalyzerInformation.getCTUs().end(); ++i) {
-            const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedLocalSuppressions(i->sourcefile));
+            const bool err = reportUnmatchedSuppressions(mProject.nomsg.getUnmatchedLocalSuppressions(i->sourcefile));
             if (err && returnValue == 0)
                 returnValue = mSettings.exitCode;
         }
 
-        const bool err = reportUnmatchedSuppressions(mSettings.nomsg.getUnmatchedGlobalSuppressions());
+        const bool err = reportUnmatchedSuppressions(mProject.nomsg.getUnmatchedGlobalSuppressions());
         if (err && returnValue == 0)
             returnValue = mSettings.exitCode;
     }
@@ -925,7 +925,7 @@ int CppCheckExecutor::check_internal(CppCheck& cppcheck, int /*argc*/, const cha
     if (!mSettings.checkConfiguration) {
         cppcheck.tooManyConfigsError("",0U);
 
-        if (mSettings.checks.isEnabled("MissingInclude") && (Preprocessor::missingIncludeFlag || Preprocessor::missingSystemIncludeFlag)) {
+        if (mProject.checks.isEnabled("MissingInclude") && (Preprocessor::missingIncludeFlag || Preprocessor::missingSystemIncludeFlag)) {
             const std::list<ErrorMessage::FileLocation> callStack;
             ErrorMessage msg(callStack,
                              emptyString,

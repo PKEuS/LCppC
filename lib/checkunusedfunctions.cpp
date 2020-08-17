@@ -132,15 +132,15 @@ Check::FileInfo* CheckUnusedFunctions::loadFileInfoFromXml(const tinyxml2::XMLEl
     return fi;
 }
 
-Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const
+Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const
 {
-    if (!settings->severity.isEnabled(Severity::style))
+    if (!project->severity.isEnabled(Severity::style))
         return nullptr;
 
     CUF_FileInfo* fi = new CUF_FileInfo;
 
     const std::string& FileName = tokenizer->list.getFiles().front();
-    const bool doMarkup = settings->library.markupFile(FileName);
+    const bool doMarkup = project->library.markupFile(FileName);
     const SymbolDatabase* symbolDatabase = tokenizer->getSymbolDatabase();
 
     // Function declarations..
@@ -192,8 +192,8 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
             lambdaEndToken = findLambdaEndToken(tok);
 
         // parsing of library code to find called functions
-        if (settings->library.isexecutableblock(FileName, tok->str())) {
-            const Token* markupVarToken = tok->tokAt(settings->library.blockstartoffset(FileName));
+        if (project->library.isexecutableblock(FileName, tok->str())) {
+            const Token* markupVarToken = tok->tokAt(project->library.blockstartoffset(FileName));
             // not found
             if (!markupVarToken)
                 continue;
@@ -201,14 +201,14 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
             bool start = true;
             // find all function calls in library code (starts with '(', not if or while etc)
             while ((scope || start) && markupVarToken) {
-                if (markupVarToken->str() == settings->library.blockstart(FileName)) {
+                if (markupVarToken->str() == project->library.blockstart(FileName)) {
                     scope++;
                     if (start) {
                         start = false;
                     }
-                } else if (markupVarToken->str() == settings->library.blockend(FileName))
+                } else if (markupVarToken->str() == project->library.blockend(FileName))
                     scope--;
-                else if (!settings->library.iskeyword(FileName, markupVarToken->str())) {
+                else if (!project->library.iskeyword(FileName, markupVarToken->str())) {
                     if (fi->mFunctions.find(markupVarToken->str()) != fi->mFunctions.end())
                         fi->mFunctions[markupVarToken->str()].usedOtherFile = true;
                     else if (markupVarToken->next()->str() == "(") {
@@ -225,17 +225,17 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
         }
 
         if (!doMarkup // only check source files
-            && settings->library.isexporter(tok->str()) && tok->next() != nullptr) {
+            && project->library.isexporter(tok->str()) && tok->next() != nullptr) {
             const Token* propToken = tok->next();
             while (propToken && propToken->str() != ")") {
-                if (settings->library.isexportedprefix(tok->str(), propToken->str())) {
+                if (project->library.isexportedprefix(tok->str(), propToken->str())) {
                     const Token* nextPropToken = propToken->next();
                     const std::string& value = nextPropToken->str();
                     if (fi->mFunctions.find(value) != fi->mFunctions.end()) {
                         fi->mFunctions[value].usedOtherFile = true;
                     }
                 }
-                if (settings->library.isexportedsuffix(tok->str(), propToken->str())) {
+                if (project->library.isexportedsuffix(tok->str(), propToken->str())) {
                     const Token* prevPropToken = propToken->previous();
                     const std::string& value = prevPropToken->str();
                     if (value != ")" && fi->mFunctions.find(value) != fi->mFunctions.end()) {
@@ -246,7 +246,7 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
             }
         }
 
-        if (doMarkup && settings->library.isimporter(FileName, tok->str()) && tok->next()) {
+        if (doMarkup && project->library.isimporter(FileName, tok->str()) && tok->next()) {
             const Token* propToken = tok->next();
             if (propToken->next()) {
                 propToken = propToken->next();
@@ -261,8 +261,8 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
             }
         }
 
-        if (settings->library.isreflection(tok->str())) {
-            const int argIndex = settings->library.reflectionArgument(tok->str());
+        if (project->library.isreflection(tok->str())) {
+            const int argIndex = project->library.reflectionArgument(tok->str());
             if (argIndex >= 0) {
                 const Token* funcToken = tok->next();
                 int index = 0;
@@ -331,9 +331,9 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Tokenizer *tokenizer, c
     return fi;
 }
 
-bool CheckUnusedFunctions::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger)
+bool CheckUnusedFunctions::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project)
 {
-    if (!settings.severity.isEnabled(Severity::style))
+    if (!project->severity.isEnabled(Severity::style))
         return false;
 
     bool errors = false;
@@ -346,7 +346,7 @@ bool CheckUnusedFunctions::analyseWholeProgram(const CTU::CTUInfo* ctu, Analyzer
             CUF_FileInfo::FunctionUsage& func = it2->second;
             if (func.lineNumber == 0 || func.filename.empty())
                 continue;
-            if (it2->first == "main" || (settings.isWindowsPlatform() && (it2->first == "WinMain" || it2->first == "_tmain")))
+            if (it2->first == "main" || (project->isWindowsPlatform() && (it2->first == "WinMain" || it2->first == "_tmain")))
                 continue;
 
             // Collect usages from other files

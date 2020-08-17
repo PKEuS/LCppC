@@ -134,7 +134,8 @@ private:
 
     bool Match(const std::string &code, const std::string &pattern, unsigned int varid=0) {
         static const Settings settings;
-        Tokenizer tokenizer(&settings, this);
+        static const Project project;
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(";" + code + ";");
         try {
             tokenizer.tokenize(istr, "test.cpp");
@@ -393,19 +394,19 @@ private:
 
     void getStrSize() const {
         Token tok;
-        Settings settings;
+        Project project;
 
         tok.str("\"\"");
-        ASSERT_EQUALS(sizeof(""), Token::getStrSize(&tok, &settings));
+        ASSERT_EQUALS(sizeof(""), Token::getStrSize(&tok, &project));
 
         tok.str("\"abc\"");
-        ASSERT_EQUALS(sizeof("abc"), Token::getStrSize(&tok, &settings));
+        ASSERT_EQUALS(sizeof("abc"), Token::getStrSize(&tok, &project));
 
         tok.str("\"\\0abc\"");
-        ASSERT_EQUALS(sizeof("\0abc"), Token::getStrSize(&tok, &settings));
+        ASSERT_EQUALS(sizeof("\0abc"), Token::getStrSize(&tok, &project));
 
         tok.str("\"\\\\\"");
-        ASSERT_EQUALS(sizeof("\\"), Token::getStrSize(&tok, &settings));
+        ASSERT_EQUALS(sizeof("\\"), Token::getStrSize(&tok, &project));
     }
 
     void getCharAt() const {

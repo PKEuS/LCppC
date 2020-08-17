@@ -37,9 +37,10 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        LOAD_LIB_2(settings.library, "std.cfg");
+        LOAD_LIB_2(project.library, "std.cfg");
 
         TEST_CASE(uninitvar1);
         TEST_CASE(uninitvar_warn_once); // only write 1 warning at a time
@@ -101,16 +102,16 @@ private:
 
         // Tokenize..
         settings.debugwarnings = debugwarnings;
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, fname);
 
         // Check for redundant code..
-        CheckUninitVar checkuninitvar(&tokenizer, &settings, this);
+        CheckUninitVar checkuninitvar(&tokenizer, &settings, this, &project);
         checkuninitvar.check();
 
         settings.debugwarnings = false;
-        settings.certainty.enable(Certainty::experimental);
+        project.certainty.enable(Certainty::experimental);
     }
 
     void uninitvar1() {
@@ -780,7 +781,7 @@ private:
                                "<def format=\"1\">"
                                "  <podtype name=\"_tm\"/>"
                                "</def>";
-        settings.library.loadxmldata(xmldata, sizeof(xmldata));
+        project.library.loadxmldata(xmldata, sizeof(xmldata));
         checkUninitVar("void f() {\n"
                        "  Fred _tm;\n"
                        "  _tm.dostuff();\n"
@@ -3313,7 +3314,7 @@ private:
                                                     "  </function>\n"
                                                     "</def>";
 
-            ASSERT_EQUALS(true, settings.library.loadxmldata(argDirectionsTestXmlData, sizeof(argDirectionsTestXmlData) / sizeof(argDirectionsTestXmlData[0])));
+            ASSERT_EQUALS(true, project.library.loadxmldata(argDirectionsTestXmlData, sizeof(argDirectionsTestXmlData) / sizeof(argDirectionsTestXmlData[0])));
 
             checkUninitVar("struct AB { int a; };\n"
                            "void f(void) {\n"
@@ -4068,14 +4069,14 @@ private:
 
         // Tokenize..
         settings.debugwarnings = false;
-        settings.certainty.disable(Certainty::experimental);
+        project.certainty.disable(Certainty::experimental);
 
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for redundant code..
-        CheckUninitVar checkuninitvar(&tokenizer, &settings, this);
+        CheckUninitVar checkuninitvar(&tokenizer, &settings, this, &project);
         checkuninitvar.valueFlowUninit();
     }
 
@@ -4700,19 +4701,21 @@ private:
         // Clear the error buffer..
         errout.str("");
 
+        project.certainty.disable(Certainty::experimental);
+
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Prepare..
-        CheckUninitVar check(&tokenizer, &settings, this);
+        CheckUninitVar check(&tokenizer, &settings, this, &project);
         AnalyzerInformation ai;
         CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
         ctu.parseTokens(&tokenizer);
 
         // Check code..
-        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings);
+        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings, &project);
         if (!fi1)
             return;
         tinyxml2::XMLDocument doc;
@@ -4721,7 +4724,7 @@ private:
 
         Check::FileInfo* fi2 = check.loadFileInfoFromXml(e);
         ctu.addCheckInfo(check.name(), fi2);
-        check.analyseWholeProgram(&ctu, ai, settings, *this);
+        check.analyseWholeProgram(&ctu, ai, settings, *this, &project);
     }
 
     void ctu() {

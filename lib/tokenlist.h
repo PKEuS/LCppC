@@ -28,6 +28,7 @@
 #include <vector>
 
 class Settings;
+class Project;
 
 namespace simplecpp {
     class TokenList;
@@ -37,16 +38,22 @@ namespace simplecpp {
 /// @{
 
 class CPPCHECKLIB TokenList {
+    friend class Tokenizer;
 public:
-    explicit TokenList(const Settings* settings);
+    explicit TokenList(const Settings* settings, const Project* project);
     ~TokenList();
 
-    void setSettings(const Settings *settings) {
+    void setSettings(const Settings *settings, const Project* project) {
         mSettings = settings;
+        mProject = project;
     }
 
     const Settings *getSettings() const {
         return mSettings;
+    }
+
+    const Project* getProject() const {
+        return mProject;
     }
 
     /** @return the source file path. e.g. "file.cpp" */
@@ -208,6 +215,7 @@ private:
 
     /** settings */
     const Settings* mSettings;
+    const Project* mProject;
 
     std::set<std::string> mKeywords;
 

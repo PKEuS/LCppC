@@ -59,13 +59,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckUninitVar(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckUninitVar(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        CheckUninitVar checkUninitVar(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckUninitVar checkUninitVar(tokenizer, settings, errorLogger, project);
         checkUninitVar.check();
         checkUninitVar.valueFlowUninit();
     }
@@ -88,12 +88,12 @@ public:
     void valueFlowUninit();
 
     /** @brief Parse current TU and extract file info */
-    Check::FileInfo* getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const override;
+    Check::FileInfo* getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const override;
 
     Check::FileInfo* loadFileInfoFromXml(const tinyxml2::XMLElement *xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger) override;
+    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project) override;
 
     void uninitstringError(const Token *tok, const std::string &varname, bool strncpy_);
     void uninitdataError(const Token *tok, const std::string &varname);
@@ -112,8 +112,8 @@ public:
 
 private:
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckUninitVar c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckUninitVar c(nullptr, settings, errorLogger, project);
 
         // error
         c.uninitstringError(nullptr, "varname", true);

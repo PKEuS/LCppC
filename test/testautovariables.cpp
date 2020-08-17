@@ -30,27 +30,28 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void check(const char code[], bool inconclusive = false, const char* filename = "test.cpp") {
         // Clear the error buffer..
         errout.str("");
 
-        settings.certainty.setEnabled(Certainty::inconclusive, inconclusive);
+        project.certainty.setEnabled(Certainty::inconclusive, inconclusive);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
 
         CheckAutoVariables checkAutoVariables;
-        checkAutoVariables.runChecks(&tokenizer, &settings, this);
+        checkAutoVariables.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void run() override {
-        settings.severity.enable(Severity::warning);
-        settings.severity.enable(Severity::style);
-        LOAD_LIB_2(settings.library, "std.cfg");
-        LOAD_LIB_2(settings.library, "qt.cfg");
+        project.severity.enable(Severity::warning);
+        project.severity.enable(Severity::style);
+        LOAD_LIB_2(project.library, "std.cfg");
+        LOAD_LIB_2(project.library, "qt.cfg");
 
         TEST_CASE(testautovar1);
         TEST_CASE(testautovar2);

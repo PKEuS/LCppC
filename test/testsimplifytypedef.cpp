@@ -34,13 +34,14 @@ public:
 
 
 private:
-    Settings settings0;
-    Settings settings1;
-    Settings settings2;
+    Settings settings;
+    Project project0;
+    Project project1;
+    Project project2;
 
     void run() override {
-        settings0.severity.enable(Severity::style);
-        settings2.severity.enable(Severity::style);
+        project0.severity.enable(Severity::style);
+        project2.severity.enable(Severity::style);
 
         TEST_CASE(simplifyTypedef1);
         TEST_CASE(simplifyTypedef2);
@@ -181,13 +182,13 @@ private:
         TEST_CASE(simplifyTypedefShadow);  // #4445 - shadow variable
     }
 
-    std::string tok(const char code[], bool simplify = true, Settings::PlatformType type = Settings::Native, bool debugwarnings = true) {
+    std::string tok(const char code[], bool simplify = true, Project::PlatformType type = Project::Native, bool debugwarnings = true) {
         errout.str("");
 
-        settings0.certainty.enable(Certainty::inconclusive);
-        settings0.debugwarnings = debugwarnings;   // show warnings about unhandled typedef
-        settings0.platform(type);
-        Tokenizer tokenizer(&settings0, this);
+        project0.certainty.enable(Certainty::inconclusive);
+        settings.debugwarnings = debugwarnings;   // show warnings about unhandled typedef
+        project0.platform(type);
+        Tokenizer tokenizer(&settings, &project0, this);
 
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
@@ -198,7 +199,9 @@ private:
     std::string simplifyTypedef(const char code[]) {
         errout.str("");
 
-        Tokenizer tokenizer(&settings1, this);
+        settings.debugwarnings = false;
+
+        Tokenizer tokenizer(&settings, &project1, this);
 
         std::istringstream istr(code);
         tokenizer.list.createTokens(istr);
@@ -211,9 +214,9 @@ private:
     void checkSimplifyTypedef(const char code[]) {
         errout.str("");
         // Tokenize..
-        settings2.certainty.enable(Certainty::inconclusive);
-        settings2.debugwarnings = true;   // show warnings about unhandled typedef
-        Tokenizer tokenizer(&settings2, this);
+        project2.certainty.enable(Certainty::inconclusive);
+        settings.debugwarnings = true;   // show warnings about unhandled typedef
+        Tokenizer tokenizer(&settings, &project2, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
     }
@@ -505,7 +508,7 @@ private:
                             "};";
 
         // Tokenize and check output..
-        TODO_ASSERT_THROW(tok(code, true, Settings::Native, false), InternalError); // TODO: Do not throw exception
+        TODO_ASSERT_THROW(tok(code, true, Project::Native, false), InternalError); // TODO: Do not throw exception
         //ASSERT_EQUALS("", errout.str());
     }
 
@@ -1589,7 +1592,7 @@ private:
 
         // The expected tokens..
         const char expected2[] = "void f ( ) { char a [ 256 ] ; a = { 0 } ; char b [ 256 ] ; b = { 0 } ; }";
-        ASSERT_EQUALS(expected2, tok(code2, false, Settings::Native, false));
+        ASSERT_EQUALS(expected2, tok(code2, false, Project::Native, false));
         ASSERT_EQUALS("", errout.str());
 
         const char code3[] = "typedef char TString[256];\n"
@@ -1600,7 +1603,7 @@ private:
 
         // The expected tokens..
         const char expected3[] = "void f ( ) { char a [ 256 ] ; a = \"\" ; char b [ 256 ] ; b = \"\" ; }";
-        ASSERT_EQUALS(expected3, tok(code3, false, Settings::Native, false));
+        ASSERT_EQUALS(expected3, tok(code3, false, Project::Native, false));
         ASSERT_EQUALS("", errout.str());
 
         const char code4[] = "typedef char TString[256];\n"
@@ -1611,7 +1614,7 @@ private:
 
         // The expected tokens..
         const char expected4[] = "void f ( ) { char a [ 256 ] ; a = \"1234\" ; char b [ 256 ] ; b = \"5678\" ; }";
-        ASSERT_EQUALS(expected4, tok(code4, false, Settings::Native, false));
+        ASSERT_EQUALS(expected4, tok(code4, false, Project::Native, false));
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -1637,7 +1640,7 @@ private:
                             "    Foo b(0);\n"
                             "    return b > Foo(10);\n"
                             "}";
-        const std::string actual(tok(code, true, Settings::Native, false));
+        const std::string actual(tok(code, true, Project::Native, false));
         ASSERT_EQUALS("int main ( ) { BAR < int > b ( 0 ) ; return b > BAR < int > ( 10 ) ; }", actual);
         ASSERT_EQUALS("", errout.str());
     }
@@ -1793,14 +1796,14 @@ private:
 
     void simplifyTypedef75() { // ticket #2426
         const char code[] = "typedef _Packed struct S { long l; };";
-        ASSERT_EQUALS("", tok(code, true, Settings::Native, false));
+        ASSERT_EQUALS("", tok(code, true, Project::Native, false));
         ASSERT_EQUALS("", errout.str());
     }
 
     void simplifyTypedef76() { // ticket #2453 segmentation fault
         const char code[] = "void f1(typedef int x) {}";
         const char expected[] = "void f1 ( typedef int x ) { }";
-        ASSERT_EQUALS(expected, tok(code, true, Settings::Native, false));
+        ASSERT_EQUALS(expected, tok(code, true, Project::Native, false));
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -2107,7 +2110,7 @@ private:
                                 "public: "
                                 "expression_error :: error_code ( * f ) ( ) ; "
                                 "} ;";
-        ASSERT_EQUALS(expected, tok(code, true, Settings::Native, false));
+        ASSERT_EQUALS(expected, tok(code, true, Project::Native, false));
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -2266,7 +2269,7 @@ private:
                                 "} ; "
                                 "} "
                                 "}";
-        ASSERT_EQUALS(expected, tok(code, true, Settings::Native, false));
+        ASSERT_EQUALS(expected, tok(code, true, Project::Native, false));
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -2874,7 +2877,7 @@ private:
                                     "C ( * f5 ) ( ) ; "
                                     "C ( * f6 ) ( ) ; "
                                     "C ( * f7 ) ( ) ;";
-            ASSERT_EQUALS(expected, tok(code, true, Settings::Native, false));
+            ASSERT_EQUALS(expected, tok(code, true, Project::Native, false));
             ASSERT_EQUALS("", errout.str());
         }
 
@@ -2903,7 +2906,7 @@ private:
                                     "const C ( * f5 ) ( ) ; "
                                     "const C ( * f6 ) ( ) ; "
                                     "const C ( * f7 ) ( ) ;";
-            ASSERT_EQUALS(expected, tok(code, true, Settings::Native, false));
+            ASSERT_EQUALS(expected, tok(code, true, Project::Native, false));
             ASSERT_EQUALS("", errout.str());
         }
 
@@ -2931,7 +2934,7 @@ private:
                                     "const C ( * f5 ) ( ) ; "
                                     "const C ( * f6 ) ( ) ; "
                                     "const C ( * f7 ) ( ) ;";
-            ASSERT_EQUALS(expected, tok(code, true, Settings::Native, false));
+            ASSERT_EQUALS(expected, tok(code, true, Project::Native, false));
             ASSERT_EQUALS("", errout.str());
         }
 
@@ -2959,7 +2962,7 @@ private:
                                     "C * ( * f5 ) ( ) ; "
                                     "C * ( * f6 ) ( ) ; "
                                     "C * ( * f7 ) ( ) ;";
-            ASSERT_EQUALS(expected, tok(code, true, Settings::Native, false));
+            ASSERT_EQUALS(expected, tok(code, true, Project::Native, false));
             ASSERT_EQUALS("", errout.str());
         }
 
@@ -2987,7 +2990,7 @@ private:
                                     "const C * ( * f5 ) ( ) ; "
                                     "const C * ( * f6 ) ( ) ; "
                                     "const C * ( * f7 ) ( ) ;";
-            ASSERT_EQUALS(expected, tok(code, true, Settings::Native, false));
+            ASSERT_EQUALS(expected, tok(code, true, Project::Native, false));
             ASSERT_EQUALS("", errout.str());
         }
 
@@ -3016,7 +3019,7 @@ private:
                                     "const C * ( * f5 ) ( ) ; "
                                     "const C * ( * f6 ) ( ) ; "
                                     "const C * ( * f7 ) ( ) ;";
-            ASSERT_EQUALS(expected, tok(code, true, Settings::Native, false));
+            ASSERT_EQUALS(expected, tok(code, true, Project::Native, false));
             ASSERT_EQUALS("", errout.str());
         }
     }
@@ -3161,7 +3164,7 @@ private:
                                     "B :: C ( * f2 ) ( ) ; "
                                     "B :: C ( * f3 ) ( ) ; "
                                     "B :: C ( * f4 ) ( ) ;";
-            ASSERT_EQUALS(expected, tok(code, true, Settings::Native, false));
+            ASSERT_EQUALS(expected, tok(code, true, Project::Native, false));
             ASSERT_EQUALS("", errout.str());
         }
 
@@ -3199,7 +3202,7 @@ private:
                                     "A :: B :: C ( * f2 ) ( ) ; "
                                     "A :: B :: C ( * f3 ) ( ) ; "
                                     "A :: B :: C ( * f4 ) ( ) ;";
-            ASSERT_EQUALS(expected, tok(code, true, Settings::Native, false));
+            ASSERT_EQUALS(expected, tok(code, true, Project::Native, false));
             ASSERT_EQUALS("", errout.str());
         }
     }

@@ -46,13 +46,13 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckAutoVariables(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckAutoVariables(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        CheckAutoVariables checkAutoVariables(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckAutoVariables checkAutoVariables(tokenizer, settings, errorLogger, project);
         checkAutoVariables.assignFunctionArg();
         checkAutoVariables.checkVarLifetime();
         checkAutoVariables.autoVariables();
@@ -85,9 +85,9 @@ private:
     void errorUselessAssignmentArg(const Token *tok);
     void errorUselessAssignmentPtrArg(const Token *tok);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
         ErrorPath errorPath;
-        CheckAutoVariables c(nullptr,settings,errorLogger);
+        CheckAutoVariables c(nullptr, settings, errorLogger, project);
         c.errorAutoVariableAssignment(nullptr, false);
         c.errorReturnAddressToAutoVariable(nullptr);
         c.errorReturnPointerToLocalArray(nullptr);

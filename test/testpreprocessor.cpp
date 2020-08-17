@@ -39,8 +39,8 @@ class TestPreprocessor : public TestFixture {
 public:
     TestPreprocessor()
         : TestFixture("TestPreprocessor")
-        , preprocessor0(settings0, this) {
-        settings0.severity.enable(Severity::information);
+        , preprocessor0(settings0, project0, this) {
+        project0.severity.enable(Severity::information);
     }
 
     class OurPreprocessor : public Preprocessor {
@@ -57,7 +57,8 @@ public:
 
             if (errorLogger) {
                 static Settings settings;
-                Preprocessor p(settings, errorLogger);
+                static Project project;
+                Preprocessor p(settings, project, errorLogger);
                 p.reportOutput(outputList, true);
             }
 
@@ -67,6 +68,7 @@ public:
 
 private:
     Settings settings0;
+    Project project0;
     Preprocessor preprocessor0;
 
     void run() override {
@@ -270,12 +272,12 @@ private:
     }
 
     std::string getConfigsStr(const char filedata[], const char *arg = nullptr) {
-        Settings settings;
+        Project project;
         if (arg && std::strncmp(arg,"-D",2)==0)
-            settings.userDefines = arg + 2;
+            project.userDefines = arg + 2;
         if (arg && std::strncmp(arg,"-U",2)==0)
-            settings.userUndefs.insert(arg+2);
-        Preprocessor preprocessor(settings, this);
+            project.userUndefs.insert(arg+2);
+        Preprocessor preprocessor(settings0, project, this);
         std::vector<std::string> files;
         std::istringstream istr(filedata);
         simplecpp::TokenList tokens(istr,files);
@@ -339,9 +341,9 @@ private:
 
     void error3() {
         errout.str("");
-        Settings settings;
-        settings.userDefines = "__cplusplus";
-        Preprocessor preprocessor(settings, this);
+        Project project;
+        project.userDefines = "__cplusplus";
+        Preprocessor preprocessor(settings0, project, this);
         const std::string code("#error hello world!\n");
         preprocessor.getcode(code, "X", "test.c");
         ASSERT_EQUALS("[test.c:1]: (error) #error hello world!\n", errout.str());
@@ -349,12 +351,12 @@ private:
 
     // Ticket #2919 - wrong filename reported for #error
     void error4() {
+        Project project;
         // In included file
         {
             errout.str("");
-            Settings settings;
-            settings.userDefines = "TEST";
-            Preprocessor preprocessor(settings, this);
+            project.userDefines = "TEST";
+            Preprocessor preprocessor(settings0, project, this);
             const std::string code("#file \"ab.h\"\n#error hello world!\n#endfile");
             preprocessor.getcode(code, "TEST", "test.c");
             ASSERT_EQUALS("[ab.h:1]: (error) #error hello world!\n", errout.str());
@@ -363,9 +365,9 @@ private:
         // After including a file
         {
             errout.str("");
-            Settings settings;
-            settings.userDefines = "TEST";
-            Preprocessor preprocessor(settings, this);
+            Project project;
+            project.userDefines = "TEST";
+            Preprocessor preprocessor(settings0, project, this);
             const std::string code("#file \"ab.h\"\n\n#endfile\n#error aaa");
             preprocessor.getcode(code, "TEST", "test.c");
             ASSERT_EQUALS("[test.c:2]: (error) #error aaa\n", errout.str());
@@ -374,10 +376,10 @@ private:
 
     void error5() {
         errout.str("");
-        Settings settings;
-        settings.userDefines = "FOO";
-        settings.force = true; // No message if --force is given
-        Preprocessor preprocessor(settings, this);
+        Project project;
+        project.userDefines = "FOO";
+        project.force = true; // No message if --force is given
+        Preprocessor preprocessor(settings0, project, this);
         const std::string code("#error hello world!\n");
         preprocessor.getcode(code, "X", "test.c");
         ASSERT_EQUALS("", errout.str());
@@ -428,8 +430,8 @@ private:
     }
 
     void setPlatformInfo() {
-        Settings settings;
-        Preprocessor preprocessor(settings, this);
+        Project project;
+        Preprocessor preprocessor(settings0, project, this);
 
         // read code with simplecpp..
         const char filedata[] = "#if sizeof(long) == 4\n"
@@ -442,12 +444,12 @@ private:
         simplecpp::TokenList tokens(istr, files, "test.c");
 
         // preprocess code with unix32 platform..
-        settings.platform(Settings::PlatformType::Unix32);
+        project.platform(Project::PlatformType::Unix32);
         preprocessor.setPlatformInfo(&tokens);
         ASSERT_EQUALS("\n1", preprocessor.getcode(tokens, "", files, false));
 
         // preprocess code with unix64 platform..
-        settings.platform(Settings::PlatformType::Unix64);
+        project.platform(Project::PlatformType::Unix64);
         preprocessor.setPlatformInfo(&tokens);
         ASSERT_EQUALS("\n\n\n2", preprocessor.getcode(tokens, "", files, false));
     }
@@ -1913,10 +1915,10 @@ private:
 
     void inline_suppression_for_missing_include() {
         Preprocessor::missingIncludeFlag = false;
-        Settings settings;
-        settings.inlineSuppressions = true;
-        settings.severity.fill();
-        Preprocessor preprocessor(settings, this);
+        Project project;
+        project.inlineSuppressions = true;
+        project.severity.fill();
+        Preprocessor preprocessor(settings0, project, this);
 
         std::istringstream src("// cppcheck-suppress missingInclude\n"
                                "#include \"missing.h\"\n"
@@ -2199,7 +2201,7 @@ private:
 
 
     void validateCfg1() {
-        Preprocessor preprocessor(settings0, this);
+        Preprocessor preprocessor(settings0, project0, this);
 
         std::vector<std::string> files(1, "test.c");
         simplecpp::MacroUsage macroUsage(files, false);
@@ -2270,9 +2272,9 @@ private:
 
     void wrongPathOnErrorDirective() {
         errout.str("");
-        Settings settings;
-        settings.userDefines = "foo";
-        Preprocessor preprocessor(settings, this);
+        Project project;
+        project.userDefines = "foo";
+        Preprocessor preprocessor(settings0, project, this);
         const std::string code("#error hello world!\n");
         preprocessor.getcode(code, "X", "./././test.c");
         ASSERT_EQUALS("[test.c:1]: (error) #error hello world!\n", errout.str());
@@ -2310,7 +2312,7 @@ private:
                                 "  </directivelist>\n";
 
         std::ostringstream ostr;
-        Preprocessor preprocessor(settings0, this);
+        Preprocessor preprocessor(settings0, project0, this);
         preprocessor.getcode(filedata, "", "test.c");
         preprocessor.dump(ostr);
         ASSERT_EQUALS(dumpdata, ostr.str());
@@ -2337,7 +2339,7 @@ private:
                                 "  </directivelist>\n";
 
         std::ostringstream ostr;
-        Preprocessor preprocessor(settings0, this);
+        Preprocessor preprocessor(settings0, project0, this);
         preprocessor.getcode(filedata, "", "test.c");
         preprocessor.dump(ostr);
         ASSERT_EQUALS(dumpdata, ostr.str());
@@ -2354,7 +2356,7 @@ private:
                                 "  </directivelist>\n";
 
         std::ostringstream ostr;
-        Preprocessor preprocessor(settings0, this);
+        Preprocessor preprocessor(settings0, project0, this);
         preprocessor.getcode(filedata, "", "test.c");
         preprocessor.dump(ostr);
         ASSERT_EQUALS(dumpdata, ostr.str());

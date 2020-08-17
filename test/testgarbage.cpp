@@ -33,11 +33,12 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
         settings.debugwarnings = true;
-        settings.severity.setEnabledAll(true);
-        settings.certainty.setEnabledAll(true);
+        project.severity.setEnabledAll(true);
+        project.certainty.setEnabledAll(true);
 
         // don't freak out when the syntax is wrong
 
@@ -277,7 +278,7 @@ private:
         errout.str("");
 
         // tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
 
@@ -288,22 +289,22 @@ private:
 
         // call all "runChecks" and "getFileInfo" in all registered Check classes
         for (std::list<Check *>::const_iterator it = Check::instances().begin(); it != Check::instances().end(); ++it) {
-            (*it)->runChecks(&tokenizer, &settings, this);
-            Check::FileInfo* fi = (*it)->getFileInfo(&tokenizer, &settings);
+            (*it)->runChecks(&tokenizer, &settings, this, &project);
+            Check::FileInfo* fi = (*it)->getFileInfo(&tokenizer, &settings, &project);
             if (fi != nullptr)
                 ctu.addCheckInfo((*it)->name(), fi);
         }
 
         // Run whole program analysis
         for (std::list<Check*>::const_iterator it = Check::instances().begin(); it != Check::instances().end(); ++it) {
-            (*it)->analyseWholeProgram(&ctu, ai, settings, *this);
+            (*it)->analyseWholeProgram(&ctu, ai, settings, *this, &project);
         }
 
         return tokenizer.tokens()->stringifyList(false, false, false, true, false, nullptr, nullptr);
     }
 
     std::string getSyntaxError(const char code[]) {
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         try {
             tokenizer.tokenize(istr, "test.cpp");
@@ -321,7 +322,7 @@ private:
         const char code[] = "class __declspec(dllexport) x final { };";
         {
             errout.str("");
-            Tokenizer tokenizer(&settings, this);
+            Tokenizer tokenizer(&settings, &project, this);
             std::istringstream istr(code);
             tokenizer.tokenize(istr, "test.cpp");
             ASSERT_EQUALS("", errout.str());
@@ -368,7 +369,7 @@ private:
                             " )\n"
                             "}";
 
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         try {
             tokenizer.tokenize(istr, "test.cpp");
@@ -403,14 +404,14 @@ private:
 
         {
             errout.str("");
-            Tokenizer tokenizer(&settings, this);
+            Tokenizer tokenizer(&settings, &project, this);
             std::istringstream istr(code);
             tokenizer.tokenize(istr, "test.c");
             ASSERT_EQUALS("", errout.str());
         }
         {
             errout.str("");
-            Tokenizer tokenizer(&settings, this);
+            Tokenizer tokenizer(&settings, &project, this);
             std::istringstream istr(code);
             tokenizer.tokenize(istr, "test.cpp");
             ASSERT_EQUALS("[test.cpp:1]: (information) The code 'class x y {' is not handled. You can use -I or --include to add handling of this code.\n", errout.str());

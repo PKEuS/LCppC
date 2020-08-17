@@ -71,7 +71,7 @@ bool CheckCondition::isAliased(const std::set<unsigned int> &vars) const
 
 void CheckCondition::assignIf()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
@@ -139,7 +139,7 @@ bool CheckCondition::assignIfParseScope(const Token * const assignTok,
         }
         if (Token::Match(tok2, "++|-- %varid%", varid) || Token::Match(tok2, "%varid% ++|--", varid))
             return true;
-        if (Token::Match(tok2, "[(,] &| $ %varid% [,)]", varid) && isVariableChangedByFunctionCall(Token::matchResult(), 0, mSettings))
+        if (Token::Match(tok2, "[(,] &| $ %varid% [,)]", varid) && isVariableChangedByFunctionCall(Token::matchResult(), 0, mProject))
             return true;
         if (tok2->str() == "}")
             return false;
@@ -156,7 +156,7 @@ bool CheckCondition::assignIfParseScope(const Token * const assignTok,
                 // is variable changed in loop?
                 const Token *bodyStart = tok2->linkAt(1)->next();
                 const Token *bodyEnd   = bodyStart ? bodyStart->link() : nullptr;
-                if (!bodyEnd || bodyEnd->str() != "}" || isVariableChanged(bodyStart, bodyEnd, varid, !islocal, mSettings, mTokenizer->isCPP()))
+                if (!bodyEnd || bodyEnd->str() != "}" || isVariableChanged(bodyStart, bodyEnd, varid, !islocal, mProject, mTokenizer->isCPP()))
                     continue;
             }
 
@@ -251,7 +251,7 @@ static bool inBooleanFunction(const Token *tok)
 
 void CheckCondition::checkBadBitmaskCheck()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
@@ -279,7 +279,7 @@ void CheckCondition::badBitmaskCheckError(const Token *tok)
 
 void CheckCondition::comparison()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
@@ -358,7 +358,7 @@ bool CheckCondition::isOverlappingCond(const Token * const cond1, const Token * 
         return false;
 
     // same expressions
-    if (isSameExpression(mTokenizer->isCPP(), true, cond1, cond2, mSettings->library, pure, false))
+    if (isSameExpression(mTokenizer->isCPP(), true, cond1, cond2, mProject->library, pure, false))
         return true;
 
     // bitwise overlap for example 'x&7' and 'x==1'
@@ -381,7 +381,7 @@ bool CheckCondition::isOverlappingCond(const Token * const cond1, const Token * 
         if (!num2->isNumber() || MathLib::isNegative(num2->str()))
             return false;
 
-        if (!isSameExpression(mTokenizer->isCPP(), true, expr1, expr2, mSettings->library, pure, false))
+        if (!isSameExpression(mTokenizer->isCPP(), true, expr1, expr2, mProject->library, pure, false))
             return false;
 
         const MathLib::bigint value1 = MathLib::toLongNumber(num1->str());
@@ -395,7 +395,7 @@ bool CheckCondition::isOverlappingCond(const Token * const cond1, const Token * 
 
 void CheckCondition::duplicateCondition()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     const SymbolDatabase *const symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -426,13 +426,13 @@ void CheckCondition::duplicateCondition()
         bool modified = false;
         visitAstNodes(cond1, [&](const Token* tok3) {
             if (exprDependsOnThis(tok3)) {
-                if (isThisChanged(scope.classDef->next(), cond2, false, mSettings, mTokenizer->isCPP())) {
+                if (isThisChanged(scope.classDef->next(), cond2, false, mProject, mTokenizer->isCPP())) {
                     modified = true;
                     return ChildrenToVisit::done;
                 }
             }
             if (tok3->varId() > 0 &&
-                isVariableChanged(scope.classDef->next(), cond2, tok3->varId(), false, mSettings, mTokenizer->isCPP())) {
+                isVariableChanged(scope.classDef->next(), cond2, tok3->varId(), false, mProject, mTokenizer->isCPP())) {
                 modified = true;
                 return ChildrenToVisit::done;
             }
@@ -440,7 +440,7 @@ void CheckCondition::duplicateCondition()
         });
         ErrorPath errorPath;
         if (!modified &&
-            isSameExpression(mTokenizer->isCPP(), true, cond1, cond2, mSettings->library, true, true, &errorPath))
+            isSameExpression(mTokenizer->isCPP(), true, cond1, cond2, mProject->library, true, true, &errorPath))
             duplicateConditionError(cond1, cond2, errorPath);
     }
 }
@@ -459,7 +459,7 @@ void CheckCondition::duplicateConditionError(const Token *tok1, const Token *tok
 
 void CheckCondition::multiCondition()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -490,7 +490,7 @@ void CheckCondition::multiCondition()
                 ErrorPath errorPath;
                 if (isOverlappingCond(cond1, tok2->astOperand2(), true))
                     overlappingElseIfConditionError(tok2, cond1->linenr());
-                else if (isOppositeCond(true, mTokenizer->isCPP(), cond1, tok2->astOperand2(), mSettings->library, true, true, &errorPath))
+                else if (isOppositeCond(true, mTokenizer->isCPP(), cond1, tok2->astOperand2(), mProject->library, true, true, &errorPath))
                     oppositeElseIfConditionError(cond1, tok2, errorPath);
             }
         }
@@ -546,7 +546,7 @@ static bool isNonConstFunctionCall(const Token *ftok, const Library &library)
 
 void CheckCondition::multiCondition2()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -577,7 +577,7 @@ void CheckCondition::multiCondition2()
         visitAstNodes(condTok,
         [&](const Token *cond) {
             if (Token::Match(cond, "%name% (")) {
-                nonConstFunctionCall = isNonConstFunctionCall(cond, mSettings->library);
+                nonConstFunctionCall = isNonConstFunctionCall(cond, mProject->library);
                 if (nonConstFunctionCall)
                     return ChildrenToVisit::done;
             }
@@ -664,10 +664,10 @@ void CheckCondition::multiCondition2()
                             if (firstCondition->str() == "&&") {
                                 return ChildrenToVisit::op1_and_op2;
                             } else if (!firstCondition->hasKnownIntValue()) {
-                                if (!isReturnVar && isOppositeCond(false, mTokenizer->isCPP(), firstCondition, cond2, mSettings->library, true, true, &errorPath)) {
+                                if (!isReturnVar && isOppositeCond(false, mTokenizer->isCPP(), firstCondition, cond2, mProject->library, true, true, &errorPath)) {
                                     if (!isAliased(vars))
                                         oppositeInnerConditionError(firstCondition, cond2, errorPath);
-                                } else if (!isReturnVar && isSameExpression(mTokenizer->isCPP(), true, firstCondition, cond2, mSettings->library, true, true, &errorPath)) {
+                                } else if (!isReturnVar && isSameExpression(mTokenizer->isCPP(), true, firstCondition, cond2, mProject->library, true, true, &errorPath)) {
                                     identicalInnerConditionError(firstCondition, cond2, errorPath);
                                 }
                             }
@@ -679,7 +679,7 @@ void CheckCondition::multiCondition2()
                                 return ChildrenToVisit::op1_and_op2;
 
                             if ((!cond1->hasKnownIntValue() || !secondCondition->hasKnownIntValue()) &&
-                                isSameExpression(mTokenizer->isCPP(), true, cond1, secondCondition, mSettings->library, true, true, &errorPath)) {
+                                isSameExpression(mTokenizer->isCPP(), true, cond1, secondCondition, mProject->library, true, true, &errorPath)) {
                                 if (!isAliased(vars) && !mTokenizer->hasIfdef(cond1, secondCondition)) {
                                     identicalConditionAfterEarlyExitError(cond1, secondCondition, errorPath);
                                     return ChildrenToVisit::done;
@@ -689,10 +689,10 @@ void CheckCondition::multiCondition2()
                         });
                     }
                 }
-                if (Token::Match(tok, "%name% (") && isVariablesChanged(tok, tok->linkAt(1), true, varsInCond, mSettings, mTokenizer->isCPP())) {
+                if (Token::Match(tok, "%name% (") && isVariablesChanged(tok, tok->linkAt(1), true, varsInCond, mProject, mTokenizer->isCPP())) {
                     break;
                 }
-                if (Token::Match(tok, "%type% (") && nonlocal && isNonConstFunctionCall(tok, mSettings->library)) // non const function call -> bailout if there are nonlocal variables
+                if (Token::Match(tok, "%type% (") && nonlocal && isNonConstFunctionCall(tok, mProject->library)) // non const function call -> bailout if there are nonlocal variables
                     break;
                 if (Token::Match(tok, "case|break|continue|return|throw") && tok->scope() == endToken->scope())
                     break;
@@ -717,7 +717,7 @@ void CheckCondition::multiCondition2()
                     }
                     bool changed = false;
                     for (int varid : vars) {
-                        if (isVariableChanged(tok1, tok2, varid, nonlocal, mSettings, mTokenizer->isCPP())) {
+                        if (isVariableChanged(tok1, tok2, varid, nonlocal, mProject, mTokenizer->isCPP())) {
                             changed = true;
                             break;
                         }
@@ -756,7 +756,7 @@ void CheckCondition::multiCondition2()
                         if (!function || !function->isConst())
                             break;
                     }
-                    if (Token::Match(tok->previous(), "[(,] %name% [,)]") && isVariableChangedByFunctionCall(tok, 0, mSettings))
+                    if (Token::Match(tok->previous(), "[(,] %name% [,)]") && isVariableChangedByFunctionCall(tok, 0, mProject))
                         break;
                 }
             }
@@ -1004,11 +1004,11 @@ static std::string conditionString(const Token * tok)
 
 void CheckCondition::checkIncorrectLogicOperator()
 {
-    const bool printStyle = mSettings->severity.isEnabled(Severity::style);
-    const bool printWarning = mSettings->severity.isEnabled(Severity::warning);
+    const bool printStyle = mProject->severity.isEnabled(Severity::style);
+    const bool printWarning = mProject->severity.isEnabled(Severity::warning);
     if (!printWarning && !printStyle)
         return;
-    const bool printInconclusive = mSettings->certainty.isEnabled(Certainty::inconclusive);
+    const bool printInconclusive = mProject->certainty.isEnabled(Certainty::inconclusive);
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope * scope : symbolDatabase->functionScopes) {
@@ -1026,7 +1026,7 @@ void CheckCondition::checkIncorrectLogicOperator()
                 ((tok->str() == "||" && tok->astOperand2()->str() == "&&") ||
                  (tok->str() == "&&" && tok->astOperand2()->str() == "||"))) {
                 const Token* tok2 = tok->astOperand2()->astOperand1();
-                if (isOppositeCond(true, mTokenizer->isCPP(), tok->astOperand1(), tok2, mSettings->library, true, false)) {
+                if (isOppositeCond(true, mTokenizer->isCPP(), tok->astOperand1(), tok2, mProject->library, true, false)) {
                     std::string expr1(tok->astOperand1()->expressionString());
                     std::string expr2(tok->astOperand2()->astOperand1()->expressionString());
                     std::string expr3(tok->astOperand2()->astOperand2()->expressionString());
@@ -1057,7 +1057,7 @@ void CheckCondition::checkIncorrectLogicOperator()
                                             "The condition '" + cond1VerboseMsg + "' is equivalent to '" + cond2VerboseMsg + "'.";
                     redundantConditionError(tok, msg, false);
                     continue;
-                } else if (isSameExpression(mTokenizer->isCPP(), false, tok->astOperand1(), tok2, mSettings->library, true, true)) {
+                } else if (isSameExpression(mTokenizer->isCPP(), false, tok->astOperand1(), tok2, mProject->library, true, true)) {
                     std::string expr1(tok->astOperand1()->expressionString());
                     std::string expr2(tok->astOperand2()->astOperand1()->expressionString());
                     std::string expr3(tok->astOperand2()->astOperand2()->expressionString());
@@ -1116,7 +1116,7 @@ void CheckCondition::checkIncorrectLogicOperator()
             ErrorPath errorPath;
 
             // Opposite comparisons around || or && => always true or always false
-            if (!isfloat && isOppositeCond(tok->str() == "||", mTokenizer->isCPP(), tok->astOperand1(), tok->astOperand2(), mSettings->library, true, true, &errorPath)) {
+            if (!isfloat && isOppositeCond(tok->str() == "||", mTokenizer->isCPP(), tok->astOperand1(), tok->astOperand2(), mProject->library, true, true, &errorPath)) {
 
                 const bool alwaysTrue(tok->str() == "||");
                 incorrectLogicOperatorError(tok, conditionString(tok), alwaysTrue, inconclusive, errorPath);
@@ -1126,9 +1126,9 @@ void CheckCondition::checkIncorrectLogicOperator()
             if (!parseable)
                 continue;
 
-            if (isSameExpression(mTokenizer->isCPP(), true, comp1, comp2, mSettings->library, true, true))
+            if (isSameExpression(mTokenizer->isCPP(), true, comp1, comp2, mProject->library, true, true))
                 continue; // same expressions => only report that there are same expressions
-            if (!isSameExpression(mTokenizer->isCPP(), true, expr1, expr2, mSettings->library, true, true))
+            if (!isSameExpression(mTokenizer->isCPP(), true, expr1, expr2, mProject->library, true, true))
                 continue;
 
 
@@ -1230,7 +1230,7 @@ void CheckCondition::redundantConditionError(const Token *tok, const std::string
 //-----------------------------------------------------------------------------
 void CheckCondition::checkModuloAlwaysTrueFalse()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -1282,7 +1282,7 @@ static int countPar(const Token *tok1, const Token *tok2)
 //---------------------------------------------------------------------------
 void CheckCondition::clarifyCondition()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     const bool isC = mTokenizer->isC();
@@ -1346,7 +1346,7 @@ void CheckCondition::clarifyConditionError(const Token *tok, bool assign, bool b
 
 void CheckCondition::alwaysTrueFalse()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -1385,7 +1385,7 @@ void CheckCondition::alwaysTrueFalse()
                 continue;
             if (Token::Match(tok, "%oror%|&&|:"))
                 continue;
-            if (tok->isComparisonOp() && isSameExpression(mTokenizer->isCPP(), true, tok->astOperand1(), tok->astOperand2(), mSettings->library, true, true))
+            if (tok->isComparisonOp() && isSameExpression(mTokenizer->isCPP(), true, tok->astOperand1(), tok->astOperand2(), mProject->library, true, true))
                 continue;
             if (isConstVarExpression(tok, "[|(|&|+|-|*|/|%|^|>>|<<"))
                 continue;
@@ -1464,7 +1464,7 @@ void CheckCondition::alwaysTrueFalseError(const Token *tok, const ValueFlow::Val
 
 void CheckCondition::checkInvalidTestForOverflow()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -1494,9 +1494,9 @@ void CheckCondition::checkInvalidTestForOverflow()
                 continue;
 
             const Token *termToken;
-            if (isSameExpression(mTokenizer->isCPP(), true, exprToken, calcToken->astOperand1(), mSettings->library, true, false))
+            if (isSameExpression(mTokenizer->isCPP(), true, exprToken, calcToken->astOperand1(), mProject->library, true, false))
                 termToken = calcToken->astOperand2();
-            else if (isSameExpression(mTokenizer->isCPP(), true, exprToken, calcToken->astOperand2(), mSettings->library, true, false))
+            else if (isSameExpression(mTokenizer->isCPP(), true, exprToken, calcToken->astOperand2(), mProject->library, true, false))
                 termToken = calcToken->astOperand1();
             else
                 continue;
@@ -1526,7 +1526,7 @@ void CheckCondition::invalidTestForOverflow(const Token* tok, bool result)
 
 void CheckCondition::checkPointerAdditionResultNotNull()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -1571,7 +1571,7 @@ void CheckCondition::pointerAdditionResultNotNullError(const Token *tok, const T
 
 void CheckCondition::checkDuplicateConditionalAssign()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -1595,10 +1595,10 @@ void CheckCondition::checkDuplicateConditionalAssign()
             if (nextAfterAstRightmostLeaf(assignTok) != blockTok->link()->previous())
                 continue;
             if (!isSameExpression(
-                    mTokenizer->isCPP(), true, condTok->astOperand1(), assignTok->astOperand1(), mSettings->library, true, true))
+                    mTokenizer->isCPP(), true, condTok->astOperand1(), assignTok->astOperand1(), mProject->library, true, true))
                 continue;
             if (!isSameExpression(
-                    mTokenizer->isCPP(), true, condTok->astOperand2(), assignTok->astOperand2(), mSettings->library, true, true))
+                    mTokenizer->isCPP(), true, condTok->astOperand2(), assignTok->astOperand2(), mProject->library, true, true))
                 continue;
             duplicateConditionalAssignError(condTok, assignTok);
         }

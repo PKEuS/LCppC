@@ -11,7 +11,7 @@
 struct ForwardTraversal {
     enum class Progress { Continue, Break, Skip };
     ValuePtr<ForwardAnalyzer> analyzer;
-    const Settings* settings;
+    const Project* project;
 
     std::pair<bool, bool> evalCond(const Token* tok) {
         std::vector<int> result = analyzer->evaluate(tok);
@@ -28,7 +28,7 @@ struct ForwardTraversal {
     Progress traverseTok(T* tok, std::function<Progress(T*)> f, bool traverseUnknown, T** out = nullptr) {
         if (Token::Match(tok, "asm|goto|continue|setjmp|longjmp"))
             return Progress::Break;
-        else if (Token::Match(tok, "return|throw") || isEscapeFunction(tok, &settings->library)) {
+        else if (Token::Match(tok, "return|throw") || isEscapeFunction(tok, &project->library)) {
             traverseRecursive(tok->astOperand1(), f, traverseUnknown);
             traverseRecursive(tok->astOperand2(), f, traverseUnknown);
             return Progress::Break;
@@ -180,7 +180,7 @@ struct ForwardTraversal {
 
     bool isEscapeScope(const Token* endBlock, bool unknown = false) {
         const Token* ftok = nullptr;
-        bool r = isReturnScope(endBlock, &settings->library, &ftok);
+        bool r = isReturnScope(endBlock, &project->library, &ftok);
         if (!r && ftok)
             return unknown;
         return r;
@@ -506,8 +506,8 @@ struct ForwardTraversal {
 
 };
 
-void valueFlowGenericForward(Token* start, const Token* end, const ValuePtr<ForwardAnalyzer>& fa, const Settings* settings)
+void valueFlowGenericForward(Token* start, const Token* end, const ValuePtr<ForwardAnalyzer>& fa, const Project* project)
 {
-    ForwardTraversal ft{fa, settings};
+    ForwardTraversal ft{fa, project };
     ft.updateRange(start, end);
 }

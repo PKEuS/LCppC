@@ -76,7 +76,8 @@ private:
     void getErrorMessages() const {
         ErrorLogger2 errorLogger;
         Settings settings;
-        CppCheck cppCheck(errorLogger, settings, true);
+        Project project;
+        CppCheck cppCheck(errorLogger, settings, project, true);
         cppCheck.getErrorMessages();
         ASSERT(!errorLogger.id.empty());
 

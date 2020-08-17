@@ -225,12 +225,12 @@ class CPPCHECKLIB Variable {
      * @param settings Platform settings and library
      * @return true if array, false if not
      */
-    bool arrayDimensions(const Settings* settings);
+    bool arrayDimensions(const Project* project);
 
 public:
     Variable(const Token *name_, const Token *start_, const Token *end_,
              unsigned int index_, AccessControl access_, const Type *type_,
-             const Scope *scope_, const Settings* settings) noexcept
+             const Scope *scope_, const Project* project) noexcept
         : mNameToken(name_),
           mTypeStartToken(start_),
           mTypeEndToken(end_),
@@ -240,7 +240,7 @@ public:
           mType(type_),
           mScope(scope_),
           mValueType(nullptr) {
-        evaluate(settings);
+        evaluate(project);
     }
     ~Variable() noexcept;
 
@@ -683,7 +683,7 @@ private:
     std::vector<Dimension> mDimensions;
 
     /** @brief fill in information, depending on Tokens given at instantiation */
-    void evaluate(const Settings* settings);
+    void evaluate(const Project* project);
 };
 
 class CPPCHECKLIB Function {
@@ -876,7 +876,7 @@ public:
     void isEscapeFunction(bool state) {
         setFlag(fIsEscapeFunction, state);
     }
-    bool isSafe(const Settings *settings) const;
+    bool isSafe(const Project* project) const;
 
     const Token *tokenDef;            ///< function name token in class definition
     const Token *argDef;              ///< function argument start '(' in class definition
@@ -1090,10 +1090,10 @@ public:
 
     void addVariable(const Token *token_, const Token *start_,
                      const Token *end_, AccessControl access_, const Type *type_,
-                     const Scope *scope_, const Settings* settings);
+                     const Scope *scope_, const Project* project);
 
     /** @brief initialize varlist */
-    void getVariableList(const Settings* settings);
+    void getVariableList(const Project* project);
 
     const Function *getDestructor() const;
 
@@ -1116,7 +1116,7 @@ public:
      * @param settings Settings
      * @return pointer to last token
      */
-    const Token *checkVariable(const Token *tok, AccessControl varaccess, const Settings* settings);
+    const Token *checkVariable(const Token *tok, AccessControl varaccess, const Project* project);
 
     /**
      * @brief get variable from name
@@ -1205,7 +1205,7 @@ public:
           containerTypeToken(nullptr),
           originalTypeName(otn)
     {}
-    static ValueType parseDecl(const Token *type, const Settings *settings);
+    static ValueType parseDecl(const Token *type, const Project* project);
 
     static Type typeFromString(const std::string &typestr, bool longType);
 
@@ -1221,7 +1221,7 @@ public:
         return (type >= ValueType::Type::FLOAT && type <= ValueType::Type::LONGDOUBLE);
     }
 
-    bool fromLibraryType(const std::string &typestr, const Settings *settings);
+    bool fromLibraryType(const std::string &typestr, const Project* project);
 
     bool isEnum() const {
         return typeScope && typeScope->type == Scope::eEnum;
@@ -1237,7 +1237,7 @@ public:
 class CPPCHECKLIB SymbolDatabase {
     friend class TestSymbolDatabase;
 public:
-    SymbolDatabase(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger);
+    SymbolDatabase(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project);
     ~SymbolDatabase();
 
     /** @brief Information about all namespaces/classes/structrues */
@@ -1371,6 +1371,7 @@ private:
 
     const Tokenizer *mTokenizer;
     const Settings *mSettings;
+    const Project* mProject;
     ErrorLogger *mErrorLogger;
 
     /** variable symbol table */

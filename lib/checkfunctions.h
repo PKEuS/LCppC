@@ -55,13 +55,13 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckFunctions(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckFunctions(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        CheckFunctions checkFunctions(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckFunctions checkFunctions(tokenizer, settings, errorLogger, project);
 
         // Checks
         checkFunctions.checkIgnoredReturnValue();
@@ -117,10 +117,10 @@ private:
     void memsetSizeArgumentAsCharLiteralError(const Token* tok);
     void memsetSizeArgumentAsCharError(const Token* tok);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckFunctions c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckFunctions c(nullptr, settings, errorLogger, project);
 
-        for (std::map<std::string, Library::WarnInfo>::const_iterator i = settings->library.functionwarn.cbegin(); i != settings->library.functionwarn.cend(); ++i) {
+        for (std::map<std::string, Library::WarnInfo>::const_iterator i = project->library.functionwarn.cbegin(); i != project->library.functionwarn.cend(); ++i) {
             c.reportError(nullptr, Severity::style, i->first+"Called", i->second.message);
         }
 

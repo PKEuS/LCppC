@@ -46,15 +46,15 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckPostfixOperator(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckPostfixOperator(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
         if (tokenizer->isC())
             return;
 
-        CheckPostfixOperator checkPostfixOperator(tokenizer, settings, errorLogger);
+        CheckPostfixOperator checkPostfixOperator(tokenizer, settings, errorLogger, project);
         checkPostfixOperator.postfixOperator();
     }
 
@@ -65,8 +65,8 @@ private:
     /** Report Error */
     void postfixOperatorError(const Token *tok);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckPostfixOperator c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckPostfixOperator c(nullptr, settings, errorLogger, project);
         c.postfixOperatorError(nullptr);
     }
 

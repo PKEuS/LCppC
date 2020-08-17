@@ -35,6 +35,7 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
         TEST_CASE(testFunctionReturnType);
@@ -46,11 +47,11 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        const CheckMemoryLeak c(&tokenizer, this, &settings);
+        const CheckMemoryLeak c(&tokenizer, this, &project);
 
         return c.functionReturnType(&tokenizer.getSymbolDatabase()->scopeList.front().functionList.front());
     }
@@ -98,13 +99,13 @@ private:
         // Clear the error buffer..
         errout.str("");
 
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // there is no allocation
         const Token *tok = Token::findsimplematch(tokenizer.tokens(), "ret =");
-        const CheckMemoryLeak check(&tokenizer, nullptr, &settings);
+        const CheckMemoryLeak check(&tokenizer, nullptr, &project);
         ASSERT_EQUALS(CheckMemoryLeak::No, check.getAllocationType(tok->tokAt(2), 1));
     }
 };
@@ -121,31 +122,32 @@ public:
     }
 
 private:
-    Settings settings0;
-    Settings settings1;
-    Settings settings2;
+    Settings settings;
+    Project project0;
+    Project project1;
+    Project project2;
 
     void check(const char code[]) {
         // Clear the error buffer..
         errout.str("");
 
-        Settings *settings = &settings1;
+        Project* project = &project1;
 
         // Tokenize..
-        Tokenizer tokenizer(settings, this);
+        Tokenizer tokenizer(&settings, project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for memory leaks..
-        CheckMemoryLeakInFunction checkMemoryLeak(&tokenizer, settings, this);
+        CheckMemoryLeakInFunction checkMemoryLeak(&tokenizer, &settings, this, project);
         checkMemoryLeak.checkReallocUsage();
     }
 
 
     void run() override {
-        LOAD_LIB_2(settings1.library, "std.cfg");
-        LOAD_LIB_2(settings1.library, "posix.cfg");
-        LOAD_LIB_2(settings2.library, "std.cfg");
+        LOAD_LIB_2(project1.library, "std.cfg");
+        LOAD_LIB_2(project1.library, "posix.cfg");
+        LOAD_LIB_2(project2.library, "std.cfg");
 
         TEST_CASE(realloc1);
         TEST_CASE(realloc2);
@@ -436,6 +438,7 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     /**
      * Tokenize and execute leak check for given code
@@ -446,20 +449,20 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for memory leaks..
-        CheckMemoryLeakInClass checkMemoryLeak(&tokenizer, &settings, this);
+        CheckMemoryLeakInClass checkMemoryLeak(&tokenizer, &settings, this, &project);
         checkMemoryLeak.check();
     }
 
     void run() override {
-        settings.severity.enable(Severity::warning);
-        settings.severity.enable(Severity::style);
+        project.severity.enable(Severity::warning);
+        project.severity.enable(Severity::style);
 
-        LOAD_LIB_2(settings.library, "std.cfg");
+        LOAD_LIB_2(project.library, "std.cfg");
 
         TEST_CASE(class1);
         TEST_CASE(class2);
@@ -1613,24 +1616,25 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void check(const char code[], bool isCPP = true) {
         // Clear the error buffer..
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, isCPP ? "test.cpp" : "test.c");
 
         // Check for memory leaks..
-        CheckMemoryLeakStructMember checkMemoryLeakStructMember(&tokenizer, &settings, this);
+        CheckMemoryLeakStructMember checkMemoryLeakStructMember(&tokenizer, &settings, this, &project);
         checkMemoryLeakStructMember.check();
     }
 
     void run() override {
-        LOAD_LIB_2(settings.library, "std.cfg");
-        LOAD_LIB_2(settings.library, "posix.cfg");
+        LOAD_LIB_2(project.library, "std.cfg");
+        LOAD_LIB_2(project.library, "posix.cfg");
 
         // testing that errors are detected
         TEST_CASE(err);
@@ -2095,28 +2099,29 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void check(const char code[]) {
         // Clear the error buffer..
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for memory leaks..
-        CheckMemoryLeakNoVar checkMemoryLeakNoVar(&tokenizer, &settings, this);
+        CheckMemoryLeakNoVar checkMemoryLeakNoVar(&tokenizer, &settings, this, &project);
         checkMemoryLeakNoVar.check();
     }
 
     void run() override {
-        settings.certainty.setEnabled(Certainty::inconclusive, true);
-        settings.libraries.emplace("posix");
-        settings.severity.enable(Severity::warning);
+        project.certainty.setEnabled(Certainty::inconclusive, true);
+        project.libraries.emplace("posix");
+        project.severity.enable(Severity::warning);
 
-        LOAD_LIB_2(settings.library, "std.cfg");
-        LOAD_LIB_2(settings.library, "posix.cfg");
+        LOAD_LIB_2(project.library, "std.cfg");
+        LOAD_LIB_2(project.library, "posix.cfg");
 
         // pass allocated memory to function..
         TEST_CASE(functionParameter);

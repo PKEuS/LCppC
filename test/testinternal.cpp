@@ -30,6 +30,7 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
         settings.addEnabled("internal");
@@ -52,13 +53,13 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
         CheckInternal checkInternal;
-        checkInternal.runChecks(&tokenizer, &settings, this);
+        checkInternal.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void simplePatternInTokenMatch() {

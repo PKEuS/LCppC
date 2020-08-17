@@ -855,7 +855,7 @@ Library::Error Library::loadFunction(const tinyxml2::XMLElement * const node, co
 std::vector<Library::InvalidArgValue> Library::getInvalidArgValues(const std::string &validExpr)
 {
     std::vector<Library::InvalidArgValue> valid;
-    TokenList tokenList(nullptr);
+    TokenList tokenList(nullptr, nullptr);
     gettokenlistfromvalid(validExpr, tokenList);
     for (const Token *tok = tokenList.front(); tok; tok = tok ? tok->next() : nullptr) {
         if (tok->str() == ",")
@@ -911,7 +911,7 @@ bool Library::isIntArgValid(const Token *ftok, int argnr, const MathLib::bigint 
         return true;
     else if (ac->valid.find('.') != std::string::npos)
         return isFloatArgValid(ftok, argnr, argvalue);
-    TokenList tokenList(nullptr);
+    TokenList tokenList(nullptr, nullptr);
     gettokenlistfromvalid(ac->valid, tokenList);
     for (const Token *tok = tokenList.front(); tok; tok = tok->next()) {
         if (tok->isNumber() && argvalue == MathLib::toLongNumber(tok->str()))
@@ -931,7 +931,7 @@ bool Library::isFloatArgValid(const Token *ftok, int argnr, double argvalue) con
     const ArgumentChecks *ac = getarg(ftok, argnr);
     if (!ac || ac->valid.empty())
         return true;
-    TokenList tokenList(nullptr);
+    TokenList tokenList(nullptr, nullptr);
     gettokenlistfromvalid(ac->valid, tokenList);
     for (const Token *tok = tokenList.front(); tok; tok = tok->next()) {
         if (Token::Match(tok, "%num% : %num%") && argvalue >= MathLib::toDoubleNumber(tok->str()) && argvalue <= MathLib::toDoubleNumber(tok->strAt(2)))

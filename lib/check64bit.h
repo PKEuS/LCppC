@@ -47,13 +47,13 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    Check64BitPortability(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    Check64BitPortability(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        Check64BitPortability check64BitPortability(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        Check64BitPortability check64BitPortability(tokenizer, settings, errorLogger, project);
         check64BitPortability.pointerassignment();
     }
 
@@ -67,8 +67,8 @@ private:
     void returnIntegerError(const Token *tok);
     void returnPointerError(const Token *tok);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        Check64BitPortability c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        Check64BitPortability c(nullptr, settings, errorLogger, project);
         c.assignmentAddressToIntegerError(nullptr);
         c.assignmentIntegerToAddressError(nullptr);
         c.returnIntegerError(nullptr);

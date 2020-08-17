@@ -33,9 +33,10 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        settings.severity.enable(Severity::style);
+        project.severity.enable(Severity::style);
 
         TEST_CASE(test1);
         TEST_CASE(test2);
@@ -85,11 +86,11 @@ private:
     }
 
 
-    void check(const char code[], Settings::PlatformType platform = Settings::Native) {
+    void check(const char code[], Project::PlatformType platform = Project::Native) {
         // Clear the error buffer..
         errout.str("");
 
-        settings.platform(platform);
+        project.platform(platform);
 
         // Raw tokens..
         std::vector<std::string> files(1, "test.cpp");
@@ -102,13 +103,13 @@ private:
         simplecpp::preprocess(tokens2, tokens1, files, filedata, simplecpp::DUI());
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         tokenizer.createTokens(std::move(tokens2));
         tokenizer.simplifyTokens0("");
         tokenizer.simplifyTokens1();
 
         // Check for unused private functions..
-        CheckClass checkClass(&tokenizer, &settings, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project);
         checkClass.privateFunctions();
     }
 
@@ -565,7 +566,7 @@ private:
               "public:\n"
               "    Foo() { }\n"
               "    __property int x = {read=getx}\n"
-              "};", Settings::Win32A);
+              "};", Project::Win32A);
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -578,7 +579,7 @@ private:
               "    }\n"
               "public:\n"
               "    Foo() { }\n"
-              "};", Settings::Win32A);
+              "};", Project::Win32A);
         ASSERT_EQUALS("", errout.str());
     }
 

@@ -30,11 +30,12 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        settings.severity.enable(Severity::style);
-        settings.severity.enable(Severity::warning);
-        settings.certainty.enable(Certainty::inconclusive);
+        project.severity.enable(Severity::style);
+        project.severity.enable(Severity::warning);
+        project.certainty.enable(Certainty::inconclusive);
 
         TEST_CASE(bitwiseOnBoolean);      // if (bool & bool)
         TEST_CASE(incrementBoolean);
@@ -80,16 +81,16 @@ private:
         // Clear the error buffer..
         errout.str("");
 
-        settings.certainty.setEnabled(Certainty::experimental, experimental);
+        project.certainty.setEnabled(Certainty::experimental, experimental);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
 
         // Check...
-        CheckBool checkBool(&tokenizer, &settings, this);
-        checkBool.runChecks(&tokenizer, &settings, this);
+        CheckBool checkBool(&tokenizer, &settings, this, &project);
+        checkBool.runChecks(&tokenizer, &settings, this, &project);
     }
 
 

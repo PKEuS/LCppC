@@ -29,7 +29,7 @@
 //---------------------------------------------------------------------------
 
 Check::Check(const char* aname)
-    : mTokenizer(nullptr), mSettings(nullptr), mErrorLogger(nullptr), mName(aname)
+    : mTokenizer(nullptr), mSettings(nullptr), mProject(nullptr), mErrorLogger(nullptr), mName(aname)
 {
     for (std::list<Check*>::iterator i = instances().begin(); i != instances().end(); ++i) {
         if ((*i)->name() > aname) {

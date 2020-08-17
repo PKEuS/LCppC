@@ -30,10 +30,11 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        settings.severity.enable(Severity::style);
-        settings.severity.enable(Severity::performance);
+        project.severity.enable(Severity::style);
+        project.severity.enable(Severity::performance);
 
         TEST_CASE(BoostForeachContainerModification);
     }
@@ -43,13 +44,13 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
         CheckBoost checkBoost;
-        checkBoost.runChecks(&tokenizer, &settings, this);
+        checkBoost.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void BoostForeachContainerModification() {

@@ -31,12 +31,13 @@ public:
     }
 
 private:
-    Settings settings0;
-    Settings settings1;
+    Settings settings;
+    Project project0;
+    Project project1;
 
     void run() override {
-        settings0.severity.enable(Severity::style);
-        settings1.severity.enable(Severity::warning);
+        project0.severity.enable(Severity::style);
+        project1.severity.enable(Severity::warning);
 
         // Load std.cfg configuration
         {
@@ -50,8 +51,8 @@ private:
                                    "</def>";
             tinyxml2::XMLDocument doc;
             doc.Parse(xmldata, sizeof(xmldata));
-            settings0.library.load(doc);
-            settings1.library.load(doc);
+            project0.library.load(doc);
+            project1.library.load(doc);
         }
 
 
@@ -230,16 +231,16 @@ private:
     void checkCopyCtorAndEqOperator(const char code[]) {
         // Clear the error log
         errout.str("");
-        Settings settings;
-        settings.severity.enable(Severity::warning);
+        Project project;
+        project.severity.enable(Severity::warning);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project);
         checkClass.checkCopyCtorAndEqOperator();
     }
 
@@ -337,12 +338,12 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings0, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project0);
         checkClass.checkExplicitConstructors();
     }
 
@@ -446,12 +447,12 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings1, this);
+        Tokenizer tokenizer(&settings, &project1, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings1, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project1);
         checkClass.checkDuplInheritedMembers();
     }
 
@@ -567,12 +568,12 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings0, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project0);
         checkClass.copyconstructors();
     }
 
@@ -973,15 +974,15 @@ private:
         // Clear the error log
         errout.str("");
 
-        settings0.certainty.enable(Certainty::inconclusive);
+        project0.certainty.enable(Certainty::inconclusive);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings0, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project0);
         checkClass.operatorEq();
     }
 
@@ -1140,12 +1141,12 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings0, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project0);
         checkClass.operatorEqRetRefThis();
     }
 
@@ -1603,12 +1604,12 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings1, this);
+        Tokenizer tokenizer(&settings, &project1, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings1, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project1);
         checkClass.operatorEqToSelf();
     }
 
@@ -2421,16 +2422,16 @@ private:
         // Clear the error log
         errout.str("");
 
-        settings0.certainty.setEnabled(Certainty::inconclusive, inconclusive);
-        settings0.severity.enable(Severity::warning);
+        project0.certainty.setEnabled(Certainty::inconclusive, inconclusive);
+        project0.severity.enable(Severity::warning);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings0, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project0);
         checkClass.virtualDestructor();
     }
 
@@ -2705,23 +2706,23 @@ private:
     }
 
     void checkNoMemset(const char code[]) {
-        Settings settings;
-        settings.severity.enable(Severity::warning);
-        settings.severity.enable(Severity::portability);
-        checkNoMemset(code,settings);
+        Project project;
+        project.severity.enable(Severity::warning);
+        project.severity.enable(Severity::portability);
+        checkNoMemset(code, project);
     }
 
-    void checkNoMemset(const char code[], const Settings &settings) {
+    void checkNoMemset(const char code[], const Project &project) {
         // Clear the error log
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project);
         checkClass.checkMemset();
     }
 
@@ -3173,7 +3174,7 @@ private:
     }
 
     void memsetOnStdPodType() { // Ticket #5901
-        Settings settings;
+        Project project;
         const char xmldata[] = "<?xml version=\"1.0\"?>\n"
                                "<def>\n"
                                "  <podtype name=\"std::uint8_t\" sign=\"u\" size=\"1\"/>\n"
@@ -3181,7 +3182,7 @@ private:
                                "</def>";
         tinyxml2::XMLDocument doc;
         doc.Parse(xmldata, sizeof(xmldata));
-        settings.library.load(doc);
+        project.library.load(doc);
 
         checkNoMemset("class A {\n"
                       "    std::array<int, 10> ints;\n"
@@ -3200,7 +3201,7 @@ private:
                       "void f() {\n"
                       "  st s;\n"
                       "  std::memset(&s, 0, sizeof(st));\n"
-                      "}", settings);
+                      "}", project);
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -3306,12 +3307,12 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings1, this);
+        Tokenizer tokenizer(&settings, &project1, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings1, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project1);
         checkClass.thisSubtraction();
     }
 
@@ -3333,21 +3334,21 @@ private:
                       "[test.cpp:3]: (warning) Suspicious pointer subtraction. Did you intend to write '->'?\n", errout.str());
     }
 
-    void checkConst(const char code[], Settings *s = nullptr, bool inconclusive = true) {
+    void checkConst(const char code[], Project *s = nullptr, bool inconclusive = true) {
         // Clear the error log
         errout.str("");
 
         // Check..
         if (!s)
-            s = &settings0;
+            s = &project0;
         s->certainty.setEnabled(Certainty::inconclusive, inconclusive);
 
         // Tokenize..
-        Tokenizer tokenizer(s, this);
+        Tokenizer tokenizer(&settings, s, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CheckClass checkClass(&tokenizer, s, this);
+        CheckClass checkClass(&tokenizer, &settings, this, s);
         checkClass.checkConst();
     }
 
@@ -6395,10 +6396,10 @@ private:
                             "    }\n"
                             "};";
 
-        checkConst(code, &settings0, true);
+        checkConst(code, &project0, true);
         ASSERT_EQUALS("[test.cpp:3]: (performance, inconclusive) Technically the member function 'foo::f' can be static (but you may consider moving to unnamed namespace).\n", errout.str());
 
-        checkConst(code, &settings0, false); // TODO: Set inconclusive to true (preprocess it)
+        checkConst(code, &project0, false); // TODO: Set inconclusive to true (preprocess it)
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -6490,14 +6491,14 @@ private:
         errout.str("");
 
         // Check..
-        settings0.certainty.setEnabled(Certainty::inconclusive, true);
+        project0.certainty.setEnabled(Certainty::inconclusive, true);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CheckClass checkClass(&tokenizer, &settings0, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project0);
         checkClass.initializerListOrder();
     }
 
@@ -6524,15 +6525,15 @@ private:
         errout.str("");
 
         // Check..
-        Settings settings;
-        settings.severity.enable(Severity::performance);
+        Project project;
+        project.severity.enable(Severity::performance);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CheckClass checkClass(&tokenizer, &settings, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project);
         checkClass.initializationListUsage();
     }
 
@@ -6726,11 +6727,11 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CheckClass checkClass(&tokenizer, &settings0, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project0);
         checkClass.checkSelfInitialization();
     }
 
@@ -6814,24 +6815,24 @@ private:
         ASSERT_EQUALS("", errout.str());
     }
 
-    void checkVirtualFunctionCall(const char code[], Settings *s = nullptr, bool inconclusive = true) {
+    void checkVirtualFunctionCall(const char code[], Project *s = nullptr, bool inconclusive = true) {
         // Clear the error log
         errout.str("");
 
         // Check..
         if (!s) {
-            static Settings settings_;
-            s = &settings_;
+            static Project project_;
+            s = &project_;
             s->severity.enable(Severity::warning);
         }
         s->certainty.setEnabled(Certainty::inconclusive, inconclusive);
 
         // Tokenize..
-        Tokenizer tokenizer(s, this);
+        Tokenizer tokenizer(&settings, s, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CheckClass checkClass(&tokenizer, s, this);
+        CheckClass checkClass(&tokenizer, &settings, this, s);
         checkClass.checkVirtualFunctionCallInConstructor();
     }
 
@@ -7074,16 +7075,16 @@ private:
     void checkOverride(const char code[]) {
         // Clear the error log
         errout.str("");
-        Settings settings;
-        settings.severity.enable(Severity::style);
+        Project project;
+        project.severity.enable(Severity::style);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project);
         checkClass.checkOverride();
     }
 
@@ -7156,17 +7157,17 @@ private:
     void checkUnsafeClassRefMember(const char code[]) {
         // Clear the error log
         errout.str("");
-        Settings settings;
-        settings.safeChecks.classes = true;
-        settings.severity.enable(Severity::warning);
+        Project project;
+        project.safeChecks.classes = true;
+        project.severity.enable(Severity::warning);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project);
         checkClass.checkUnsafeClassRefMember();
     }
 
@@ -7180,12 +7181,12 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings1, this);
+        Tokenizer tokenizer(&settings, &project1, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings1, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project1);
         checkClass.checkThisUseAfterFree();
     }
 

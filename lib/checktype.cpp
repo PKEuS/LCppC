@@ -52,7 +52,7 @@ static const struct CWE CWE190(190U);   // Integer Overflow or Wraparound
 void CheckType::checkTooBigBitwiseShift()
 {
     // unknown sizeof(int) => can't run this checker
-    if (mSettings->platformType == Settings::Unspecified)
+    if (mProject->platformType == Project::Unspecified)
         return;
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
@@ -79,21 +79,21 @@ void CheckType::checkTooBigBitwiseShift()
             (lhstype->type == ValueType::Type::WCHAR_T) ||
             (lhstype->type == ValueType::Type::BOOL) ||
             (lhstype->type == ValueType::Type::INT))
-            lhsbits = mSettings->int_bit;
+            lhsbits = mProject->int_bit;
         else if (lhstype->type == ValueType::Type::LONG)
-            lhsbits = mSettings->long_bit;
+            lhsbits = mProject->long_bit;
         else if (lhstype->type == ValueType::Type::LONGLONG)
-            lhsbits = mSettings->long_long_bit;
+            lhsbits = mProject->long_long_bit;
         else
             continue;
 
         // Get biggest rhs value. preferably a value which doesn't have 'condition'.
-        const ValueFlow::Value * value = tok->astOperand2()->getValueGE(lhsbits, mSettings);
-        if (value && mSettings->isEnabled(value, false))
+        const ValueFlow::Value * value = tok->astOperand2()->getValueGE(lhsbits, mProject);
+        if (value && mProject->isEnabled(value, false))
             tooBigBitwiseShiftError(tok, lhsbits, *value);
         else if (lhstype->sign == ValueType::Sign::SIGNED) {
-            value = tok->astOperand2()->getValueGE(lhsbits-1, mSettings);
-            if (value && mSettings->isEnabled(value, false))
+            value = tok->astOperand2()->getValueGE(lhsbits-1, mProject);
+            if (value && mProject->isEnabled(value, false))
                 tooBigSignedBitwiseShiftError(tok, lhsbits, *value);
         }
     }
@@ -122,7 +122,7 @@ void CheckType::tooBigSignedBitwiseShiftError(const Token *tok, int lhsbits, con
 {
     const char id[] = "shiftTooManyBitsSigned";
 
-    const bool cpp14 = mSettings->standards.cpp >= Standards::CPP14;
+    const bool cpp14 = mProject->standards.cpp >= Standards::CPP14;
 
     std::string behaviour = "undefined";
     if (cpp14)
@@ -143,7 +143,7 @@ void CheckType::tooBigSignedBitwiseShiftError(const Token *tok, int lhsbits, con
     if (cpp14)
         severity = Severity::portability;
 
-    if ((severity == Severity::portability) && !mSettings->severity.isEnabled(Severity::portability))
+    if ((severity == Severity::portability) && !mProject->severity.isEnabled(Severity::portability))
         return;
     reportError(errorPath, severity, id, errmsg.str(), CWE758, rhsbits.isInconclusive() ? Certainty::inconclusive : Certainty::safe);
 }
@@ -155,7 +155,7 @@ void CheckType::tooBigSignedBitwiseShiftError(const Token *tok, int lhsbits, con
 void CheckType::checkIntegerOverflow()
 {
     // unknown sizeof(int) => can't run this checker
-    if (mSettings->platformType == Settings::Unspecified || mSettings->int_bit >= MathLib::bigint_bits)
+    if (mProject->platformType == Project::Unspecified || mProject->int_bit >= MathLib::bigint_bits)
         return;
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
@@ -169,11 +169,11 @@ void CheckType::checkIntegerOverflow()
 
         unsigned int bits;
         if (vt->type == ValueType::Type::INT)
-            bits = mSettings->int_bit;
+            bits = mProject->int_bit;
         else if (vt->type == ValueType::Type::LONG)
-            bits = mSettings->long_bit;
+            bits = mProject->long_bit;
         else if (vt->type == ValueType::Type::LONGLONG)
-            bits = mSettings->long_long_bit;
+            bits = mProject->long_long_bit;
         else
             continue;
 
@@ -184,10 +184,10 @@ void CheckType::checkIntegerOverflow()
         const MathLib::bigint maxvalue = (((MathLib::bigint)1) << (bits - 1)) - 1;
 
         // is there a overflow result value
-        const ValueFlow::Value *value = tok->getValueGE(maxvalue + 1, mSettings);
+        const ValueFlow::Value *value = tok->getValueGE(maxvalue + 1, mProject);
         if (!value)
-            value = tok->getValueLE(-maxvalue - 2, mSettings);
-        if (!value || !mSettings->isEnabled(value,false))
+            value = tok->getValueLE(-maxvalue - 2, mProject);
+        if (!value || !mProject->isEnabled(value,false))
             continue;
 
         // For left shift, it's common practice to shift into the sign bit
@@ -226,7 +226,7 @@ void CheckType::integerOverflowError(const Token *tok, const ValueFlow::Value &v
 
 void CheckType::checkSignConversion()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
@@ -242,7 +242,7 @@ void CheckType::checkSignConversion()
         for (const Token * tok1 : astOperands) {
             if (!tok1)
                 continue;
-            const ValueFlow::Value *negativeValue = tok1->getValueLE(-1,mSettings);
+            const ValueFlow::Value *negativeValue = tok1->getValueLE(-1, mProject);
             if (!negativeValue)
                 continue;
             if (tok1->valueType() && tok1->valueType()->sign != ValueType::Sign::UNSIGNED)
@@ -283,7 +283,7 @@ void CheckType::signConversionError(const Token *tok, const ValueFlow::Value *ne
 
 void CheckType::checkLongCast()
 {
-    if (!mSettings->severity.isEnabled(Severity::style))
+    if (!mProject->severity.isEnabled(Severity::style))
         return;
 
     // Assignments..
@@ -293,7 +293,7 @@ void CheckType::checkLongCast()
 
         if (tok->astOperand2()->hasKnownIntValue()) {
             const ValueFlow::Value &v = tok->astOperand2()->values().front();
-            if (mSettings->isIntValue(v.intvalue))
+            if (mProject->isIntValue(v.intvalue))
                 continue;
         }
 
@@ -402,7 +402,7 @@ void CheckType::checkFloatToIntegerOverflow()
             while (scope && scope->type != Scope::ScopeType::eLambda && scope->type != Scope::ScopeType::eFunction)
                 scope = scope->nestedIn;
             if (scope && scope->type == Scope::ScopeType::eFunction && scope->function && scope->function->retDef) {
-                const ValueType &valueType = ValueType::parseDecl(scope->function->retDef, mSettings);
+                const ValueType &valueType = ValueType::parseDecl(scope->function->retDef, mProject);
                 vtfloat = tok->astOperand1()->valueType();
                 floatValues = &tok->astOperand1()->values();
                 checkFloatToIntegerOverflow(tok, &valueType, vtfloat, floatValues);
@@ -422,24 +422,24 @@ void CheckType::checkFloatToIntegerOverflow(const Token *tok, const ValueType *v
     for (const ValueFlow::Value &f : *floatValues) {
         if (f.valueType != ValueFlow::Value::ValueType::FLOAT)
             continue;
-        if (!mSettings->isEnabled(&f, false))
+        if (!mProject->isEnabled(&f, false))
             continue;
         if (f.floatValue > ~0ULL)
             floatToIntegerOverflowError(tok, f);
         else if ((-f.floatValue) > (1ULL<<62))
             floatToIntegerOverflowError(tok, f);
-        else if (mSettings->platformType != Settings::Unspecified) {
+        else if (mProject->platformType != Project::Unspecified) {
             unsigned int bits = 0;
             if (vtint->type == ValueType::Type::CHAR)
-                bits = mSettings->char_bit;
+                bits = mProject->char_bit;
             else if (vtint->type == ValueType::Type::SHORT)
-                bits = mSettings->short_bit;
+                bits = mProject->short_bit;
             else if (vtint->type == ValueType::Type::INT)
-                bits = mSettings->int_bit;
+                bits = mProject->int_bit;
             else if (vtint->type == ValueType::Type::LONG)
-                bits = mSettings->long_bit;
+                bits = mProject->long_bit;
             else if (vtint->type == ValueType::Type::LONGLONG)
-                bits = mSettings->long_long_bit;
+                bits = mProject->long_long_bit;
             else
                 continue;
             if (bits < MathLib::bigint_bits && f.floatValue >= (((MathLib::biguint)1) << bits))

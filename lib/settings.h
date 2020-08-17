@@ -122,8 +122,7 @@ public:
  * to pass individual values to functions or constructors now or in the
  * future when we might have even more detailed settings.
  */
-class CPPCHECKLIB Settings : public cppcheck::Platform {
-private:
+class CPPCHECKLIB Settings {
 
     /** @brief terminate checking */
     static std::atomic<bool> mTerminated;
@@ -131,37 +130,14 @@ private:
 public:
     Settings();
 
-    /** @brief addons, either filename of python/json file or json data */
-    std::vector<std::string> addons;
-
     /** @brief Path to the python interpreter to be used to run addons. */
     std::string addonPython;
-
-    /** @brief Paths used as base for conversion to relative paths. */
-    std::vector<std::string> basePaths;
-
-    /** @brief --cppcheck-build-dir */
-    std::string buildDir;
-
-    /** @brief check all configurations (false if -D or --max-configs is used */
-    bool checkAllConfigurations;
 
     /** Is the 'configuration checking' wanted? */
     bool checkConfiguration;
 
-    /**
-     * Check code in the headers, this is on by default but can
-     * be turned off to save CPU */
-    bool checkHeaders;
-
     /** Check for incomplete info in library files? */
     bool checkLibrary;
-
-    /** @brief include paths excluded from checking the configuration */
-    std::set<std::string> configExcludePaths;
-
-    /** Check unused/uninstantiated templates */
-    bool checkUnusedTemplates;
 
     /** @brief Is --debug-normal given? */
     bool debugnormal;
@@ -176,18 +152,102 @@ public:
     bool dump;
     std::string dumpFile;
 
+    /** @brief Is --exception-handling given */
+    bool exceptionHandling;
+
+    // argv[0]
+    std::string exename;
+
+    /** @brief If errors are found, this value is returned from main().
+        Default value is 0. */
+    int exitCode;
+
+    /** @brief How many processes/threads should do checking at the same
+        time. Default is 1. (-j N) */
+    unsigned int jobs;
+
+    /** @brief Use relative paths in output. */
+    bool relativePaths;
+
+    SimpleEnableGroup<Output::OutputType> output;
+
+
+    enum SHOWTIME_MODES : uint8_t {
+        SHOWTIME_NONE = 0,
+        SHOWTIME_FILE,
+        SHOWTIME_SUMMARY,
+        SHOWTIME_TOP5
+    };
+    /** @brief show timing information (--showtime=file|summary|top5) */
+    SHOWTIME_MODES showtime;
+
+
+    /** @brief The output format in which the errors are printed in text mode,
+        e.g. "{severity} {file}:{line} {message} {id}" */
+    std::string templateFormat;
+
+    /** @brief The output format in which the error locations are printed in
+     *  text mode, e.g. "{file}:{line} {info}" */
+    std::string templateLocation;
+
+    /** @brief Is --verbose given? */
+    bool verbose;
+
+    /** @brief write XML results (--xml) */
+    bool xml;
+
+    /** @brief XML version (--xml-version=..) */
+    int xml_version;
+
+    /** @brief Request termination of checking */
+    static void terminate(bool t = true) {
+        Settings::mTerminated = t;
+    }
+
+    /** @brief termination requested? */
+    static bool terminated() {
+        return Settings::mTerminated;
+    }
+};
+
+/**
+ * @brief All information about how a specific code base should be checked
+ */
+class CPPCHECKLIB Project : public cppcheck::Platform {
+private:
+
+public:
+    Project();
+
+    /** @brief addons, either filename of python/json file or json data */
+    std::vector<std::string> addons;
+
+    /** @brief Paths used as base for conversion to relative paths. */
+    std::vector<std::string> basePaths;
+
+    /** @brief --cppcheck-build-dir */
+    std::string buildDir;
+
+    /** @brief check all configurations (false if -D or --max-configs is used */
+    bool checkAllConfigurations;
+
+    /**
+     * Check code in the headers, this is on by default but can
+     * be turned off to save CPU */
+    bool checkHeaders;
+
+    /** @brief include paths excluded from checking the configuration */
+    std::set<std::string> configExcludePaths;
+
+    /** Check unused/uninstantiated templates */
+    bool checkUnusedTemplates;
+
     enum Language : uint8_t {
         None, C, CPP
     };
 
     /** @brief Name of the language that is enforced. Empty per default. */
     Language enforcedLang;
-
-    /** @brief Is --exception-handling given */
-    bool exceptionHandling;
-
-    // argv[0]
-    std::string exename;
 
     /** @brief --file-filter for analyzing special files */
     std::string fileFilter;
@@ -196,19 +256,11 @@ public:
         for finding include files inside source files. (-I) */
     std::vector<std::string> includePaths;
 
-    /** @brief If errors are found, this value is returned from main().
-        Default value is 0. */
-    int exitCode;
-
     /** @brief Force checking the files with "too many" configurations (--force). */
     bool force;
 
     /** @brief Is --inline-suppr given? */
     bool inlineSuppressions;
-
-    /** @brief How many processes/threads should do checking at the same
-        time. Default is 1. (-j N) */
-    unsigned int jobs;
 
     /** @brief --library= */
     std::set<std::string> libraries;
@@ -237,9 +289,6 @@ public:
 
     /** @brief Using -E for debugging purposes */
     bool preprocessOnly;
-
-    /** @brief Use relative paths in output. */
-    bool relativePaths;
 
     /** Rule */
     class CPPCHECKLIB Rule {
@@ -307,30 +356,12 @@ public:
 
     SafeChecks safeChecks;
 
-    SimpleEnableGroup<int> output;
     SimpleEnableGroup<Severity::SeverityType> severity;
     SimpleEnableGroup<Certainty::CertaintyLevel> certainty;
     ComplexEnableGroup checks;
 
-    enum SHOWTIME_MODES : uint8_t {
-        SHOWTIME_NONE = 0,
-        SHOWTIME_FILE,
-        SHOWTIME_SUMMARY,
-        SHOWTIME_TOP5
-    };
-    /** @brief show timing information (--showtime=file|summary|top5) */
-    SHOWTIME_MODES showtime;
-
     /** Struct contains standards settings */
     Standards standards;
-
-    /** @brief The output format in which the errors are printed in text mode,
-        e.g. "{severity} {file}:{line} {message} {id}" */
-    std::string templateFormat;
-
-    /** @brief The output format in which the error locations are printed in
-     *  text mode, e.g. "{file}:{line} {info}" */
-    std::string templateLocation;
 
     /** @brief defines given by the user */
     std::string userDefines;
@@ -340,15 +371,6 @@ public:
 
     /** @brief forced includes given by the user */
     std::vector<std::string> userIncludes;
-
-    /** @brief Is --verbose given? */
-    bool verbose;
-
-    /** @brief write XML results (--xml) */
-    bool xml;
-
-    /** @brief XML version (--xml-version=..) */
-    int xml_version;
 
     /**
      * @brief return true if a included file is to be excluded in Preprocessor::getConfigs
@@ -375,16 +397,16 @@ public:
     }
 
     void addLibrary(const std::string& libname);
+};
 
-    /** @brief Request termination of checking */
-    static void terminate(bool t = true) {
-        Settings::mTerminated = t;
-    }
 
-    /** @brief termination requested? */
-    static bool terminated() {
-        return Settings::mTerminated;
-    }
+class SymbolDatabase;
+class Tokenizer;
+struct CPPCHECKLIB Context {
+    const Tokenizer* tokenizer;
+    const SymbolDatabase* symbolDatabase;
+    const Settings* settings;
+    const Project* project;
 };
 
 /// @}

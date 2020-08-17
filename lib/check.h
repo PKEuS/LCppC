@@ -43,6 +43,7 @@ namespace ValueFlow {
 }
 
 class Settings;
+class Project;
 class Token;
 class ErrorLogger;
 class ErrorMessage;
@@ -64,8 +65,8 @@ public:
     explicit Check(const char* aname);
 
     /** This constructor is used when running checks. */
-    Check(const char* aname, const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : mTokenizer(tokenizer), mSettings(settings), mErrorLogger(errorLogger), mName(aname) {
+    Check(const char* aname, const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : mTokenizer(tokenizer), mSettings(settings), mProject(project), mErrorLogger(errorLogger), mName(aname) {
     }
 
     virtual ~Check() {
@@ -77,10 +78,10 @@ public:
     static std::list<Check *> &instances();
 
     /** run checks, the token list is not simplified */
-    virtual void runChecks(const Tokenizer *, const Settings *, ErrorLogger *) = 0;
+    virtual void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) = 0;
 
     /** get error messages */
-    virtual void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const = 0;
+    virtual void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const = 0;
 
     /** class name, used to generate documentation */
     const std::string& name() const {
@@ -108,9 +109,10 @@ public:
         }
     };
 
-    virtual FileInfo * getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const {
+    virtual FileInfo * getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const {
         (void)tokenizer;
         (void)settings;
+        (void)project;
         return nullptr;
     }
 
@@ -120,11 +122,12 @@ public:
     }
 
     // Return true if an error is reported.
-    virtual bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& /*settings*/, ErrorLogger &/*errorLogger*/) {
+    virtual bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project) {
         (void)ctu;
         (void)analyzerInformation;
-        //(void)settings;
-        //(void)errorLogger;
+        (void)settings;
+        (void)errorLogger;
+        (void)project;
         return false;
     }
 
@@ -133,6 +136,7 @@ public:
 protected:
     const Tokenizer * const mTokenizer;
     const Settings * const mSettings;
+    const Project * const mProject;
     ErrorLogger * const mErrorLogger;
 
     /** report an error */

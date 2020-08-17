@@ -44,7 +44,7 @@ class Settings;
  */
 class CPPCHECKLIB ThreadExecutor : public ErrorLogger {
 public:
-    ThreadExecutor(std::list<CTU::CTUInfo>& files, Settings &settings, ErrorLogger &errorLogger);
+    ThreadExecutor(std::list<CTU::CTUInfo>& files, Settings& settings, Project& project, ErrorLogger& errorLogger);
     ThreadExecutor(const ThreadExecutor &) = delete;
     void operator=(const ThreadExecutor &) = delete;
 
@@ -65,7 +65,8 @@ public:
 
 private:
     std::list<CTU::CTUInfo>& mCTUs;
-    Settings &mSettings;
+    Settings& mSettings;
+    Project& mProject;
     ErrorLogger &mErrorLogger;
 
 private:

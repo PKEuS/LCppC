@@ -33,8 +33,15 @@ public:
     TestVarID() : TestFixture("TestVarID") {
     }
 
+    Settings settings;
+    Project project;
+
 private:
     void run() override {
+        project.platform(Project::Unix64);
+        project.standards.c = Standards::C89;
+        project.standards.cpp = Standards::CPP11;
+
         TEST_CASE(varid1);
         TEST_CASE(varid2);
         TEST_CASE(varid3);
@@ -208,12 +215,7 @@ private:
     std::string tokenize(const char code[], const char filename[] = "test.cpp") {
         errout.str("");
 
-        Settings settings;
-        settings.platform(Settings::Unix64);
-        settings.standards.c   = Standards::C89;
-        settings.standards.cpp = Standards::CPP11;
-
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
 
@@ -224,12 +226,7 @@ private:
     std::string compareVaridsForVariable(const char code[], const char varname[], const char filename[] = "test.cpp") {
         errout.str("");
 
-        Settings settings;
-        settings.platform(Settings::Unix64);
-        settings.standards.c   = Standards::C89;
-        settings.standards.cpp = Standards::CPP11;
-
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
 

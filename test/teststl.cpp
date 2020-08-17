@@ -33,12 +33,13 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        settings.severity.enable(Severity::warning);
-        settings.severity.enable(Severity::style);
-        settings.severity.enable(Severity::performance);
-        LOAD_LIB_2(settings.library, "std.cfg");
+        project.severity.enable(Severity::warning);
+        project.severity.enable(Severity::style);
+        project.severity.enable(Severity::performance);
+        LOAD_LIB_2(project.library, "std.cfg");
 
         TEST_CASE(outOfBounds);
         TEST_CASE(outOfBoundsIndexExpression);
@@ -173,18 +174,18 @@ private:
         // Clear the error buffer..
         errout.str("");
 
-        settings.certainty.setEnabled(Certainty::inconclusive, inconclusive);
-        settings.standards.cpp = cppstandard;
+        project.certainty.setEnabled(Certainty::inconclusive, inconclusive);
+        project.standards.cpp = cppstandard;
 
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
 
-        CheckStl checkStl(&tokenizer, &settings, this);
+        CheckStl checkStl(&tokenizer, &settings, this, &project);
 
         tokenizer.tokenize(istr, "test.cpp");
-        checkStl.runChecks(&tokenizer, &settings, this);
+        checkStl.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void check(const std::string &code, const bool inconclusive=false) {
@@ -196,13 +197,13 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckStl checkStl(&tokenizer, &settings, this);
-        checkStl.runChecks(&tokenizer, &settings, this);
+        CheckStl checkStl(&tokenizer, &settings, this, &project);
+        checkStl.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void outOfBounds() {

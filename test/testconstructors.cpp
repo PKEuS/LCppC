@@ -30,26 +30,27 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void check(const char code[], bool showAll = false) {
         // Clear the error buffer..
         errout.str("");
 
-        settings.certainty.setEnabled(Certainty::inconclusive, showAll);
+        project.certainty.setEnabled(Certainty::inconclusive, showAll);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check class constructors..
-        CheckClass checkClass(&tokenizer, &settings, this);
+        CheckClass checkClass(&tokenizer, &settings, this, &project);
         checkClass.constructors();
     }
 
     void run() override {
-        settings.severity.enable(Severity::style);
-        settings.severity.enable(Severity::warning);
+        project.severity.enable(Severity::style);
+        project.severity.enable(Severity::warning);
 
         TEST_CASE(simple1);
         TEST_CASE(simple2);
@@ -1181,7 +1182,7 @@ private:
     }
 
     void initvar_private_constructor() {
-        settings.standards.cpp = Standards::CPP11;
+        project.standards.cpp = Standards::CPP11;
         check("class Fred\n"
               "{\n"
               "private:\n"
@@ -1192,7 +1193,7 @@ private:
               "{ }");
         ASSERT_EQUALS("[test.cpp:7]: (warning) Member variable 'Fred::var' is not initialized in the constructor.\n", errout.str());
 
-        settings.standards.cpp = Standards::CPP03;
+        project.standards.cpp = Standards::CPP03;
         check("class Fred\n"
               "{\n"
               "private:\n"
@@ -3070,14 +3071,14 @@ private:
     }
 
     void privateCtor1() {
-        settings.standards.cpp = Standards::CPP03;
+        project.standards.cpp = Standards::CPP03;
         check("class Foo {\n"
               "    int foo;\n"
               "    Foo() { }\n"
               "};");
         ASSERT_EQUALS("", errout.str());
 
-        settings.standards.cpp = Standards::CPP11;
+        project.standards.cpp = Standards::CPP11;
         check("class Foo {\n"
               "    int foo;\n"
               "    Foo() { }\n"

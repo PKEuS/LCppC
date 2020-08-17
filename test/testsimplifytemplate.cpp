@@ -37,9 +37,10 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        settings.severity.enable(Severity::portability);
+        project.severity.enable(Severity::portability);
 
         TEST_CASE(template1);
         TEST_CASE(template2);
@@ -260,12 +261,12 @@ private:
         TEST_CASE(castInExpansion);
     }
 
-    std::string tok(const char code[], bool debugwarnings = false, Settings::PlatformType type = Settings::Native) {
+    std::string tok(const char code[], bool debugwarnings = false, Project::PlatformType type = Project::Native) {
         errout.str("");
 
         settings.debugwarnings = debugwarnings;
-        settings.platform(type);
-        Tokenizer tokenizer(&settings, this);
+        project.platform(type);
+        Tokenizer tokenizer(&settings, &project, this);
 
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
@@ -4407,7 +4408,7 @@ private:
     }
 
     unsigned int templateParameters(const char code[]) {
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
 
         std::istringstream istr(code);
         tokenizer.createTokens(istr, "test.cpp");
@@ -4466,7 +4467,7 @@ private:
 
     // Helper function to unit test TemplateSimplifier::getTemplateNamePosition
     int templateNamePositionHelper(const char code[], unsigned offset = 0) {
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
 
         std::istringstream istr(code);
         tokenizer.createTokens(istr, "test.cpp");
@@ -4536,7 +4537,7 @@ private:
 
     // Helper function to unit test TemplateSimplifier::findTemplateDeclarationEnd
     bool findTemplateDeclarationEndHelper(const char code[], const char pattern[], unsigned offset = 0) {
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
 
         std::istringstream istr(code);
         tokenizer.createTokens(istr, "test.cpp");
@@ -4798,7 +4799,7 @@ private:
     }
 
     unsigned int instantiateMatch(const char code[], const std::size_t numberOfArguments, const char patternAfter[]) {
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
 
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp", "");

@@ -45,13 +45,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckBool(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckBool(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        CheckBool checkBool(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckBool checkBool(tokenizer, settings, errorLogger, project);
 
         // Checks
         checkBool.checkComparisonOfBoolExpressionWithInt();
@@ -111,8 +111,8 @@ private:
     void pointerArithBoolError(const Token *tok);
     void returnValueBoolError(const Token *tok);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckBool c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckBool c(nullptr, settings, errorLogger, project);
 
         c.assignBoolToPointerError(nullptr);
         c.assignBoolToFloatError(nullptr);

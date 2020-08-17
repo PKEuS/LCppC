@@ -37,6 +37,7 @@ class Enumerator;
 class Function;
 class Scope;
 class Settings;
+class Project;
 class Type;
 class ValueType;
 class Variable;
@@ -349,9 +350,9 @@ public:
      * Should be called for %%str%% tokens only.
      *
      * @param tok token with C-string
-     * @param settings Settings
+     * @param project Project
      **/
-    static unsigned int getStrSize(const Token *tok, const Settings *const);
+    static unsigned int getStrSize(const Token *tok, const Project* project);
 
     /**
      * @return char of C-string at index (possible escaped "\\n")
@@ -1077,15 +1078,15 @@ public:
 
     const ValueFlow::Value* getMovedValue() const;
 
-    const ValueFlow::Value * getValueLE(const MathLib::bigint val, const Settings *settings) const;
-    const ValueFlow::Value * getValueGE(const MathLib::bigint val, const Settings *settings) const;
+    const ValueFlow::Value * getValueLE(const MathLib::bigint val, const Project* project) const;
+    const ValueFlow::Value * getValueGE(const MathLib::bigint val, const Project* project) const;
 
-    const ValueFlow::Value * getInvalidValue(const Token *ftok, unsigned int argnr, const Settings *settings) const;
+    const ValueFlow::Value * getInvalidValue(const Token *ftok, unsigned int argnr, const Project* project) const;
 
     const ValueFlow::Value* getContainerSizeValue(const MathLib::bigint val) const;
 
     const Token *getValueTokenMaxStrLength() const;
-    const Token *getValueTokenMinStrSize(const Settings *settings) const;
+    const Token *getValueTokenMinStrSize(const Project* project) const;
 
     const Token *getValueTokenDeadPointer() const;
 

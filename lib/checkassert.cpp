@@ -40,7 +40,7 @@ namespace {
 
 void CheckAssert::assertWithSideEffects()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     for (const Token* tok = mTokenizer->list.front(); tok; tok = tok->next()) {

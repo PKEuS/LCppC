@@ -31,7 +31,7 @@
 #include "utils.h"
 
 class Library;
-class Settings;
+class Project;
 class Token;
 class Variable;
 
@@ -169,7 +169,7 @@ const Token * getTokenArgumentFunction(const Token * tok, int& argn);
  * @param settings      program settings
  * @param inconclusive  pointer to output variable which indicates that the answer of the question is inconclusive
  */
-bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, unsigned int varid, const Settings *settings, bool *inconclusive);
+bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, unsigned int varid, const Project* project, bool *inconclusive);
 
 /** Is variable changed by function call?
  * In case the answer of the question is inconclusive, e.g. because the function declaration is not known
@@ -179,7 +179,7 @@ bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, un
  * @param settings      program settings
  * @param inconclusive pointer to output variable which indicates that the answer of the question is inconclusive
  */
-bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, const Settings *settings, bool *inconclusive);
+bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, const Project* project, bool *inconclusive);
 
 /** Is variable changed by function call?
  * In case the answer of the question is inconclusive, e.g. because the function declaration is not known
@@ -188,27 +188,27 @@ bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, co
  * @param tok           token of variable in function call
  * @param settings      program settings
  */
-bool isVariableChangedByFunctionCall(const Token* tok, unsigned int indirect, const Settings* settings);
+bool isVariableChangedByFunctionCall(const Token* tok, unsigned int indirect, const Project* project);
 
 /** Is variable changed in block of code? */
-bool isVariableChanged(const Token *start, const Token *end, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
-bool isVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
+bool isVariableChanged(const Token *start, const Token *end, const unsigned int varid, bool globalvar, const Project* project, bool cpp, int depth = 20);
+bool isVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Project* project, bool cpp, int depth = 20);
 
-bool isVariableChanged(const Token *tok, int indirect, const Settings *settings, bool cpp, int depth = 20);
+bool isVariableChanged(const Token *tok, int indirect, const Project* project, bool cpp, int depth = 20);
 
-bool isVariableChanged(const Variable * var, const Settings *settings, bool cpp, int depth = 20);
+bool isVariableChanged(const Variable * var, const Project* project, bool cpp, int depth = 20);
 
 bool isVariablesChanged(const Token* start,
                         const Token* end,
                         int indirect,
                         std::vector<const Variable*> vars,
-                        const Settings* settings,
+                        const Project* project,
                         bool cpp);
 
-bool isThisChanged(const Token* start, const Token* end, int indirect, const Settings* settings, bool cpp);
+bool isThisChanged(const Token* start, const Token* end, int indirect, const Project* project, bool cpp);
 
-const Token* findVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
-Token* findVariableChanged(Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Settings *settings, bool cpp, int depth = 20);
+const Token* findVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Project* project, bool cpp, int depth = 20);
+Token* findVariableChanged(Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Project* project, bool cpp, int depth = 20);
 
 /// If token is an alias if another variable
 bool isAliasOf(const Token *tok, unsigned int varid);

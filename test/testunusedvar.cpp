@@ -31,12 +31,13 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        settings.severity.enable(Severity::style);
-        settings.severity.enable(Severity::information);
+        project.severity.enable(Severity::style);
+        project.severity.enable(Severity::information);
         settings.checkLibrary = true;
-        LOAD_LIB_2(settings.library, "std.cfg");
+        LOAD_LIB_2(project.library, "std.cfg");
 
         TEST_CASE(isRecordTypeWithoutSideEffects);
 
@@ -219,18 +220,18 @@ private:
         // Clear the error buffer..
         errout.str("");
 
-        Preprocessor preprocessor(settings, nullptr);
+        Preprocessor preprocessor(settings, project, nullptr);
         if (directives)
             preprocessor.setDirectives(*directives);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         tokenizer.setPreprocessor(&preprocessor);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for unused variables..
-        CheckUnusedVar checkUnusedVar(&tokenizer, &settings, this);
+        CheckUnusedVar checkUnusedVar(&tokenizer, &settings, this, &project);
         checkUnusedVar.checkStructMemberUsage();
     }
 
@@ -657,13 +658,13 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         if (!tokenizer.tokenize(istr, filename))
             return;
 
         // Check for unused variables..
-        CheckUnusedVar checkUnusedVar(&tokenizer, &settings, this);
+        CheckUnusedVar checkUnusedVar(&tokenizer, &settings, this, &project);
         checkUnusedVar.checkFunctionVariableUsage();
     }
 

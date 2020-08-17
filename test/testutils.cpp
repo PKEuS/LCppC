@@ -21,6 +21,7 @@
 #include "utils.h"
 
 const Settings givenACodeSampleToTokenize::settings;
+const Project givenACodeSampleToTokenize::project;
 
 class TestUtils : public TestFixture {
 public:

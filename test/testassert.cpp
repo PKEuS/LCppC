@@ -29,23 +29,24 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void check(const char code[], const char *filename = "test.cpp") {
         // Clear the error buffer..
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
 
         // Check..
         CheckAssert checkAssert;
-        checkAssert.runChecks(&tokenizer, &settings, this);
+        checkAssert.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void run() override {
-        settings.severity.enable(Severity::warning);
+        project.severity.enable(Severity::warning);
 
         TEST_CASE(assignmentInAssert);
         TEST_CASE(functionCallInAssert);

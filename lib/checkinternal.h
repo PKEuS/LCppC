@@ -40,12 +40,12 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckInternal(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckInternal(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        CheckInternal checkInternal(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckInternal checkInternal(tokenizer, settings, errorLogger, project);
 
         checkInternal.checkTokenMatchPatterns();
         checkInternal.checkTokenSimpleMatchPatterns();
@@ -87,8 +87,8 @@ private:
     void extraWhitespaceError(const Token *tok, const std::string &pattern, const std::string &funcname);
     void checkRedundantTokCheckError(const Token *tok);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckInternal c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckInternal c(nullptr, settings, errorLogger, project);
         c.multiComparePatternError(nullptr, ";|%type%", "Match");
         c.simplePatternError(nullptr, "class {", "Match");
         c.complexPatternError(nullptr, "%type% ( )", "Match");

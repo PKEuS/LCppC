@@ -95,8 +95,9 @@ static bool addPathsToSet(const std::string& fileName, std::set<std::string>* se
     return true;
 }
 
-CmdLineParser::CmdLineParser(Settings *settings)
+CmdLineParser::CmdLineParser(Settings* settings, Project* project)
     : mSettings(settings)
+    , mProject(project)
     , mShowHelp(false)
     , mShowVersion(false)
     , mShowErrorMessages(false)
@@ -114,7 +115,7 @@ void CmdLineParser::printMessage(const char* message)
     std::cout << message << std::endl;
 }
 
-std::string CmdLineParser::parseEnableList(const std::string& str, bool(*function)(Settings&, const std::string&, bool))
+std::string CmdLineParser::parseEnableList(const std::string& str, std::function<bool(CmdLineParser*, const std::string&, bool)> function)
 {
     // Enable parameters may be comma separated...
     if (str.find(',') != std::string::npos) {
@@ -138,66 +139,66 @@ std::string CmdLineParser::parseEnableList(const std::string& str, bool(*functio
     if (str.size() == (enable ? 0U : 1U))
         return std::string("cppcheck: --enable parameter is empty");
 
-    if (!function(*mSettings, enable ? str : str.substr(1), enable))
+    if (!function(this, enable ? str : str.substr(1), enable))
         return std::string("cppcheck: unknown name '" + str + "'");
     return std::string();
 }
-bool CmdLineParser::parseEnableList_setSeverity(Settings& settings, const std::string& str, bool enable)
+bool CmdLineParser::parseEnableList_setSeverity(CmdLineParser* instance, const std::string& str, bool enable)
 {
     if (str == "all")
-        settings.severity.setEnabledAll(enable);
+        instance->mProject->severity.setEnabledAll(enable);
     else if (str == "warning")
-        settings.severity.setEnabled(Severity::warning, enable);
+        instance->mProject->severity.setEnabled(Severity::warning, enable);
     else if (str == "style")
-        settings.severity.setEnabled(Severity::style, enable);
+        instance->mProject->severity.setEnabled(Severity::style, enable);
     else if (str == "performance")
-        settings.severity.setEnabled(Severity::performance, enable);
+        instance->mProject->severity.setEnabled(Severity::performance, enable);
     else if (str == "portability")
-        settings.severity.setEnabled(Severity::portability, enable);
+        instance->mProject->severity.setEnabled(Severity::portability, enable);
     else if (str == "information")
-        settings.severity.setEnabled(Severity::information, enable);
+        instance->mProject->severity.setEnabled(Severity::information, enable);
     else
         return false;
     return true;
 }
-bool CmdLineParser::parseEnableList_setCertainty(Settings& settings, const std::string& str, bool enable)
+bool CmdLineParser::parseEnableList_setCertainty(CmdLineParser* instance, const std::string& str, bool enable)
 {
     if (str == "all")
-        settings.certainty.setEnabledAll(enable);
+        instance->mProject->certainty.setEnabledAll(enable);
     else if (str == "safe")
-        settings.certainty.setEnabled(Certainty::safe, enable);
+        instance->mProject->certainty.setEnabled(Certainty::safe, enable);
     else if (str == "inconclusive")
-        settings.certainty.setEnabled(Certainty::inconclusive, enable);
+        instance->mProject->certainty.setEnabled(Certainty::inconclusive, enable);
     else if (str == "experimental")
-        settings.certainty.setEnabled(Certainty::experimental, enable);
+        instance->mProject->certainty.setEnabled(Certainty::experimental, enable);
     else
         return false;
     return true;
 }
-bool CmdLineParser::parseEnableList_setOutput(Settings& settings, const std::string& str, bool enable)
+bool CmdLineParser::parseEnableList_setOutput(CmdLineParser* instance, const std::string& str, bool enable)
 {
     if (str == "all")
-        settings.output.setEnabledAll(enable);
+        instance->mSettings->output.setEnabledAll(enable);
     else if (str == "status")
-        settings.output.setEnabled(Output::status, enable);
+        instance->mSettings->output.setEnabled(Output::status, enable);
     else if (str == "progress")
-        settings.output.setEnabled(Output::progress, enable);
+        instance->mSettings->output.setEnabled(Output::progress, enable);
     else if (str == "verbose")
-        settings.output.setEnabled(Output::verbose, enable);
+        instance->mSettings->output.setEnabled(Output::verbose, enable);
     else if (str == "config")
-        settings.output.setEnabled(Output::config, enable);
+        instance->mSettings->output.setEnabled(Output::config, enable);
     else if (str == "findings")
-        settings.output.setEnabled(Output::findings, enable);
+        instance->mSettings->output.setEnabled(Output::findings, enable);
     else
         return false;
     return true;
 }
-bool CmdLineParser::parseEnableList_setChecks(Settings& settings, const std::string& str, bool enable)
+bool CmdLineParser::parseEnableList_setChecks(CmdLineParser* instance, const std::string& str, bool enable)
 {
     if (str == "all")
-        settings.checks.setEnabledAll(enable);
+        instance->mProject->checks.setEnabledAll(enable);
     else
-        settings.checks.setEnabled(str, enable);
+        instance->mProject->checks.setEnabled(str, enable);
     return true;
 }
 
@@ -233,16 +234,16 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                 if (define.find('=') == std::string::npos)
                     define += "=1";
 
-                if (!mSettings->userDefines.empty())
-                    mSettings->userDefines += ";";
-                mSettings->userDefines += define;
+                if (!mProject->userDefines.empty())
+                    mProject->userDefines += ";";
+                mProject->userDefines += define;
 
                 def = true;
             }
 
             // -E
             else if (std::strcmp(argv[i], "-E") == 0) {
-                mSettings->preprocessOnly = true;
+                mProject->preprocessOnly = true;
             }
 
             // Include paths
@@ -270,7 +271,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                 if (!endsWith(path,'/'))
                     path += '/';
 
-                mSettings->includePaths.emplace_back(path);
+                mProject->includePaths.emplace_back(path);
             }
 
             // User undef
@@ -292,11 +293,11 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                     undef = 2 + argv[i];
                 }
 
-                mSettings->userUndefs.insert(undef);
+                mProject->userUndefs.insert(undef);
             }
 
             else if (std::strncmp(argv[i], "--addon=", 8) == 0)
-                mSettings->addons.emplace_back(argv[i]+8);
+                mProject->addons.emplace_back(argv[i]+8);
 
             else if (std::strncmp(argv[i],"--addon-python=", 15) == 0)
                 mSettings->addonPython.assign(argv[i]+15);
@@ -310,22 +311,22 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                 mSettings->checkLibrary = true;
 
             else if (std::strncmp(argv[i], "--config-exclude=",17) ==0) {
-                mSettings->configExcludePaths.insert(Path::fromNativeSeparators(argv[i] + 17));
+                mProject->configExcludePaths.insert(Path::fromNativeSeparators(argv[i] + 17));
             }
 
             else if (std::strncmp(argv[i], "--config-excludes-file=", 23) == 0) {
                 // open this file and read every input file (1 file name per line)
                 const std::string cfgExcludesFile(23 + argv[i]);
-                if (!addPathsToSet(cfgExcludesFile, &mSettings->configExcludePaths)) {
+                if (!addPathsToSet(cfgExcludesFile, &mProject->configExcludePaths)) {
                     printMessage(PROGRAMNAME ": unable to open config excludes file at '" + cfgExcludesFile + "'");
                     return false;
                 }
             }
 
             else if (std::strncmp(argv[i], "--cppcheck-build-dir=", 21) == 0) {
-                mSettings->buildDir = Path::fromNativeSeparators(argv[i] + 21);
-                if (endsWith(mSettings->buildDir, '/'))
-                    mSettings->buildDir.pop_back();
+                mProject->buildDir = Path::fromNativeSeparators(argv[i] + 21);
+                if (endsWith(mProject->buildDir, '/'))
+                    mProject->buildDir.pop_back();
             }
 
             // Show --debug output after the first simplifications
@@ -456,7 +457,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                     printMessage("cppcheck: Couldn't open the file: \"" + filename + "\".");
                     return false;
                 }
-                const std::string errmsg(mSettings->nofail.parseFile(f));
+                const std::string errmsg(mProject->nofail.parseFile(f));
                 if (!errmsg.empty()) {
                     printMessage(errmsg);
                     return false;
@@ -465,7 +466,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 
             // use a file filter
             else if (std::strncmp(argv[i], "--file-filter=", 14) == 0)
-                mSettings->fileFilter = argv[i] + 14;
+                mProject->fileFilter = argv[i] + 14;
 
             // file list specified
             else if (std::strncmp(argv[i], "--file-list=", 12) == 0)
@@ -474,7 +475,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 
             // Force checking of files that have "too many" configurations
             else if (std::strcmp(argv[i], "-f") == 0 || std::strcmp(argv[i], "--force") == 0)
-                mSettings->force = true;
+                mProject->force = true;
 
             // Print help
             else if (std::strcmp(argv[i], "-h") == 0 || std::strcmp(argv[i], "--help") == 0) {
@@ -518,13 +519,13 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
             }
 
             else if (std::strncmp(argv[i], "--include=", 10) == 0) {
-                mSettings->userIncludes.emplace_back(Path::fromNativeSeparators(argv[i] + 10));
+                mProject->userIncludes.emplace_back(Path::fromNativeSeparators(argv[i] + 10));
             }
 
             else if (std::strncmp(argv[i], "--includes-file=", 16) == 0) {
                 // open this file and read every input file (1 file name per line)
                 const std::string includesFile(16 + argv[i]);
-                if (!addIncludePathsToList(includesFile, &mSettings->includePaths)) {
+                if (!addIncludePathsToList(includesFile, &mProject->includePaths)) {
                     printMessage(PROGRAMNAME ": unable to open includes file at '" + includesFile + "'");
                     return false;
                 }
@@ -532,7 +533,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 
             // Enables inline suppressions.
             else if (std::strcmp(argv[i], "--inline-suppr") == 0)
-                mSettings->inlineSuppressions = true;
+                mProject->inlineSuppressions = true;
 
             // Checking threads
             else if (std::strncmp(argv[i], "-j", 2) == 0) {
@@ -583,9 +584,9 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                 }
 
                 if (str == "c")
-                    mSettings->enforcedLang = Settings::C;
+                    mProject->enforcedLang = Project::C;
                 else if (str == "c++")
-                    mSettings->enforcedLang = Settings::CPP;
+                    mProject->enforcedLang = Project::CPP;
                 else {
                     printMessage("cppcheck: Unknown language '" + str + "' enforced.");
                     return false;
@@ -594,20 +595,20 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 
             // --library
             else if (std::strncmp(argv[i], "--library=", 10) == 0) {
-                mSettings->addLibrary(argv[i] + 10);
+                mProject->addLibrary(argv[i] + 10);
             }
 
             // Set maximum number of #ifdef configurations to check
             else if (std::strncmp(argv[i], "--max-configs=", 14) == 0) {
-                mSettings->force = false;
+                mProject->force = false;
 
                 std::istringstream iss(14+argv[i]);
-                if (!(iss >> mSettings->maxConfigs)) {
+                if (!(iss >> mProject->maxConfigs)) {
                     printMessage("cppcheck: argument to '--max-configs=' is not a number.");
                     return false;
                 }
 
-                if (mSettings->maxConfigs < 1) {
+                if (mProject->maxConfigs < 1) {
                     printMessage("cppcheck: argument to '--max-configs=' must be greater than 0.");
                     return false;
                 }
@@ -617,31 +618,31 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 
             // max ctu depth
             else if (std::strncmp(argv[i], "--max-ctu-depth=", 16) == 0)
-                mSettings->maxCtuDepth = std::atoi(argv[i] + 16);
+                mProject->maxCtuDepth = std::atoi(argv[i] + 16);
 
             // Write results in file
             else if (std::strncmp(argv[i], "--output-file=", 14) == 0)
-                mSettings->outputFile = Path::simplifyPath(Path::fromNativeSeparators(argv[i] + 14));
+                mProject->outputFile = Path::simplifyPath(Path::fromNativeSeparators(argv[i] + 14));
 
             // Specify platform
             else if (std::strncmp(argv[i], "--platform=", 11) == 0) {
                 const std::string platform(11+argv[i]);
 
                 if (platform == "win32A")
-                    mSettings->platform(Settings::Win32A);
+                    mProject->platform(Project::Win32A);
                 else if (platform == "win32W")
-                    mSettings->platform(Settings::Win32W);
+                    mProject->platform(Project::Win32W);
                 else if (platform == "win64")
-                    mSettings->platform(Settings::Win64);
+                    mProject->platform(Project::Win64);
                 else if (platform == "unix32")
-                    mSettings->platform(Settings::Unix32);
+                    mProject->platform(Project::Unix32);
                 else if (platform == "unix64")
-                    mSettings->platform(Settings::Unix64);
+                    mProject->platform(Project::Unix64);
                 else if (platform == "native")
-                    mSettings->platform(Settings::Native);
+                    mProject->platform(Project::Native);
                 else if (platform == "unspecified")
-                    mSettings->platform(Settings::Unspecified);
-                else if (!mSettings->loadPlatformFile(argv[0], platform)) {
+                    mProject->platform(Project::Unspecified);
+                else if (!mProject->loadPlatformFile(argv[0], platform)) {
                     std::string message("cppcheck: error: unrecognized platform: \"");
                     message += platform;
                     message += "\".";
@@ -660,10 +661,10 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                     for (;;) {
                         const std::string::size_type pos = paths.find(';');
                         if (pos == std::string::npos) {
-                            mSettings->basePaths.emplace_back(Path::fromNativeSeparators(paths));
+                            mProject->basePaths.emplace_back(Path::fromNativeSeparators(paths));
                             break;
                         }
-                        mSettings->basePaths.emplace_back(Path::fromNativeSeparators(paths.substr(0, pos)));
+                        mProject->basePaths.emplace_back(Path::fromNativeSeparators(paths.substr(0, pos)));
                         paths.erase(0, pos + 1);
                     }
                 } else {
@@ -680,9 +681,9 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 #ifdef HAVE_RULES
             // Rule given at command line
             else if (std::strncmp(argv[i], "--rule=", 7) == 0) {
-                Settings::Rule rule;
+                Project::Rule rule;
                 rule.pattern = 7 + argv[i];
-                mSettings->rules.emplace_back(rule);
+                mProject->rules.emplace_back(rule);
             }
 
             // Rule file
@@ -691,7 +692,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                 if (doc.LoadFile(12+argv[i]) == tinyxml2::XML_SUCCESS) {
                     tinyxml2::XMLElement *node = doc.FirstChildElement();
                     for (; node && strcmp(node->Value(), "rule") == 0; node = node->NextSiblingElement()) {
-                        Settings::Rule rule;
+                        Project::Rule rule;
 
                         tinyxml2::XMLElement *tokenlist = node->FirstChildElement("tokenlist");
                         if (tokenlist)
@@ -718,7 +719,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                         }
 
                         if (!rule.pattern.empty())
-                            mSettings->rules.emplace_back(rule);
+                            mProject->rules.emplace_back(rule);
                     }
                 } else {
                     printMessage("cppcheck: error: unable to load rule-file: " + std::string(12+argv[i]));
@@ -746,26 +747,26 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 
             // --std
             else if (std::strcmp(argv[i], "--std=c89") == 0) {
-                mSettings->standards.c = Standards::C89;
+                mProject->standards.c = Standards::C89;
             } else if (std::strcmp(argv[i], "--std=c99") == 0) {
-                mSettings->standards.c = Standards::C99;
+                mProject->standards.c = Standards::C99;
             } else if (std::strcmp(argv[i], "--std=c11") == 0) {
-                mSettings->standards.c = Standards::C11;
+                mProject->standards.c = Standards::C11;
             } else if (std::strcmp(argv[i], "--std=c++03") == 0) {
-                mSettings->standards.cpp = Standards::CPP03;
+                mProject->standards.cpp = Standards::CPP03;
             } else if (std::strcmp(argv[i], "--std=c++11") == 0) {
-                mSettings->standards.cpp = Standards::CPP11;
+                mProject->standards.cpp = Standards::CPP11;
             } else if (std::strcmp(argv[i], "--std=c++14") == 0) {
-                mSettings->standards.cpp = Standards::CPP14;
+                mProject->standards.cpp = Standards::CPP14;
             } else if (std::strcmp(argv[i], "--std=c++17") == 0) {
-                mSettings->standards.cpp = Standards::CPP17;
+                mProject->standards.cpp = Standards::CPP17;
             } else if (std::strcmp(argv[i], "--std=c++20") == 0) {
-                mSettings->standards.cpp = Standards::CPP20;
+                mProject->standards.cpp = Standards::CPP20;
             }
 
             else if (std::strncmp(argv[i], "--suppress=", 11) == 0) {
                 const std::string suppression = argv[i]+11;
-                const std::string errmsg(mSettings->nomsg.addSuppressionLine(suppression));
+                const std::string errmsg(mProject->nomsg.addSuppressionLine(suppression));
                 if (!errmsg.empty()) {
                     printMessage(errmsg);
                     return false;
@@ -792,7 +793,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
                     printMessage(message);
                     return false;
                 }
-                const std::string errmsg(mSettings->nomsg.parseFile(f));
+                const std::string errmsg(mProject->nomsg.parseFile(f));
                 if (!errmsg.empty()) {
                     printMessage(errmsg);
                     return false;
@@ -801,7 +802,7 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
 
             else if (std::strncmp(argv[i], "--suppress-xml=", 15) == 0) {
                 const char * filename = argv[i] + 15;
-                const std::string errmsg(mSettings->nomsg.parseXmlFile(filename));
+                const std::string errmsg(mProject->nomsg.parseXmlFile(filename));
                 if (!errmsg.empty()) {
                     printMessage(errmsg);
                     return false;
@@ -900,14 +901,14 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
             mSettings->templateLocation = "{file}:{line}:{column}: note: {info}\\n{code}";
     }
 
-    if (mSettings->force || maxconfigs)
-        mSettings->checkAllConfigurations = true;
+    if (mProject->force || maxconfigs)
+        mProject->checkAllConfigurations = true;
 
-    if (mSettings->force)
-        mSettings->maxConfigs = ~0U;
+    if (mProject->force)
+        mProject->maxConfigs = ~0U;
 
-    else if ((def || mSettings->preprocessOnly) && !maxconfigs)
-        mSettings->maxConfigs = 1U;
+    else if ((def || mProject->preprocessOnly) && !maxconfigs)
+        mProject->maxConfigs = 1U;
 
     if (argc <= 1) {
         mShowHelp = true;
@@ -926,8 +927,8 @@ bool CmdLineParser::parseFromArgs(int argc, const char* const argv[])
     }
 
     // Use paths _pathnames if no base paths for relative path output are given
-    if (mSettings->basePaths.empty() && mSettings->relativePaths)
-        mSettings->basePaths = mPathNames;
+    if (mProject->basePaths.empty() && mSettings->relativePaths)
+        mProject->basePaths = mPathNames;
 
     return true;
 }

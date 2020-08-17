@@ -117,9 +117,9 @@ namespace {
 
 void CheckIO::checkFileUsage()
 {
-    const bool windows = mSettings->isWindowsPlatform();
-    const bool printPortability = mSettings->severity.isEnabled(Severity::portability);
-    const bool printWarnings = mSettings->severity.isEnabled(Severity::warning);
+    const bool windows = mProject->isWindowsPlatform();
+    const bool printPortability = mProject->severity.isEnabled(Severity::portability);
+    const bool printWarnings = mProject->severity.isEnabled(Severity::warning);
 
     std::map<unsigned int, Filepointer> filepointers;
 
@@ -156,7 +156,7 @@ void CheckIO::checkFileUsage()
                         i->second.lastOperation = Filepointer::UNKNOWN_OP;
                     }
                 }
-            } else if (tok->str() == "return" || tok->str() == "continue" || tok->str() == "break" || mSettings->library.isnoreturn(tok)) { // Reset upon return, continue or break
+            } else if (tok->str() == "return" || tok->str() == "continue" || tok->str() == "break" || mProject->library.isnoreturn(tok)) { // Reset upon return, continue or break
                 for (std::map<unsigned int, Filepointer>::iterator i = filepointers.begin(); i != filepointers.end(); ++i) {
                     i->second.mode_indent = 0;
                     i->second.mode = UNKNOWN_OM;
@@ -232,7 +232,7 @@ void CheckIO::checkFileUsage()
                     if ((tok->str() == "ungetc" || tok->str() == "ungetwc") && fileTok)
                         fileTok = fileTok->nextArgument();
                     operation = Filepointer::UNIMPORTANT;
-                } else if (!Token::Match(tok, "if|for|while|catch|switch") && !mSettings->library.isFunctionConst(tok->str(), true)) {
+                } else if (!Token::Match(tok, "if|for|while|catch|switch") && !mProject->library.isFunctionConst(tok->str(), true)) {
                     const Token* const end2 = tok->linkAt(1);
                     if (scope->functionOf && scope->functionOf->isClassOrStruct() && !scope->function->isStatic() && ((tok->strAt(-1) != "::" && tok->strAt(-1) != ".") || tok->strAt(-2) == "this")) {
                         if (!tok->function() || (tok->function()->nestedIn && tok->function()->nestedIn->isClassOrStruct())) {
@@ -374,7 +374,7 @@ void CheckIO::seekOnAppendedFileError(const Token *tok)
 //---------------------------------------------------------------------------
 void CheckIO::invalidScanf()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase * const symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -491,7 +491,7 @@ static inline bool typesMatch(const std::string& iToTest, const std::string& iTy
 void CheckIO::checkWrongPrintfScanfArguments()
 {
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    const bool isWindows = mSettings->isWindowsPlatform();
+    const bool isWindows = mProject->isWindowsPlatform();
 
     for (const Scope * scope : symbolDatabase->functionScopes) {
         for (const Token *tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
@@ -504,10 +504,10 @@ void CheckIO::checkWrongPrintfScanfArguments()
             bool scanf_s = false;
             int formatStringArgNo = -1;
 
-            if (tok->strAt(1) == "(" && mSettings->library.formatstr_function(tok)) {
-                formatStringArgNo = mSettings->library.formatstr_argno(tok);
-                scan = mSettings->library.formatstr_scan(tok);
-                scanf_s = mSettings->library.formatstr_secure(tok);
+            if (tok->strAt(1) == "(" && mProject->library.formatstr_function(tok)) {
+                formatStringArgNo = mProject->library.formatstr_argno(tok);
+                scan = mProject->library.formatstr_scan(tok);
+                scanf_s = mProject->library.formatstr_secure(tok);
             }
 
             if (formatStringArgNo >= 0) {
@@ -564,8 +564,8 @@ void CheckIO::checkFormatString(const Token * const tok,
                                 const bool scan,
                                 const bool scanf_s)
 {
-    const bool isWindows = mSettings->isWindowsPlatform();
-    const bool printWarning = mSettings->severity.isEnabled(Severity::warning);
+    const bool isWindows = mProject->isWindowsPlatform();
+    const bool printWarning = mProject->severity.isEnabled(Severity::warning);
     const std::string &formatString = formatStringTok->str();
 
     // Count format string parameters..
@@ -658,9 +658,9 @@ void CheckIO::checkFormatString(const Token * const tok,
                 }
 
                 // Perform type checks
-                ArgumentInfo argInfo(argListTok, mSettings, mTokenizer->isCPP());
+                ArgumentInfo argInfo(argListTok, mProject, mTokenizer->isCPP());
 
-                if (argInfo.typeToken && !argInfo.isLibraryType(mSettings)) {
+                if (argInfo.typeToken && !argInfo.isLibraryType(mProject->library)) {
                     if (scan) {
                         std::string specifier;
                         bool done = false;
@@ -1302,7 +1302,7 @@ void CheckIO::checkFormatString(const Token * const tok,
 // We currently only support string literals, variables, and functions.
 /// @todo add non-string literals, and generic expressions
 
-CheckIO::ArgumentInfo::ArgumentInfo(const Token * arg, const Settings *settings, bool _isCPP)
+CheckIO::ArgumentInfo::ArgumentInfo(const Token * arg, const Project* project, bool _isCPP)
     : variableInfo(nullptr)
     , typeToken(nullptr)
     , functionInfo(nullptr)
@@ -1453,12 +1453,12 @@ CheckIO::ArgumentInfo::ArgumentInfo(const Token * arg, const Settings *settings,
                 tempToken->linenr(tok1->linenr());
                 if (tok1->next()->str() == "size") {
                     // size_t is platform dependent
-                    if (settings->sizeof_size_t == 8) {
+                    if (project->sizeof_size_t == 8) {
                         tempToken->str("long");
-                        if (settings->sizeof_long != 8)
+                        if (project->sizeof_long != 8)
                             tempToken->isLong(true);
-                    } else if (settings->sizeof_size_t == 4) {
-                        if (settings->sizeof_long == 4) {
+                    } else if (project->sizeof_size_t == 4) {
+                        if (project->sizeof_long == 4) {
                             tempToken->str("long");
                         } else {
                             tempToken->str("int");
@@ -1668,9 +1668,9 @@ bool CheckIO::ArgumentInfo::isKnownType() const
     return typeToken->isStandardType() || Token::Match(typeToken, "std :: string|wstring");
 }
 
-bool CheckIO::ArgumentInfo::isLibraryType(const Settings *settings) const
+bool CheckIO::ArgumentInfo::isLibraryType(const Library& library) const
 {
-    return typeToken && typeToken->isStandardType() && settings->library.podtype(typeToken->str());
+    return typeToken && typeToken->isStandardType() && library.podtype(typeToken->str());
 }
 
 void CheckIO::wrongPrintfScanfArgumentsError(const Token* tok,
@@ -1679,7 +1679,7 @@ void CheckIO::wrongPrintfScanfArgumentsError(const Token* tok,
         unsigned int numFunction)
 {
     const Severity::SeverityType severity = numFormat > numFunction ? Severity::error : Severity::warning;
-    if (severity != Severity::error && !mSettings->severity.isEnabled(Severity::warning))
+    if (severity != Severity::error && !mProject->severity.isEnabled(Severity::warning))
         return;
 
     std::ostringstream errmsg;
@@ -1698,7 +1698,7 @@ void CheckIO::wrongPrintfScanfArgumentsError(const Token* tok,
 void CheckIO::wrongPrintfScanfPosixParameterPositionError(const Token* tok, const std::string& functionName,
         unsigned int index, unsigned int numFunction)
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
     std::ostringstream errmsg;
     errmsg << functionName << ": ";
@@ -1713,7 +1713,7 @@ void CheckIO::wrongPrintfScanfPosixParameterPositionError(const Token* tok, cons
 void CheckIO::invalidScanfArgTypeError_s(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
-    if (!mSettings->severity.isEnabled(severity))
+    if (!mProject->severity.isEnabled(severity))
         return;
     std::ostringstream errmsg;
     errmsg << "%" << specifier << " in format string (no. " << numFormat << ") requires a \'";
@@ -1729,7 +1729,7 @@ void CheckIO::invalidScanfArgTypeError_s(const Token* tok, unsigned int numForma
 void CheckIO::invalidScanfArgTypeError_int(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo, bool isUnsigned)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
-    if (!mSettings->severity.isEnabled(severity))
+    if (!mProject->severity.isEnabled(severity))
         return;
     std::ostringstream errmsg;
     errmsg << "%" << specifier << " in format string (no. " << numFormat << ") requires \'";
@@ -1774,7 +1774,7 @@ void CheckIO::invalidScanfArgTypeError_int(const Token* tok, unsigned int numFor
 void CheckIO::invalidScanfArgTypeError_float(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
-    if (!mSettings->severity.isEnabled(severity))
+    if (!mProject->severity.isEnabled(severity))
         return;
     std::ostringstream errmsg;
     errmsg << "%" << specifier << " in format string (no. " << numFormat << ") requires \'";
@@ -1793,7 +1793,7 @@ void CheckIO::invalidScanfArgTypeError_float(const Token* tok, unsigned int numF
 void CheckIO::invalidPrintfArgTypeError_s(const Token* tok, unsigned int numFormat, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
-    if (!mSettings->severity.isEnabled(severity))
+    if (!mProject->severity.isEnabled(severity))
         return;
     std::ostringstream errmsg;
     errmsg << "%s in format string (no. " << numFormat << ") requires \'char *\' but the argument type is ";
@@ -1804,7 +1804,7 @@ void CheckIO::invalidPrintfArgTypeError_s(const Token* tok, unsigned int numForm
 void CheckIO::invalidPrintfArgTypeError_n(const Token* tok, unsigned int numFormat, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
-    if (!mSettings->severity.isEnabled(severity))
+    if (!mProject->severity.isEnabled(severity))
         return;
     std::ostringstream errmsg;
     errmsg << "%n in format string (no. " << numFormat << ") requires \'int *\' but the argument type is ";
@@ -1815,7 +1815,7 @@ void CheckIO::invalidPrintfArgTypeError_n(const Token* tok, unsigned int numForm
 void CheckIO::invalidPrintfArgTypeError_p(const Token* tok, unsigned int numFormat, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
-    if (!mSettings->severity.isEnabled(severity))
+    if (!mProject->severity.isEnabled(severity))
         return;
     std::ostringstream errmsg;
     errmsg << "%p in format string (no. " << numFormat << ") requires an address but the argument type is ";
@@ -1865,7 +1865,7 @@ static void printfFormatType(std::ostream& os, const std::string& specifier, boo
 void CheckIO::invalidPrintfArgTypeError_uint(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
-    if (!mSettings->severity.isEnabled(severity))
+    if (!mProject->severity.isEnabled(severity))
         return;
     std::ostringstream errmsg;
     errmsg << "%" << specifier << " in format string (no. " << numFormat << ") requires ";
@@ -1879,7 +1879,7 @@ void CheckIO::invalidPrintfArgTypeError_uint(const Token* tok, unsigned int numF
 void CheckIO::invalidPrintfArgTypeError_sint(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
-    if (!mSettings->severity.isEnabled(severity))
+    if (!mProject->severity.isEnabled(severity))
         return;
     std::ostringstream errmsg;
     errmsg << "%" << specifier << " in format string (no. " << numFormat << ") requires ";
@@ -1892,7 +1892,7 @@ void CheckIO::invalidPrintfArgTypeError_sint(const Token* tok, unsigned int numF
 void CheckIO::invalidPrintfArgTypeError_float(const Token* tok, unsigned int numFormat, const std::string& specifier, const ArgumentInfo* argInfo)
 {
     const Severity::SeverityType severity = getSeverity(argInfo);
-    if (!mSettings->severity.isEnabled(severity))
+    if (!mProject->severity.isEnabled(severity))
         return;
     std::ostringstream errmsg;
     errmsg << "%" << specifier << " in format string (no. " << numFormat << ") requires \'";
@@ -1962,7 +1962,7 @@ void CheckIO::argumentType(std::ostream& os, const ArgumentInfo * argInfo)
 
 void CheckIO::invalidLengthModifierError(const Token* tok, unsigned int numFormat, const std::string& modifier)
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
     std::ostringstream errmsg;
     errmsg << "'" << modifier << "' in format string (no. " << numFormat << ") is a length modifier and cannot be used without a conversion specifier.";
@@ -1981,7 +1981,7 @@ void CheckIO::invalidScanfFormatWidthError(const Token* tok, unsigned int numFor
 
     std::ostringstream errmsg;
     if (arrlen > width) {
-        if (tok != nullptr && (!mSettings->certainty.isEnabled(Certainty::inconclusive) || !mSettings->severity.isEnabled(Severity::warning)))
+        if (tok != nullptr && (!mProject->certainty.isEnabled(Certainty::inconclusive) || !mProject->severity.isEnabled(Severity::warning)))
             return;
         errmsg << "Width " << width << " given in format string (no. " << numFormat << ") is smaller than destination buffer"
                << " '" << varname << "[" << arrlen << "]'.";

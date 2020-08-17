@@ -50,13 +50,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckNullPointer(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckNullPointer(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        CheckNullPointer checkNullPointer(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckNullPointer checkNullPointer(tokenizer, settings, errorLogger, project);
         checkNullPointer.nullPointer();
         checkNullPointer.arithmetic();
         checkNullPointer.nullConstantDereference();
@@ -83,7 +83,7 @@ public:
      */
     bool isPointerDeRef(const Token *tok, bool &unknown) const;
 
-    static bool isPointerDeRef(const Token *tok, bool &unknown, const Settings *settings);
+    static bool isPointerDeRef(const Token *tok, bool &unknown, const Project* project);
 
     /** @brief possible null pointer dereference */
     void nullPointer();
@@ -99,17 +99,17 @@ public:
     void nullPointerError(const Token *tok, const std::string &varname, const ValueFlow::Value* value, bool inconclusive);
 
     /** @brief Parse current TU and extract file info */
-    Check::FileInfo *getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const override;
+    Check::FileInfo * getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const override;
 
     Check::FileInfo * loadFileInfoFromXml(const tinyxml2::XMLElement *xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger) override;
+    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project) override;
 
 private:
     /** Get error messages. Used by --errorlist */
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckNullPointer c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckNullPointer c(nullptr, settings, errorLogger, project);
         c.nullPointerError(nullptr, "pointer", nullptr, false);
         c.pointerArithmeticError(nullptr, nullptr, false);
         c.redundantConditionWarning(nullptr, nullptr, nullptr, false);

@@ -34,6 +34,7 @@
 
 class ErrorLogger;
 class Settings;
+class Project;
 class Token;
 class Tokenizer;
 class TokenList;
@@ -501,7 +502,8 @@ private:
 
     Tokenizer *mTokenizer;
     TokenList &mTokenList;
-    const Settings *mSettings;
+    const Settings* mSettings;
+    const Project* mProject;
     ErrorLogger *mErrorLogger;
     bool mChanged;
 

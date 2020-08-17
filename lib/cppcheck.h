@@ -52,6 +52,7 @@ public:
      */
     CppCheck(ErrorLogger &errorLogger,
              Settings& settings,
+             Project& project,
              bool useGlobalSuppressions);
 
     /**
@@ -184,6 +185,7 @@ private:
 
     std::vector<std::string> mErrorList;
     Settings& mSettings;
+    Project& mProject;
 
     void reportProgress(const std::string &filename, const char stage[], const std::size_t value) override;
 

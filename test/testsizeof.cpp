@@ -32,11 +32,12 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        settings.severity.enable(Severity::warning);
-        settings.severity.enable(Severity::portability);
-        settings.certainty.enable(Certainty::inconclusive);
+        project.severity.enable(Severity::warning);
+        project.severity.enable(Severity::portability);
+        project.certainty.enable(Certainty::inconclusive);
 
         TEST_CASE(sizeofsizeof);
         TEST_CASE(sizeofCalculation);
@@ -56,13 +57,13 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check...
-        CheckSizeof checkSizeof(&tokenizer, &settings, this);
-        checkSizeof.runChecks(&tokenizer, &settings, this);
+        CheckSizeof checkSizeof(&tokenizer, &settings, this, &project);
+        checkSizeof.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void checkP(const char code[]) {
@@ -80,14 +81,14 @@ private:
         simplecpp::preprocess(tokens2, tokens1, files, filedata, simplecpp::DUI());
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         tokenizer.createTokens(std::move(tokens2));
         tokenizer.simplifyTokens0("");
         tokenizer.simplifyTokens1();
 
         // Check...
-        CheckSizeof checkSizeof(&tokenizer, &settings, this);
-        checkSizeof.runChecks(&tokenizer, &settings, this);
+        CheckSizeof checkSizeof(&tokenizer, &settings, this, &project);
+        checkSizeof.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void sizeofsizeof() {

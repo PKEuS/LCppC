@@ -147,8 +147,7 @@ static bool isClassStructUnionEnumStart(const Token * tok)
 //---------------------------------------------------------------------------
 
 Tokenizer::Tokenizer() :
-    list(nullptr),
-    mSettings(nullptr),
+    list(nullptr, nullptr),
     mErrorLogger(nullptr),
     mSymbolDatabase(nullptr),
     mTemplateSimplifier(nullptr),
@@ -162,9 +161,8 @@ Tokenizer::Tokenizer() :
 {
 }
 
-Tokenizer::Tokenizer(const Settings *settings, ErrorLogger *errorLogger) :
-    list(settings),
-    mSettings(settings),
+Tokenizer::Tokenizer(const Settings* settings, const Project* project, ErrorLogger* errorLogger) :
+    list(settings, project),
     mErrorLogger(errorLogger),
     mSymbolDatabase(nullptr),
     mTemplateSimplifier(nullptr),
@@ -177,7 +175,7 @@ Tokenizer::Tokenizer(const Settings *settings, ErrorLogger *errorLogger) :
     mPreprocessor(nullptr)
 {
     // make sure settings are specified
-    assert(mSettings);
+    assert(list.mSettings);
 
     mTemplateSimplifier = new TemplateSimplifier(this);
 }
@@ -197,7 +195,7 @@ unsigned int Tokenizer::sizeOfType(const std::string& type) const
 {
     const std::map<std::string, int>::const_iterator it = mTypeSize.find(type);
     if (it == mTypeSize.end()) {
-        const Library::PodType* podtype = mSettings->library.podtype(type);
+        const Library::PodType* podtype = list.mProject->library.podtype(type);
         if (!podtype)
             return 0;
 
@@ -216,16 +214,16 @@ unsigned int Tokenizer::sizeOfType(const Token *type) const
 
     const std::map<std::string, int>::const_iterator it = mTypeSize.find(type->str());
     if (it == mTypeSize.end()) {
-        const Library::PodType* podtype = mSettings->library.podtype(type->str());
+        const Library::PodType* podtype = list.mProject->library.podtype(type->str());
         if (!podtype)
             return 0;
 
         return podtype->size;
     } else if (type->isLong()) {
         if (type->str() == "double")
-            return mSettings->sizeof_long_double;
+            return list.mProject->sizeof_long_double;
         else if (type->str() == "long")
-            return mSettings->sizeof_long_long;
+            return list.mProject->sizeof_long_long;
     }
 
     return it->second;
@@ -359,7 +357,7 @@ bool Tokenizer::duplicateTypedef(Token *tok, const Token *name, const Token *typ
 
 void Tokenizer::unsupportedTypedef(const Token *tok) const
 {
-    if (!mSettings->debugwarnings)
+    if (!list.mSettings->debugwarnings)
         return;
 
     std::ostringstream str;
@@ -573,7 +571,7 @@ void Tokenizer::simplifyUsingToTypedef()
 
 void Tokenizer::simplifyTypedef()
 {
-    Timer t("Tokenizer::simplifyTypedef", mSettings->showtime);
+    Timer t("Tokenizer::simplifyTypedef", list.mSettings->showtime);
 
     // Convert "using a::b;" to corresponding typedef statements
     simplifyUsingToTypedef();
@@ -2266,7 +2264,7 @@ bool Tokenizer::simplifyUsing()
                 }
             } else {
                 skip = true;
-                if (mSettings->debugwarnings && mErrorLogger) {
+                if (list.mSettings->debugwarnings && mErrorLogger) {
                     std::string str;
                     for (Token *tok3 = usingStart; tok3 && tok3 != usingEnd; tok3 = tok3->next()) {
                         if (!str.empty())
@@ -2379,7 +2377,7 @@ bool Tokenizer::createTokens(std::istream &code,
                              const std::string& FileName)
 {
     // make sure settings specified
-    assert(mSettings);
+    assert(list.mSettings);
 
     return list.createTokens(code, FileName);
 }
@@ -2387,13 +2385,13 @@ bool Tokenizer::createTokens(std::istream &code,
 void Tokenizer::createTokens(simplecpp::TokenList&& tokenList)
 {
     // make sure settings specified
-    assert(mSettings);
+    assert(list.mSettings);
     list.createTokens(std::move(tokenList));
 }
 
 bool Tokenizer::simplifyTokens0(const std::string& configuration)
 {
-    Timer timer2("Tokenizer::simplifyTokens0", mSettings->showtime);
+    Timer timer2("Tokenizer::simplifyTokens0", list.mSettings->showtime);
 
     mConfiguration = configuration;
 
@@ -2405,13 +2403,13 @@ bool Tokenizer::simplifyTokens0(const std::string& configuration)
 
 bool Tokenizer::simplifyTokens1()
 {
-    Timer timer3("Tokenizer::simplifyTokens1", mSettings->showtime);
+    Timer timer3("Tokenizer::simplifyTokens1", list.mSettings->showtime);
 
     if (!simplifyTokenList1(list.getFiles().front().c_str()))
         return false;
 
     {
-        Timer t("Tokenizer::createAst", mSettings->showtime);
+        Timer t("Tokenizer::createAst", list.mSettings->showtime);
         list.createAst();
         list.validateAst();
     }
@@ -2419,13 +2417,13 @@ bool Tokenizer::simplifyTokens1()
     createSymbolDatabase();
 
     {
-        Timer t("Tokenizer::setValueTypeInTokenList", mSettings->showtime);
+        Timer t("Tokenizer::setValueTypeInTokenList", list.mSettings->showtime);
         mSymbolDatabase->setValueTypeInTokenList(true);
     }
 
     {
-        Timer t("Tokenizer::ValueFlow", mSettings->showtime);
-        ValueFlow::setValues(&list, mSymbolDatabase, mErrorLogger, mSettings);
+        Timer t("Tokenizer::ValueFlow", list.mSettings->showtime);
+        ValueFlow::setValues(&list, mSymbolDatabase, mErrorLogger);
     }
 
     mSymbolDatabase->setArrayDimensionsUsingValueFlow();
@@ -2471,16 +2469,16 @@ void Tokenizer::fillTypeSizes()
 {
     mTypeSize.clear();
     mTypeSize["char"] = 1;
-    mTypeSize["_Bool"] = mSettings->sizeof_bool;
-    mTypeSize["bool"] = mSettings->sizeof_bool;
-    mTypeSize["short"] = mSettings->sizeof_short;
-    mTypeSize["int"] = mSettings->sizeof_int;
-    mTypeSize["long"] = mSettings->sizeof_long;
-    mTypeSize["float"] = mSettings->sizeof_float;
-    mTypeSize["double"] = mSettings->sizeof_double;
-    mTypeSize["wchar_t"] = mSettings->sizeof_wchar_t;
-    mTypeSize["size_t"] = mSettings->sizeof_size_t;
-    mTypeSize["*"] = mSettings->sizeof_pointer;
+    mTypeSize["_Bool"] = list.mProject->sizeof_bool;
+    mTypeSize["bool"] = list.mProject->sizeof_bool;
+    mTypeSize["short"] = list.mProject->sizeof_short;
+    mTypeSize["int"] = list.mProject->sizeof_int;
+    mTypeSize["long"] = list.mProject->sizeof_long;
+    mTypeSize["float"] = list.mProject->sizeof_float;
+    mTypeSize["double"] = list.mProject->sizeof_double;
+    mTypeSize["wchar_t"] = list.mProject->sizeof_wchar_t;
+    mTypeSize["size_t"] = list.mProject->sizeof_size_t;
+    mTypeSize["*"] = list.mProject->sizeof_pointer;
 }
 
 void Tokenizer::combineOperators()
@@ -2571,7 +2569,7 @@ void Tokenizer::combineStringAndCharLiterals()
 
         while (Token::Match(tok->next(), "%str%") || Token::Match(tok->next(), "_T|_TEXT|TEXT ( %str% )")) {
             if (tok->next()->isName()) {
-                if (!mSettings->isWindowsPlatform())
+                if (!list.mProject->isWindowsPlatform())
                     break;
                 tok->deleteNext(2);
                 tok->next()->deleteNext();
@@ -2673,7 +2671,7 @@ void Tokenizer::simplifySQL()
 
 void Tokenizer::simplifyModules()
 {
-    if (isC() || mSettings->standards.cpp < Standards::CPP20)
+    if (isC() || list.mProject->standards.cpp < Standards::CPP20)
         return;
 
     for (Token* tok = list.front(); tok; tok = tok->next()) {
@@ -3064,7 +3062,7 @@ void Tokenizer::calculateScopes()
 
 void Tokenizer::simplifyTemplates()
 {
-    Timer t("Tokenizer::simplifyTemplates", mSettings->showtime);
+    Timer t("Tokenizer::simplifyTemplates", list.mSettings->showtime);
     mTemplateSimplifier->simplifyTemplates(
 #ifdef MAXTIME
         mMaxTime,
@@ -3443,7 +3441,7 @@ void Tokenizer::setVarIdClassFunction(const std::string &classname,
 
 void Tokenizer::setVarId()
 {
-    Timer t("Tokenizer::setVarId", mSettings->showtime);
+    Timer t("Tokenizer::setVarId", list.mSettings->showtime);
 
     // Clear all variable ids
     for (Token *tok = list.front(); tok; tok = tok->next()) {
@@ -4439,7 +4437,7 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
     // simplify '[;{}] * & ( %any% ) =' to '%any% ='
     simplifyMulAndParens();
 
-    if (!isC() && !mSettings->library.markupFile(FileName)) {
+    if (!isC() && !list.mProject->library.markupFile(FileName)) {
         findComplicatedSyntaxErrorsInTemplates();
     }
 
@@ -4509,7 +4507,7 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
     }
 
     // class x y {
-    if (isCPP() && mSettings->severity.isEnabled(Severity::information)) {
+    if (isCPP() && list.mProject->severity.isEnabled(Severity::information)) {
         for (const Token *tok = list.front(); tok; tok = tok->next()) {
             if (Token::Match(tok, "class %type% %type% [:{]")) {
                 unhandled_macro_class_x_y(tok);
@@ -4673,30 +4671,30 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
 
 void Tokenizer::printDebugOutput() const
 {
-    if (list.front() && mSettings->debugnormal) {
+    if (list.front() && list.mSettings->debugnormal) {
         list.front()->printOut(nullptr, list.getFiles());
 
-        if (mSettings->xml)
+        if (list.mSettings->xml)
             std::cout << "<debug>" << std::endl;
 
         if (mSymbolDatabase) {
-            if (mSettings->xml)
+            if (list.mSettings->xml)
                 mSymbolDatabase->printXml(std::cout);
-            else if (mSettings->verbose) {
+            else if (list.mSettings->verbose) {
                 mSymbolDatabase->printOut("Symbol database");
             }
         }
 
-        if (mSettings->verbose)
-            list.front()->printAst(mSettings->verbose, mSettings->xml, std::cout);
+        if (list.mSettings->verbose)
+            list.front()->printAst(list.mSettings->verbose, list.mSettings->xml, std::cout);
 
-        list.front()->printValueFlow(mSettings->xml, std::cout);
+        list.front()->printValueFlow(list.mSettings->xml, std::cout);
 
-        if (mSettings->xml)
+        if (list.mSettings->xml)
             std::cout << "</debug>" << std::endl;
     }
 
-    if (mSymbolDatabase && mSettings->debugwarnings) {
+    if (mSymbolDatabase && list.mSettings->debugwarnings) {
         printUnknownTypes();
 
         // the typeStartToken() should come before typeEndToken()
@@ -4800,15 +4798,15 @@ void Tokenizer::simplifyHeaders()
     // TODO : can we remove anything in headers here? Like unused declarations.
     // Maybe if --dump is used we want to have _everything_.
 
-    if (mSettings->checkHeaders && mSettings->checkUnusedTemplates)
+    if (list.mProject->checkHeaders && list.mProject->checkUnusedTemplates)
         // Full analysis. All information in the headers are kept.
         return;
 
-    const bool checkHeaders = mSettings->checkHeaders;
-    const bool removeUnusedIncludedFunctions = !mSettings->checkHeaders;
-    const bool removeUnusedIncludedClasses   = !mSettings->checkHeaders;
-    const bool removeUnusedIncludedTemplates = !mSettings->checkUnusedTemplates || !mSettings->checkHeaders;
-    const bool removeUnusedTemplates = !mSettings->checkUnusedTemplates;
+    const bool checkHeaders = list.mProject->checkHeaders;
+    const bool removeUnusedIncludedFunctions = !list.mProject->checkHeaders;
+    const bool removeUnusedIncludedClasses   = !list.mProject->checkHeaders;
+    const bool removeUnusedIncludedTemplates = !list.mProject->checkUnusedTemplates || !list.mProject->checkHeaders;
+    const bool removeUnusedTemplates = !list.mProject->checkUnusedTemplates;
 
     // We want to remove selected stuff from the headers but not *everything*.
     // The intention here is to not damage the analysis of the source file.
@@ -4841,7 +4839,7 @@ void Tokenizer::simplifyHeaders()
         const bool isIncluded = (tok->fileIndex() != 0);
 
         // Remove executable code
-        if (isIncluded && !mSettings->checkHeaders && tok->str() == "{") {
+        if (isIncluded && !list.mProject->checkHeaders && tok->str() == "{") {
             // TODO: We probably need to keep the executable code if this function is called from the source file.
             const Token *prev = tok->previous();
             while (prev && prev->isName())
@@ -5537,7 +5535,7 @@ void Tokenizer::simplifyVarDecl(const bool only_k_r_fpar)
 
 void Tokenizer::simplifyVarDecl(Token * tokBegin, const Token * const tokEnd, const bool only_k_r_fpar)
 {
-    const bool isCPP11  = mSettings->standards.cpp >= Standards::CPP11;
+    const bool isCPP11  = list.mProject->standards.cpp >= Standards::CPP11;
 
     // Split up variable declarations..
     // "int a=4;" => "int a; a=4;"
@@ -6424,10 +6422,10 @@ bool Tokenizer::duplicateDefinition(Token ** tokPtr)
 bool Tokenizer::isScopeNoReturn(const Token *endScopeToken, bool *unknown) const
 {
     std::string unknownFunc;
-    const bool ret = mSettings->library.isScopeNoReturn(endScopeToken,&unknownFunc);
+    const bool ret = list.mProject->library.isScopeNoReturn(endScopeToken,&unknownFunc);
     if (unknown)
         *unknown = !unknownFunc.empty();
-    if (!unknownFunc.empty() && mSettings->checkLibrary && mSettings->severity.isEnabled(Severity::information)) {
+    if (!unknownFunc.empty() && list.mSettings->checkLibrary && list.mProject->severity.isEnabled(Severity::information)) {
         // Is function global?
         bool globalFunction = true;
         if (Token::simpleMatch(endScopeToken->tokAt(-2), ") ; }")) {
@@ -6563,7 +6561,7 @@ bool Tokenizer::isTwoNumber(const std::string &s)
 
 void Tokenizer::checkConfiguration() const
 {
-    if (!mSettings->checkConfiguration)
+    if (!list.mSettings->checkConfiguration)
         return;
     for (const Token *tok = tokens(); tok; tok = tok->next()) {
         if (!Token::Match(tok, "%name% ("))
@@ -6762,9 +6760,9 @@ void Tokenizer::reportUnknownMacros()
 
 void Tokenizer::findGarbageCode() const
 {
-    Timer t("Tokenizer::findGarbageCode", mSettings->showtime);
+    Timer t("Tokenizer::findGarbageCode", list.mSettings->showtime);
 
-    const bool isCPP11 = isCPP() && mSettings->standards.cpp >= Standards::CPP11;
+    const bool isCPP11 = isCPP() && list.mProject->standards.cpp >= Standards::CPP11;
 
     const std::set<std::string> nonConsecutiveKeywords{ "break",
             "continue",
@@ -6822,7 +6820,7 @@ void Tokenizer::findGarbageCode() const
             if (!Token::Match(tok->next(), "( !!)"))
                 syntaxError(tok);
             if (tok->str() != "for") {
-                if (isGarbageExpr(tok->next(), tok->linkAt(1), mSettings->standards.cpp>=Standards::cppstd_t::CPP17))
+                if (isGarbageExpr(tok->next(), tok->linkAt(1), list.mProject->standards.cpp>=Standards::cppstd_t::CPP17))
                     syntaxError(tok);
             }
         }
@@ -7268,7 +7266,7 @@ void Tokenizer::simplifyStructDecl()
 
 void Tokenizer::simplifyCallingConvention()
 {
-    const bool windows = mSettings->isWindowsPlatform();
+    const bool windows = list.mProject->isWindowsPlatform();
 
     for (Token *tok = list.front(); tok; tok = tok->next()) {
         while (Token::Match(tok, "__cdecl|__stdcall|__fastcall|__thiscall|__clrcall|__syscall|__pascal|__fortran|__far|__near") || (windows && Token::Match(tok, "WINAPI|APIENTRY|CALLBACK"))) {
@@ -7304,10 +7302,10 @@ void Tokenizer::simplifyDeclspec()
 void Tokenizer::simplifyAttribute()
 {
     for (Token *tok = list.front(); tok; tok = tok->next()) {
-        if (Token::Match(tok, "%type% (") && !mSettings->library.isNotLibraryFunction(tok)) {
-            if (mSettings->library.isFunctionConst(tok->str(), true))
+        if (Token::Match(tok, "%type% (") && !list.mProject->library.isNotLibraryFunction(tok)) {
+            if (list.mProject->library.isFunctionConst(tok->str(), true))
                 tok->isAttributePure(true);
-            if (mSettings->library.isFunctionConst(tok->str(), false))
+            if (list.mProject->library.isFunctionConst(tok->str(), false))
                 tok->isAttributeConst(true);
         }
         while (Token::Match(tok, "__attribute__|__attribute (") && tok->next()->link() && tok->next()->link()->next()) {
@@ -7444,7 +7442,7 @@ void Tokenizer::simplifyCppcheckAttribute()
 
 void Tokenizer::simplifyCPPAttribute()
 {
-    if (mSettings->standards.cpp < Standards::CPP11 || isC())
+    if (list.mProject->standards.cpp < Standards::CPP11 || isC())
         return;
 
     for (Token *tok = list.front(); tok; tok = tok->next()) {
@@ -7515,9 +7513,9 @@ void Tokenizer::simplifyKeyword()
     // linux kernel code at least uses "_inline" as struct member name at some
     // places.
 
-    const bool c99 = isC() && mSettings->standards.c >= Standards::C99;
-    const bool cpp11 = isCPP() && mSettings->standards.cpp >= Standards::CPP11;
-    const bool cpp20 = isCPP() && mSettings->standards.cpp >= Standards::CPP20;
+    const bool c99 = isC() && list.mProject->standards.c >= Standards::C99;
+    const bool cpp11 = isCPP() && list.mProject->standards.cpp >= Standards::CPP11;
+    const bool cpp20 = isCPP() && list.mProject->standards.cpp >= Standards::CPP20;
 
     for (Token *tok = list.front(); tok; tok = tok->next()) {
         if (keywords.find(tok->str()) != keywords.end()) {
@@ -7526,7 +7524,7 @@ void Tokenizer::simplifyKeyword()
                 tok->deleteThis(); // Simplify..
         }
 
-        if (isC() || mSettings->standards.cpp == Standards::CPP03) {
+        if (isC() || list.mProject->standards.cpp == Standards::CPP03) {
             if (tok->str() == "auto")
                 tok->deleteThis();
         }
@@ -7540,7 +7538,7 @@ void Tokenizer::simplifyKeyword()
             while (tok->str() == "restrict")
                 tok->deleteThis();
 
-            if (mSettings->standards.c >= Standards::C11) {
+            if (list.mProject->standards.c >= Standards::C11) {
                 while (tok->str() == "_Atomic")
                     tok->deleteThis();
             }
@@ -7914,7 +7912,7 @@ void Tokenizer::simplifyNamespaceStd()
     if (!isCPP())
         return;
 
-    const bool isCPP11  = mSettings->standards.cpp == Standards::CPP11;
+    const bool isCPP11  = list.mProject->standards.cpp == Standards::CPP11;
 
     std::set<std::string> userFunctions;
 
@@ -7966,7 +7964,7 @@ void Tokenizer::simplifyNamespaceStd()
 void Tokenizer::simplifyMicrosoftMemoryFunctions()
 {
     // skip if not Windows
-    if (!mSettings->isWindowsPlatform())
+    if (!list.mProject->isWindowsPlatform())
         return;
 
     for (Token *tok = list.front(); tok; tok = tok->next()) {
@@ -8061,10 +8059,10 @@ namespace {
 void Tokenizer::simplifyMicrosoftStringFunctions()
 {
     // skip if not Windows
-    if (!mSettings->isWindowsPlatform())
+    if (!list.mProject->isWindowsPlatform())
         return;
 
-    const bool ansi = mSettings->platformType == Settings::Win32A;
+    const bool ansi = list.mProject->platformType == Project::Win32A;
     for (Token *tok = list.front(); tok; tok = tok->next()) {
         if (tok->strAt(1) != "(")
             continue;
@@ -8097,7 +8095,7 @@ void Tokenizer::simplifyMicrosoftStringFunctions()
 void Tokenizer::simplifyBorland()
 {
     // skip if not Windows
-    if (!mSettings->isWindowsPlatform())
+    if (!list.mProject->isWindowsPlatform())
         return;
     if (isC())
         return;
@@ -8200,9 +8198,9 @@ void Tokenizer::simplifyQtSignalsSlots()
 
 void Tokenizer::createSymbolDatabase()
 {
-    Timer t("Tokenizer::createSymbolDatabase", mSettings->showtime);
+    Timer t("Tokenizer::createSymbolDatabase", list.mSettings->showtime);
     if (!mSymbolDatabase)
-        mSymbolDatabase = new SymbolDatabase(this, mSettings, mErrorLogger);
+        mSymbolDatabase = new SymbolDatabase(this, list.mSettings, mErrorLogger, list.mProject);
     mSymbolDatabase->validate();
 }
 
@@ -8349,7 +8347,7 @@ void Tokenizer::simplifyOperatorName()
         }
     }
 
-    if (mSettings->debugwarnings) {
+    if (list.mSettings->debugwarnings) {
         const Token *tok = list.front();
 
         while ((tok = Token::findsimplematch(tok, "operator")) != nullptr) {
@@ -8656,14 +8654,14 @@ void Tokenizer::reportError(const std::vector<const Token*>& callstack, Severity
 
 void Tokenizer::setPodTypes()
 {
-    if (!mSettings)
+    if (!list.mSettings)
         return;
     for (Token *tok = list.front(); tok; tok = tok->next()) {
         if (!tok->isName())
             continue;
 
         // pod type
-        const struct Library::PodType *podType = mSettings->library.podtype(tok->str());
+        const struct Library::PodType *podType = list.mProject->library.podtype(tok->str());
         if (podType) {
             const Token *prev = tok->previous();
             while (prev && prev->isName())

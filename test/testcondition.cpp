@@ -34,15 +34,16 @@ public:
     }
 
 private:
-    Settings settings0;
-    Settings settings1;
+    Settings settings;
+    Project project0;
+    Project project1;
 
     void run() override {
-        LOAD_LIB_2(settings0.library, "qt.cfg");
-        LOAD_LIB_2(settings0.library, "std.cfg");
+        LOAD_LIB_2(project0.library, "qt.cfg");
+        LOAD_LIB_2(project0.library, "std.cfg");
 
-        settings0.severity.enable(Severity::style);
-        settings0.severity.enable(Severity::warning);
+        project0.severity.enable(Severity::style);
+        project0.severity.enable(Severity::warning);
 
         const char cfg[] = "<?xml version=\"1.0\"?>\n"
                            "<def>\n"
@@ -50,9 +51,9 @@ private:
                            "</def>";
         tinyxml2::XMLDocument xmldoc;
         xmldoc.Parse(cfg, sizeof(cfg));
-        settings1.severity.enable(Severity::style);
-        settings1.severity.enable(Severity::warning);
-        settings1.library.load(xmldoc);
+        project1.severity.enable(Severity::style);
+        project1.severity.enable(Severity::warning);
+        project1.library.load(xmldoc);
 
         TEST_CASE(assignAndCompare);   // assignment and comparison don't match
         TEST_CASE(mismatchingBitAnd);  // overlapping bitmasks
@@ -125,7 +126,7 @@ private:
         // Clear the error buffer..
         errout.str("");
 
-        settings0.certainty.setEnabled(Certainty::inconclusive, inconclusive);
+        project0.certainty.setEnabled(Certainty::inconclusive, inconclusive);
 
         // Raw tokens..
         std::vector<std::string> files(1, filename);
@@ -137,11 +138,11 @@ private:
         std::map<std::string, simplecpp::TokenList*> filedata;
         simplecpp::preprocess(tokens2, tokens1, files, filedata, simplecpp::DUI());
 
-        Preprocessor preprocessor(settings0, nullptr);
+        Preprocessor preprocessor(settings, project0, nullptr);
         preprocessor.setDirectives(tokens1);
 
         // Tokenizer..
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings, &project0, this);
         tokenizer.createTokens(std::move(tokens2));
         tokenizer.simplifyTokens0("");
         tokenizer.simplifyTokens1();
@@ -149,7 +150,7 @@ private:
 
         // Run checks..
         CheckCondition checkCondition;
-        checkCondition.runChecks(&tokenizer, &settings0, this);
+        checkCondition.runChecks(&tokenizer, &settings, this, &project0);
     }
 
     void assignAndCompare() {
@@ -521,12 +522,12 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings1, this);
+        Tokenizer tokenizer(&settings, &project1, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         CheckCondition checkCondition;
-        checkCondition.runChecks(&tokenizer, &settings1, this);
+        checkCondition.runChecks(&tokenizer, &settings, this, &project1);
     }
 
     void overlappingElseIfCondition() {

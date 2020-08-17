@@ -42,6 +42,7 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
         // strcpy, abort cfg
@@ -50,8 +51,8 @@ private:
                            "  <function name=\"strcpy\"> <arg nr=\"1\"><not-null/></arg> </function>\n"
                            "  <function name=\"abort\"> <noreturn>true</noreturn> </function>\n" // abort is a noreturn function
                            "</def>";
-        settings.library.loadxmldata(cfg, sizeof(cfg));
-        LOAD_LIB_2(settings.library, "std.cfg");
+        project.library.loadxmldata(cfg, sizeof(cfg));
+        LOAD_LIB_2(project.library, "std.cfg");
 
         TEST_CASE(valueFlowNumber);
         TEST_CASE(valueFlowString);
@@ -144,7 +145,7 @@ private:
 
     bool testValueOfXKnown(const char code[], unsigned int linenr, int value) {
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -162,7 +163,7 @@ private:
 
     bool testValueOfX(const char code[], unsigned int linenr, int value) {
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -180,7 +181,7 @@ private:
 
     bool testValueOfX(const char code[], unsigned int linenr, float value, float diff) {
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -199,7 +200,7 @@ private:
 
     std::string getErrorPathForX(const char code[], unsigned int linenr) {
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -223,7 +224,7 @@ private:
 
     bool testValueOfX(const char code[], unsigned int linenr, const char value[], ValueFlow::Value::ValueType type) {
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -242,7 +243,7 @@ private:
 
     bool testValueOfX(const char code[], unsigned int linenr, int value, ValueFlow::Value::ValueType type) {
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -260,7 +261,7 @@ private:
 
     bool testValueOfX(const char code[], unsigned int linenr, ValueFlow::Value::MoveKind moveKind) {
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -278,7 +279,7 @@ private:
 
     bool testConditionalValueOfX(const char code[], unsigned int linenr, int value) {
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
@@ -307,7 +308,7 @@ private:
         simplecpp::preprocess(tokens2, tokens1, files, filedata, simplecpp::DUI());
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         tokenizer.createTokens(std::move(tokens2));
         tokenizer.simplifyTokens0("");
         tokenizer.simplifyTokens1();
@@ -315,8 +316,8 @@ private:
         settings.debugwarnings = false;
     }
 
-    std::vector<ValueFlow::Value> tokenValues(const char code[], const char tokstr[], const Settings *s = nullptr) {
-        Tokenizer tokenizer(s ? s : &settings, this);
+    std::vector<ValueFlow::Value> tokenValues(const char code[], const char tokstr[], const Project *s = nullptr) {
+        Tokenizer tokenizer(&settings, s ? s : &project, this);
         std::istringstream istr(code);
         errout.str("");
         tokenizer.tokenize(istr, "test.cpp");
@@ -324,7 +325,7 @@ private:
         return tok ? tok->values() : std::vector<ValueFlow::Value>();
     }
 
-    std::vector<ValueFlow::Value> tokenValues(const char code[], const char tokstr[], ValueFlow::Value::ValueType vt, const Settings *s = nullptr) {
+    std::vector<ValueFlow::Value> tokenValues(const char code[], const char tokstr[], ValueFlow::Value::ValueType vt, const Project*s = nullptr) {
         std::vector<ValueFlow::Value> values = tokenValues(code, tokstr, s);
         values.erase(std::remove_if(values.begin(), values.end(), [&](const ValueFlow::Value& v) {
             return v.valueType != vt;
@@ -412,9 +413,6 @@ private:
 
     void valueFlowLifetime() {
         const char *code;
-
-        LOAD_LIB_2(settings.library, "std.cfg");
-
         code  = "void f() {\n"
                 "    int a = 1;\n"
                 "    auto x = [&]() { return a + 1; };\n"
@@ -691,7 +689,7 @@ private:
 
         // ~
         code  = "x = ~0U;";
-        settings.platform(cppcheck::Platform::Native); // ensure platform is native
+        project.platform(cppcheck::Platform::Native); // ensure platform is native
         values = tokenValues(code,"~");
         ASSERT_EQUALS(1U, values.size());
         ASSERT_EQUALS(~0U, values.back().intvalue);
@@ -845,22 +843,22 @@ private:
         } while(false)
 
         // standard types
-        CHECK("void *", settings.sizeof_pointer);
+        CHECK("void *", project.sizeof_pointer);
         CHECK("char", 1U);
-        CHECK("short", settings.sizeof_short);
-        CHECK("int", settings.sizeof_int);
-        CHECK("long", settings.sizeof_long);
-        CHECK("wchar_t", settings.sizeof_wchar_t);
+        CHECK("short", project.sizeof_short);
+        CHECK("int", project.sizeof_int);
+        CHECK("long", project.sizeof_long);
+        CHECK("wchar_t", project.sizeof_wchar_t);
 
         // string/char literals
         CHECK("\"asdf\"", 5);
-        CHECK("L\"asdf\"", 5 * settings.sizeof_wchar_t);
+        CHECK("L\"asdf\"", 5 * project.sizeof_wchar_t);
         CHECK("u8\"asdf\"", 5); // char8_t
         CHECK("u\"asdf\"", 5 * 2); // char16_t
         CHECK("U\"asdf\"", 5 * 4); // char32_t
         CHECK("'a'", 1U);
-        CHECK("'ab'", settings.sizeof_int);
-        CHECK("L'a'", settings.sizeof_wchar_t);
+        CHECK("'ab'", project.sizeof_int);
+        CHECK("L'a'", project.sizeof_wchar_t);
         CHECK("u8'a'", 1U); // char8_t
         CHECK("u'a'", 2U); // char16_t
         CHECK("U'a'", 4U); // char32_t
@@ -887,67 +885,67 @@ private:
         } while(false)
 
         // enums
-        CHECK("", "", "E", settings.sizeof_int);
+        CHECK("", "", "E", project.sizeof_int);
 
         // typed enums
         CHECK("", ": char", "E", 1U);
         CHECK("", ": signed char", "E", 1U);
         CHECK("", ": unsigned char", "E", 1U);
-        CHECK("", ": short", "E", settings.sizeof_short);
-        CHECK("", ": signed short", "E", settings.sizeof_short);
-        CHECK("", ": unsigned short", "E", settings.sizeof_short);
-        CHECK("", ": int", "E", settings.sizeof_int);
-        CHECK("", ": signed int", "E", settings.sizeof_int);
-        CHECK("", ": unsigned int", "E", settings.sizeof_int);
-        CHECK("", ": long", "E", settings.sizeof_long);
-        CHECK("", ": signed long", "E", settings.sizeof_long);
-        CHECK("", ": unsigned long", "E", settings.sizeof_long);
-        CHECK("", ": long long", "E", settings.sizeof_long_long);
-        CHECK("", ": signed long long", "E", settings.sizeof_long_long);
-        CHECK("", ": unsigned long long", "E", settings.sizeof_long_long);
-        CHECK("", ": wchar_t", "E", settings.sizeof_wchar_t);
-        CHECK("", ": size_t", "E", settings.sizeof_size_t);
+        CHECK("", ": short", "E", project.sizeof_short);
+        CHECK("", ": signed short", "E", project.sizeof_short);
+        CHECK("", ": unsigned short", "E", project.sizeof_short);
+        CHECK("", ": int", "E", project.sizeof_int);
+        CHECK("", ": signed int", "E", project.sizeof_int);
+        CHECK("", ": unsigned int", "E", project.sizeof_int);
+        CHECK("", ": long", "E", project.sizeof_long);
+        CHECK("", ": signed long", "E", project.sizeof_long);
+        CHECK("", ": unsigned long", "E", project.sizeof_long);
+        CHECK("", ": long long", "E", project.sizeof_long_long);
+        CHECK("", ": signed long long", "E", project.sizeof_long_long);
+        CHECK("", ": unsigned long long", "E", project.sizeof_long_long);
+        CHECK("", ": wchar_t", "E", project.sizeof_wchar_t);
+        CHECK("", ": size_t", "E", project.sizeof_size_t);
 
         // enumerators
-        CHECK("", "", "E0", settings.sizeof_int);
+        CHECK("", "", "E0", project.sizeof_int);
 
         // typed enumerators
         CHECK("", ": char", "E0", 1U);
         CHECK("", ": signed char", "E0", 1U);
         CHECK("", ": unsigned char", "E0", 1U);
-        CHECK("", ": short", "E0", settings.sizeof_short);
-        CHECK("", ": signed short", "E0", settings.sizeof_short);
-        CHECK("", ": unsigned short", "E0", settings.sizeof_short);
-        CHECK("", ": int", "E0", settings.sizeof_int);
-        CHECK("", ": signed int", "E0", settings.sizeof_int);
-        CHECK("", ": unsigned int", "E0", settings.sizeof_int);
-        CHECK("", ": long", "E0", settings.sizeof_long);
-        CHECK("", ": signed long", "E0", settings.sizeof_long);
-        CHECK("", ": unsigned long", "E0", settings.sizeof_long);
-        CHECK("", ": long long", "E0", settings.sizeof_long_long);
-        CHECK("", ": signed long long", "E0", settings.sizeof_long_long);
-        CHECK("", ": unsigned long long", "E0", settings.sizeof_long_long);
-        CHECK("", ": wchar_t", "E0", settings.sizeof_wchar_t);
-        CHECK("", ": size_t", "E0", settings.sizeof_size_t);
+        CHECK("", ": short", "E0", project.sizeof_short);
+        CHECK("", ": signed short", "E0", project.sizeof_short);
+        CHECK("", ": unsigned short", "E0", project.sizeof_short);
+        CHECK("", ": int", "E0", project.sizeof_int);
+        CHECK("", ": signed int", "E0", project.sizeof_int);
+        CHECK("", ": unsigned int", "E0", project.sizeof_int);
+        CHECK("", ": long", "E0", project.sizeof_long);
+        CHECK("", ": signed long", "E0", project.sizeof_long);
+        CHECK("", ": unsigned long", "E0", project.sizeof_long);
+        CHECK("", ": long long", "E0", project.sizeof_long_long);
+        CHECK("", ": signed long long", "E0", project.sizeof_long_long);
+        CHECK("", ": unsigned long long", "E0", project.sizeof_long_long);
+        CHECK("", ": wchar_t", "E0", project.sizeof_wchar_t);
+        CHECK("", ": size_t", "E0", project.sizeof_size_t);
 
         // class typed enumerators
         CHECK("class", ": char", "E :: E0", 1U);
         CHECK("class", ": signed char", "E :: E0", 1U);
         CHECK("class", ": unsigned char", "E :: E0", 1U);
-        CHECK("class", ": short", "E :: E0", settings.sizeof_short);
-        CHECK("class", ": signed short", "E :: E0", settings.sizeof_short);
-        CHECK("class", ": unsigned short", "E :: E0", settings.sizeof_short);
-        CHECK("class", ": int", "E :: E0", settings.sizeof_int);
-        CHECK("class", ": signed int", "E :: E0", settings.sizeof_int);
-        CHECK("class", ": unsigned int", "E :: E0", settings.sizeof_int);
-        CHECK("class", ": long", "E :: E0", settings.sizeof_long);
-        CHECK("class", ": signed long", "E :: E0", settings.sizeof_long);
-        CHECK("class", ": unsigned long", "E :: E0", settings.sizeof_long);
-        CHECK("class", ": long long", "E :: E0", settings.sizeof_long_long);
-        CHECK("class", ": signed long long", "E :: E0", settings.sizeof_long_long);
-        CHECK("class", ": unsigned long long", "E :: E0", settings.sizeof_long_long);
-        CHECK("class", ": wchar_t", "E :: E0", settings.sizeof_wchar_t);
-        CHECK("class", ": size_t", "E :: E0", settings.sizeof_size_t);
+        CHECK("class", ": short", "E :: E0", project.sizeof_short);
+        CHECK("class", ": signed short", "E :: E0", project.sizeof_short);
+        CHECK("class", ": unsigned short", "E :: E0", project.sizeof_short);
+        CHECK("class", ": int", "E :: E0", project.sizeof_int);
+        CHECK("class", ": signed int", "E :: E0", project.sizeof_int);
+        CHECK("class", ": unsigned int", "E :: E0", project.sizeof_int);
+        CHECK("class", ": long", "E :: E0", project.sizeof_long);
+        CHECK("class", ": signed long", "E :: E0", project.sizeof_long);
+        CHECK("class", ": unsigned long", "E :: E0", project.sizeof_long);
+        CHECK("class", ": long long", "E :: E0", project.sizeof_long_long);
+        CHECK("class", ": signed long long", "E :: E0", project.sizeof_long_long);
+        CHECK("class", ": unsigned long long", "E :: E0", project.sizeof_long_long);
+        CHECK("class", ": wchar_t", "E :: E0", project.sizeof_wchar_t);
+        CHECK("class", ": size_t", "E :: E0", project.sizeof_size_t);
 #undef CHECK
 
 #define CHECK(A, B)                                   \
@@ -963,26 +961,26 @@ private:
         } while(false)
 
         // enum array
-        CHECK("", settings.sizeof_int);
+        CHECK("", project.sizeof_int);
 
         // typed enum array
         CHECK(": char", 1U);
         CHECK(": signed char", 1U);
         CHECK(": unsigned char", 1U);
-        CHECK(": short", settings.sizeof_short);
-        CHECK(": signed short", settings.sizeof_short);
-        CHECK(": unsigned short", settings.sizeof_short);
-        CHECK(": int", settings.sizeof_int);
-        CHECK(": signed int", settings.sizeof_int);
-        CHECK(": unsigned int", settings.sizeof_int);
-        CHECK(": long", settings.sizeof_long);
-        CHECK(": signed long", settings.sizeof_long);
-        CHECK(": unsigned long", settings.sizeof_long);
-        CHECK(": long long", settings.sizeof_long_long);
-        CHECK(": signed long long", settings.sizeof_long_long);
-        CHECK(": unsigned long long", settings.sizeof_long_long);
-        CHECK(": wchar_t", settings.sizeof_wchar_t);
-        CHECK(": size_t", settings.sizeof_size_t);
+        CHECK(": short", project.sizeof_short);
+        CHECK(": signed short", project.sizeof_short);
+        CHECK(": unsigned short", project.sizeof_short);
+        CHECK(": int", project.sizeof_int);
+        CHECK(": signed int", project.sizeof_int);
+        CHECK(": unsigned int", project.sizeof_int);
+        CHECK(": long", project.sizeof_long);
+        CHECK(": signed long", project.sizeof_long);
+        CHECK(": unsigned long", project.sizeof_long);
+        CHECK(": long long", project.sizeof_long_long);
+        CHECK(": signed long long", project.sizeof_long_long);
+        CHECK(": unsigned long long", project.sizeof_long_long);
+        CHECK(": wchar_t", project.sizeof_wchar_t);
+        CHECK(": size_t", project.sizeof_size_t);
 #undef CHECK
 
 #define CHECK(A, B)                                   \
@@ -998,26 +996,26 @@ private:
         } while(false)
 
         // enum array
-        CHECK("", settings.sizeof_int);
+        CHECK("", project.sizeof_int);
 
         // typed enum array
         CHECK(": char", 1U);
         CHECK(": signed char", 1U);
         CHECK(": unsigned char", 1U);
-        CHECK(": short", settings.sizeof_short);
-        CHECK(": signed short", settings.sizeof_short);
-        CHECK(": unsigned short", settings.sizeof_short);
-        CHECK(": int", settings.sizeof_int);
-        CHECK(": signed int", settings.sizeof_int);
-        CHECK(": unsigned int", settings.sizeof_int);
-        CHECK(": long", settings.sizeof_long);
-        CHECK(": signed long", settings.sizeof_long);
-        CHECK(": unsigned long", settings.sizeof_long);
-        CHECK(": long long", settings.sizeof_long_long);
-        CHECK(": signed long long", settings.sizeof_long_long);
-        CHECK(": unsigned long long", settings.sizeof_long_long);
-        CHECK(": wchar_t", settings.sizeof_wchar_t);
-        CHECK(": size_t", settings.sizeof_size_t);
+        CHECK(": short", project.sizeof_short);
+        CHECK(": signed short", project.sizeof_short);
+        CHECK(": unsigned short", project.sizeof_short);
+        CHECK(": int", project.sizeof_int);
+        CHECK(": signed int", project.sizeof_int);
+        CHECK(": unsigned int", project.sizeof_int);
+        CHECK(": long", project.sizeof_long);
+        CHECK(": signed long", project.sizeof_long);
+        CHECK(": unsigned long", project.sizeof_long);
+        CHECK(": long long", project.sizeof_long_long);
+        CHECK(": signed long long", project.sizeof_long_long);
+        CHECK(": unsigned long long", project.sizeof_long_long);
+        CHECK(": wchar_t", project.sizeof_wchar_t);
+        CHECK(": size_t", project.sizeof_size_t);
 #undef CHECK
 
         code = "uint16_t arr[10];\n"
@@ -2744,10 +2742,10 @@ private:
     void valueFlowRightShift() {
         const char *code;
         /* Set some temporary fixed values to simplify testing */
-        const Settings settingsTmp = settings;
-        settings.int_bit = 32;
-        settings.long_bit = 64;
-        settings.long_long_bit = MathLib::bigint_bits * 2;
+        const Project projectTmp = project;
+        project.int_bit = 32;
+        project.long_bit = 64;
+        project.long_long_bit = MathLib::bigint_bits * 2;
 
         code = "int f(int a) {\n"
                "  int x = (a & 0xff) >> 16;\n"
@@ -2821,7 +2819,7 @@ private:
                "}";
         ASSERT_EQUALS(false, testValueOfX(code, 3u, 0));
 
-        settings = settingsTmp;
+        project = projectTmp;
     }
 
     void valueFlowFwdAnalysis() {
@@ -4063,9 +4061,6 @@ private:
 
     void valueFlowContainerSize() {
         const char *code;
-
-        LOAD_LIB_2(settings.library, "std.cfg");
-
         // condition
         code = "void f(const std::list<int> &ints) {\n"
                "  if (!static_cast<bool>(ints.empty()))\n"
@@ -4487,8 +4482,7 @@ private:
     void valueFlowDynamicBufferSize() {
         const char *code;
 
-        LOAD_LIB_2(settings.library, "std.cfg");
-        LOAD_LIB_2(settings.library, "posix.cfg");
+        LOAD_LIB_2(project.library, "posix.cfg");
 
         code = "void* f() {\n"
                "  void* x = malloc(10);\n"
@@ -4527,7 +4521,7 @@ private:
     void valueFlowSafeFunctionParameterValues() {
         const char *code;
         std::vector<ValueFlow::Value> values;
-        Settings s;
+        Project s;
         LOAD_LIB_2(s.library, "std.cfg");
         s.safeChecks.classes = s.safeChecks.externalFunctions = s.safeChecks.internalFunctions = true;
 

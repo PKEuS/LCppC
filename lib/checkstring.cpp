@@ -57,7 +57,7 @@ void CheckString::stringLiteralWrite()
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (!tok->variable() || !tok->variable()->isPointer())
                 continue;
-            const Token *str = tok->getValueTokenMinStrSize(mSettings);
+            const Token *str = tok->getValueTokenMinStrSize(mProject);
             if (!str)
                 continue;
             if (Token::Match(tok, "%var% @[ ="))
@@ -94,7 +94,7 @@ void CheckString::stringLiteralWriteError(const Token *tok, const Token *strValu
 //---------------------------------------------------------------------------
 void CheckString::checkAlwaysTrueOrFalseStringCompare()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     for (const Token* tok = mTokenizer->tokens(); tok; tok = tok->next()) {
@@ -161,7 +161,7 @@ void CheckString::alwaysTrueStringVariableCompareError(const Token *tok, const s
 //-----------------------------------------------------------------------------
 void CheckString::checkSuspiciousStringCompare()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase* symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -250,7 +250,7 @@ void CheckString::strPlusCharError(const Token *tok)
 //---------------------------------------------------------------------------
 void CheckString::checkIncorrectStringCompare()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -318,7 +318,7 @@ void CheckString::incorrectStringBooleanError(const Token *tok, const std::strin
 //---------------------------------------------------------------------------
 void CheckString::overlappingStrcmp()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -368,7 +368,7 @@ void CheckString::overlappingStrcmp()
                     if (args1[1]->isLiteral() &&
                         args2[1]->isLiteral() &&
                         args1[1]->str() != args2[1]->str() &&
-                        isSameExpression(mTokenizer->isCPP(), true, args1[0], args2[0], mSettings->library, true, false))
+                        isSameExpression(mTokenizer->isCPP(), true, args1[0], args2[0], mProject->library, true, false))
                         overlappingStrcmpError(eq0, ne0);
                 }
             }
@@ -418,7 +418,7 @@ void CheckString::sprintfOverlappingData()
                                                    false,
                                                    dest,
                                                    arg,
-                                                   mSettings->library,
+                                                   mProject->library,
                                                    true,
                                                    false);
                 if (same) {

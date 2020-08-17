@@ -55,7 +55,7 @@ static const CWE CWE688(688U);  // Function Call With Incorrect Variable or Refe
 
 void CheckFunctions::checkProhibitedFunctions()
 {
-    const bool checkAlloca = mSettings->severity.isEnabled(Severity::warning) && ((mSettings->standards.c >= Standards::C99 && mTokenizer->isC()) || mSettings->standards.cpp >= Standards::CPP11);
+    const bool checkAlloca = mProject->severity.isEnabled(Severity::warning) && ((mProject->standards.c >= Standards::C99 && mTokenizer->isC()) || mProject->standards.cpp >= Standards::CPP11);
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope *scope : symbolDatabase->functionScopes) {
@@ -65,7 +65,7 @@ void CheckFunctions::checkProhibitedFunctions()
             // alloca() is special as it depends on the code being C or C++, so it is not in Library
             if (checkAlloca && Token::simpleMatch(tok, "alloca (") && (!tok->function() || tok->function()->nestedIn->type == Scope::eGlobal)) {
                 if (mTokenizer->isC()) {
-                    if (mSettings->standards.c > Standards::C89)
+                    if (mProject->standards.c > Standards::C89)
                         reportError(tok, Severity::warning, "allocaCalled",
                                     "$symbol:alloca\n"
                                     "Obsolete function 'alloca' called. In C99 and later it is recommended to use a variable length array instead.\n"
@@ -83,9 +83,9 @@ void CheckFunctions::checkProhibitedFunctions()
                 if (tok->function() && tok->function()->hasBody())
                     continue;
 
-                const Library::WarnInfo* wi = mSettings->library.getWarnInfo(tok);
+                const Library::WarnInfo* wi = mProject->library.getWarnInfo(tok);
                 if (wi) {
-                    if (mSettings->severity.isEnabled(wi->severity) && mSettings->standards.c >= wi->standards.c && mSettings->standards.cpp >= wi->standards.cpp) {
+                    if (mProject->severity.isEnabled(wi->severity) && mProject->standards.c >= wi->standards.c && mProject->standards.cpp >= wi->standards.cpp) {
                         reportError(tok, wi->severity, tok->str() + "Called", wi->message, CWE477, Certainty::safe);
                     }
                 }
@@ -110,24 +110,24 @@ void CheckFunctions::invalidFunctionUsage()
                 const Token * const argtok = arguments[argnr-1];
 
                 // check <valid>...</valid>
-                const ValueFlow::Value *invalidValue = argtok->getInvalidValue(functionToken,argnr,mSettings);
+                const ValueFlow::Value *invalidValue = argtok->getInvalidValue(functionToken, argnr, mProject);
                 if (invalidValue) {
-                    invalidFunctionArgError(argtok, functionToken->next()->astOperand1()->expressionString(), argnr, invalidValue, mSettings->library.validarg(functionToken, argnr));
+                    invalidFunctionArgError(argtok, functionToken->next()->astOperand1()->expressionString(), argnr, invalidValue, mProject->library.validarg(functionToken, argnr));
                 }
 
                 if (astIsBool(argtok)) {
                     // check <not-bool>
-                    if (mSettings->library.isboolargbad(functionToken, argnr))
+                    if (mProject->library.isboolargbad(functionToken, argnr))
                         invalidFunctionArgBoolError(argtok, functionToken->str(), argnr);
 
                     // Are the values 0 and 1 valid?
-                    else if (!mSettings->library.isIntArgValid(functionToken, argnr, 0))
-                        invalidFunctionArgError(argtok, functionToken->str(), argnr, nullptr, mSettings->library.validarg(functionToken, argnr));
-                    else if (!mSettings->library.isIntArgValid(functionToken, argnr, 1))
-                        invalidFunctionArgError(argtok, functionToken->str(), argnr, nullptr, mSettings->library.validarg(functionToken, argnr));
+                    else if (!mProject->library.isIntArgValid(functionToken, argnr, 0))
+                        invalidFunctionArgError(argtok, functionToken->str(), argnr, nullptr, mProject->library.validarg(functionToken, argnr));
+                    else if (!mProject->library.isIntArgValid(functionToken, argnr, 1))
+                        invalidFunctionArgError(argtok, functionToken->str(), argnr, nullptr, mProject->library.validarg(functionToken, argnr));
                 }
 
-                if (mSettings->library.isargstrz(functionToken, argnr)) {
+                if (mProject->library.isargstrz(functionToken, argnr)) {
                     if (Token::Match(argtok, "& %var% !![") && argtok->next() && argtok->next()->valueType()) {
                         const ValueType * valueType = argtok->next()->valueType();
                         const Variable * variable = argtok->next()->variable();
@@ -192,7 +192,7 @@ void CheckFunctions::invalidFunctionArgStrError(const Token *tok, const std::str
 //---------------------------------------------------------------------------
 void CheckFunctions::checkIgnoredReturnValue()
 {
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -216,7 +216,7 @@ void CheckFunctions::checkIgnoredReturnValue()
             }
 
             if ((!tok->function() || !Token::Match(tok->function()->retDef, "void %name%")) &&
-                (mSettings->library.isUseRetVal(tok) || (tok->function() && tok->function()->isAttributeNodiscard())) &&
+                (mProject->library.isUseRetVal(tok) || (tok->function() && tok->function()->isAttributeNodiscard())) &&
                 !WRONG_DATA(!tok->next()->astOperand1(), tok)) {
                 ignoredReturnValueError(tok, tok->next()->astOperand1()->expressionString());
             }
@@ -236,8 +236,8 @@ void CheckFunctions::ignoredReturnValueError(const Token* tok, const std::string
 //---------------------------------------------------------------------------
 void CheckFunctions::checkMathFunctions()
 {
-    const bool styleC99 = mSettings->severity.isEnabled(Severity::style) && mSettings->standards.c != Standards::C89 && mSettings->standards.cpp != Standards::CPP03;
-    const bool printWarnings = mSettings->severity.isEnabled(Severity::warning);
+    const bool styleC99 = mProject->severity.isEnabled(Severity::style) && mProject->standards.c != Standards::C89 && mProject->standards.cpp != Standards::CPP03;
+    const bool printWarnings = mProject->severity.isEnabled(Severity::warning);
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope *scope : symbolDatabase->functionScopes) {
@@ -318,7 +318,7 @@ void CheckFunctions::memsetZeroBytes()
 //       <warn knownIntValue="0" severity="warning" msg="..."/>
 //     </arg>
 
-    if (!mSettings->severity.isEnabled(Severity::warning))
+    if (!mProject->severity.isEnabled(Severity::warning))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -355,12 +355,12 @@ void CheckFunctions::memsetInvalid2nd3rdParam()
 //       <warn possibleIntValue=":-129,256:" severity="warning" msg="..."/>
 //     </arg>
 
-    const bool printPortability = mSettings->severity.isEnabled(Severity::portability);
-    const bool printWarning = mSettings->severity.isEnabled(Severity::warning);
+    const bool printPortability = mProject->severity.isEnabled(Severity::portability);
+    const bool printWarning = mProject->severity.isEnabled(Severity::warning);
     if (!printWarning && !printPortability)
         return;
 
-    const bool inconclusive = mSettings->certainty.isEnabled(Certainty::inconclusive);
+    const bool inconclusive = mProject->certainty.isEnabled(Certainty::inconclusive);
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope *scope : symbolDatabase->functionScopes) {
@@ -383,8 +383,8 @@ void CheckFunctions::memsetInvalid2nd3rdParam()
             if (printWarning) {
                 if (!zerovalue && args[1]->isNumber()) { // Check if the second parameter is a literal and is out of range
                     const long long int value = MathLib::toLongNumber(args[1]->str());
-                    const long long sCharMin = mSettings->signedCharMin();
-                    const long long uCharMax = mSettings->unsignedCharMax();
+                    const long long sCharMin = mProject->signedCharMin();
+                    const long long uCharMax = mProject->unsignedCharMax();
                     if (value < sCharMin || value > uCharMax)
                         memsetValueOutOfRangeError(args[1], args[1]->str());
                 } else if (args[2]->tokType() == Token::eChar) { // Check if the third parameter is a char literal
@@ -431,7 +431,7 @@ void CheckFunctions::memsetSizeArgumentAsCharError(const Token* tok)
 
 void CheckFunctions::checkLibraryMatchFunctions()
 {
-    if (!mSettings->checkLibrary || !mSettings->severity.isEnabled(Severity::information))
+    if (!mSettings->checkLibrary || !mProject->severity.isEnabled(Severity::information))
         return;
 
     bool insideNew = false;
@@ -458,11 +458,11 @@ void CheckFunctions::checkLibraryMatchFunctions()
         if (tok->function())
             continue;
 
-        if (!mSettings->library.isNotLibraryFunction(tok))
+        if (!mProject->library.isNotLibraryFunction(tok))
             continue;
 
-        const std::string &functionName = mSettings->library.getFunctionName(tok);
-        if (functionName.empty() || mSettings->library.functions.find(functionName) != mSettings->library.functions.end())
+        const std::string &functionName = mProject->library.getFunctionName(tok);
+        if (functionName.empty() || mProject->library.functions.find(functionName) != mProject->library.functions.end())
             continue;
 
         reportError(tok,

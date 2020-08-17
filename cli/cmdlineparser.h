@@ -21,8 +21,10 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 class Settings;
+class Project;
 
 /// @addtogroup CLI
 /// @{
@@ -43,7 +45,7 @@ public:
      * @param settings Settings instance that will be modified according to
      * options user has given.
      */
-    explicit CmdLineParser(Settings *settings);
+    CmdLineParser(Settings *settings, Project* project);
 
     /**
      * Parse given command line.
@@ -106,16 +108,17 @@ protected:
     static void printMessage(const std::string &message);
     static void printMessage(const char* message);
 
-    std::string parseEnableList(const std::string& str, bool(*function)(Settings&, const std::string&, bool));
-    static bool parseEnableList_setSeverity(Settings& settings, const std::string& str, bool enable);
-    static bool parseEnableList_setCertainty(Settings& settings, const std::string& str, bool enable);
-    static bool parseEnableList_setChecks(Settings& settings, const std::string& str, bool enable);
-    static bool parseEnableList_setOutput(Settings& settings, const std::string& str, bool enable);
+    std::string parseEnableList(const std::string& str, std::function<bool(CmdLineParser*, const std::string&, bool)> function);
+    static bool parseEnableList_setSeverity(CmdLineParser* instance, const std::string& str, bool enable);
+    static bool parseEnableList_setCertainty(CmdLineParser* instance, const std::string& str, bool enable);
+    static bool parseEnableList_setChecks(CmdLineParser* instance, const std::string& str, bool enable);
+    static bool parseEnableList_setOutput(CmdLineParser* instance, const std::string& str, bool enable);
 
 private:
     std::vector<std::string> mPathNames;
     std::vector<std::string> mIgnoredPaths;
-    Settings *mSettings;
+    Settings* mSettings;
+    Project* mProject;
     bool mShowHelp;
     bool mShowVersion;
     bool mShowErrorMessages;

@@ -225,7 +225,7 @@ bool TokenAndName::isAliasToken(const Token *tok) const
 }
 
 TemplateSimplifier::TemplateSimplifier(Tokenizer *tokenizer)
-    : mTokenizer(tokenizer), mTokenList(tokenizer->list), mSettings(tokenizer->mSettings),
+    : mTokenizer(tokenizer), mTokenList(tokenizer->list), mSettings(tokenizer->getSettings()), mProject(tokenizer->list.getProject()),
       mErrorLogger(tokenizer->mErrorLogger), mChanged(false)
 {
 }
@@ -2931,8 +2931,8 @@ bool TemplateSimplifier::simplifyTemplateInstantiations(
         if (numberOfTemplateInstantiations != mTemplateInstantiations.size()) {
             numberOfTemplateInstantiations = mTemplateInstantiations.size();
             ++recursiveCount;
-            if (recursiveCount > mSettings->maxTemplateRecursion) {
-                if (mErrorLogger && mSettings->severity.isEnabled(Severity::information)) {
+            if (recursiveCount > mProject->maxTemplateRecursion) {
+                if (mErrorLogger && mProject->severity.isEnabled(Severity::information)) {
                     std::vector<std::string> typeStringsUsedInTemplateInstantiation;
                     const std::string typeForNewName = templateDeclaration.name() + "<" + getNewName(instantiation.token(), typeStringsUsedInTemplateInstantiation) + ">";
 
@@ -2941,7 +2941,7 @@ bool TemplateSimplifier::simplifyTemplateInstantiations(
                                               Severity::information,
                                               "templateRecursion",
                                               "TemplateSimplifier: max template recursion ("
-                                              + MathLib::toString(mSettings->maxTemplateRecursion)
+                                              + MathLib::toString(mProject->maxTemplateRecursion)
                                               + ") reached for template '" + typeForNewName + "'. You might want to limit Cppcheck recursion.",
                                               Certainty::safe);
                     mErrorLogger->reportErr(errmsg);

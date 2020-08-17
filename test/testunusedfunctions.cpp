@@ -34,9 +34,10 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
-        settings.severity.enable(Severity::style);
+        project.severity.enable(Severity::style);
 
         TEST_CASE(incondition);
         TEST_CASE(return1);
@@ -70,26 +71,26 @@ private:
         TEST_CASE(buildfile);
     }
 
-    void check(const char code[], Settings::PlatformType platform = Settings::Native) {
+    void check(const char code[], Project::PlatformType platform = Project::Native) {
         // Clear the error buffer..
         errout.str("");
 
-        settings.platform(platform);
+        project.platform(platform);
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Prepare..
-        CheckUnusedFunctions check(&tokenizer, &settings, this);
+        CheckUnusedFunctions check(&tokenizer, &settings, this, &project);
         AnalyzerInformation ai;
         CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
 
         // Check code..
-        Check::FileInfo* fi = check.getFileInfo(&tokenizer, &settings);
+        Check::FileInfo* fi = check.getFileInfo(&tokenizer, &settings, &project);
         ctu.addCheckInfo(check.name(), fi);
-        check.analyseWholeProgram(nullptr, ai, settings, *this);
+        check.analyseWholeProgram(nullptr, ai, settings, *this, &project);
     }
 
     void incondition() {
@@ -260,10 +261,10 @@ private:
         check("int main() { }");
         ASSERT_EQUALS("", errout.str());
 
-        check("int _tmain() { }", Settings::Win32A);
+        check("int _tmain() { }", Project::Win32A);
         ASSERT_EQUALS("", errout.str());
 
-        check("int WinMain() { }", Settings::Win32A);
+        check("int WinMain() { }", Project::Win32A);
         ASSERT_EQUALS("", errout.str());
     }
 
@@ -383,8 +384,8 @@ private:
 
     // Check code..
     void multipleFiles() {
-        Tokenizer tokenizer(&settings, this);
-        CheckUnusedFunctions check(&tokenizer, &settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
+        CheckUnusedFunctions check(&tokenizer, &settings, this, &project);
         AnalyzerInformation ai;
 
         // Clear the error buffer..
@@ -399,18 +400,18 @@ private:
             // Clear the error buffer..
             errout.str("");
 
-            Tokenizer tokenizer2(&settings, this);
+            Tokenizer tokenizer2(&settings, &project, this);
             std::istringstream istr(code);
             tokenizer2.tokenize(istr, fname.str().c_str());
 
             CTU::CTUInfo& ctu = ai.addCTU(fname.str(), 0, emptyString);
 
-            Check::FileInfo* fi = check.getFileInfo(&tokenizer2, &settings);
+            Check::FileInfo* fi = check.getFileInfo(&tokenizer2, &settings, &project);
             ctu.addCheckInfo(check.name(), fi);
         }
 
         // Check for unused functions..
-        check.analyseWholeProgram(nullptr, ai, settings, *this);
+        check.analyseWholeProgram(nullptr, ai, settings, *this, &project);
 
         ASSERT_EQUALS("[test1.cpp:1]: (style) The function 'f' is never used.\n"
                       "[test2.cpp:1]: (style) The function 'f' is never used.\n", errout.str());
@@ -498,7 +499,7 @@ private:
 
     void buildfile() {
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(
             "void foo() {}\n"
             "void bar() { foo(); }\n"
@@ -506,19 +507,19 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Prepare..
-        CheckUnusedFunctions check(&tokenizer, &settings, this);
+        CheckUnusedFunctions check(&tokenizer, &settings, this, &project);
         AnalyzerInformation ai;
         CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
 
         // Check code..
-        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings);
+        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings, &project);
         tinyxml2::XMLDocument doc;
         tinyxml2::XMLElement* e = fi1->toXMLElement(&doc);
         delete fi1;
 
         Check::FileInfo* fi2 = check.loadFileInfoFromXml(e);
         ctu.addCheckInfo(check.name(), fi2);
-        check.analyseWholeProgram(nullptr, ai, settings, *this);
+        check.analyseWholeProgram(nullptr, ai, settings, *this, &project);
 
         ASSERT_EQUALS("[test.cpp:2]: (style) The function 'bar' is never used.\n", errout.str());
     }

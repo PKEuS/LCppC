@@ -30,6 +30,7 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
         TEST_CASE(testaddtoken1);
@@ -41,15 +42,15 @@ private:
     // inspired by #5895
     void testaddtoken1() {
         const std::string code = "0x89504e470d0a1a0a";
-        TokenList tokenlist(&settings);
+        TokenList tokenlist(&settings, &project);
         tokenlist.addtoken(code, 1, 1, false);
         ASSERT_EQUALS("0x89504e470d0a1a0a", tokenlist.front()->str());
     }
 
     void testaddtoken2() {
         const std::string code = "0xF0000000";
-        settings.int_bit = 32;
-        TokenList tokenlist(&settings);
+        project.int_bit = 32;
+        TokenList tokenlist(&settings, &project);
         tokenlist.addtoken(code, 1, 1, false);
         ASSERT_EQUALS("0xF0000000", tokenlist.front()->str());
     }
@@ -60,7 +61,7 @@ private:
         errout.str("");
 
         // tokenize..
-        TokenList tokenlist(&settings);
+        TokenList tokenlist(&settings, &project);
         std::istringstream istr(code);
         tokenlist.createTokens(istr, "a.cpp");
 
@@ -72,7 +73,7 @@ private:
         const char code[] = "for a int delete true";
 
         {
-            TokenList tokenlist(&settings);
+            TokenList tokenlist(&settings, &project);
             std::istringstream istr(code);
             tokenlist.createTokens(istr, "a.c");
 
@@ -90,7 +91,7 @@ private:
             ASSERT_EQUALS(false, tokenlist.front()->tokAt(4)->isControlFlowKeyword());
         }
         {
-            TokenList tokenlist(&settings);
+            TokenList tokenlist(&settings, &project);
             std::istringstream istr(code);
             tokenlist.createTokens(istr, "a.cpp");
 

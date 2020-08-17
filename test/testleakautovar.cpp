@@ -34,24 +34,25 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void run() override {
         int id = 0;
         while (!Library::ismemory(++id));
-        settings.library.setalloc("malloc", id, -1);
-        settings.library.setrealloc("realloc", id, -1);
-        settings.library.setdealloc("free", id, 1);
+        project.library.setalloc("malloc", id, -1);
+        project.library.setrealloc("realloc", id, -1);
+        project.library.setdealloc("free", id, 1);
         while (!Library::isresource(++id));
-        settings.library.setalloc("fopen", id, -1);
-        settings.library.setrealloc("freopen", id, -1, 3);
-        settings.library.setdealloc("fclose", id, 1);
-        settings.library.smartPointers.insert("std::shared_ptr");
-        settings.library.smartPointers.insert("std::unique_ptr");
+        project.library.setalloc("fopen", id, -1);
+        project.library.setrealloc("freopen", id, -1, 3);
+        project.library.setdealloc("fclose", id, 1);
+        project.library.smartPointers.insert("std::shared_ptr");
+        project.library.smartPointers.insert("std::unique_ptr");
         Library::Container string;
         string.startPattern = "std :: string";
         string.startPattern2 = "std :: string !!::";
         string.arrayLike_indexOp = string.stdStringLike = true;
-        settings.library.containers["std::string"] = string;
+        project.library.containers["std::string"] = string;
 
         const char xmldata[] = "<?xml version=\"1.0\"?>\n"
                                "<def>\n"
@@ -59,7 +60,7 @@ private:
                                "</def>";
         tinyxml2::XMLDocument doc;
         doc.Parse(xmldata, sizeof(xmldata));
-        settings.library.load(doc);
+        project.library.load(doc);
 
         // Assign
         TEST_CASE(assign1);
@@ -199,29 +200,29 @@ private:
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, cpp?"test.cpp":"test.c");
 
         // Check for leaks..
         CheckLeakAutoVar c;
         settings.checkLibrary = true;
-        settings.severity.enable(Severity::information);
-        c.runChecks(&tokenizer, &settings, this);
+        project.severity.enable(Severity::information);
+        c.runChecks(&tokenizer, &settings, this, &project);
     }
 
-    void check(const char code[], Settings& settings0) {
+    void check(const char code[], Settings& settings0, Project& project0) {
         // Clear the error buffer..
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings0, this);
+        Tokenizer tokenizer(&settings0, &project0, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for leaks..
         CheckLeakAutoVar c;
-        c.runChecks(&tokenizer, &settings0, this);
+        c.runChecks(&tokenizer, &settings0, this, &project0);
     }
 
     void checkP(const char code[], bool cpp = false) {
@@ -239,7 +240,7 @@ private:
         simplecpp::preprocess(tokens2, tokens1, files, filedata, simplecpp::DUI());
 
         // Tokenizer..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         tokenizer.createTokens(std::move(tokens2));
         tokenizer.simplifyTokens0("");
         tokenizer.simplifyTokens1();
@@ -247,8 +248,8 @@ private:
         // Check for leaks..
         CheckLeakAutoVar c;
         settings.checkLibrary = true;
-        settings.severity.enable(Severity::information);
-        c.runChecks(&tokenizer, &settings, this);
+        project.severity.enable(Severity::information);
+        c.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void assign1() {
@@ -2066,8 +2067,9 @@ private:
 
     void functionCallCastConfig() { // #9652
         Settings settingsFunctionCall = settings;
+        Project projectFunctionCall = project;
         settingsFunctionCall.checkLibrary = true;
-        settingsFunctionCall.severity.enable(Severity::information);
+        projectFunctionCall.severity.enable(Severity::information);
 
         const char xmldata[] = "<?xml version=\"1.0\"?>\n"
                                "<def format=\"2\">\n"
@@ -2083,12 +2085,12 @@ private:
                                "</def>";
         tinyxml2::XMLDocument doc;
         doc.Parse(xmldata, sizeof(xmldata));
-        settingsFunctionCall.library.load(doc);
+        projectFunctionCall.library.load(doc);
         check("void test_func()\n"
               "{\n"
               "    char * buf = malloc(4);\n"
               "    free_func((void *)(1), buf);\n"
-              "}", settingsFunctionCall);
+              "}", settingsFunctionCall, projectFunctionCall);
         ASSERT_EQUALS("[test.cpp:5]: (information) --check-library: Function free_func() should have <use>/<leak-ignore> configuration\n", errout.str());
     }
 };
@@ -2103,25 +2105,26 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void check(const char code[]) {
         // Clear the error buffer..
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for leaks..
         CheckLeakAutoVar checkLeak;
         settings.checkLibrary = true;
-        settings.severity.enable(Severity::information);
-        checkLeak.runChecks(&tokenizer, &settings, this);
+        project.severity.enable(Severity::information);
+        checkLeak.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void run() override {
-        LOAD_LIB_2(settings.library, "std.cfg");
+        LOAD_LIB_2(project.library, "std.cfg");
 
         TEST_CASE(returnedValue); // #9298
         TEST_CASE(fclose_false_positive); // #9575
@@ -2154,23 +2157,24 @@ public:
 
 private:
     Settings settings;
+    Project project;
 
     void check(const char code[]) {
         // Clear the error buffer..
         errout.str("");
 
         // Tokenize..
-        Tokenizer tokenizer(&settings, this);
+        Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.c");
 
         // Check for leaks..
         CheckLeakAutoVar checkLeak;
-        checkLeak.runChecks(&tokenizer, &settings, this);
+        checkLeak.runChecks(&tokenizer, &settings, this, &project);
     }
 
     void run() override {
-        LOAD_LIB_2(settings.library, "windows.cfg");
+        LOAD_LIB_2(project.library, "windows.cfg");
 
         TEST_CASE(heapDoubleFree);
     }

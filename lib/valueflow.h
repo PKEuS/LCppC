@@ -314,14 +314,14 @@ namespace ValueFlow {
     };
 
     /// Constant folding of expression. This can be used before the full ValueFlow has been executed (ValueFlow::setValues).
-    const ValueFlow::Value * valueFlowConstantFoldAST(Token *expr, const Settings *settings);
+    const ValueFlow::Value * valueFlowConstantFoldAST(Token *expr, const Project* project);
 
     /// Perform valueflow analysis.
-    void setValues(TokenList *tokenlist, SymbolDatabase* symboldatabase, ErrorLogger *errorLogger, const Settings *settings);
+    void setValues(TokenList *tokenlist, SymbolDatabase* symboldatabase, ErrorLogger *errorLogger);
 
     std::string eitherTheConditionIsRedundant(const Token *condition);
 
-    unsigned int getSizeOf(const ValueType &vt, const Settings *settings);
+    unsigned int getSizeOf(const ValueType &vt, const Project* project);
 }
 
 struct LifetimeToken {
@@ -361,7 +361,7 @@ const Variable* getLifetimeVariable(const Token* tok, ValueFlow::Value::ErrorPat
 
 const Variable* getLifetimeVariable(const Token* tok);
 
-bool isLifetimeBorrowed(const Token *tok, const Settings *settings);
+bool isLifetimeBorrowed(const Token *tok, const Project* project);
 
 std::string lifetimeType(const Token *tok, const ValueFlow::Value *val);
 

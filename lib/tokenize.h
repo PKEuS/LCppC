@@ -60,7 +60,7 @@ class CPPCHECKLIB Tokenizer {
 
 public:
     Tokenizer();
-    Tokenizer(const Settings * settings, ErrorLogger *errorLogger);
+    Tokenizer(const Settings* settings, const Project* project, ErrorLogger* errorLogger);
     ~Tokenizer();
 
     /** Is the code C. Used for bailouts */
@@ -597,9 +597,8 @@ public:
     }
 
 
-    void setSettings(const Settings *settings) {
-        mSettings = settings;
-        list.setSettings(settings);
+    void setSettings(const Settings* settings, const Project* project) {
+        list.setSettings(settings, project);
     }
 
     const SymbolDatabase *getSymbolDatabase() const {
@@ -675,7 +674,7 @@ public:
     }
 
     const Settings *getSettings() const {
-        return mSettings;
+        return list.getSettings();
     }
 
     void calculateScopes();
@@ -699,9 +698,6 @@ private:
 
     /** Set pod types */
     void setPodTypes();
-
-    /** settings */
-    const Settings * mSettings;
 
     /** errorlogger */
     ErrorLogger* const mErrorLogger;

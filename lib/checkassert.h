@@ -45,13 +45,13 @@ public:
     CheckAssert() : Check(myName()) {
     }
 
-    CheckAssert(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger)
-        : Check(myName(), tokenizer, settings, errorLogger) {
+    CheckAssert(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
+        : Check(myName(), tokenizer, settings, errorLogger, project) {
     }
 
     /** run checks, the token list is not simplified */
-    void runChecks(const Tokenizer *tokenizer, const Settings *settings, ErrorLogger *errorLogger) override {
-        CheckAssert checkAssert(tokenizer, settings, errorLogger);
+    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+        CheckAssert checkAssert(tokenizer, settings, errorLogger, project);
         checkAssert.assertWithSideEffects();
     }
 
@@ -65,8 +65,8 @@ private:
     void sideEffectInAssertError(const Token *tok, const std::string& functionName);
     void assignmentInAssertError(const Token *tok, const std::string &varname);
 
-    void getErrorMessages(ErrorLogger *errorLogger, const Settings *settings) const override {
-        CheckAssert c(nullptr, settings, errorLogger);
+    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+        CheckAssert c(nullptr, settings, errorLogger, project);
         c.sideEffectInAssertError(nullptr, "function");
         c.assignmentInAssertError(nullptr, "var");
     }

@@ -181,7 +181,7 @@ static unsigned int getMinFormatStringOutputLength(const std::vector<const Token
 
 //---------------------------------------------------------------------------
 
-static bool getDimensionsEtc(const Token * const arrayToken, const Settings *settings, std::vector<Dimension> * const dimensions, ErrorPath * const errorPath, bool * const mightBeLarger, MathLib::bigint* path)
+static bool getDimensionsEtc(const Token * const arrayToken, const Project* project, std::vector<Dimension> * const dimensions, ErrorPath * const errorPath, bool * const mightBeLarger, MathLib::bigint* path)
 {
     const Token *array = arrayToken;
     while (Token::Match(array, ".|::"))
@@ -199,7 +199,7 @@ static bool getDimensionsEtc(const Token * const arrayToken, const Settings *set
                 return ChildrenToVisit::op1_and_op2;
             });
         }
-    } else if (const Token *stringLiteral = array->getValueTokenMinStrSize(settings)) {
+    } else if (const Token *stringLiteral = array->getValueTokenMinStrSize(project)) {
         Dimension dim;
         dim.tok = nullptr;
         dim.num = Token::getStrArraySize(stringLiteral);
@@ -215,7 +215,7 @@ static bool getDimensionsEtc(const Token * const arrayToken, const Settings *set
         Dimension dim;
         dim.known = value->isKnown();
         dim.tok = nullptr;
-        const MathLib::bigint typeSize = array->valueType()->typeSize(*settings);
+        const MathLib::bigint typeSize = array->valueType()->typeSize(*project);
         if (typeSize == 0)
             return false;
         dim.num = value->intvalue / typeSize;
@@ -307,7 +307,7 @@ void CheckBufferOverrun::arrayIndex()
         ErrorPath errorPath;
         bool mightBeLarger = false;
         MathLib::bigint path = 0;
-        if (!getDimensionsEtc(tok->astOperand1(), mSettings, &dimensions, &errorPath, &mightBeLarger, &path))
+        if (!getDimensionsEtc(tok->astOperand1(), mProject, &dimensions, &errorPath, &mightBeLarger, &path))
             continue;
 
         // Positive index
@@ -321,7 +321,7 @@ void CheckBufferOverrun::arrayIndex()
         bool neg = false;
         std::vector<const ValueFlow::Value *> negativeIndexes;
         for (const Token * indexToken : indexTokens) {
-            const ValueFlow::Value *negativeValue = indexToken->getValueLE(-1, mSettings);
+            const ValueFlow::Value *negativeValue = indexToken->getValueLE(-1, mProject);
             negativeIndexes.emplace_back(negativeValue);
             if (negativeValue)
                 neg = true;
@@ -380,7 +380,7 @@ void CheckBufferOverrun::arrayIndexError(const Token *tok, const std::vector<Dim
     for (const ValueFlow::Value *indexValue: indexes) {
         if (!indexValue)
             continue;
-        if (!indexValue->errorSeverity() && !mSettings->severity.isEnabled(Severity::warning))
+        if (!indexValue->errorSeverity() && !mProject->severity.isEnabled(Severity::warning))
             return;
         if (indexValue->condition)
             condition = indexValue->condition;
@@ -408,7 +408,7 @@ void CheckBufferOverrun::negativeIndexError(const Token *tok, const std::vector<
     for (const ValueFlow::Value *indexValue: indexes) {
         if (!indexValue)
             continue;
-        if (!indexValue->errorSeverity() && !mSettings->severity.isEnabled(Severity::warning))
+        if (!indexValue->errorSeverity() && !mProject->severity.isEnabled(Severity::warning))
             return;
         if (indexValue->condition)
             condition = indexValue->condition;
@@ -428,7 +428,7 @@ void CheckBufferOverrun::negativeIndexError(const Token *tok, const std::vector<
 
 void CheckBufferOverrun::pointerArithmetic()
 {
-    if (!mSettings->severity.isEnabled(Severity::portability))
+    if (!mProject->severity.isEnabled(Severity::portability))
         return;
 
     for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
@@ -457,7 +457,7 @@ void CheckBufferOverrun::pointerArithmetic()
         ErrorPath errorPath;
         bool mightBeLarger = false;
         MathLib::bigint path = 0;
-        if (!getDimensionsEtc(arrayToken, mSettings, &dimensions, &errorPath, &mightBeLarger, &path))
+        if (!getDimensionsEtc(arrayToken, mProject, &dimensions, &errorPath, &mightBeLarger, &path))
             continue;
 
         if (tok->str() == "+") {
@@ -469,7 +469,7 @@ void CheckBufferOverrun::pointerArithmetic()
                     pointerArithmeticError(tok, indexToken, indexValues.front());
             }
 
-            if (const ValueFlow::Value *neg = indexToken->getValueLE(-1, mSettings))
+            if (const ValueFlow::Value *neg = indexToken->getValueLE(-1, mProject))
                 pointerArithmeticError(tok, indexToken, neg);
         } else if (tok->str() == "-") {
             // TODO
@@ -525,11 +525,11 @@ ValueFlow::Value CheckBufferOverrun::getBufferSize(const Token *bufTok) const
     v.valueType = ValueFlow::Value::ValueType::BUFFER_SIZE;
 
     if (var->isPointerArray())
-        v.intvalue = dim * mSettings->sizeof_pointer;
+        v.intvalue = dim * mProject->sizeof_pointer;
     else if (var->isPointer())
         return ValueFlow::Value(-1);
     else {
-        const MathLib::bigint typeSize = bufTok->valueType()->typeSize(*mSettings);
+        const MathLib::bigint typeSize = bufTok->valueType()->typeSize(*mProject);
         v.intvalue = dim * typeSize;
     }
 
@@ -537,14 +537,14 @@ ValueFlow::Value CheckBufferOverrun::getBufferSize(const Token *bufTok) const
 }
 //---------------------------------------------------------------------------
 
-static bool checkBufferSize(const Token *ftok, const Library::ArgumentChecks::MinSize &minsize, const std::vector<const Token *> &args, const MathLib::bigint bufferSize, const Settings *settings, const Tokenizer* tokenizer)
+static bool checkBufferSize(const Token *ftok, const Library::ArgumentChecks::MinSize &minsize, const std::vector<const Token *> &args, const MathLib::bigint bufferSize, const Project* project, const Tokenizer* tokenizer)
 {
     const Token * const arg = (minsize.arg > 0 && minsize.arg - 1 < args.size()) ? args[minsize.arg - 1] : nullptr;
     const Token * const arg2 = (minsize.arg2 > 0 && minsize.arg2 - 1 < args.size()) ? args[minsize.arg2 - 1] : nullptr;
 
     switch (minsize.type) {
     case Library::ArgumentChecks::MinSize::Type::STRLEN:
-        if (settings->library.isargformatstr(ftok, minsize.arg)) {
+        if (project->library.isargformatstr(ftok, minsize.arg)) {
             return getMinFormatStringOutputLength(args, minsize.arg) < bufferSize;
         } else if (arg) {
             const Token *strtoken = arg->getValueTokenMaxStrLength();
@@ -584,13 +584,13 @@ void CheckBufferOverrun::bufferOverflow()
         for (const Token *tok = scope->bodyStart; tok != scope->bodyEnd; tok = tok->next()) {
             if (!Token::Match(tok, "%name% (") || Token::simpleMatch(tok, ") {"))
                 continue;
-            if (!mSettings->library.hasminsize(tok))
+            if (!mProject->library.hasminsize(tok))
                 continue;
             const std::vector<const Token *> args = getArguments(tok);
             for (std::size_t argnr = 0; argnr < args.size(); ++argnr) {
                 if (!args[argnr]->valueType() || args[argnr]->valueType()->pointer == 0)
                     continue;
-                const std::vector<Library::ArgumentChecks::MinSize> *minsizes = mSettings->library.argminsizes(tok, argnr + 1);
+                const std::vector<Library::ArgumentChecks::MinSize> *minsizes = mProject->library.argminsizes(tok, argnr + 1);
                 if (!minsizes || minsizes->empty())
                     continue;
                 // Get buffer size..
@@ -608,7 +608,7 @@ void CheckBufferOverrun::bufferOverflow()
                 if (bufferSize.intvalue <= 1)
                     continue;
                 bool error = std::none_of(minsizes->begin(), minsizes->end(), [=](const Library::ArgumentChecks::MinSize &minsize) {
-                    return checkBufferSize(tok, minsize, args, bufferSize.intvalue, mSettings, mTokenizer);
+                    return checkBufferSize(tok, minsize, args, bufferSize.intvalue, mProject, mTokenizer);
                 });
                 if (error)
                     bufferOverflowError(args[argnr], &bufferSize);
@@ -626,7 +626,7 @@ void CheckBufferOverrun::bufferOverflowError(const Token *tok, const ValueFlow::
 
 void CheckBufferOverrun::arrayIndexThenCheck()
 {
-    if (!mSettings->severity.isEnabled(Severity::portability))
+    if (!mProject->severity.isEnabled(Severity::portability))
         return;
 
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
@@ -682,7 +682,7 @@ void CheckBufferOverrun::arrayIndexThenCheckError(const Token *tok, const std::s
 void CheckBufferOverrun::stringNotZeroTerminated()
 {
     // this is currently 'inconclusive'. See TestBufferOverrun::terminateStrncpy3
-    if (!mSettings->severity.isEnabled(Severity::warning) || !mSettings->certainty.isEnabled(Certainty::inconclusive))
+    if (!mProject->severity.isEnabled(Severity::warning) || !mProject->certainty.isEnabled(Certainty::inconclusive))
         return;
     const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     for (const Scope * const scope : symbolDatabase->functionScopes) {
@@ -709,7 +709,7 @@ void CheckBufferOverrun::stringNotZeroTerminated()
                 const Token *rhs = tok2->next()->astOperand2();
                 if (!rhs || !rhs->hasKnownIntValue() || rhs->getKnownIntValue() != 0)
                     continue;
-                if (isSameExpression(mTokenizer->isCPP(), false, args[0], tok2->link()->astOperand1(), mSettings->library, false, false))
+                if (isSameExpression(mTokenizer->isCPP(), false, args[0], tok2->link()->astOperand1(), mProject->library, false, false))
                     isZeroTerminated = true;
             }
             if (isZeroTerminated)
@@ -783,7 +783,7 @@ bool CheckBufferOverrun::isCtuUnsafeBufferUsage(const Check *check, const Token 
     const CheckBufferOverrun *c = dynamic_cast<const CheckBufferOverrun *>(check);
     if (!c)
         return false;
-    if (!argtok->valueType() || argtok->valueType()->typeSize(*c->mSettings) == 0)
+    if (!argtok->valueType() || argtok->valueType()->typeSize(*c->mProject) == 0)
         return false;
     const Token *indexTok = nullptr;
     if (type == 1 && Token::Match(argtok, "%name% @[ !![") && argtok->astParent() == argtok->next())
@@ -798,7 +798,7 @@ bool CheckBufferOverrun::isCtuUnsafeBufferUsage(const Check *check, const Token 
         return false;
     if (!offset)
         return false;
-    *offset = indexTok->getKnownIntValue() * argtok->valueType()->typeSize(*c->mSettings);
+    *offset = indexTok->getKnownIntValue() * argtok->valueType()->typeSize(*c->mProject);
     return true;
 }
 
@@ -813,12 +813,12 @@ bool CheckBufferOverrun::isCtuUnsafePointerArith(const Check *check, const Token
 }
 
 /** @brief Parse current TU and extract file info */
-Check::FileInfo *CheckBufferOverrun::getFileInfo(const Tokenizer *tokenizer, const Settings *settings) const
+Check::FileInfo* CheckBufferOverrun::getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const
 {
-    CheckBufferOverrun checkBufferOverrun(tokenizer, settings, nullptr);
+    CheckBufferOverrun checkBufferOverrun(tokenizer, settings, nullptr, project);
     CBO_FileInfo*fileInfo = new CBO_FileInfo;
-    fileInfo->unsafeArrayIndex = CTU::getUnsafeUsage(tokenizer, settings, &checkBufferOverrun, isCtuUnsafeArrayIndex);
-    fileInfo->unsafePointerArith = CTU::getUnsafeUsage(tokenizer, settings, &checkBufferOverrun, isCtuUnsafePointerArith);
+    fileInfo->unsafeArrayIndex = CTU::getUnsafeUsage(tokenizer, project, &checkBufferOverrun, isCtuUnsafeArrayIndex);
+    fileInfo->unsafePointerArith = CTU::getUnsafeUsage(tokenizer, project, &checkBufferOverrun, isCtuUnsafePointerArith);
     if (fileInfo->unsafeArrayIndex.empty() && fileInfo->unsafePointerArith.empty()) {
         delete fileInfo;
         return nullptr;
@@ -848,12 +848,11 @@ Check::FileInfo * CheckBufferOverrun::loadFileInfoFromXml(const tinyxml2::XMLEle
 }
 
 /** @brief Analyse all file infos for all TU */
-bool CheckBufferOverrun::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger &errorLogger)
+bool CheckBufferOverrun::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings&, ErrorLogger& errorLogger, const Project*)
 {
     if (!ctu)
         return false;
     bool foundErrors = false;
-    (void)settings; // This argument is unused
 
     const std::map<std::string, std::vector<const CTU::CTUInfo::CallBase *>> callsMap = ctu->getCallsMap();
 
@@ -990,7 +989,7 @@ void CheckBufferOverrun::negativeArraySize()
         const Token* const nameToken = var->nameToken();
         if (!Token::Match(nameToken, "%var% [") || !nameToken->next()->astOperand2())
             continue;
-        const ValueFlow::Value* sz = nameToken->next()->astOperand2()->getValueLE(-1, mSettings);
+        const ValueFlow::Value* sz = nameToken->next()->astOperand2()->getValueLE(-1, mProject);
         // don't warn about constant negative index because that is a compiler error
         if (sz && isVLAIndex(nameToken->next()->astOperand2()))
             negativeArraySizeError(nameToken);
@@ -1003,7 +1002,7 @@ void CheckBufferOverrun::negativeArraySize()
             const Token* valOperand = tok->astOperand1()->astOperand2();
             if (!valOperand)
                 continue;
-            const ValueFlow::Value* sz = valOperand->getValueLE(-1, mSettings);
+            const ValueFlow::Value* sz = valOperand->getValueLE(-1, mProject);
             if (sz)
                 negativeMemoryAllocationSizeError(tok);
         }

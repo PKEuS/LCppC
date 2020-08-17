@@ -22,45 +22,50 @@
 
 std::atomic<bool> Settings::mTerminated;
 
-const char Settings::SafeChecks::XmlRootName[] = "safe-checks";
-const char Settings::SafeChecks::XmlClasses[] = "class-public";
-const char Settings::SafeChecks::XmlExternalFunctions[] = "external-functions";
-const char Settings::SafeChecks::XmlInternalFunctions[] = "internal-functions";
-const char Settings::SafeChecks::XmlExternalVariables[] = "external-variables";
+const char Project::SafeChecks::XmlRootName[] = "safe-checks";
+const char Project::SafeChecks::XmlClasses[] = "class-public";
+const char Project::SafeChecks::XmlExternalFunctions[] = "external-functions";
+const char Project::SafeChecks::XmlInternalFunctions[] = "internal-functions";
+const char Project::SafeChecks::XmlExternalVariables[] = "external-variables";
 
-Settings::Settings()
-    : checkAllConfigurations(true),
-      checkConfiguration(false),
-      checkHeaders(true),
-      checkLibrary(false),
-      checkUnusedTemplates(false),
-      debugnormal(false),
-      debugtemplate(false),
-      debugwarnings(false),
-      dump(false),
-      enforcedLang(None),
-      exceptionHandling(false),
-      exitCode(0),
-      force(false),
-      inlineSuppressions(false),
-      jobs(1),
-      maxConfigs(12),
-      maxCtuDepth(2),
-      maxTemplateRecursion(100),
-      preprocessOnly(false),
-      relativePaths(false),
-      showtime(SHOWTIME_MODES::SHOWTIME_NONE),
-      verbose(false),
-      xml(false),
-      xml_version(2)
+
+Settings::Settings() :
+    checkConfiguration(false),
+    checkLibrary(false),
+    debugnormal(false),
+    debugtemplate(false),
+    debugwarnings(false),
+    dump(false),
+    exceptionHandling(false),
+    exitCode(0),
+    jobs(1),
+    relativePaths(false),
+    showtime(SHOWTIME_MODES::SHOWTIME_NONE),
+    verbose(false),
+    xml(false),
+    xml_version(2)
+{
+    output.setEnabled(Output::findings, true);
+}
+
+Project::Project() :
+    checkAllConfigurations(true),
+    checkHeaders(true),
+    checkUnusedTemplates(false),
+    enforcedLang(None),
+    force(false),
+    inlineSuppressions(false),
+    maxConfigs(12),
+    maxCtuDepth(2),
+    maxTemplateRecursion(100),
+    preprocessOnly(false)
 {
     severity.setEnabled(Severity::error, true);
     certainty.setEnabled(Certainty::safe, true);
     checks.setEnabled("MissingInclude", false);
-    output.setEnabled(Output::findings, true);
 }
 
-bool Settings::isEnabled(const ValueFlow::Value *value, bool inconclusiveCheck) const
+bool Project::isEnabled(const ValueFlow::Value *value, bool inconclusiveCheck) const
 {
     if (!severity.isEnabled(Severity::warning) && (value->condition || value->defaultArg))
         return false;
@@ -69,7 +74,7 @@ bool Settings::isEnabled(const ValueFlow::Value *value, bool inconclusiveCheck) 
     return true;
 }
 
-void Settings::addLibrary(const std::string& libname)
+void Project::addLibrary(const std::string& libname)
 {
     if (libname.ends_with(".cfg"))
         libraries.emplace(libname.substr(0, libname.size()-4));
