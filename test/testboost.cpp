@@ -50,7 +50,7 @@ private:
 
         // Check..
         CheckBoost checkBoost;
-        checkBoost.runChecks(&tokenizer, &settings, this, &project);
+        checkBoost.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void BoostForeachContainerModification() {

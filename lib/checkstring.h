@@ -27,10 +27,6 @@
 
 #include <string>
 
-class ErrorLogger;
-class Settings;
-class Token;
-class Tokenizer;
 
 /// @addtogroup Checks
 /// @{
@@ -45,13 +41,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckString(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckString(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckString checkString(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckString checkString(ctx);
 
         // Checks
         checkString.strPlusChar();
@@ -96,8 +92,8 @@ private:
     void suspiciousStringCompareError_char(const Token* tok, const std::string& var);
     void overlappingStrcmpError(const Token* eq0, const Token *ne0);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckString c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckString c(ctx);
 
         c.stringLiteralWriteError(nullptr, nullptr);
         c.sprintfOverlappingDataError(nullptr, nullptr, "varname");

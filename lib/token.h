@@ -32,6 +32,7 @@
 #include <ostream>
 #include <string>
 #include <vector>
+#include <set>
 
 class Enumerator;
 class Function;

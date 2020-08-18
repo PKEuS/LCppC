@@ -99,8 +99,8 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, filename);
 
-        CheckFunctions checkFunctions(&tokenizer, &settings, this, project_);
-        checkFunctions.runChecks(&tokenizer, &settings, this, project_);
+        CheckFunctions checkFunctions(Context(this, &settings, project_, &tokenizer));
+        checkFunctions.runChecks(Context(this, &settings, project_, &tokenizer));
     }
 
     void prohibitedFunctions_posix() {

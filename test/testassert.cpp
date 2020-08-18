@@ -42,7 +42,7 @@ private:
 
         // Check..
         CheckAssert checkAssert;
-        checkAssert.runChecks(&tokenizer, &settings, this, &project);
+        checkAssert.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void run() override {

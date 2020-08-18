@@ -140,7 +140,7 @@ namespace {
  */
 bool CheckNullPointer::isPointerDeRef(const Token *tok, bool &unknown) const
 {
-    return isPointerDeRef(tok, unknown, mProject);
+    return isPointerDeRef(tok, unknown, mCtx.project);
 }
 
 bool CheckNullPointer::isPointerDeRef(const Token *tok, bool &unknown, const Project* project)
@@ -278,9 +278,9 @@ static bool isNullablePointer(const Token* tok, const Settings* settings)
 
 void CheckNullPointer::nullPointerByDeRefAndChec()
 {
-    const bool printInconclusive = (mProject->certainty.isEnabled(Certainty::inconclusive));
+    const bool printInconclusive = (mCtx.project->certainty.isEnabled(Certainty::inconclusive));
 
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (Token::Match(tok, "sizeof|decltype|typeid|typeof (")) {
             tok = tok->next()->link();
             continue;
@@ -289,7 +289,7 @@ void CheckNullPointer::nullPointerByDeRefAndChec()
         if (Token::Match(tok, "%num%|%char%|%str%"))
             continue;
 
-        if (!isNullablePointer(tok, mSettings))
+        if (!isNullablePointer(tok, mCtx.settings))
             continue;
 
         // Can pointer be NULL?
@@ -327,9 +327,7 @@ namespace {
 /** Dereferencing null constant (simplified token list) */
 void CheckNullPointer::nullConstantDereference()
 {
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         if (scope->function == nullptr || !scope->function->hasBody()) // We only look for functions with a body
             continue;
 
@@ -358,7 +356,7 @@ void CheckNullPointer::nullConstantDereference()
                         nullPointerError(tok);
                 } else { // function call
                     std::vector<const Token *> var;
-                    parseFunctionCall(*tok, var, &mProject->library);
+                    parseFunctionCall(*tok, var, &mCtx.project->library);
 
                     // is one of the var items a NULL pointer?
                     for (const Token *vartok : var) {
@@ -377,7 +375,7 @@ void CheckNullPointer::nullConstantDereference()
                         continue;
                     if (argtok->values().front().intvalue != 0)
                         continue;
-                    if (mProject->library.isnullargbad(tok, argnr+1))
+                    if (mCtx.project->library.isnullargbad(tok, argnr+1))
                         nullPointerError(argtok);
                 }
             }
@@ -434,7 +432,7 @@ void CheckNullPointer::nullPointerError(const Token *tok, const std::string &var
         return;
     }
 
-    if (!mProject->isEnabled(value, inconclusive))
+    if (!mCtx.project->isEnabled(value, inconclusive))
         return;
 
     const ErrorPath errorPath = getErrorPath(tok, value, "Null pointer dereference");
@@ -459,8 +457,7 @@ void CheckNullPointer::nullPointerError(const Token *tok, const std::string &var
 
 void CheckNullPointer::arithmetic()
 {
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (!Token::Match(tok, "-|+|+=|-=|++|--"))
                 continue;
@@ -479,9 +476,9 @@ void CheckNullPointer::arithmetic()
             const ValueFlow::Value* value = pointerOperand->getValue(0);
             if (!value)
                 continue;
-            if (!mProject->certainty.isEnabled(Certainty::inconclusive) && value->isInconclusive())
+            if (!mCtx.project->certainty.isEnabled(Certainty::inconclusive) && value->isInconclusive())
                 continue;
-            if (value->condition && !mProject->severity.isEnabled(Severity::warning))
+            if (value->condition && !mCtx.project->severity.isEnabled(Severity::warning))
                 continue;
             if (value->condition)
                 redundantConditionWarning(tok, value, value->condition, value->isInconclusive());
@@ -562,10 +559,10 @@ static bool isUnsafeUsage(const Check *check, const Token *vartok, MathLib::bigi
     return checkNullPointer && checkNullPointer->isPointerDeRef(vartok, unknown);
 }
 
-Check::FileInfo *CheckNullPointer::getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const
+Check::FileInfo *CheckNullPointer::getFileInfo(Context ctx) const
 {
-    CheckNullPointer check(tokenizer, settings, nullptr, project);
-    const std::list<CTU::CTUInfo::UnsafeUsage> &unsafeUsage = CTU::getUnsafeUsage(tokenizer, project, &check, ::isUnsafeUsage);
+    CheckNullPointer check(ctx);
+    const std::list<CTU::CTUInfo::UnsafeUsage> &unsafeUsage = CTU::getUnsafeUsage(ctx, &check, ::isUnsafeUsage);
     if (unsafeUsage.empty())
         return nullptr;
 
@@ -585,12 +582,11 @@ Check::FileInfo * CheckNullPointer::loadFileInfoFromXml(const tinyxml2::XMLEleme
     return fileInfo;
 }
 
-bool CheckNullPointer::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project)
+bool CheckNullPointer::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx)
 {
     if (!ctu)
         return false;
     bool foundErrors = false;
-    (void)settings; // This argument is unused
 
     const std::map<std::string, std::vector<const CTU::CTUInfo::CallBase *>> callsMap = ctu->getCallsMap();
 
@@ -600,7 +596,7 @@ bool CheckNullPointer::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInfo
             continue;
         for (const CTU::CTUInfo::UnsafeUsage &unsafeUsage : fi->unsafeUsage) {
             for (int warning = 0; warning <= 1; warning++) {
-                if (warning == 1 && !project->severity.isEnabled(Severity::warning))
+                if (warning == 1 && !ctx.project->severity.isEnabled(Severity::warning))
                     break;
 
                 const std::list<ErrorMessage::FileLocation> &locationList =
@@ -620,7 +616,7 @@ bool CheckNullPointer::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInfo
                                           "ctunullpointer",
                                           Certainty::safe,
                                           CWE_NULL_POINTER_DEREFERENCE);
-                errorLogger.reportErr(errmsg);
+                ctx.errorLogger->reportErr(errmsg);
 
                 foundErrors = true;
                 break;

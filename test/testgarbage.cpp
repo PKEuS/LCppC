@@ -289,15 +289,15 @@ private:
 
         // call all "runChecks" and "getFileInfo" in all registered Check classes
         for (std::list<Check *>::const_iterator it = Check::instances().begin(); it != Check::instances().end(); ++it) {
-            (*it)->runChecks(&tokenizer, &settings, this, &project);
-            Check::FileInfo* fi = (*it)->getFileInfo(&tokenizer, &settings, &project);
+            (*it)->runChecks(Context(this, &settings, &project, &tokenizer));
+            Check::FileInfo* fi = (*it)->getFileInfo(Context(this, &settings, &project, &tokenizer));
             if (fi != nullptr)
                 ctu.addCheckInfo((*it)->name(), fi);
         }
 
         // Run whole program analysis
         for (std::list<Check*>::const_iterator it = Check::instances().begin(); it != Check::instances().end(); ++it) {
-            (*it)->analyseWholeProgram(&ctu, ai, settings, *this, &project);
+            (*it)->analyseWholeProgram(&ctu, ai, Context(this, &settings, &project));
         }
 
         return tokenizer.tokens()->stringifyList(false, false, false, true, false, nullptr, nullptr);

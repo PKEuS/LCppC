@@ -44,7 +44,7 @@ private:
         tokenizer.tokenize(istr, filename);
 
         CheckAutoVariables checkAutoVariables;
-        checkAutoVariables.runChecks(&tokenizer, &settings, this, &project);
+        checkAutoVariables.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void run() override {

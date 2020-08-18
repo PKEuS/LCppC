@@ -30,9 +30,6 @@
 #include <vector>
 #include <string>
 
-class Settings;
-class ErrorLogger;
-
 // CWE ID used:
 static const struct CWE CWE398(398U);   // Indicator of Poor Code Quality
 static const struct CWE CWE703(703U);   // Improper Check or Handling of Exceptional Conditions
@@ -57,15 +54,15 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckExceptionSafety(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckExceptionSafety(Context ctx)
+        : Check(myName(), ctx) {
     }
 
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        if (tokenizer->isC())
+    void runChecks(Context ctx) override {
+        if (ctx.tokenizer->isC())
             return;
 
-        CheckExceptionSafety checkExceptionSafety(tokenizer, settings, errorLogger, project);
+        CheckExceptionSafety checkExceptionSafety(ctx);
         checkExceptionSafety.destructors();
         checkExceptionSafety.deallocThrow();
         checkExceptionSafety.checkRethrowCopy();
@@ -136,8 +133,8 @@ private:
     }
 
     /** Generate all possible errors (for --errorlist) */
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckExceptionSafety c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckExceptionSafety c(ctx);
         c.destructorsError(nullptr, "Class");
         c.deallocThrowError(nullptr, "p");
         c.rethrowCopyError(nullptr, "varname");

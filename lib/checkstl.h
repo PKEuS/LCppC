@@ -32,10 +32,7 @@
 #include <string>
 
 class Scope;
-class Settings;
-class Token;
 class Variable;
-class ErrorLogger;
 
 
 /// @addtogroup Checks
@@ -50,17 +47,17 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckStl(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckStl(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** run checks, the token list is not simplified */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        if (!tokenizer->isCPP()) {
+    void runChecks(Context ctx) override {
+        if (!ctx.tokenizer->isCPP()) {
             return;
         }
 
-        CheckStl checkStl(tokenizer, settings, errorLogger, project);
+        CheckStl checkStl(ctx);
         checkStl.erase();
         checkStl.if_find();
         checkStl.checkFindInsert();
@@ -236,9 +233,9 @@ private:
     void globalLockGuardError(const Token *tok);
     void localMutexError(const Token *tok);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+    void getErrorMessages(Context ctx) const override {
         ErrorPath errorPath;
-        CheckStl c(nullptr, settings, errorLogger, project);
+        CheckStl c(ctx);
         c.outOfBoundsError(nullptr, "container", nullptr, "x", nullptr);
         c.invalidIteratorError(nullptr, "iterator");
         c.iteratorsError(nullptr, "container1", "container2");

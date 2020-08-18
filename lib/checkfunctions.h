@@ -32,10 +32,6 @@
 #include <string>
 #include <utility>
 
-class Token;
-class Tokenizer;
-class ErrorLogger;
-
 namespace ValueFlow {
     class Value;
 }  // namespace ValueFlow
@@ -55,13 +51,13 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckFunctions(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckFunctions(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckFunctions checkFunctions(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckFunctions checkFunctions(ctx);
 
         // Checks
         checkFunctions.checkIgnoredReturnValue();
@@ -117,10 +113,10 @@ private:
     void memsetSizeArgumentAsCharLiteralError(const Token* tok);
     void memsetSizeArgumentAsCharError(const Token* tok);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckFunctions c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckFunctions c(ctx);
 
-        for (std::map<std::string, Library::WarnInfo>::const_iterator i = project->library.functionwarn.cbegin(); i != project->library.functionwarn.cend(); ++i) {
+        for (std::map<std::string, Library::WarnInfo>::const_iterator i = ctx.project->library.functionwarn.cbegin(); i != ctx.project->library.functionwarn.cend(); ++i) {
             c.reportError(nullptr, Severity::style, i->first+"Called", i->second.message);
         }
 

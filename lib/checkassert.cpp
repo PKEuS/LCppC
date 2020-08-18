@@ -40,10 +40,10 @@ namespace {
 
 void CheckAssert::assertWithSideEffects()
 {
-    if (!mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    for (const Token* tok = mTokenizer->list.front(); tok; tok = tok->next()) {
+    for (const Token* tok = mCtx.tokenizer->list.front(); tok; tok = tok->next()) {
         if (!Token::simpleMatch(tok, "assert ("))
             continue;
 

@@ -399,16 +399,6 @@ public:
     void addLibrary(const std::string& libname);
 };
 
-
-class SymbolDatabase;
-class Tokenizer;
-struct CPPCHECKLIB Context {
-    const Tokenizer* tokenizer;
-    const SymbolDatabase* symbolDatabase;
-    const Settings* settings;
-    const Project* project;
-};
-
 /// @}
 //---------------------------------------------------------------------------
 #endif // settingsH

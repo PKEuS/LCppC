@@ -57,7 +57,7 @@ private:
 
         // Check for buffer overruns..
         CheckBufferOverrun check;
-        check.runChecks(&tokenizer, &settings, this, &project0);
+        check.runChecks(Context(this, &settings, &project0, &tokenizer));
 
         // Prepare..
         AnalyzerInformation ai;
@@ -65,7 +65,7 @@ private:
         ctu.parseTokens(&tokenizer);
 
         // Check code..
-        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings, &project0);
+        Check::FileInfo* fi1 = check.getFileInfo(Context(this, &settings, &project0, &tokenizer));
         if (!fi1)
             return;
         tinyxml2::XMLDocument doc;
@@ -74,7 +74,7 @@ private:
 
         Check::FileInfo* fi2 = check.loadFileInfoFromXml(e);
         ctu.addCheckInfo(check.name(), fi2);
-        check.analyseWholeProgram(&ctu, ai, settings, *this, &project0);
+        check.analyseWholeProgram(&ctu, ai, Context(this, &settings, &project0));
     }
 
     void check(const char code[], const Project& project, const char filename[] = "test.cpp") {
@@ -86,8 +86,8 @@ private:
         errout.str("");
 
         // Check for buffer overruns..
-        CheckBufferOverrun checkBufferOverrun(&tokenizer, &settings, this, &project);
-        checkBufferOverrun.runChecks(&tokenizer, &settings, this, &project);
+        CheckBufferOverrun checkBufferOverrun(Context(this, &settings, &project, &tokenizer));
+        checkBufferOverrun.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void run() override {
@@ -4119,7 +4119,7 @@ private:
     void getErrorMessages() {
         // Ticket #2292: segmentation fault when using --errorlist
         CheckBufferOverrun c;
-        c.getErrorMessages(this, nullptr, nullptr);
+        c.getErrorMessages(Context(this));
     }
 
     void arrayIndexThenCheck() {

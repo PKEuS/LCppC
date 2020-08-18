@@ -83,14 +83,14 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Prepare..
-        CheckUnusedFunctions check(&tokenizer, &settings, this, &project);
+        CheckUnusedFunctions check(Context(this, &settings, &project, &tokenizer));
         AnalyzerInformation ai;
         CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
 
         // Check code..
-        Check::FileInfo* fi = check.getFileInfo(&tokenizer, &settings, &project);
+        Check::FileInfo* fi = check.getFileInfo(Context(this, &settings, &project, &tokenizer));
         ctu.addCheckInfo(check.name(), fi);
-        check.analyseWholeProgram(nullptr, ai, settings, *this, &project);
+        check.analyseWholeProgram(nullptr, ai, Context(this, &settings, &project));
     }
 
     void incondition() {
@@ -385,7 +385,7 @@ private:
     // Check code..
     void multipleFiles() {
         Tokenizer tokenizer(&settings, &project, this);
-        CheckUnusedFunctions check(&tokenizer, &settings, this, &project);
+        CheckUnusedFunctions check(Context(this, &settings, &project, &tokenizer));
         AnalyzerInformation ai;
 
         // Clear the error buffer..
@@ -406,12 +406,12 @@ private:
 
             CTU::CTUInfo& ctu = ai.addCTU(fname.str(), 0, emptyString);
 
-            Check::FileInfo* fi = check.getFileInfo(&tokenizer2, &settings, &project);
+            Check::FileInfo* fi = check.getFileInfo(Context(this, &settings, &project, &tokenizer2));
             ctu.addCheckInfo(check.name(), fi);
         }
 
         // Check for unused functions..
-        check.analyseWholeProgram(nullptr, ai, settings, *this, &project);
+        check.analyseWholeProgram(nullptr, ai, Context(this, &settings, &project));
 
         ASSERT_EQUALS("[test1.cpp:1]: (style) The function 'f' is never used.\n"
                       "[test2.cpp:1]: (style) The function 'f' is never used.\n", errout.str());
@@ -507,19 +507,19 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Prepare..
-        CheckUnusedFunctions check(&tokenizer, &settings, this, &project);
+        CheckUnusedFunctions check(Context(this, &settings, &project, &tokenizer));
         AnalyzerInformation ai;
         CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
 
         // Check code..
-        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings, &project);
+        Check::FileInfo* fi1 = check.getFileInfo(Context(this, &settings, &project, &tokenizer));
         tinyxml2::XMLDocument doc;
         tinyxml2::XMLElement* e = fi1->toXMLElement(&doc);
         delete fi1;
 
         Check::FileInfo* fi2 = check.loadFileInfoFromXml(e);
         ctu.addCheckInfo(check.name(), fi2);
-        check.analyseWholeProgram(nullptr, ai, settings, *this, &project);
+        check.analyseWholeProgram(nullptr, ai, Context(this, &settings, &project));
 
         ASSERT_EQUALS("[test.cpp:2]: (style) The function 'bar' is never used.\n", errout.str());
     }

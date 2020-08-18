@@ -28,10 +28,6 @@
 
 #include <string>
 
-class ErrorLogger;
-class Settings;
-class Token;
-
 /// @addtogroup Checks
 /// @{
 
@@ -44,16 +40,16 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckBoost(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckBoost(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        if (!tokenizer->isCPP())
+    void runChecks(Context ctx) override {
+        if (!ctx.tokenizer->isCPP())
             return;
 
-        CheckBoost checkBoost(tokenizer, settings, errorLogger, project);
+        CheckBoost checkBoost(ctx);
         checkBoost.checkBoostForeachModification();
     }
 
@@ -63,8 +59,8 @@ public:
 private:
     void boostForeachError(const Token *tok);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckBoost c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckBoost c(ctx);
         c.boostForeachError(nullptr);
     }
 

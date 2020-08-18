@@ -26,11 +26,6 @@
 #include "config.h"
 #include "valueflow.h"
 
-class ErrorLogger;
-class Settings;
-class Token;
-class Tokenizer;
-
 /// @addtogroup Checks
 /// @{
 
@@ -44,14 +39,14 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckType(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckType(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
+    void runChecks(Context ctx) override {
         // These are not "simplified" because casts can't be ignored
-        CheckType checkType(tokenizer, settings, errorLogger, project);
+        CheckType checkType(ctx);
         checkType.checkTooBigBitwiseShift();
         checkType.checkIntegerOverflow();
         checkType.checkSignConversion();
@@ -86,8 +81,8 @@ private:
     void longCastReturnError(const Token *tok);
     void floatToIntegerOverflowError(const Token *tok, const ValueFlow::Value &value);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckType c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckType c(ctx);
         c.tooBigBitwiseShiftError(nullptr, 32, ValueFlow::Value(64));
         c.tooBigSignedBitwiseShiftError(nullptr, 31, ValueFlow::Value(31));
         c.integerOverflowError(nullptr, ValueFlow::Value(1LL<<32));

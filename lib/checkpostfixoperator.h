@@ -28,10 +28,6 @@
 
 #include <string>
 
-class ErrorLogger;
-class Settings;
-class Token;
-
 /// @addtogroup Checks
 /// @{
 
@@ -46,15 +42,15 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckPostfixOperator(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckPostfixOperator(Context ctx)
+        : Check(myName(), ctx) {
     }
 
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        if (tokenizer->isC())
+    void runChecks(Context ctx) override {
+        if (ctx.tokenizer->isC())
             return;
 
-        CheckPostfixOperator checkPostfixOperator(tokenizer, settings, errorLogger, project);
+        CheckPostfixOperator checkPostfixOperator(ctx);
         checkPostfixOperator.postfixOperator();
     }
 
@@ -65,8 +61,8 @@ private:
     /** Report Error */
     void postfixOperatorError(const Token *tok);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckPostfixOperator c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckPostfixOperator c(ctx);
         c.postfixOperatorError(nullptr);
     }
 

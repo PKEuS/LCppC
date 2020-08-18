@@ -27,11 +27,6 @@
 
 #include <string>
 
-class ErrorLogger;
-class Settings;
-class Token;
-class Tokenizer;
-
 /// @addtogroup Checks
 /// @{
 
@@ -45,13 +40,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckSizeof(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckSizeof(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckSizeof checkSizeof(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckSizeof checkSizeof(ctx);
 
         // Checks
         checkSizeof.sizeofsizeof();
@@ -103,8 +98,8 @@ private:
     void sizeofDereferencedVoidPointerError(const Token *tok, const std::string &varname);
     void arithOperationsOnVoidPointerError(const Token* tok, const std::string &varname, const std::string &vartype);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckSizeof c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckSizeof c(ctx);
 
         c.sizeofForArrayParameterError(nullptr);
         c.sizeofForPointerError(nullptr, "varname");

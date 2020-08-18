@@ -42,7 +42,7 @@ private:
 
         // Check..
         CheckVaarg checkVaarg;
-        checkVaarg.runChecks(&tokenizer, &settings, this, &project);
+        checkVaarg.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void run() override {

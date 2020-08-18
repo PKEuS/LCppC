@@ -66,8 +66,8 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check char variable usage..
-        CheckExceptionSafety checkExceptionSafety(&tokenizer, &settings, this, &project);
-        checkExceptionSafety.runChecks(&tokenizer, &settings, this, &project);
+        CheckExceptionSafety checkExceptionSafety(Context(this, &settings, &project, &tokenizer));
+        checkExceptionSafety.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void destructors() {

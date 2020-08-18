@@ -44,12 +44,10 @@ static const struct CWE CWE398(398U);   // Indicator of Poor Code Quality
 
 void CheckPostfixOperator::postfixOperator()
 {
-    if (!mProject->severity.isEnabled(Severity::performance))
+    if (!mCtx.project->severity.isEnabled(Severity::performance))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             const Variable *var = tok->variable();
             if (!var || var->isArrayOrPointer() || !Token::Match(tok, "%var% ++|--"))

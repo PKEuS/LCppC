@@ -59,7 +59,7 @@ private:
 
         // Check..
         CheckInternal checkInternal;
-        checkInternal.runChecks(&tokenizer, &settings, this, &project);
+        checkInternal.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void simplePatternInTokenMatch() {

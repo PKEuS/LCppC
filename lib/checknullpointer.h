@@ -30,11 +30,7 @@
 #include <vector>
 #include <string>
 
-class ErrorLogger;
 class Library;
-class Settings;
-class Token;
-class Tokenizer;
 
 
 /// @addtogroup Checks
@@ -50,13 +46,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckNullPointer(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckNullPointer(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckNullPointer checkNullPointer(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckNullPointer checkNullPointer(ctx);
         checkNullPointer.nullPointer();
         checkNullPointer.arithmetic();
         checkNullPointer.nullConstantDereference();
@@ -99,17 +95,17 @@ public:
     void nullPointerError(const Token *tok, const std::string &varname, const ValueFlow::Value* value, bool inconclusive);
 
     /** @brief Parse current TU and extract file info */
-    Check::FileInfo * getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const override;
+    Check::FileInfo * getFileInfo(Context ctx) const override;
 
     Check::FileInfo * loadFileInfoFromXml(const tinyxml2::XMLElement *xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project) override;
+    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx) override;
 
 private:
     /** Get error messages. Used by --errorlist */
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckNullPointer c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckNullPointer c(ctx);
         c.nullPointerError(nullptr, "pointer", nullptr, false);
         c.pointerArithmeticError(nullptr, nullptr, false);
         c.redundantConditionWarning(nullptr, nullptr, nullptr, false);

@@ -23,6 +23,7 @@
 
 #include "config.h"
 #include "errortypes.h"
+#include "tokenize.h"
 
 #include <list>
 #include <string>
@@ -42,12 +43,23 @@ namespace ValueFlow {
     class Value;
 }
 
-class Settings;
-class Project;
-class Token;
-class ErrorLogger;
 class ErrorMessage;
-class Tokenizer;
+class ErrorLogger;
+class Project;
+class Settings;
+class SymbolDatabase;
+
+struct CPPCHECKLIB Context {
+    const Tokenizer* tokenizer;
+    const Project* project;
+    const SymbolDatabase* symbolDB;
+    const Settings* settings;
+    ErrorLogger* errorLogger;
+
+    constexpr Context(ErrorLogger* e = nullptr, const Settings* s = nullptr, const Project* p = nullptr, const Tokenizer* t = nullptr)
+        : tokenizer(t), project(p), settings(s), errorLogger(e), symbolDB(t?t->getSymbolDatabase():nullptr)
+    {}
+};
 
 /** Use WRONG_DATA in checkers to mark conditions that check that data is correct */
 #define WRONG_DATA(COND, TOK)  (wrongData((TOK), (COND), #COND))
@@ -65,12 +77,12 @@ public:
     explicit Check(const char* aname);
 
     /** This constructor is used when running checks. */
-    Check(const char* aname, const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : mTokenizer(tokenizer), mSettings(settings), mProject(project), mErrorLogger(errorLogger), mName(aname) {
+    Check(const char* aname, Context ctx)
+        : mCtx(ctx), mName(aname) {
     }
 
     virtual ~Check() {
-        if (!mTokenizer)
+        if (!mCtx.tokenizer)
             instances().remove(this);
     }
 
@@ -78,10 +90,10 @@ public:
     static std::list<Check *> &instances();
 
     /** run checks, the token list is not simplified */
-    virtual void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) = 0;
+    virtual void runChecks(Context ctx) = 0;
 
     /** get error messages */
-    virtual void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const = 0;
+    virtual void getErrorMessages(Context ctx) const = 0;
 
     /** class name, used to generate documentation */
     const std::string& name() const {
@@ -109,10 +121,8 @@ public:
         }
     };
 
-    virtual FileInfo * getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const {
-        (void)tokenizer;
-        (void)settings;
-        (void)project;
+    virtual FileInfo * getFileInfo(Context ctx) const {
+        (void)ctx;
         return nullptr;
     }
 
@@ -122,22 +132,17 @@ public:
     }
 
     // Return true if an error is reported.
-    virtual bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project) {
+    virtual bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx) {
         (void)ctu;
         (void)analyzerInformation;
-        (void)settings;
-        (void)errorLogger;
-        (void)project;
+        (void)ctx;
         return false;
     }
 
     static std::string getMessageId(const ValueFlow::Value &value, const char id[]);
 
 protected:
-    const Tokenizer * const mTokenizer;
-    const Settings * const mSettings;
-    const Project * const mProject;
-    ErrorLogger * const mErrorLogger;
+    Context mCtx;
 
     /** report an error */
     void reportError(const Token* tok, const Severity::SeverityType severity, const char id[], const std::string& msg, CWE cwe = CWE(0U), Certainty::CertaintyLevel certainty = Certainty::safe);

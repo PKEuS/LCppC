@@ -51,7 +51,7 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        const CheckMemoryLeak c(&tokenizer, this, &project);
+        const CheckMemoryLeak c(Context(this, &settings, &project, &tokenizer));
 
         return c.functionReturnType(&tokenizer.getSymbolDatabase()->scopeList.front().functionList.front());
     }
@@ -105,8 +105,8 @@ private:
 
         // there is no allocation
         const Token *tok = Token::findsimplematch(tokenizer.tokens(), "ret =");
-        const CheckMemoryLeak check(&tokenizer, nullptr, &project);
-        ASSERT_EQUALS(CheckMemoryLeak::No, check.getAllocationType(tok->tokAt(2), 1));
+        CheckMemoryLeak c(Context(this, &settings, &project, &tokenizer));
+        ASSERT_EQUALS(CheckMemoryLeak::No, c.getAllocationType(tok->tokAt(2), 1));
     }
 };
 
@@ -139,7 +139,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for memory leaks..
-        CheckMemoryLeakInFunction checkMemoryLeak(&tokenizer, &settings, this, project);
+        CheckMemoryLeakInFunction checkMemoryLeak(Context(this, &settings, project, &tokenizer));
         checkMemoryLeak.checkReallocUsage();
     }
 
@@ -454,7 +454,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for memory leaks..
-        CheckMemoryLeakInClass checkMemoryLeak(&tokenizer, &settings, this, &project);
+        CheckMemoryLeakInClass checkMemoryLeak(Context(this, &settings, &project, &tokenizer));
         checkMemoryLeak.check();
     }
 
@@ -1628,7 +1628,7 @@ private:
         tokenizer.tokenize(istr, isCPP ? "test.cpp" : "test.c");
 
         // Check for memory leaks..
-        CheckMemoryLeakStructMember checkMemoryLeakStructMember(&tokenizer, &settings, this, &project);
+        CheckMemoryLeakStructMember checkMemoryLeakStructMember(Context(this, &settings, &project, &tokenizer));
         checkMemoryLeakStructMember.check();
     }
 
@@ -2111,7 +2111,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for memory leaks..
-        CheckMemoryLeakNoVar checkMemoryLeakNoVar(&tokenizer, &settings, this, &project);
+        CheckMemoryLeakNoVar checkMemoryLeakNoVar(Context(this, &settings, &project, &tokenizer));
         checkMemoryLeakNoVar.check();
     }
 

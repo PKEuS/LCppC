@@ -30,11 +30,7 @@
 #include <string>
 
 class Function;
-class Settings;
-class Token;
-class Tokenizer;
 class Variable;
-class ErrorLogger;
 
 /// @addtogroup Checks
 /// @{
@@ -47,13 +43,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckIO(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckIO(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Run checks on the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckIO checkIO(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckIO checkIO(ctx);
 
         checkIO.checkWrongPrintfScanfArguments();
         checkIO.checkCoutCerrMisusage();
@@ -135,8 +131,8 @@ private:
     static void argumentType(std::ostream & os, const ArgumentInfo * argInfo);
     static Severity::SeverityType getSeverity(const ArgumentInfo *argInfo);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckIO c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckIO c(ctx);
 
         c.coutCerrMisusageError(nullptr,  "cout");
         c.fflushOnInputStreamError(nullptr,  "stdin");

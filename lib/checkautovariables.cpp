@@ -202,13 +202,12 @@ static bool variableIsUsedInScope(const Token* start, unsigned int varId, const 
 
 void CheckAutoVariables::assignFunctionArg()
 {
-    const bool printStyle = mProject->severity.isEnabled(Severity::style);
-    const bool printWarning = mProject->severity.isEnabled(Severity::warning);
+    const bool printStyle = mCtx.project->severity.isEnabled(Severity::style);
+    const bool printWarning = mCtx.project->severity.isEnabled(Severity::warning);
     if (!printStyle && !printWarning)
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token *tok = scope->bodyStart; tok && tok != scope->bodyEnd; tok = tok->next()) {
             // TODO: What happens if this is removed?
             if (tok->astParent())
@@ -231,9 +230,8 @@ void CheckAutoVariables::assignFunctionArg()
 
 void CheckAutoVariables::autoVariables()
 {
-    const bool printInconclusive = mProject->certainty.isEnabled(Certainty::inconclusive);
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    const bool printInconclusive = mCtx.project->certainty.isEnabled(Certainty::inconclusive);
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token *tok = scope->bodyStart; tok && tok != scope->bodyEnd; tok = tok->next()) {
             // Skip lambda..
             if (tok->scope()->type == Scope::eLambda) {
@@ -267,8 +265,8 @@ void CheckAutoVariables::autoVariables()
                 errorAutoVariableAssignment(tok->next(), false);
             }
             // Invalid pointer deallocation
-            else if ((Token::Match(tok, "%name% ( $ %var% ) ;") && mProject->library.getDeallocFuncInfo(tok)) ||
-                     (mTokenizer->isCPP() && Token::Match(tok, "delete [| ]| (| $ %var% !!["))) {
+            else if ((Token::Match(tok, "%name% ( $ %var% ) ;") && mCtx.project->library.getDeallocFuncInfo(tok)) ||
+                     (mCtx.tokenizer->isCPP() && Token::Match(tok, "delete [| ]| (| $ %var% !!["))) {
                 tok = Token::matchResult();
                 if (isArrayVar(tok))
                     errorInvalidDeallocation(tok, nullptr);
@@ -282,8 +280,8 @@ void CheckAutoVariables::autoVariables()
                         }
                     }
                 }
-            } else if ((Token::Match(tok, "%name% ( & $ %var% ) ;") && mProject->library.getDeallocFuncInfo(tok)) ||
-                       (mTokenizer->isCPP() && Token::Match(tok, "delete [| ]| (| & $ %var% !!["))) {
+            } else if ((Token::Match(tok, "%name% ( & $ %var% ) ;") && mCtx.project->library.getDeallocFuncInfo(tok)) ||
+                       (mCtx.tokenizer->isCPP() && Token::Match(tok, "delete [| ]| (| & $ %var% !!["))) {
                 tok = Token::matchResult();
                 if (isAutoVar(tok))
                     errorInvalidDeallocation(tok, nullptr);
@@ -447,7 +445,7 @@ void CheckAutoVariables::checkVarLifetimeScope(const Token * start, const Token 
                     isInScope(var->nameToken(), tok->scope())) {
                     errorReturnReference(tok, lt.errorPath, lt.inconclusive);
                     break;
-                } else if (isDeadTemporary(mTokenizer->isCPP(), lt.token, nullptr, &mProject->library)) {
+                } else if (isDeadTemporary(mCtx.tokenizer->isCPP(), lt.token, nullptr, &mCtx.project->library)) {
                     errorReturnTempReference(tok, lt.errorPath, lt.inconclusive);
                     break;
                 }
@@ -472,18 +470,18 @@ void CheckAutoVariables::checkVarLifetimeScope(const Token * start, const Token 
                 if (Token::Match(tok->astParent(), "return|throw")) {
                     if (getPointerDepth(tok) < getPointerDepth(tokvalue))
                         continue;
-                    if (!isLifetimeBorrowed(tok, mProject))
+                    if (!isLifetimeBorrowed(tok, mCtx.project))
                         continue;
                     if ((tokvalue->variable() && !isEscapedReference(tokvalue->variable()) &&
                          isInScope(tokvalue->variable()->nameToken(), scope)) ||
-                        isDeadTemporary(mTokenizer->isCPP(), tokvalue, tok, &mProject->library)) {
+                        isDeadTemporary(mCtx.tokenizer->isCPP(), tokvalue, tok, &mCtx.project->library)) {
                         errorReturnDanglingLifetime(tok, &val);
                         break;
                     }
                 } else if (tokvalue->variable() && isDeadScope(tokvalue->variable()->nameToken(), tok->scope())) {
                     errorInvalidLifetime(tok, &val);
                     break;
-                } else if (!tokvalue->variable() && isDeadTemporary(mTokenizer->isCPP(), tokvalue, tok, &mProject->library)) {
+                } else if (!tokvalue->variable() && isDeadTemporary(mCtx.tokenizer->isCPP(), tokvalue, tok, &mCtx.project->library)) {
                     errorDanglingTemporaryLifetime(tok, &val);
                     break;
                 } else if (tokvalue->variable() && isInScope(tokvalue->variable()->nameToken(), tok->scope())) {
@@ -497,9 +495,9 @@ void CheckAutoVariables::checkVarLifetimeScope(const Token * start, const Token 
                     } else if (tok->variable() && tok->variable()->declarationId() == tok->varId()) {
                         var = tok->variable();
                     }
-                    if (!isLifetimeBorrowed(tok, mProject))
+                    if (!isLifetimeBorrowed(tok, mCtx.project))
                         continue;
-                    if (var && !var->isLocal() && !var->isArgument() && !isVariableChanged(tok->next(), tok->scope()->bodyEnd, var->declarationId(), var->isGlobal(), mProject, mTokenizer->isCPP())) {
+                    if (var && !var->isLocal() && !var->isArgument() && !isVariableChanged(tok->next(), tok->scope()->bodyEnd, var->declarationId(), var->isGlobal(), mCtx.project, mCtx.tokenizer->isCPP())) {
                         errorDanglngLifetime(tok2, &val);
                         break;
                     }
@@ -528,8 +526,7 @@ void CheckAutoVariables::checkVarLifetimeScope(const Token * start, const Token 
 
 void CheckAutoVariables::checkVarLifetime()
 {
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         if (!scope->function)
             continue;
         checkVarLifetimeScope(scope->bodyStart, scope->bodyEnd);

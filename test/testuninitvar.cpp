@@ -107,7 +107,7 @@ private:
         tokenizer.tokenize(istr, fname);
 
         // Check for redundant code..
-        CheckUninitVar checkuninitvar(&tokenizer, &settings, this, &project);
+        CheckUninitVar checkuninitvar(Context(this, &settings, &project, &tokenizer));
         checkuninitvar.check();
 
         settings.debugwarnings = false;
@@ -4076,7 +4076,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for redundant code..
-        CheckUninitVar checkuninitvar(&tokenizer, &settings, this, &project);
+        CheckUninitVar checkuninitvar(Context(this, &settings, &project, &tokenizer));
         checkuninitvar.valueFlowUninit();
     }
 
@@ -4709,13 +4709,13 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Prepare..
-        CheckUninitVar check(&tokenizer, &settings, this, &project);
+        CheckUninitVar check(Context(this, &settings, &project, &tokenizer));
         AnalyzerInformation ai;
         CTU::CTUInfo& ctu = ai.addCTU("test.cpp", 0, emptyString);
         ctu.parseTokens(&tokenizer);
 
         // Check code..
-        Check::FileInfo* fi1 = check.getFileInfo(&tokenizer, &settings, &project);
+        Check::FileInfo* fi1 = check.getFileInfo(Context(this, &settings, &project, &tokenizer));
         if (!fi1)
             return;
         tinyxml2::XMLDocument doc;
@@ -4724,7 +4724,7 @@ private:
 
         Check::FileInfo* fi2 = check.loadFileInfoFromXml(e);
         ctu.addCheckInfo(check.name(), fi2);
-        check.analyseWholeProgram(&ctu, ai, settings, *this, &project);
+        check.analyseWholeProgram(&ctu, ai, Context(this, &settings, &project));
     }
 
     void ctu() {

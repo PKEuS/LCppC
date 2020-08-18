@@ -55,17 +55,16 @@ static const CWE CWE688(688U);  // Function Call With Incorrect Variable or Refe
 
 void CheckFunctions::checkProhibitedFunctions()
 {
-    const bool checkAlloca = mProject->severity.isEnabled(Severity::warning) && ((mProject->standards.c >= Standards::C99 && mTokenizer->isC()) || mProject->standards.cpp >= Standards::CPP11);
+    const bool checkAlloca = mCtx.project->severity.isEnabled(Severity::warning) && ((mCtx.project->standards.c >= Standards::C99 && mCtx.tokenizer->isC()) || mCtx.project->standards.cpp >= Standards::CPP11);
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope *scope : symbolDatabase->functionScopes) {
+    for (const Scope *scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart; tok != scope->bodyEnd; tok = tok->next()) {
             if (!Token::Match(tok, "%name% (") && tok->varId() == 0)
                 continue;
             // alloca() is special as it depends on the code being C or C++, so it is not in Library
             if (checkAlloca && Token::simpleMatch(tok, "alloca (") && (!tok->function() || tok->function()->nestedIn->type == Scope::eGlobal)) {
-                if (mTokenizer->isC()) {
-                    if (mProject->standards.c > Standards::C89)
+                if (mCtx.tokenizer->isC()) {
+                    if (mCtx.project->standards.c > Standards::C89)
                         reportError(tok, Severity::warning, "allocaCalled",
                                     "$symbol:alloca\n"
                                     "Obsolete function 'alloca' called. In C99 and later it is recommended to use a variable length array instead.\n"
@@ -83,9 +82,9 @@ void CheckFunctions::checkProhibitedFunctions()
                 if (tok->function() && tok->function()->hasBody())
                     continue;
 
-                const Library::WarnInfo* wi = mProject->library.getWarnInfo(tok);
+                const Library::WarnInfo* wi = mCtx.project->library.getWarnInfo(tok);
                 if (wi) {
-                    if (mProject->severity.isEnabled(wi->severity) && mProject->standards.c >= wi->standards.c && mProject->standards.cpp >= wi->standards.cpp) {
+                    if (mCtx.project->severity.isEnabled(wi->severity) && mCtx.project->standards.c >= wi->standards.c && mCtx.project->standards.cpp >= wi->standards.cpp) {
                         reportError(tok, wi->severity, tok->str() + "Called", wi->message, CWE477, Certainty::safe);
                     }
                 }
@@ -99,8 +98,7 @@ void CheckFunctions::checkProhibitedFunctions()
 //---------------------------------------------------------------------------
 void CheckFunctions::invalidFunctionUsage()
 {
-    const SymbolDatabase* symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope *scope : symbolDatabase->functionScopes) {
+    for (const Scope *scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (!Token::Match(tok, "%name% ( !!)"))
                 continue;
@@ -110,24 +108,24 @@ void CheckFunctions::invalidFunctionUsage()
                 const Token * const argtok = arguments[argnr-1];
 
                 // check <valid>...</valid>
-                const ValueFlow::Value *invalidValue = argtok->getInvalidValue(functionToken, argnr, mProject);
+                const ValueFlow::Value *invalidValue = argtok->getInvalidValue(functionToken, argnr, mCtx.project);
                 if (invalidValue) {
-                    invalidFunctionArgError(argtok, functionToken->next()->astOperand1()->expressionString(), argnr, invalidValue, mProject->library.validarg(functionToken, argnr));
+                    invalidFunctionArgError(argtok, functionToken->next()->astOperand1()->expressionString(), argnr, invalidValue, mCtx.project->library.validarg(functionToken, argnr));
                 }
 
                 if (astIsBool(argtok)) {
                     // check <not-bool>
-                    if (mProject->library.isboolargbad(functionToken, argnr))
+                    if (mCtx.project->library.isboolargbad(functionToken, argnr))
                         invalidFunctionArgBoolError(argtok, functionToken->str(), argnr);
 
                     // Are the values 0 and 1 valid?
-                    else if (!mProject->library.isIntArgValid(functionToken, argnr, 0))
-                        invalidFunctionArgError(argtok, functionToken->str(), argnr, nullptr, mProject->library.validarg(functionToken, argnr));
-                    else if (!mProject->library.isIntArgValid(functionToken, argnr, 1))
-                        invalidFunctionArgError(argtok, functionToken->str(), argnr, nullptr, mProject->library.validarg(functionToken, argnr));
+                    else if (!mCtx.project->library.isIntArgValid(functionToken, argnr, 0))
+                        invalidFunctionArgError(argtok, functionToken->str(), argnr, nullptr, mCtx.project->library.validarg(functionToken, argnr));
+                    else if (!mCtx.project->library.isIntArgValid(functionToken, argnr, 1))
+                        invalidFunctionArgError(argtok, functionToken->str(), argnr, nullptr, mCtx.project->library.validarg(functionToken, argnr));
                 }
 
-                if (mProject->library.isargstrz(functionToken, argnr)) {
+                if (mCtx.project->library.isargstrz(functionToken, argnr)) {
                     if (Token::Match(argtok, "& %var% !![") && argtok->next() && argtok->next()->valueType()) {
                         const ValueType * valueType = argtok->next()->valueType();
                         const Variable * variable = argtok->next()->variable();
@@ -192,11 +190,10 @@ void CheckFunctions::invalidFunctionArgStrError(const Token *tok, const std::str
 //---------------------------------------------------------------------------
 void CheckFunctions::checkIgnoredReturnValue()
 {
-    if (!mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope *scope : symbolDatabase->functionScopes) {
+    for (const Scope *scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             // skip c++11 initialization, ({...})
             if (Token::Match(tok, "%var%|(|,|return {"))
@@ -216,7 +213,7 @@ void CheckFunctions::checkIgnoredReturnValue()
             }
 
             if ((!tok->function() || !Token::Match(tok->function()->retDef, "void %name%")) &&
-                (mProject->library.isUseRetVal(tok) || (tok->function() && tok->function()->isAttributeNodiscard())) &&
+                (mCtx.project->library.isUseRetVal(tok) || (tok->function() && tok->function()->isAttributeNodiscard())) &&
                 !WRONG_DATA(!tok->next()->astOperand1(), tok)) {
                 ignoredReturnValueError(tok, tok->next()->astOperand1()->expressionString());
             }
@@ -236,11 +233,10 @@ void CheckFunctions::ignoredReturnValueError(const Token* tok, const std::string
 //---------------------------------------------------------------------------
 void CheckFunctions::checkMathFunctions()
 {
-    const bool styleC99 = mProject->severity.isEnabled(Severity::style) && mProject->standards.c != Standards::C89 && mProject->standards.cpp != Standards::CPP03;
-    const bool printWarnings = mProject->severity.isEnabled(Severity::warning);
+    const bool styleC99 = mCtx.project->severity.isEnabled(Severity::style) && mCtx.project->standards.c != Standards::C89 && mCtx.project->standards.cpp != Standards::CPP03;
+    const bool printWarnings = mCtx.project->severity.isEnabled(Severity::warning);
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope *scope : symbolDatabase->functionScopes) {
+    for (const Scope *scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (tok->varId())
                 continue;
@@ -318,11 +314,10 @@ void CheckFunctions::memsetZeroBytes()
 //       <warn knownIntValue="0" severity="warning" msg="..."/>
 //     </arg>
 
-    if (!mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope *scope : symbolDatabase->functionScopes) {
+    for (const Scope *scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (Token::Match(tok, "memset|wmemset (") && (numberOfArguments(tok)==3)) {
                 const std::vector<const Token *> &arguments = getArguments(tok);
@@ -355,15 +350,14 @@ void CheckFunctions::memsetInvalid2nd3rdParam()
 //       <warn possibleIntValue=":-129,256:" severity="warning" msg="..."/>
 //     </arg>
 
-    const bool printPortability = mProject->severity.isEnabled(Severity::portability);
-    const bool printWarning = mProject->severity.isEnabled(Severity::warning);
+    const bool printPortability = mCtx.project->severity.isEnabled(Severity::portability);
+    const bool printWarning = mCtx.project->severity.isEnabled(Severity::warning);
     if (!printWarning && !printPortability)
         return;
 
-    const bool inconclusive = mProject->certainty.isEnabled(Certainty::inconclusive);
+    const bool inconclusive = mCtx.project->certainty.isEnabled(Certainty::inconclusive);
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope *scope : symbolDatabase->functionScopes) {
+    for (const Scope *scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok && (tok != scope->bodyEnd); tok = tok->next()) {
             if (!Token::simpleMatch(tok, "memset ("))
                 continue;
@@ -383,8 +377,8 @@ void CheckFunctions::memsetInvalid2nd3rdParam()
             if (printWarning) {
                 if (!zerovalue && args[1]->isNumber()) { // Check if the second parameter is a literal and is out of range
                     const long long int value = MathLib::toLongNumber(args[1]->str());
-                    const long long sCharMin = mProject->signedCharMin();
-                    const long long uCharMax = mProject->unsignedCharMax();
+                    const long long sCharMin = mCtx.project->signedCharMin();
+                    const long long uCharMax = mCtx.project->unsignedCharMax();
                     if (value < sCharMin || value > uCharMax)
                         memsetValueOutOfRangeError(args[1], args[1]->str());
                 } else if (args[2]->tokType() == Token::eChar) { // Check if the third parameter is a char literal
@@ -431,11 +425,11 @@ void CheckFunctions::memsetSizeArgumentAsCharError(const Token* tok)
 
 void CheckFunctions::checkLibraryMatchFunctions()
 {
-    if (!mSettings->checkLibrary || !mProject->severity.isEnabled(Severity::information))
+    if (!mCtx.settings->checkLibrary || !mCtx.project->severity.isEnabled(Severity::information))
         return;
 
     bool insideNew = false;
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (!tok->scope()->isExecutable())
             continue;
 
@@ -458,11 +452,11 @@ void CheckFunctions::checkLibraryMatchFunctions()
         if (tok->function())
             continue;
 
-        if (!mProject->library.isNotLibraryFunction(tok))
+        if (!mCtx.project->library.isNotLibraryFunction(tok))
             continue;
 
-        const std::string &functionName = mProject->library.getFunctionName(tok);
-        if (functionName.empty() || mProject->library.functions.find(functionName) != mProject->library.functions.end())
+        const std::string &functionName = mCtx.project->library.getFunctionName(tok);
+        if (functionName.empty() || mCtx.project->library.functions.find(functionName) != mCtx.project->library.functions.end())
             continue;
 
         reportError(tok,

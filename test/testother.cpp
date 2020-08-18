@@ -269,8 +269,8 @@ private:
         tokenizer.tokenize(istr, filename ? filename : "test.cpp");
 
         // Check..
-        CheckOther checkOther(&tokenizer, &_settings, this, project);
-        checkOther.runChecks(&tokenizer, &_settings, this, project);
+        CheckOther checkOther(Context(this, &_settings, project, &tokenizer));
+        checkOther.runChecks(Context(this, &_settings, project, &tokenizer));
 
         (void)runSimpleChecks; // TODO Remove this
     }
@@ -314,8 +314,8 @@ private:
         tokenizer.setPreprocessor(&preprocessor);
 
         // Check..
-        CheckOther checkOther(&tokenizer, &_settings, this, project);
-        checkOther.runChecks(&tokenizer, &_settings, this, project);
+        CheckOther checkOther(Context(this, &_settings, project, &tokenizer));
+        checkOther.runChecks(Context(this, &_settings, project, &tokenizer));
     }
 
     void checkInterlockedDecrement(const char code[]) {
@@ -1254,7 +1254,7 @@ private:
         std::istringstream istr(code);
         tokenizerCpp.tokenize(istr, "test.cpp");
 
-        CheckOther checkOtherCpp(&tokenizerCpp, &_settings, this, &project);
+        CheckOther checkOtherCpp(Context(this, &_settings, &project, &tokenizerCpp));
         checkOtherCpp.warningOldStylePointerCast();
     }
 
@@ -1398,7 +1398,7 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CheckOther checkOtherCpp(&tokenizer, &_settings, this, &project);
+        CheckOther checkOtherCpp(Context(this, &_settings, &project, &tokenizer));
         checkOtherCpp.invalidPointerCast();
     }
 

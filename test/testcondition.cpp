@@ -150,7 +150,7 @@ private:
 
         // Run checks..
         CheckCondition checkCondition;
-        checkCondition.runChecks(&tokenizer, &settings, this, &project0);
+        checkCondition.runChecks(Context(this, &settings, &project0, &tokenizer));
     }
 
     void assignAndCompare() {
@@ -527,7 +527,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         CheckCondition checkCondition;
-        checkCondition.runChecks(&tokenizer, &settings, this, &project1);
+        checkCondition.runChecks(Context(this, &settings, &project1, &tokenizer));
     }
 
     void overlappingElseIfCondition() {

@@ -52,12 +52,12 @@ static const struct CWE CWE190(190U);   // Integer Overflow or Wraparound
 void CheckType::checkTooBigBitwiseShift()
 {
     // unknown sizeof(int) => can't run this checker
-    if (mProject->platformType == Project::Unspecified)
+    if (mCtx.project->platformType == Project::Unspecified)
         return;
 
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         // C++ and macro: OUT(x<<y)
-        if (mTokenizer->isCPP() && Token::Match(tok, "[;{}] %name% @( ;") && tok->next()->isUpperCaseName() && !tok->next()->function())
+        if (mCtx.tokenizer->isCPP() && Token::Match(tok, "[;{}] %name% @( ;") && tok->next()->isUpperCaseName() && !tok->next()->function())
             tok = tok->linkAt(2);
 
         if (!tok->astOperand1() || !tok->astOperand2())
@@ -79,21 +79,21 @@ void CheckType::checkTooBigBitwiseShift()
             (lhstype->type == ValueType::Type::WCHAR_T) ||
             (lhstype->type == ValueType::Type::BOOL) ||
             (lhstype->type == ValueType::Type::INT))
-            lhsbits = mProject->int_bit;
+            lhsbits = mCtx.project->int_bit;
         else if (lhstype->type == ValueType::Type::LONG)
-            lhsbits = mProject->long_bit;
+            lhsbits = mCtx.project->long_bit;
         else if (lhstype->type == ValueType::Type::LONGLONG)
-            lhsbits = mProject->long_long_bit;
+            lhsbits = mCtx.project->long_long_bit;
         else
             continue;
 
         // Get biggest rhs value. preferably a value which doesn't have 'condition'.
-        const ValueFlow::Value * value = tok->astOperand2()->getValueGE(lhsbits, mProject);
-        if (value && mProject->isEnabled(value, false))
+        const ValueFlow::Value * value = tok->astOperand2()->getValueGE(lhsbits, mCtx.project);
+        if (value && mCtx.project->isEnabled(value, false))
             tooBigBitwiseShiftError(tok, lhsbits, *value);
         else if (lhstype->sign == ValueType::Sign::SIGNED) {
-            value = tok->astOperand2()->getValueGE(lhsbits-1, mProject);
-            if (value && mProject->isEnabled(value, false))
+            value = tok->astOperand2()->getValueGE(lhsbits-1, mCtx.project);
+            if (value && mCtx.project->isEnabled(value, false))
                 tooBigSignedBitwiseShiftError(tok, lhsbits, *value);
         }
     }
@@ -122,7 +122,7 @@ void CheckType::tooBigSignedBitwiseShiftError(const Token *tok, int lhsbits, con
 {
     const char id[] = "shiftTooManyBitsSigned";
 
-    const bool cpp14 = mProject->standards.cpp >= Standards::CPP14;
+    const bool cpp14 = mCtx.project->standards.cpp >= Standards::CPP14;
 
     std::string behaviour = "undefined";
     if (cpp14)
@@ -143,7 +143,7 @@ void CheckType::tooBigSignedBitwiseShiftError(const Token *tok, int lhsbits, con
     if (cpp14)
         severity = Severity::portability;
 
-    if ((severity == Severity::portability) && !mProject->severity.isEnabled(Severity::portability))
+    if ((severity == Severity::portability) && !mCtx.project->severity.isEnabled(Severity::portability))
         return;
     reportError(errorPath, severity, id, errmsg.str(), CWE758, rhsbits.isInconclusive() ? Certainty::inconclusive : Certainty::safe);
 }
@@ -155,10 +155,10 @@ void CheckType::tooBigSignedBitwiseShiftError(const Token *tok, int lhsbits, con
 void CheckType::checkIntegerOverflow()
 {
     // unknown sizeof(int) => can't run this checker
-    if (mProject->platformType == Project::Unspecified || mProject->int_bit >= MathLib::bigint_bits)
+    if (mCtx.project->platformType == Project::Unspecified || mCtx.project->int_bit >= MathLib::bigint_bits)
         return;
 
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (!tok->isArithmeticalOp())
             continue;
 
@@ -169,11 +169,11 @@ void CheckType::checkIntegerOverflow()
 
         unsigned int bits;
         if (vt->type == ValueType::Type::INT)
-            bits = mProject->int_bit;
+            bits = mCtx.project->int_bit;
         else if (vt->type == ValueType::Type::LONG)
-            bits = mProject->long_bit;
+            bits = mCtx.project->long_bit;
         else if (vt->type == ValueType::Type::LONGLONG)
-            bits = mProject->long_long_bit;
+            bits = mCtx.project->long_long_bit;
         else
             continue;
 
@@ -184,10 +184,10 @@ void CheckType::checkIntegerOverflow()
         const MathLib::bigint maxvalue = (((MathLib::bigint)1) << (bits - 1)) - 1;
 
         // is there a overflow result value
-        const ValueFlow::Value *value = tok->getValueGE(maxvalue + 1, mProject);
+        const ValueFlow::Value *value = tok->getValueGE(maxvalue + 1, mCtx.project);
         if (!value)
-            value = tok->getValueLE(-maxvalue - 2, mProject);
-        if (!value || !mProject->isEnabled(value,false))
+            value = tok->getValueLE(-maxvalue - 2, mCtx.project);
+        if (!value || !mCtx.project->isEnabled(value,false))
             continue;
 
         // For left shift, it's common practice to shift into the sign bit
@@ -226,10 +226,10 @@ void CheckType::integerOverflowError(const Token *tok, const ValueFlow::Value &v
 
 void CheckType::checkSignConversion()
 {
-    if (!mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (!tok->isArithmeticalOp() || Token::Match(tok,"+|-"))
             continue;
 
@@ -242,7 +242,7 @@ void CheckType::checkSignConversion()
         for (const Token * tok1 : astOperands) {
             if (!tok1)
                 continue;
-            const ValueFlow::Value *negativeValue = tok1->getValueLE(-1, mProject);
+            const ValueFlow::Value *negativeValue = tok1->getValueLE(-1, mCtx.project);
             if (!negativeValue)
                 continue;
             if (tok1->valueType() && tok1->valueType()->sign != ValueType::Sign::UNSIGNED)
@@ -283,17 +283,17 @@ void CheckType::signConversionError(const Token *tok, const ValueFlow::Value *ne
 
 void CheckType::checkLongCast()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
     // Assignments..
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (tok->str() != "=" || !Token::Match(tok->astOperand2(), "*|<<"))
             continue;
 
         if (tok->astOperand2()->hasKnownIntValue()) {
             const ValueFlow::Value &v = tok->astOperand2()->values().front();
-            if (mProject->isIntValue(v.intvalue))
+            if (mCtx.project->isIntValue(v.intvalue))
                 continue;
         }
 
@@ -315,8 +315,7 @@ void CheckType::checkLongCast()
     }
 
     // Return..
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
 
         // function must return long data
         const Token * def = scope->classDef;
@@ -377,7 +376,7 @@ void CheckType::longCastReturnError(const Token *tok)
 
 void CheckType::checkFloatToIntegerOverflow()
 {
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         const ValueType *vtint, *vtfloat;
         const std::vector<ValueFlow::Value> *floatValues;
 
@@ -402,7 +401,7 @@ void CheckType::checkFloatToIntegerOverflow()
             while (scope && scope->type != Scope::ScopeType::eLambda && scope->type != Scope::ScopeType::eFunction)
                 scope = scope->nestedIn;
             if (scope && scope->type == Scope::ScopeType::eFunction && scope->function && scope->function->retDef) {
-                const ValueType &valueType = ValueType::parseDecl(scope->function->retDef, mProject);
+                const ValueType &valueType = ValueType::parseDecl(scope->function->retDef, mCtx.project);
                 vtfloat = tok->astOperand1()->valueType();
                 floatValues = &tok->astOperand1()->values();
                 checkFloatToIntegerOverflow(tok, &valueType, vtfloat, floatValues);
@@ -422,24 +421,24 @@ void CheckType::checkFloatToIntegerOverflow(const Token *tok, const ValueType *v
     for (const ValueFlow::Value &f : *floatValues) {
         if (f.valueType != ValueFlow::Value::ValueType::FLOAT)
             continue;
-        if (!mProject->isEnabled(&f, false))
+        if (!mCtx.project->isEnabled(&f, false))
             continue;
         if (f.floatValue > ~0ULL)
             floatToIntegerOverflowError(tok, f);
         else if ((-f.floatValue) > (1ULL<<62))
             floatToIntegerOverflowError(tok, f);
-        else if (mProject->platformType != Project::Unspecified) {
+        else if (mCtx.project->platformType != Project::Unspecified) {
             unsigned int bits = 0;
             if (vtint->type == ValueType::Type::CHAR)
-                bits = mProject->char_bit;
+                bits = mCtx.project->char_bit;
             else if (vtint->type == ValueType::Type::SHORT)
-                bits = mProject->short_bit;
+                bits = mCtx.project->short_bit;
             else if (vtint->type == ValueType::Type::INT)
-                bits = mProject->int_bit;
+                bits = mCtx.project->int_bit;
             else if (vtint->type == ValueType::Type::LONG)
-                bits = mProject->long_bit;
+                bits = mCtx.project->long_bit;
             else if (vtint->type == ValueType::Type::LONGLONG)
-                bits = mProject->long_long_bit;
+                bits = mCtx.project->long_long_bit;
             else
                 continue;
             if (bits < MathLib::bigint_bits && f.floatValue >= (((MathLib::biguint)1) << bits))

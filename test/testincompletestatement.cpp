@@ -57,7 +57,7 @@ private:
         tokenizer.simplifyTokens1();
 
         // Check for incomplete statements..
-        CheckOther checkOther(&tokenizer, &settings, this, &project);
+        CheckOther checkOther(Context(this, &settings, &project, &tokenizer));
         checkOther.checkIncompleteStatement();
     }
 

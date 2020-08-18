@@ -27,11 +27,6 @@
 
 #include <string>
 
-class ErrorLogger;
-class Settings;
-class Token;
-class Tokenizer;
-
 /// @addtogroup Checks
 /// @{
 
@@ -45,13 +40,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckBool(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckBool(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckBool checkBool(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckBool checkBool(ctx);
 
         // Checks
         checkBool.checkComparisonOfBoolExpressionWithInt();
@@ -111,8 +106,8 @@ private:
     void pointerArithBoolError(const Token *tok);
     void returnValueBoolError(const Token *tok);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckBool c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckBool c(ctx);
 
         c.assignBoolToPointerError(nullptr);
         c.assignBoolToFloatError(nullptr);

@@ -31,11 +31,6 @@
 #include <set>
 #include <string>
 
-class Settings;
-class Token;
-class Tokenizer;
-class ErrorLogger;
-
 /// @addtogroup Checks
 /// @{
 
@@ -50,12 +45,12 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckCondition(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckCondition(Context ctx)
+        : Check(myName(), ctx) {
     }
 
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckCondition checkCondition(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckCondition checkCondition(ctx);
         checkCondition.multiCondition();
         checkCondition.clarifyCondition();   // not simplified because ifAssign
         checkCondition.multiCondition2();
@@ -160,8 +155,8 @@ private:
 
     void duplicateConditionalAssignError(const Token *condTok, const Token* assignTok);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckCondition c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckCondition c(ctx);
 
         ErrorPath errorPath;
 

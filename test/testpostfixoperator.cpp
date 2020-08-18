@@ -42,7 +42,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for postfix operators..
-        CheckPostfixOperator checkPostfixOperator(&tokenizer, &settings, this, &project);
+        CheckPostfixOperator checkPostfixOperator(Context(this, &settings, &project, &tokenizer));
         checkPostfixOperator.postfixOperator();
     }
 

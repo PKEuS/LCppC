@@ -89,8 +89,8 @@ private:
         tokenizer.tokenize(istr, filename);
 
         // Check...
-        CheckBool checkBool(&tokenizer, &settings, this, &project);
-        checkBool.runChecks(&tokenizer, &settings, this, &project);
+        CheckBool checkBool(Context(this, &settings, &project, &tokenizer));
+        checkBool.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
 

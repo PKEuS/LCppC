@@ -34,10 +34,7 @@
 #include <string>
 
 class Scope;
-class Token;
-class Tokenizer;
 class Variable;
-class ErrorLogger;
 
 
 struct VariableValue {
@@ -59,13 +56,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckUninitVar(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckUninitVar(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckUninitVar checkUninitVar(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckUninitVar checkUninitVar(ctx);
         checkUninitVar.check();
         checkUninitVar.valueFlowUninit();
     }
@@ -88,12 +85,12 @@ public:
     void valueFlowUninit();
 
     /** @brief Parse current TU and extract file info */
-    Check::FileInfo* getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const override;
+    Check::FileInfo* getFileInfo(Context ctx) const override;
 
     Check::FileInfo* loadFileInfoFromXml(const tinyxml2::XMLElement *xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project) override;
+    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx) override;
 
     void uninitstringError(const Token *tok, const std::string &varname, bool strncpy_);
     void uninitdataError(const Token *tok, const std::string &varname);
@@ -112,8 +109,8 @@ public:
 
 private:
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckUninitVar c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckUninitVar c(ctx);
 
         // error
         c.uninitstringError(nullptr, "varname", true);

@@ -49,11 +49,10 @@ static bool isBool(const Variable* var)
 //---------------------------------------------------------------------------
 void CheckBool::checkIncrementBoolean()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (astIsBool(tok) && tok->astParent() && tok->astParent()->str() == "++") {
                 incrementBooleanError(tok);
@@ -80,16 +79,15 @@ void CheckBool::incrementBooleanError(const Token *tok)
 //---------------------------------------------------------------------------
 void CheckBool::checkBitwiseOnBoolean()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
     // danmar: this is inconclusive because I don't like that there are
     //         warnings for calculations. Example: set_flag(a & b);
-    if (!mProject->certainty.isEnabled(Certainty::inconclusive))
+    if (!mCtx.project->certainty.isEnabled(Certainty::inconclusive))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (tok->isBinaryOp() && (tok->str() == "&" || tok->str() == "|")) {
                 if (astIsBool(tok->astOperand1()) || astIsBool(tok->astOperand2())) {
@@ -117,11 +115,10 @@ void CheckBool::bitwiseOnBooleanError(const Token *tok, const std::string &expre
 
 void CheckBool::checkComparisonOfBoolWithInt()
 {
-    if (!mProject->severity.isEnabled(Severity::warning) || !mTokenizer->isCPP())
+    if (!mCtx.project->severity.isEnabled(Severity::warning) || !mCtx.tokenizer->isCPP())
         return;
 
-    const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (!tok->isComparisonOp() || !tok->isBinaryOp())
                 continue;
@@ -166,15 +163,13 @@ static bool tokenIsFunctionReturningBool(const Token* tok)
 
 void CheckBool::checkComparisonOfFuncReturningBool()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    if (!mTokenizer->isCPP())
+    if (!mCtx.tokenizer->isCPP())
         return;
 
-    const SymbolDatabase * const symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (!tok->isComparisonOp() || tok->str() == "==" || tok->str() == "!=")
                 continue;
@@ -225,18 +220,16 @@ void CheckBool::checkComparisonOfBoolWithBool()
 {
     // FIXME: This checking is "experimental" because of the false positives
     //        when self checking lib/tokenize.cpp (#2617)
-    if (!mProject->certainty.isEnabled(Certainty::experimental))
+    if (!mCtx.project->certainty.isEnabled(Certainty::experimental))
         return;
 
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    if (!mTokenizer->isCPP())
+    if (!mCtx.tokenizer->isCPP())
         return;
 
-    const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (!tok->isComparisonOp() || tok->str() == "==" || tok->str() == "!=")
                 continue;
@@ -277,8 +270,7 @@ void CheckBool::comparisonOfBoolWithBoolError(const Token *tok, const std::strin
 //-----------------------------------------------------------------------------
 void CheckBool::checkAssignBoolToPointer()
 {
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart; tok != scope->bodyEnd; tok = tok->next()) {
             if (tok->str() == "=" && astIsPointer(tok->astOperand1()) && astIsBool(tok->astOperand2())) {
                 assignBoolToPointerError(tok);
@@ -297,12 +289,10 @@ void CheckBool::assignBoolToPointerError(const Token *tok)
 //-----------------------------------------------------------------------------
 void CheckBool::checkComparisonOfBoolExpressionWithInt()
 {
-    if (!mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    const SymbolDatabase* symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (!tok->isComparisonOp())
                 continue;
@@ -344,7 +334,7 @@ void CheckBool::checkComparisonOfBoolExpressionWithInt()
                      : Token::Match(tok, ">|==|!=")))
                     continue;
                 comparisonOfBoolExpressionWithIntError(tok, true);
-            } else if (astIsIntegral(numTok, false) && mTokenizer->isCPP())
+            } else if (astIsIntegral(numTok, false) && mCtx.tokenizer->isCPP())
                 comparisonOfBoolExpressionWithIntError(tok, false);
         }
     }
@@ -363,9 +353,7 @@ void CheckBool::comparisonOfBoolExpressionWithIntError(const Token *tok, bool n0
 
 void CheckBool::pointerArithBool()
 {
-    const SymbolDatabase* symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope &scope : symbolDatabase->scopeList) {
+    for (const Scope &scope : mCtx.symbolDB->scopeList) {
         if (scope.type != Scope::eIf && scope.type != Scope::eWhile && scope.type != Scope::eDo && scope.type != Scope::eFor)
             continue;
         const Token* tok = scope.classDef->next()->astOperand2();
@@ -413,12 +401,12 @@ void CheckBool::pointerArithBoolError(const Token *tok)
 
 void CheckBool::checkAssignBoolToFloat()
 {
-    if (!mTokenizer->isCPP())
+    if (!mCtx.tokenizer->isCPP())
         return;
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart; tok != scope->bodyEnd; tok = tok->next()) {
             if (tok->str() == "=" && astIsFloat(tok->astOperand1(), false) && astIsBool(tok->astOperand2())) {
                 assignBoolToFloatError(tok);
@@ -435,12 +423,10 @@ void CheckBool::assignBoolToFloatError(const Token *tok)
 
 void CheckBool::returnValueOfFunctionReturningBool()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    const SymbolDatabase * const symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         if (!(scope->function && Token::Match(scope->function->retDef, "bool|_Bool")))
             continue;
 
@@ -452,7 +438,7 @@ void CheckBool::returnValueOfFunctionReturningBool()
             } else if (tok->scope()->isClassOrStruct())
                 tok = tok->scope()->bodyEnd;
             else if (Token::simpleMatch(tok, "return") && tok->astOperand1() &&
-                     (tok->astOperand1()->getValueGE(2, mProject) || tok->astOperand1()->getValueLE(-1, mProject)) &&
+                     (tok->astOperand1()->getValueGE(2, mCtx.project) || tok->astOperand1()->getValueLE(-1, mCtx.project)) &&
                      !(tok->astOperand1()->astOperand1() && Token::Match(tok->astOperand1(), "&|%or%")))
                 returnValueBoolError(tok);
         }

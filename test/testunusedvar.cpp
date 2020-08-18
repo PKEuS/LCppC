@@ -231,7 +231,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check for unused variables..
-        CheckUnusedVar checkUnusedVar(&tokenizer, &settings, this, &project);
+        CheckUnusedVar checkUnusedVar(Context(this, &settings, &project, &tokenizer));
         checkUnusedVar.checkStructMemberUsage();
     }
 
@@ -664,7 +664,7 @@ private:
             return;
 
         // Check for unused variables..
-        CheckUnusedVar checkUnusedVar(&tokenizer, &settings, this, &project);
+        CheckUnusedVar checkUnusedVar(Context(this, &settings, &project, &tokenizer));
         checkUnusedVar.checkFunctionVariableUsage();
     }
 

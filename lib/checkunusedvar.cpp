@@ -654,7 +654,7 @@ void CheckUnusedVar::checkFunctionVariableUsage_iterateScopes(const Scope* const
                 type = Variables::pointerPointer;
             else if (i->isPointer())
                 type = Variables::pointer;
-            else if (mTokenizer->isC() ||
+            else if (mCtx.tokenizer->isC() ||
                      i->typeEndToken()->isStandardType() ||
                      isRecordTypeWithoutSideEffects(i->type()) ||
                      (i->isStlType() &&
@@ -779,7 +779,7 @@ void CheckUnusedVar::checkFunctionVariableUsage_iterateScopes(const Scope* const
         }
         // Freeing memory (not considered "using" the pointer if it was also allocated in this function)
         if (Token::Match(tok, "free|g_free|kfree|vfree ( %var% )") ||
-            (mTokenizer->isCPP() && (Token::Match(tok, "delete %var% ;") || Token::Match(tok, "delete [ ] %var% ;")))) {
+            (mCtx.tokenizer->isCPP() && (Token::Match(tok, "delete %var% ;") || Token::Match(tok, "delete [ ] %var% ;")))) {
             unsigned int varid = 0;
             if (tok->str() != "delete") {
                 const Token *varTok = tok->tokAt(2);
@@ -884,8 +884,8 @@ void CheckUnusedVar::checkFunctionVariableUsage_iterateScopes(const Scope* const
                         const Token *type = start->tokAt(3);
 
                         // skip nothrow
-                        if (mTokenizer->isCPP() && (Token::simpleMatch(type, "( nothrow )") ||
-                                                    Token::simpleMatch(type, "( std :: nothrow )")))
+                        if (mCtx.tokenizer->isCPP() && (Token::simpleMatch(type, "( nothrow )") ||
+                                                        Token::simpleMatch(type, "( std :: nothrow )")))
                             type = type->link()->next();
 
                         // is it a user defined type?
@@ -976,7 +976,7 @@ void CheckUnusedVar::checkFunctionVariableUsage_iterateScopes(const Scope* const
             }
         }
 
-        else if (mTokenizer->isCPP() && Token::Match(tok, "[;{}] %var% <<")) {
+        else if (mCtx.tokenizer->isCPP() && Token::Match(tok, "[;{}] %var% <<")) {
             variables.erase(tok->next()->varId());
         }
 
@@ -986,13 +986,13 @@ void CheckUnusedVar::checkFunctionVariableUsage_iterateScopes(const Scope* const
             } else // addressof
                 variables.use(tok->next()->varId(), tok); // use = read + write
         } else if (Token::Match(tok, ">>|>>= %name%")) {
-            if (isLikelyStreamRead(mTokenizer->isCPP(), tok))
+            if (isLikelyStreamRead(mCtx.tokenizer->isCPP(), tok))
                 variables.use(tok->next()->varId(), tok); // use = read + write
             else
                 variables.read(tok->next()->varId(), tok);
         } else if (Token::Match(tok, "%var% >>|&") && Token::Match(tok->previous(), "[{};:]")) {
             variables.read(tok->varId(), tok);
-        } else if (isLikelyStreamRead(mTokenizer->isCPP(),tok->previous())) {
+        } else if (isLikelyStreamRead(mCtx.tokenizer->isCPP(),tok->previous())) {
             variables.use(tok->varId(), tok);
         }
 
@@ -1074,14 +1074,12 @@ void CheckUnusedVar::checkFunctionVariableUsage_iterateScopes(const Scope* const
 
 void CheckUnusedVar::checkFunctionVariableUsage()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
     // Parse all executing scopes..
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-
     // only check functions
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         // Bailout when there are lambdas or inline functions
         // TODO: Handle lambdas and inline functions properly
         if (scope->hasInlineOrLambdaFunction())
@@ -1108,7 +1106,7 @@ void CheckUnusedVar::checkFunctionVariableUsage()
             if (!isAssignment && !isInitialization && !isIncrementOrDecrement)
                 continue;
             if (tok->isName()) {
-                if (mTokenizer->isCPP()) {
+                if (mCtx.tokenizer->isCPP()) {
                     // do not check RAII/scope_lock objects
                     if (!tok->valueType())
                         continue;
@@ -1182,12 +1180,12 @@ void CheckUnusedVar::checkFunctionVariableUsage()
                     continue;
 
                 // Bailout for unknown template classes, we have no idea what side effects such assignments have
-                if (mTokenizer->isCPP() &&
+                if (mCtx.tokenizer->isCPP() &&
                     op1Var->isClass() &&
                     (!op1Var->valueType() || op1Var->valueType()->type == ValueType::Type::UNKNOWN_TYPE)) {
                     // Check in the library if we should bailout or not..
                     const std::string typeName = op1Var->getTypeName();
-                    switch (mProject->library.getTypeCheck("unusedvar", typeName)) {
+                    switch (mCtx.project->library.getTypeCheck("unusedvar", typeName)) {
                     case Library::TypeCheck::def:
                         bailoutTypeName = typeName;
                         break;
@@ -1208,10 +1206,10 @@ void CheckUnusedVar::checkFunctionVariableUsage()
             if (tok->previous() && tok->previous()->variable() && tok->previous()->variable()->nameToken()->scope()->type == Scope::eUnion)
                 continue;
 
-            FwdAnalysis fwdAnalysis(mTokenizer->isCPP(), mProject->library);
+            FwdAnalysis fwdAnalysis(mCtx.tokenizer->isCPP(), mCtx.project->library);
             if (fwdAnalysis.unusedValue(expr, start, scope->bodyEnd)) {
                 if (!bailoutTypeName.empty() && bailoutTypeName != "auto") {
-                    if (mSettings->checkLibrary && mProject->severity.isEnabled(Severity::information)) {
+                    if (mCtx.settings->checkLibrary && mCtx.project->severity.isEnabled(Severity::information)) {
                         reportError(tok,
                                     Severity::information,
                                     "checkLibraryCheckType",
@@ -1249,7 +1247,7 @@ void CheckUnusedVar::checkFunctionVariableUsage()
                 continue;
 
             const std::string &varname = usage._var->name();
-            const Variable* var = symbolDatabase->getVariableFromVarId(it->first);
+            const Variable* var = mCtx.symbolDB->getVariableFromVarId(it->first);
 
             // variable has had memory allocated for it, but hasn't done
             // anything with that memory other than, perhaps, freeing it
@@ -1301,12 +1299,10 @@ void CheckUnusedVar::unassignedVariableError(const Token *tok, const std::string
 //---------------------------------------------------------------------------
 void CheckUnusedVar::checkStructMemberUsage()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope &scope : symbolDatabase->scopeList) {
+    for (const Scope &scope : mCtx.symbolDB->scopeList) {
         if (scope.type != Scope::eStruct && scope.type != Scope::eUnion)
             continue;
 
@@ -1316,10 +1312,10 @@ void CheckUnusedVar::checkStructMemberUsage()
         // Packed struct => possibly used by lowlevel code. Struct members might be required by hardware.
         if (scope.bodyEnd->isAttributePacked())
             continue;
-        if (const Preprocessor *preprocessor = mTokenizer->getPreprocessor()) {
+        if (const Preprocessor *preprocessor = mCtx.tokenizer->getPreprocessor()) {
             bool isPacked = false;
             for (const Directive &d: preprocessor->getDirectives()) {
-                if (d.str == "#pragma pack(1)" && d.file == mTokenizer->list.getFiles().front() && d.linenr < scope.bodyStart->linenr()) {
+                if (d.str == "#pragma pack(1)" && d.file == mCtx.tokenizer->list.getFiles().front() && d.linenr < scope.bodyStart->linenr()) {
                     isPacked=true;
                     break;
                 }
@@ -1338,7 +1334,7 @@ void CheckUnusedVar::checkStructMemberUsage()
 
         // bail out if struct is inherited
         bool bailout = false;
-        for (const Scope &derivedScope : symbolDatabase->scopeList) {
+        for (const Scope &derivedScope : mCtx.symbolDB->scopeList) {
             if (derivedScope.definedType) {
                 for (const Type::BaseInfo &derivedFrom : derivedScope.definedType->derivedFrom) {
                     if (derivedFrom.type == scope.definedType) {
@@ -1352,7 +1348,7 @@ void CheckUnusedVar::checkStructMemberUsage()
             continue;
 
         // bail out for extern/global struct
-        for (const Variable* var : symbolDatabase->variableList()) {
+        for (const Variable* var : mCtx.symbolDB->variableList()) {
             if (var && (var->isExtern() || (var->isGlobal() && !var->isStatic())) && var->typeEndToken()->str() == scope.className) {
                 bailout = true;
                 break;
@@ -1393,10 +1389,10 @@ void CheckUnusedVar::checkStructMemberUsage()
 
             // Check if the struct member variable is used anywhere in the file
             std::string tmp(". " + var.name());
-            if (Token::findsimplematch(mTokenizer->tokens(), tmp.c_str(), tmp.size()))
+            if (Token::findsimplematch(mCtx.tokenizer->tokens(), tmp.c_str(), tmp.size()))
                 continue;
             tmp = (":: " + var.name());
-            if (Token::findsimplematch(mTokenizer->tokens(), tmp.c_str(), tmp.size()))
+            if (Token::findsimplematch(mCtx.tokenizer->tokens(), tmp.c_str(), tmp.size()))
                 continue;
 
             unusedStructMemberError(var.nameToken(), scope.className, var.name(), scope.type == Scope::eUnion);

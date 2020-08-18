@@ -22,14 +22,13 @@
 
 #include "errorlogger.h"
 #include "settings.h"
-#include "tokenize.h"
 
 #include <iostream>
 
 //---------------------------------------------------------------------------
 
 Check::Check(const char* aname)
-    : mTokenizer(nullptr), mSettings(nullptr), mProject(nullptr), mErrorLogger(nullptr), mName(aname)
+    : mName(aname)
 {
     for (std::list<Check*>::iterator i = instances().begin(); i != instances().end(); ++i) {
         if ((*i)->name() > aname) {
@@ -48,36 +47,36 @@ void Check::reportError(const ErrorMessage &errmsg)
 
 void Check::reportError(const Token* tok, Severity::SeverityType severity, const char id[], const std::string& msg, CWE cwe, Certainty::CertaintyLevel certainty)
 {
-    const ErrorMessage errmsg(tok, mTokenizer ? &mTokenizer->list : nullptr, severity, id, msg, certainty, cwe);
-    if (mErrorLogger)
-        mErrorLogger->reportErr(errmsg);
+    const ErrorMessage errmsg(tok, mCtx.tokenizer ? &mCtx.tokenizer->list : nullptr, severity, id, msg, certainty, cwe);
+    if (mCtx.errorLogger)
+        mCtx.errorLogger->reportErr(errmsg);
     else
         reportError(errmsg);
 }
 
 void Check::reportError(const Token* tok, Severity::SeverityType severity, const std::string& id, const std::string& msg, CWE cwe, Certainty::CertaintyLevel certainty)
 {
-    const ErrorMessage errmsg(tok, mTokenizer ? &mTokenizer->list : nullptr, severity, id, msg, certainty, cwe);
-    if (mErrorLogger)
-        mErrorLogger->reportErr(errmsg);
+    const ErrorMessage errmsg(tok, mCtx.tokenizer ? &mCtx.tokenizer->list : nullptr, severity, id, msg, certainty, cwe);
+    if (mCtx.errorLogger)
+        mCtx.errorLogger->reportErr(errmsg);
     else
         reportError(errmsg);
 }
 
 void Check::reportError(const std::vector<const Token*>& callstack, Severity::SeverityType severity, const std::string& id, const std::string& msg, CWE cwe, Certainty::CertaintyLevel certainty)
 {
-    const ErrorMessage errmsg(callstack, mTokenizer ? &mTokenizer->list : nullptr, severity, id, msg, certainty, cwe);
-    if (mErrorLogger)
-        mErrorLogger->reportErr(errmsg);
+    const ErrorMessage errmsg(callstack, mCtx.tokenizer ? &mCtx.tokenizer->list : nullptr, severity, id, msg, certainty, cwe);
+    if (mCtx.errorLogger)
+        mCtx.errorLogger->reportErr(errmsg);
     else
         reportError(errmsg);
 }
 
 void Check::reportError(const ErrorPath &errorPath, Severity::SeverityType severity, const char id[], const std::string &msg, CWE cwe, Certainty::CertaintyLevel certainty)
 {
-    const ErrorMessage errmsg(errorPath, mTokenizer ? &mTokenizer->list : nullptr, severity, id, msg, certainty, cwe);
-    if (mErrorLogger)
-        mErrorLogger->reportErr(errmsg);
+    const ErrorMessage errmsg(errorPath, mCtx.tokenizer ? &mCtx.tokenizer->list : nullptr, severity, id, msg, certainty, cwe);
+    if (mCtx.errorLogger)
+        mCtx.errorLogger->reportErr(errmsg);
     else
         reportError(errmsg);
 }
@@ -115,7 +114,7 @@ ErrorPath Check::getErrorPath(const Token* errtok, const ValueFlow::Value* value
     ErrorPath errorPath;
     if (!value) {
         errorPath.emplace_back(errtok, bug);
-    } else if (mSettings->verbose || mSettings->xml || !mSettings->templateLocation.empty()) {
+    } else if (mCtx.settings->verbose || mCtx.settings->xml || !mCtx.settings->templateLocation.empty()) {
         errorPath = value->errorPath;
         errorPath.emplace_back(errtok, bug);
     } else {

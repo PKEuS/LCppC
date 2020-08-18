@@ -208,7 +208,7 @@ private:
         CheckLeakAutoVar c;
         settings.checkLibrary = true;
         project.severity.enable(Severity::information);
-        c.runChecks(&tokenizer, &settings, this, &project);
+        c.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void check(const char code[], Settings& settings0, Project& project0) {
@@ -222,7 +222,7 @@ private:
 
         // Check for leaks..
         CheckLeakAutoVar c;
-        c.runChecks(&tokenizer, &settings0, this, &project0);
+        c.runChecks(Context(this, &settings0, &project0, &tokenizer));
     }
 
     void checkP(const char code[], bool cpp = false) {
@@ -249,7 +249,7 @@ private:
         CheckLeakAutoVar c;
         settings.checkLibrary = true;
         project.severity.enable(Severity::information);
-        c.runChecks(&tokenizer, &settings, this, &project);
+        c.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void assign1() {
@@ -2120,7 +2120,7 @@ private:
         CheckLeakAutoVar checkLeak;
         settings.checkLibrary = true;
         project.severity.enable(Severity::information);
-        checkLeak.runChecks(&tokenizer, &settings, this, &project);
+        checkLeak.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void run() override {
@@ -2170,7 +2170,7 @@ private:
 
         // Check for leaks..
         CheckLeakAutoVar checkLeak;
-        checkLeak.runChecks(&tokenizer, &settings, this, &project);
+        checkLeak.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void run() override {

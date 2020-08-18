@@ -35,11 +35,7 @@ namespace ValueFlow {
     class Value;
 }
 
-class Settings;
-class Token;
-class Tokenizer;
 class Variable;
-class ErrorLogger;
 
 /// @addtogroup Checks
 /// @{
@@ -54,13 +50,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckOther(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckOther(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckOther checkOther(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckOther checkOther(ctx);
 
         // Checks
         checkOther.warningOldStylePointerCast();
@@ -272,8 +268,8 @@ private:
     void comparePointersError(const Token *tok, const ValueFlow::Value *v1, const ValueFlow::Value *v2);
     void checkModuloOfOneError(const Token *tok);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckOther c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckOther c(ctx);
 
         ErrorPath errorPath;
 

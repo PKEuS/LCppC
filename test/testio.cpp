@@ -95,7 +95,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckIO checkIO(&tokenizer, &settings, this, &project);
+        CheckIO checkIO(Context(this, &settings, &project, &tokenizer));
         checkIO.checkWrongPrintfScanfArguments();
         if (!onlyFormatStr) {
             checkIO.checkCoutCerrMisusage();

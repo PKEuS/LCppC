@@ -149,7 +149,7 @@ namespace CTU {
 
     extern int maxCtuDepth;
 
-    std::list<CTUInfo::UnsafeUsage> getUnsafeUsage(const Tokenizer *tokenizer, const Settings *settings, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *_value));
+    std::list<CTUInfo::UnsafeUsage> getUnsafeUsage(const Context& ctx, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *_value));
 
     std::list<CTUInfo::UnsafeUsage> loadUnsafeUsageListFromXml(const tinyxml2::XMLElement *xmlElement);
 }

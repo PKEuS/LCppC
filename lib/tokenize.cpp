@@ -8199,8 +8199,14 @@ void Tokenizer::simplifyQtSignalsSlots()
 void Tokenizer::createSymbolDatabase()
 {
     Timer t("Tokenizer::createSymbolDatabase", list.mSettings->showtime);
-    if (!mSymbolDatabase)
-        mSymbolDatabase = new SymbolDatabase(this, list.mSettings, mErrorLogger, list.mProject);
+    if (!mSymbolDatabase) {
+        Context ctx;
+        ctx.errorLogger = mErrorLogger;
+        ctx.project = list.mProject;
+        ctx.settings = list.mSettings;
+        ctx.tokenizer = this;
+        mSymbolDatabase = new SymbolDatabase(ctx);
+    }
     mSymbolDatabase->validate();
 }
 

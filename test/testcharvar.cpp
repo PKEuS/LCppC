@@ -53,7 +53,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check char variable usage..
-        CheckOther checkOther(&tokenizer, &settings, this, &project);
+        CheckOther checkOther(Context(this, &settings, &project, &tokenizer));
         checkOther.checkCharVariable();
     }
 

@@ -72,8 +72,8 @@ private:
         tokenizer.tokenize(istr, filename);
 
         // Check char variable usage..
-        CheckString checkString(&tokenizer, &settings, this, &project);
-        checkString.runChecks(&tokenizer, &settings, this, &project);
+        CheckString checkString(Context(this, &settings, &project, &tokenizer));
+        checkString.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void stringLiteralWrite() {

@@ -27,11 +27,7 @@
 
 #include <string>
 
-class ErrorLogger;
 class Scope;
-class Settings;
-class Token;
-class Tokenizer;
 
 /// @addtogroup Checks
 /// @{
@@ -45,13 +41,13 @@ public:
     CheckAssert() : Check(myName()) {
     }
 
-    CheckAssert(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckAssert(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** run checks, the token list is not simplified */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckAssert checkAssert(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckAssert checkAssert(ctx);
         checkAssert.assertWithSideEffects();
     }
 
@@ -65,8 +61,8 @@ private:
     void sideEffectInAssertError(const Token *tok, const std::string& functionName);
     void assignmentInAssertError(const Token *tok, const std::string &varname);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckAssert c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckAssert c(ctx);
         c.sideEffectInAssertError(nullptr, "function");
         c.assignmentInAssertError(nullptr, "var");
     }

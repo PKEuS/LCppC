@@ -31,7 +31,7 @@
 #include <vector>
 
 class ErrorLogger;
-class Settings;
+class Project;
 class SymbolDatabase;
 class Token;
 class TokenList;

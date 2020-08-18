@@ -41,13 +41,11 @@ namespace {
 
 void Check64BitPortability::pointerassignment()
 {
-    if (!mProject->severity.isEnabled(Severity::portability))
+    if (!mCtx.project->severity.isEnabled(Severity::portability))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-
     // Check return values
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         if (scope->function == nullptr || !scope->function->hasBody()) // We only look for functions with a body
             continue;
 
@@ -85,7 +83,7 @@ void Check64BitPortability::pointerassignment()
     }
 
     // Check assignments
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token *tok = scope->bodyStart; tok && tok != scope->bodyEnd; tok = tok->next()) {
             if (tok->str() != "=")
                 continue;

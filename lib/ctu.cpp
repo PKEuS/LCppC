@@ -408,24 +408,23 @@ static std::vector<std::pair<const Token *, MathLib::bigint>> getUnsafeFunction(
     return ret;
 }
 
-std::list<CTU::CTUInfo::UnsafeUsage> CTU::getUnsafeUsage(const Tokenizer *tokenizer, const Project* project, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *_value))
+std::list<CTU::CTUInfo::UnsafeUsage> CTU::getUnsafeUsage(const Context& ctx, const Check *check, bool (*isUnsafeUsage)(const Check *check, const Token *argtok, MathLib::bigint *_value))
 {
     std::list<CTU::CTUInfo::UnsafeUsage> unsafeUsage;
 
     // Parse all functions in TU
-    const SymbolDatabase * const symbolDatabase = tokenizer->getSymbolDatabase();
 
-    for (const Scope &scope : symbolDatabase->scopeList) {
+    for (const Scope &scope : ctx.symbolDB->scopeList) {
         if (!scope.isExecutable() || scope.type != Scope::eFunction || !scope.function)
             continue;
         const Function *const function = scope.function;
 
         // "Unsafe" functions unconditionally reads data before it is written..
         for (std::size_t argnr = 0; argnr < function->argCount(); ++argnr) {
-            for (const std::pair<const Token *, MathLib::bigint> &v : getUnsafeFunction(tokenizer, project, &scope, argnr, check, isUnsafeUsage)) {
+            for (const std::pair<const Token *, MathLib::bigint> &v : getUnsafeFunction(ctx.tokenizer, ctx.project, &scope, argnr, check, isUnsafeUsage)) {
                 const Token *tok = v.first;
                 MathLib::bigint value = v.second;
-                unsafeUsage.emplace_back(getFunctionId(tokenizer, function), static_cast<unsigned int>(argnr+1), tok->str(), CTU::CTUInfo::Location(tokenizer,tok), value);
+                unsafeUsage.emplace_back(getFunctionId(ctx.tokenizer, function), static_cast<unsigned int>(argnr+1), tok->str(), CTU::CTUInfo::Location(ctx.tokenizer,tok), value);
             }
         }
     }

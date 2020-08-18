@@ -182,10 +182,10 @@ private:
         Tokenizer tokenizer(&settings, &project, this);
         std::istringstream istr(code);
 
-        CheckStl checkStl(&tokenizer, &settings, this, &project);
+        CheckStl checkStl(Context(this, &settings, &project, &tokenizer));
 
         tokenizer.tokenize(istr, "test.cpp");
-        checkStl.runChecks(&tokenizer, &settings, this, &project);
+        checkStl.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void check(const std::string &code, const bool inconclusive=false) {
@@ -202,8 +202,8 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckStl checkStl(&tokenizer, &settings, this, &project);
-        checkStl.runChecks(&tokenizer, &settings, this, &project);
+        CheckStl checkStl(Context(this, &settings, &project, &tokenizer));
+        checkStl.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void outOfBounds() {

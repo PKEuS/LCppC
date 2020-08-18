@@ -39,11 +39,6 @@ namespace tinyxml2 {
     class XMLElement;
 }
 
-class ErrorLogger;
-class Settings;
-class Token;
-class Tokenizer;
-
 /// @addtogroup Checks
 /// @{
 
@@ -64,12 +59,12 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckBufferOverrun(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckBufferOverrun(Context ctx)
+        : Check(myName(), ctx) {
     }
 
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckBufferOverrun checkBufferOverrun(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckBufferOverrun checkBufferOverrun(ctx);
         checkBufferOverrun.arrayIndex();
         checkBufferOverrun.pointerArithmetic();
         checkBufferOverrun.bufferOverflow();
@@ -80,8 +75,8 @@ public:
         checkBufferOverrun.checkInsecureCmdLineArgs();
     }
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckBufferOverrun c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckBufferOverrun c(ctx);
         c.arrayIndexError(nullptr, std::vector<Dimension>(), std::vector<const ValueFlow::Value *>());
         c.pointerArithmeticError(nullptr, nullptr, nullptr);
         c.negativeIndexError(nullptr, std::vector<Dimension>(), std::vector<const ValueFlow::Value *>());
@@ -95,12 +90,12 @@ public:
     }
 
     /** @brief Parse current TU and extract file info */
-    Check::FileInfo* getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const override;
+    Check::FileInfo* getFileInfo(Context ctx) const override;
 
     Check::FileInfo* loadFileInfoFromXml(const tinyxml2::XMLElement* xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project) override;
+    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx) override;
 
 private:
 

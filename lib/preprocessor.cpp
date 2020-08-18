@@ -63,7 +63,7 @@ std::atomic<bool> Preprocessor::missingSystemIncludeFlag;
 
 char Preprocessor::macroChar = char(1);
 
-Preprocessor::Preprocessor(Settings& settings, Project& project, ErrorLogger *errorLogger) : mSettings(settings), mProject(project), mErrorLogger(errorLogger)
+Preprocessor::Preprocessor(const Settings& settings, Project& project, ErrorLogger *errorLogger) : mSettings(settings), mProject(project), mErrorLogger(errorLogger)
 {
 }
 
@@ -881,12 +881,9 @@ void Preprocessor::validateCfgError(const std::string &file, const unsigned int 
     mErrorLogger->reportErr(errmsg);
 }
 
-void Preprocessor::getErrorMessages(ErrorLogger *errorLogger, const Settings* settings, const Project* project)
+void Preprocessor::getErrorMessages(Context ctx)
 {
-    Settings settings2(*settings);
-    Project project2(*project);
-    Preprocessor preprocessor(settings2, project2, errorLogger);
-    settings2.checkConfiguration = true;
+    Preprocessor preprocessor(*ctx.settings, *const_cast<Project*>(ctx.project), ctx.errorLogger);
     preprocessor.missingInclude(emptyString, 1, emptyString, UserHeader);
     preprocessor.missingInclude(emptyString, 1, emptyString, SystemHeader);
     preprocessor.validateCfgError(emptyString, 1, "X", "X");

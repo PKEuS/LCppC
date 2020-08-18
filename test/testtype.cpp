@@ -60,8 +60,8 @@ private:
         tokenizer.tokenize(istr, filename);
 
         // Check..
-        CheckType checkType(&tokenizer, &_settings, this, project);
-        checkType.runChecks(&tokenizer, &_settings, this, project);
+        CheckType checkType(Context(this, &_settings, project, &tokenizer));
+        checkType.runChecks(Context(this, &_settings, project, &tokenizer));
     }
 
     void checkTooBigShift_Unix32() {

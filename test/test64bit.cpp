@@ -53,7 +53,8 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check char variable usage..
-        Check64BitPortability check64BitPortability(&tokenizer, &settings, this, &project);
+
+        Check64BitPortability check64BitPortability(Context(this, &settings, &project, &tokenizer));
         check64BitPortability.pointerassignment();
     }
 

@@ -776,10 +776,12 @@ void CppCheck::checkRawTokens(const Tokenizer &tokenizer)
 
 void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
 {
+    Context ctx(this, &mSettings, &mProject, &tokenizer);
+
     // Analyse the tokens..
     mCTU->parseTokens(&tokenizer);
     for (const Check *check : Check::instances()) {
-        Check::FileInfo *fi = check->getFileInfo(&tokenizer, &mSettings, &mProject);
+        Check::FileInfo *fi = check->getFileInfo(ctx);
         if (fi != nullptr) {
             mCTU->addCheckInfo(check->name(), fi);
         }
@@ -797,7 +799,7 @@ void CppCheck::checkNormalTokens(const Tokenizer &tokenizer)
             continue;
 
         Timer timerRunChecks(check->name() + "::runChecks", mSettings.showtime);
-        check->runChecks(&tokenizer, &mSettings, this, &mProject);
+        check->runChecks(ctx);
     }
 
     executeRules("normal", tokenizer);
@@ -1215,16 +1217,21 @@ void CppCheck::getErrorMessages()
     mTooManyConfigs = true;
     tooManyConfigsError("",0U);
 
+    Context ctx(this, &s, &p);
+
     // call all "getErrorMessages" in all registered Check classes
     for (std::list<Check *>::const_iterator it = Check::instances().begin(); it != Check::instances().end(); ++it)
-        (*it)->getErrorMessages(this, &s, &p);
+        (*it)->getErrorMessages(ctx);
 
-    Preprocessor::getErrorMessages(this, &s, &p);
+    s.checkConfiguration = true;
+    Preprocessor::getErrorMessages(ctx);
 }
 
 bool CppCheck::analyseWholeProgram(AnalyzerInformation& analyzerInformation)
 {
     bool errors = false;
+
+    Context ctx(this, &mSettings, &mProject);
 
     // Init CTU
     CTU::maxCtuDepth = mProject.maxCtuDepth;
@@ -1235,6 +1242,6 @@ bool CppCheck::analyseWholeProgram(AnalyzerInformation& analyzerInformation)
         combinedCTU.nestedCalls.insert(combinedCTU.nestedCalls.end(), it->nestedCalls.begin(), it->nestedCalls.end());
     }
     for (Check* check : Check::instances())
-        errors |= check->analyseWholeProgram(&combinedCTU, analyzerInformation, mSettings, *this, &mProject);
+        errors |= check->analyseWholeProgram(&combinedCTU, analyzerInformation, ctx);
     return errors && (mExitCode > 0);
 }

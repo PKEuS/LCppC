@@ -44,7 +44,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check class constructors..
-        CheckClass checkClass(&tokenizer, &settings, this, &project);
+        CheckClass checkClass(Context(this, &settings, &project, &tokenizer));
         checkClass.constructors();
     }
 

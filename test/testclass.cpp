@@ -240,7 +240,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project);
+        CheckClass checkClass(Context(this, &settings, &project, &tokenizer));
         checkClass.checkCopyCtorAndEqOperator();
     }
 
@@ -343,7 +343,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project0);
+        CheckClass checkClass(Context(this, &settings, &project0, &tokenizer));
         checkClass.checkExplicitConstructors();
     }
 
@@ -452,7 +452,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project1);
+        CheckClass checkClass(Context(this, &settings, &project1, &tokenizer));
         checkClass.checkDuplInheritedMembers();
     }
 
@@ -573,7 +573,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project0);
+        CheckClass checkClass(Context(this, &settings, &project0, &tokenizer));
         checkClass.copyconstructors();
     }
 
@@ -982,7 +982,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project0);
+        CheckClass checkClass(Context(this, &settings, &project0, &tokenizer));
         checkClass.operatorEq();
     }
 
@@ -1146,7 +1146,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project0);
+        CheckClass checkClass(Context(this, &settings, &project0, &tokenizer));
         checkClass.operatorEqRetRefThis();
     }
 
@@ -1609,7 +1609,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project1);
+        CheckClass checkClass(Context(this, &settings, &project1, &tokenizer));
         checkClass.operatorEqToSelf();
     }
 
@@ -2431,7 +2431,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project0);
+        CheckClass checkClass(Context(this, &settings, &project0, &tokenizer));
         checkClass.virtualDestructor();
     }
 
@@ -2722,7 +2722,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project);
+        CheckClass checkClass(Context(this, &settings, &project, &tokenizer));
         checkClass.checkMemset();
     }
 
@@ -3312,7 +3312,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project1);
+        CheckClass checkClass(Context(this, &settings, &project1, &tokenizer));
         checkClass.thisSubtraction();
     }
 
@@ -3348,7 +3348,7 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CheckClass checkClass(&tokenizer, &settings, this, s);
+        CheckClass checkClass(Context(this, &settings, s, &tokenizer));
         checkClass.checkConst();
     }
 
@@ -6498,7 +6498,7 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CheckClass checkClass(&tokenizer, &settings, this, &project0);
+        CheckClass checkClass(Context(this, &settings, &project0, &tokenizer));
         checkClass.initializerListOrder();
     }
 
@@ -6533,7 +6533,7 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CheckClass checkClass(&tokenizer, &settings, this, &project);
+        CheckClass checkClass(Context(this, &settings, &project, &tokenizer));
         checkClass.initializationListUsage();
     }
 
@@ -6731,7 +6731,7 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CheckClass checkClass(&tokenizer, &settings, this, &project0);
+        CheckClass checkClass(Context(this, &settings, &project0, &tokenizer));
         checkClass.checkSelfInitialization();
     }
 
@@ -6832,7 +6832,7 @@ private:
         std::istringstream istr(code);
         tokenizer.tokenize(istr, "test.cpp");
 
-        CheckClass checkClass(&tokenizer, &settings, this, s);
+        CheckClass checkClass(Context(this, &settings, s, &tokenizer));
         checkClass.checkVirtualFunctionCallInConstructor();
     }
 
@@ -7084,7 +7084,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project);
+        CheckClass checkClass(Context(this, &settings, &project, &tokenizer));
         checkClass.checkOverride();
     }
 
@@ -7167,7 +7167,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project);
+        CheckClass checkClass(Context(this, &settings, &project, &tokenizer));
         checkClass.checkUnsafeClassRefMember();
     }
 
@@ -7186,7 +7186,7 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check..
-        CheckClass checkClass(&tokenizer, &settings, this, &project1);
+        CheckClass checkClass(Context(this, &settings, &project1, &tokenizer));
         checkClass.checkThisUseAfterFree();
     }
 

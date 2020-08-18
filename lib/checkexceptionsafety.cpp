@@ -39,13 +39,11 @@ namespace {
 
 void CheckExceptionSafety::destructors()
 {
-    if (!mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
-
     // Perform check..
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         const Function * function = scope->function;
         if (!function)
             continue;
@@ -79,15 +77,14 @@ void CheckExceptionSafety::destructors()
 
 void CheckExceptionSafety::deallocThrow()
 {
-    if (!mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    const bool printInconclusive = mProject->certainty.isEnabled(Certainty::inconclusive);
-    const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
+    const bool printInconclusive = mCtx.project->certainty.isEnabled(Certainty::inconclusive);
 
     // Deallocate a global/member pointer and then throw exception
     // the pointer will be a dead pointer
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token *tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             // only looking for delete now
             if (tok->str() != "delete")
@@ -131,7 +128,7 @@ void CheckExceptionSafety::deallocThrow()
                     break;
                 }
                 // Variable passed to function and seems to be re-assigned
-                else if (Token::Match(tok2, "[(,] &| $ %varid% [,)]", varid) && isVariableChangedByFunctionCall(Token::matchResult(), 0, mProject))
+                else if (Token::Match(tok2, "[(,] &| $ %varid% [,)]", varid) && isVariableChangedByFunctionCall(Token::matchResult(), 0, mCtx.project))
                     break;
             }
         }
@@ -146,12 +143,10 @@ void CheckExceptionSafety::deallocThrow()
 //---------------------------------------------------------------------------
 void CheckExceptionSafety::checkRethrowCopy()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope &scope : symbolDatabase->scopeList) {
+    for (const Scope &scope : mCtx.symbolDB->scopeList) {
         if (scope.type != Scope::eCatch)
             continue;
 
@@ -180,12 +175,10 @@ void CheckExceptionSafety::checkRethrowCopy()
 //---------------------------------------------------------------------------
 void CheckExceptionSafety::checkCatchExceptionByValue()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope &scope : symbolDatabase->scopeList) {
+    for (const Scope &scope : mCtx.symbolDB->scopeList) {
         if (scope.type != Scope::eCatch)
             continue;
 
@@ -246,9 +239,7 @@ static const Token * functionThrows(const Function * function)
 //--------------------------------------------------------------------------
 void CheckExceptionSafety::nothrowThrows()
 {
-    const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         const Function* function = scope->function;
         if (!function)
             continue;
@@ -282,12 +273,10 @@ void CheckExceptionSafety::nothrowThrows()
 //--------------------------------------------------------------------------
 void CheckExceptionSafety::unhandledExceptionSpecification()
 {
-    if (!mProject->severity.isEnabled(Severity::style) || !mProject->certainty.isEnabled(Certainty::inconclusive))
+    if (!mCtx.project->severity.isEnabled(Severity::style) || !mCtx.project->certainty.isEnabled(Certainty::inconclusive))
         return;
 
-    const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         // only check functions without exception epecification
         if (scope->function && !scope->function->isThrow() &&
             scope->className != "main" && scope->className != "wmain" &&

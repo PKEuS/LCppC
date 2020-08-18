@@ -27,11 +27,7 @@
 #include <map>
 #include <string>
 
-class ErrorLogger;
 class Scope;
-class Settings;
-class Token;
-class Tokenizer;
 class Type;
 class Variables;
 
@@ -48,13 +44,13 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckUnusedVar(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckUnusedVar(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckUnusedVar checkUnusedVar(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckUnusedVar checkUnusedVar(ctx);
 
         // Coding style checks
         checkUnusedVar.checkStructMemberUsage();
@@ -79,8 +75,8 @@ private:
     void unreadVariableError(const Token *tok, const std::string &varname, bool modified);
     void unassignedVariableError(const Token *tok, const std::string &varname);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckUnusedVar c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckUnusedVar c(ctx);
 
         // style/warning
         c.unusedVariableError(nullptr, "varname");

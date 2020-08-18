@@ -62,8 +62,8 @@ private:
         tokenizer.tokenize(istr, "test.cpp");
 
         // Check...
-        CheckSizeof checkSizeof(&tokenizer, &settings, this, &project);
-        checkSizeof.runChecks(&tokenizer, &settings, this, &project);
+        CheckSizeof checkSizeof(Context(this, &settings, &project, &tokenizer));
+        checkSizeof.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void checkP(const char code[]) {
@@ -87,8 +87,8 @@ private:
         tokenizer.simplifyTokens1();
 
         // Check...
-        CheckSizeof checkSizeof(&tokenizer, &settings, this, &project);
-        checkSizeof.runChecks(&tokenizer, &settings, this, &project);
+        CheckSizeof checkSizeof(Context(this, &settings, &project, &tokenizer));
+        checkSizeof.runChecks(Context(this, &settings, &project, &tokenizer));
     }
 
     void sizeofsizeof() {

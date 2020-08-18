@@ -79,11 +79,10 @@ static const struct CWE CWE783(783U);   // Operator Precedence Logic Error
 //----------------------------------------------------------------------------------
 void CheckOther::checkCastIntToCharAndBack()
 {
-    if (!mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         std::map<unsigned int, std::string> vars;
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             // Quick check to see if any of the matches below have any chances
@@ -100,13 +99,13 @@ void CheckOther::checkCastIntToCharAndBack()
                 if (var && var->typeEndToken()->str() == "char" && !var->typeEndToken()->isSigned()) {
                     checkCastIntToCharAndBackError(tok, tok->strAt(2));
                 }
-            } else if (mTokenizer->isCPP() && (Token::Match(tok, "EOF %comp% ( %var% = std :: cin . get (") || Token::Match(tok, "EOF %comp% ( %var% = cin . get ("))) {
+            } else if (mCtx.tokenizer->isCPP() && (Token::Match(tok, "EOF %comp% ( %var% = std :: cin . get (") || Token::Match(tok, "EOF %comp% ( %var% = cin . get ("))) {
                 tok = tok->tokAt(3);
                 const Variable *var = tok->variable();
                 if (var && var->typeEndToken()->str() == "char" && !var->typeEndToken()->isSigned()) {
                     checkCastIntToCharAndBackError(tok, "cin.get");
                 }
-            } else if (mTokenizer->isCPP() && (Token::Match(tok, "%var% = std :: cin . get (") || Token::Match(tok, "%var% = cin . get ("))) {
+            } else if (mCtx.tokenizer->isCPP() && (Token::Match(tok, "%var% = std :: cin . get (") || Token::Match(tok, "%var% = cin . get ("))) {
                 const Variable *var = tok->variable();
                 if (var && var->typeEndToken()->str() == "char" && !var->typeEndToken()->isSigned()) {
                     vars[tok->varId()] = "cin.get";
@@ -147,11 +146,10 @@ void CheckOther::checkCastIntToCharAndBackError(const Token *tok, const std::str
 //---------------------------------------------------------------------------
 void CheckOther::clarifyCalculation()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             // ? operator where lhs is arithmetical expression
             if (tok->str() != "?" || !tok->astOperand1() || !tok->astOperand1()->isCalculation())
@@ -203,11 +201,10 @@ void CheckOther::clarifyCalculationError(const Token *tok, const std::string &op
 //---------------------------------------------------------------------------
 void CheckOther::clarifyStatement()
 {
-    if (!mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart; tok && tok != scope->bodyEnd; tok = tok->next()) {
             if (tok->astOperand1() && Token::Match(tok, "* %name%")) {
                 const Token *tok2 = tok->previous();
@@ -237,13 +234,11 @@ void CheckOther::clarifyStatementError(const Token *tok)
 //---------------------------------------------------------------------------
 void CheckOther::checkSuspiciousSemicolon()
 {
-    if (!mProject->certainty.isEnabled(Certainty::inconclusive) || !mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->certainty.isEnabled(Certainty::inconclusive) || !mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
-
     // Look for "if(); {}", "for(); {}" or "while(); {}"
-    for (const Scope &scope : symbolDatabase->scopeList) {
+    for (const Scope &scope : mCtx.symbolDB->scopeList) {
         if (scope.type == Scope::eIf || scope.type == Scope::eElse || scope.type == Scope::eWhile || scope.type == Scope::eFor) {
             // Ensure the semicolon is at the same line number as the if/for/while statement
             // and the {..} block follows it without an extra empty line.
@@ -269,11 +264,10 @@ void CheckOther::suspiciousSemicolonError(const Token* tok)
 void CheckOther::warningOldStylePointerCast()
 {
     // Only valid on C++ code
-    if (!mProject->severity.isEnabled(Severity::style) || !mTokenizer->isCPP())
+    if (!mCtx.project->severity.isEnabled(Severity::style) || !mCtx.tokenizer->isCPP())
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         const Token* tok;
         if (scope->function && scope->function->isConstructor())
             tok = scope->classDef;
@@ -318,12 +312,11 @@ void CheckOther::cstyleCastError(const Token *tok)
 
 void CheckOther::invalidPointerCast()
 {
-    if (!mProject->severity.isEnabled(Severity::portability))
+    if (!mCtx.project->severity.isEnabled(Severity::portability))
         return;
 
-    const bool printInconclusive = mProject->certainty.isEnabled(Certainty::inconclusive);
-    const SymbolDatabase* const symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    const bool printInconclusive = mCtx.project->certainty.isEnabled(Certainty::inconclusive);
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             const Token* toTok = nullptr;
             const Token* fromTok = nullptr;
@@ -369,10 +362,10 @@ void CheckOther::invalidPointerCastError(const Token* tok, const std::string& fr
 
 void CheckOther::checkRedundantAssignment()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
-    const SymbolDatabase* symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope *scope : symbolDatabase->functionScopes) {
+
+    for (const Scope *scope : mCtx.symbolDB->functionScopes) {
         if (!scope->bodyStart)
             continue;
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
@@ -424,7 +417,7 @@ void CheckOther::checkRedundantAssignment()
 
                 // If there is a custom assignment operator => this is inconclusive
                 bool inconclusive = false;
-                if (mTokenizer->isCPP() && tok->astOperand1()->valueType() && tok->astOperand1()->valueType()->typeScope) {
+                if (mCtx.tokenizer->isCPP() && tok->astOperand1()->valueType() && tok->astOperand1()->valueType()->typeScope) {
                     const std::string op = "operator" + tok->str();
                     for (const Function &f : tok->astOperand1()->valueType()->typeScope->functionList) {
                         if (f.name() == op) {
@@ -433,10 +426,10 @@ void CheckOther::checkRedundantAssignment()
                         }
                     }
                 }
-                if (inconclusive && !mProject->certainty.isEnabled(Certainty::inconclusive))
+                if (inconclusive && !mCtx.project->certainty.isEnabled(Certainty::inconclusive))
                     continue;
 
-                FwdAnalysis fwdAnalysis(mTokenizer->isCPP(), mProject->library);
+                FwdAnalysis fwdAnalysis(mCtx.tokenizer->isCPP(), mCtx.project->library);
                 if (fwdAnalysis.hasOperand(tok->astOperand2(), tok->astOperand1()))
                     continue;
 
@@ -543,14 +536,12 @@ static inline bool isFunctionOrBreakPattern(const Token *tok)
 
 void CheckOther::checkRedundantAssignmentInSwitch()
 {
-    if (!mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning))
         return;
-
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
 
     // Find the beginning of a switch. E.g.:
     //   switch (var) { ...
-    for (const Scope &switchScope : symbolDatabase->scopeList) {
+    for (const Scope &switchScope : mCtx.symbolDB->scopeList) {
         if (switchScope.type != Scope::eSwitch || !switchScope.bodyStart)
             continue;
 
@@ -670,12 +661,10 @@ void CheckOther::redundantBitwiseOperationInSwitchError(const Token *tok, const 
 //---------------------------------------------------------------------------
 void CheckOther::checkSuspiciousCaseInSwitch()
 {
-    if (!mProject->certainty.isEnabled(Certainty::inconclusive) || !mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->certainty.isEnabled(Certainty::inconclusive) || !mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope & scope : symbolDatabase->scopeList) {
+    for (const Scope & scope : mCtx.symbolDB->scopeList) {
         if (scope.type != Scope::eSwitch)
             continue;
 
@@ -715,11 +704,10 @@ void CheckOther::suspiciousCaseInSwitchError(const Token* tok, const std::string
 //---------------------------------------------------------------------------
 void CheckOther::checkUnreachableCode()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
-    const bool printInconclusive = mProject->certainty.isEnabled(Certainty::inconclusive);
-    const SymbolDatabase* symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    const bool printInconclusive = mCtx.project->certainty.isEnabled(Certainty::inconclusive);
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart; tok && tok != scope->bodyEnd; tok = tok->next()) {
             const Token* secondBreak = nullptr;
             const Token* labelName = nullptr;
@@ -742,7 +730,7 @@ void CheckOther::checkUnreachableCode()
             } else if (Token::Match(tok, "goto %any% ;")) {
                 secondBreak = tok->tokAt(3);
                 labelName = tok->next();
-            } else if (Token::Match(tok, "%name% (") && mProject->library.isnoreturn(tok) && !Token::Match(tok->next()->astParent(), "?|:")) {
+            } else if (Token::Match(tok, "%name% (") && mCtx.project->library.isnoreturn(tok) && !Token::Match(tok->next()->astParent(), "?|:")) {
                 if ((!tok->function() || (tok->function()->token != tok && tok->function()->tokenDef != tok)) && tok->linkAt(1)->strAt(1) != "{")
                     secondBreak = tok->linkAt(1)->tokAt(2);
             }
@@ -828,19 +816,17 @@ void CheckOther::unreachableCodeError(const Token *tok, bool inconclusive)
 //---------------------------------------------------------------------------
 void CheckOther::checkVariableScope()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Variable* var : symbolDatabase->variableList()) {
+    for (const Variable* var : mCtx.symbolDB->variableList()) {
         if (!var || !var->isLocal() || (!var->isPointer() && !var->isReference() && !var->typeStartToken()->isStandardType()))
             continue;
 
         if (var->isConst())
             continue;
 
-        if (mTokenizer->hasIfdef(var->nameToken(), var->scope()->bodyEnd))
+        if (mCtx.tokenizer->hasIfdef(var->nameToken(), var->scope()->bodyEnd))
             continue;
 
         // reference of range for loop variable..
@@ -1026,13 +1012,13 @@ void CheckOther::variableScopeError(const Token *tok, const std::string &varname
 void CheckOther::checkCommaSeparatedReturn()
 {
     // This is experimental for now. See #5076
-    if (!mProject->certainty.isEnabled(Certainty::experimental))
+    if (!mCtx.project->certainty.isEnabled(Certainty::experimental))
         return;
 
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (tok->str() == "return") {
             tok = tok->next();
             while (tok && tok->str() != ";") {
@@ -1071,7 +1057,7 @@ void CheckOther::commaSeparatedReturnError(const Token *tok)
 //---------------------------------------------------------------------------
 // Check for function parameters that should be passed by const reference
 //---------------------------------------------------------------------------
-static unsigned int estimateSize(const Type* type, const Project* project, const SymbolDatabase* symbolDatabase, unsigned int recursionDepth = 0)
+static unsigned int estimateSize(const Type* type, const Context& ctx, unsigned int recursionDepth = 0)
 {
     if (recursionDepth > 20)
         return 0;
@@ -1082,13 +1068,13 @@ static unsigned int estimateSize(const Type* type, const Project* project, const
         if (var.isStatic())
             continue;
         if (var.isPointer() || var.isReference())
-            size = project->sizeof_pointer;
+            size = ctx.project->sizeof_pointer;
         else if (var.type() && var.type()->classScope)
-            size = estimateSize(var.type(), project, symbolDatabase, recursionDepth+1);
+            size = estimateSize(var.type(), ctx, recursionDepth+1);
         else if (var.valueType()->type == ValueType::Type::CONTAINER)
-            size = 3 * project->sizeof_pointer; // Just guess
+            size = 3 * ctx.project->sizeof_pointer; // Just guess
         else
-            size = symbolDatabase->sizeOfType(var.typeStartToken());
+            size = ctx.symbolDB->sizeOfType(var.typeStartToken());
 
         if (var.isArray())
             cumulatedSize += size * (unsigned int)var.dimension(0);
@@ -1097,7 +1083,7 @@ static unsigned int estimateSize(const Type* type, const Project* project, const
     }
     for (const Type::BaseInfo &baseInfo : type->derivedFrom) {
         if (baseInfo.type && baseInfo.type->classScope)
-            cumulatedSize += estimateSize(baseInfo.type, project, symbolDatabase, recursionDepth+1);
+            cumulatedSize += estimateSize(baseInfo.type, ctx, recursionDepth+1);
     }
     return cumulatedSize;
 }
@@ -1182,12 +1168,10 @@ static bool canBeConst(const Variable *var)
 
 void CheckOther::checkPassByReference()
 {
-    if (!mProject->severity.isEnabled(Severity::performance) || mTokenizer->isC())
+    if (!mCtx.project->severity.isEnabled(Severity::performance) || mCtx.tokenizer->isC())
         return;
 
-    const SymbolDatabase * const symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Variable* var : symbolDatabase->variableList()) {
+    for (const Variable* var : mCtx.symbolDB->variableList()) {
         if (!var || !var->isArgument() || !var->isClass() || var->isPointer() || var->isArray() || var->isReference() || var->isEnumType())
             continue;
 
@@ -1205,12 +1189,12 @@ void CheckOther::checkPassByReference()
             // Ensure that it is a large object.
             if (!var->type()->classScope)
                 inconclusive = true;
-            else if (estimateSize(var->type(), mProject, symbolDatabase) <= 2 * mProject->sizeof_pointer)
+            else if (estimateSize(var->type(), mCtx) <= 2 * mCtx.project->sizeof_pointer)
                 continue;
         } else
             continue;
 
-        if (inconclusive && !mProject->certainty.isEnabled(Certainty::inconclusive))
+        if (inconclusive && !mCtx.project->certainty.isEnabled(Certainty::inconclusive))
             continue;
 
         const bool isConst = var->isConst();
@@ -1284,12 +1268,10 @@ static bool isVariableMutableInInitializer(const Token* start, const Token * end
 
 void CheckOther::checkConstVariable()
 {
-    if (!mProject->severity.isEnabled(Severity::style) || mTokenizer->isC())
+    if (!mCtx.project->severity.isEnabled(Severity::style) || mCtx.tokenizer->isC())
         return;
 
-    const SymbolDatabase *const symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Variable *var : symbolDatabase->variableList()) {
+    for (const Variable *var : mCtx.symbolDB->variableList()) {
         if (!var)
             continue;
         if (!var->isReference())
@@ -1324,7 +1306,7 @@ void CheckOther::checkConstVariable()
             continue;
         if (isAliased(var))
             continue;
-        if (isVariableChanged(var, mProject, mTokenizer->isCPP()))
+        if (isVariableChanged(var, mCtx.project, mCtx.tokenizer->isCPP()))
             continue;
         if (Function::returnsReference(function)) {
             std::vector<const Token*> returns = Function::findReturns(function);
@@ -1369,13 +1351,12 @@ void CheckOther::constVariableError(const Variable *var)
 
 void CheckOther::checkCharVariable()
 {
-    const bool warning = mProject->severity.isEnabled(Severity::warning);
-    const bool portability = mProject->severity.isEnabled(Severity::portability);
+    const bool warning = mCtx.project->severity.isEnabled(Severity::warning);
+    const bool portability = mCtx.project->severity.isEnabled(Severity::portability);
     if (!warning && !portability)
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart; tok != scope->bodyEnd; tok = tok->next()) {
             if (Token::Match(tok, "%var% [")) {
                 if (!tok->variable())
@@ -1383,24 +1364,24 @@ void CheckOther::checkCharVariable()
                 if (!tok->variable()->isArray() && !tok->variable()->isPointer())
                     continue;
                 const Token *index = tok->next()->astOperand2();
-                if (warning && tok->variable()->isArray() && astIsSignedChar(index) && index->getValueGE(0x80, mProject))
+                if (warning && tok->variable()->isArray() && astIsSignedChar(index) && index->getValueGE(0x80, mCtx.project))
                     signedCharArrayIndexError(tok);
-                if (portability && astIsUnknownSignChar(index) && index->getValueGE(0x80, mProject))
+                if (portability && astIsUnknownSignChar(index) && index->getValueGE(0x80, mCtx.project))
                     unknownSignCharArrayIndexError(tok);
             } else if (warning && Token::Match(tok, "[&|^]") && tok->isBinaryOp()) {
                 bool warn = false;
                 if (astIsSignedChar(tok->astOperand1())) {
-                    const ValueFlow::Value *v1 = tok->astOperand1()->getValueLE(-1, mProject);
+                    const ValueFlow::Value *v1 = tok->astOperand1()->getValueLE(-1, mCtx.project);
                     const ValueFlow::Value *v2 = tok->astOperand2()->getMaxValue(false);
                     if (!v1)
-                        v1 = tok->astOperand1()->getValueGE(0x80, mProject);
+                        v1 = tok->astOperand1()->getValueGE(0x80, mCtx.project);
                     if (v1 && !(tok->str() == "&" && v2 && v2->isKnown() && v2->intvalue >= 0 && v2->intvalue < 0x100))
                         warn = true;
                 } else if (astIsSignedChar(tok->astOperand2())) {
-                    const ValueFlow::Value *v1 = tok->astOperand2()->getValueLE(-1, mProject);
+                    const ValueFlow::Value *v1 = tok->astOperand2()->getValueLE(-1, mCtx.project);
                     const ValueFlow::Value *v2 = tok->astOperand1()->getMaxValue(false);
                     if (!v1)
-                        v1 = tok->astOperand2()->getValueGE(0x80, mProject);
+                        v1 = tok->astOperand2()->getValueGE(0x80, mCtx.project);
                     if (v1 && !(tok->str() == "&" && v2 && v2->isKnown() && v2->intvalue >= 0 && v2->intvalue < 0x100))
                         warn = true;
                 }
@@ -1543,10 +1524,10 @@ static bool isConstTop(const Token *tok)
 
 void CheckOther::checkIncompleteStatement()
 {
-    if (!mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         const Scope *scope = tok->scope();
         if (scope && !scope->isExecutable())
             continue;
@@ -1563,11 +1544,11 @@ void CheckOther::checkIncompleteStatement()
             continue;
         if (isVoidStmt(tok))
             continue;
-        if (mTokenizer->isCPP() && tok->str() == "&" && !(tok->astOperand1()->valueType() && tok->astOperand1()->valueType()->isIntegral()))
+        if (mCtx.tokenizer->isCPP() && tok->str() == "&" && !(tok->astOperand1()->valueType() && tok->astOperand1()->valueType()->isIntegral()))
             // Possible archive
             continue;
         bool inconclusive = tok->isConstOp();
-        if (mProject->certainty.isEnabled(Certainty::inconclusive) || !inconclusive)
+        if (mCtx.project->certainty.isEnabled(Certainty::inconclusive) || !inconclusive)
             constStatementError(tok, tok->isNumber() ? "numeric" : "string", inconclusive);
     }
 }
@@ -1599,7 +1580,7 @@ void CheckOther::constStatementError(const Token *tok, const std::string &type, 
 //---------------------------------------------------------------------------
 void CheckOther::checkZeroDivision()
 {
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (!tok->astOperand2() || !tok->astOperand1())
             continue;
         if (tok->str() != "%" && tok->str() != "/" && tok->str() != "%=" && tok->str() != "/=")
@@ -1609,7 +1590,7 @@ void CheckOther::checkZeroDivision()
 
         // Value flow..
         const ValueFlow::Value *value = tok->astOperand2()->getValue(0LL);
-        if (value && mProject->isEnabled(value, false))
+        if (value && mCtx.project->isEnabled(value, false))
             zerodivError(tok, value);
     }
 }
@@ -1645,9 +1626,9 @@ void CheckOther::zerodivError(const Token *tok, const ValueFlow::Value *value)
 
 void CheckOther::checkNanInArithmeticExpression()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (tok->str() != "/")
             continue;
         if (!Token::Match(tok->astParent(), "[+-*/]"))
@@ -1671,14 +1652,13 @@ void CheckOther::nanInArithmeticExpressionError(const Token *tok)
 void CheckOther::checkMisusedScopedObject()
 {
     // Skip this check for .c files
-    if (mTokenizer->isC())
+    if (mCtx.tokenizer->isC())
         return;
 
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    const SymbolDatabase * const symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token *tok = scope->bodyStart; tok && tok != scope->bodyEnd; tok = tok->next()) {
             if ((tok->next()->type() || (tok->next()->function() && tok->next()->function()->isConstructor())) // TODO: The rhs of || should be removed; It is a workaround for a symboldatabase bug
                 && Token::Match(tok, "[;{}] %name% @( ; !!}")
@@ -1727,12 +1707,10 @@ void CheckOther::checkDuplicateBranch()
     //   and their conditional code is a duplicate of the condition that
     //   is always true just in case it would be false. See for instance
     //   abiword.
-    if (!mProject->severity.isEnabled(Severity::style) || !mProject->certainty.isEnabled(Certainty::inconclusive))
+    if (!mCtx.project->severity.isEnabled(Severity::style) || !mCtx.project->certainty.isEnabled(Certainty::inconclusive))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope & scope : symbolDatabase->scopeList) {
+    for (const Scope & scope : mCtx.symbolDB->scopeList) {
         if (scope.type != Scope::eIf)
             continue;
 
@@ -1773,8 +1751,8 @@ void CheckOther::checkDuplicateBranch()
                 continue;
             if (branchTop1->str() != branchTop2->str())
                 continue;
-            if (isSameExpression(mTokenizer->isCPP(), false, branchTop1->astOperand1(), branchTop2->astOperand1(), mProject->library, true, true, &errorPath) &&
-                isSameExpression(mTokenizer->isCPP(), false, branchTop1->astOperand2(), branchTop2->astOperand2(), mProject->library, true, true, &errorPath))
+            if (isSameExpression(mCtx.tokenizer->isCPP(), false, branchTop1->astOperand1(), branchTop2->astOperand1(), mCtx.project->library, true, true, &errorPath) &&
+                isSameExpression(mCtx.tokenizer->isCPP(), false, branchTop1->astOperand2(), branchTop2->astOperand2(), mCtx.project->library, true, true, &errorPath))
                 duplicateBranchError(scope.classDef, scope.bodyEnd->next(), errorPath);
         }
     }
@@ -1802,9 +1780,8 @@ void CheckOther::checkInvalidFree()
     std::map<unsigned int, bool> inconclusive;
     std::map<unsigned int, std::string> allocation;
 
-    const bool printInconclusive = mProject->certainty.isEnabled(Certainty::inconclusive);
-    const SymbolDatabase* symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    const bool printInconclusive = mCtx.project->certainty.isEnabled(Certainty::inconclusive);
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
 
             // Keep track of which variables were assigned addresses to newly-allocated memory
@@ -1856,7 +1833,7 @@ void CheckOther::checkInvalidFree()
             // If the previously-allocated variable is passed in to another function
             // as a parameter, it might be modified, so we shouldn't report an error
             // if it is later used to free memory
-            else if (Token::Match(tok, "%name% (") && !mProject->library.isFunctionConst(tok->str(), true)) {
+            else if (Token::Match(tok, "%name% (") && !mCtx.project->library.isFunctionConst(tok->str(), true)) {
                 const Token* tok2 = Token::findmatch(tok->next(), "%var%", tok->linkAt(1));
                 while (tok2 != nullptr) {
                     allocation.erase(tok->varId());
@@ -1914,18 +1891,16 @@ namespace {
 
 void CheckOther::checkDuplicateExpression()
 {
-    const bool styleEnabled = mProject->severity.isEnabled(Severity::style);
-    const bool warningEnabled = mProject->severity.isEnabled(Severity::warning);
+    const bool styleEnabled = mCtx.project->severity.isEnabled(Severity::style);
+    const bool warningEnabled = mCtx.project->severity.isEnabled(Severity::warning);
     if (!styleEnabled && !warningEnabled)
         return;
 
     // Parse all executing scopes..
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-
     std::list<const Function*> constFunctions;
-    getConstFunctions(symbolDatabase, constFunctions);
+    getConstFunctions(mCtx.symbolDB, constFunctions);
 
-    for (const Scope *scope : symbolDatabase->functionScopes) {
+    for (const Scope *scope : mCtx.symbolDB->functionScopes) {
         for (const Token *tok = scope->bodyStart; tok != scope->bodyEnd; tok = tok->next()) {
             if (tok->str() == "=" && Token::Match(tok->astOperand1(), "%var%")) {
                 const Token * endStatement = Token::findsimplematch(tok, ";");
@@ -1949,8 +1924,8 @@ void CheckOther::checkDuplicateExpression()
                             Token::Match(tok->astOperand2()->previous(), "%name% (")
                         ) &&
                         tok->next()->tokType() != Token::eType &&
-                        isSameExpression(mTokenizer->isCPP(), true, tok->next(), nextAssign->next(), mProject->library, true, false) &&
-                        isSameExpression(mTokenizer->isCPP(), true, tok->astOperand2(), nextAssign->astOperand2(), mProject->library, true, false) &&
+                        isSameExpression(mCtx.tokenizer->isCPP(), true, tok->next(), nextAssign->next(), mCtx.project->library, true, false) &&
+                        isSameExpression(mCtx.tokenizer->isCPP(), true, tok->astOperand2(), nextAssign->astOperand2(), mCtx.project->library, true, false) &&
                         tok->astOperand2()->expressionString() == nextAssign->astOperand2()->expressionString()) {
                         bool assigned = false;
                         const Scope * varScope = var1->scope() ? var1->scope() : scope;
@@ -1966,7 +1941,7 @@ void CheckOther::checkDuplicateExpression()
                         }
                         if (!assigned && !isUniqueExpression(tok->astOperand2()))
                             duplicateAssignExpressionError(var1, var2, false);
-                        else if (mProject->certainty.isEnabled(Certainty::inconclusive))
+                        else if (mCtx.project->certainty.isEnabled(Certainty::inconclusive))
                             duplicateAssignExpressionError(var1, var2, true);
                     }
                 }
@@ -1978,20 +1953,20 @@ void CheckOther::checkDuplicateExpression()
                 const bool pointerDereference = (tok->astOperand1() && tok->astOperand1()->isUnaryOp("*")) ||
                                                 (tok->astOperand2() && tok->astOperand2()->isUnaryOp("*"));
                 const bool followVar = (!isConstVarExpression(tok) || Token::Match(tok, "%comp%|%oror%|&&")) && !pointerDereference;
-                if (isSameExpression(mTokenizer->isCPP(),
+                if (isSameExpression(mCtx.tokenizer->isCPP(),
                                      true,
                                      tok->astOperand1(),
                                      tok->astOperand2(),
-                                     mProject->library,
+                                     mCtx.project->library,
                                      true,
                                      followVar,
                                      &errorPath)) {
-                    if (isWithoutSideEffects(mTokenizer->isCPP(), tok->astOperand1())) {
+                    if (isWithoutSideEffects(mCtx.tokenizer->isCPP(), tok->astOperand1())) {
                         const bool assignment = tok->str() == "=";
                         if (assignment && warningEnabled)
                             selfAssignmentError(tok, tok->astOperand1()->expressionString());
                         else if (styleEnabled) {
-                            if (mTokenizer->isCPP() && mProject->standards.cpp==Standards::CPP11 && tok->str() == "==") {
+                            if (mCtx.tokenizer->isCPP() && mCtx.project->standards.cpp==Standards::CPP11 && tok->str() == "==") {
                                 const Token* parent = tok->astParent();
                                 while (parent && parent->astParent()) {
                                     parent = parent->astParent();
@@ -2004,45 +1979,45 @@ void CheckOther::checkDuplicateExpression()
                         }
                     }
                 } else if (tok->str() == "=" && Token::simpleMatch(tok->astOperand2(), "=") &&
-                           isSameExpression(mTokenizer->isCPP(),
+                           isSameExpression(mCtx.tokenizer->isCPP(),
                                             false,
                                             tok->astOperand1(),
                                             tok->astOperand2()->astOperand1(),
-                                            mProject->library,
+                                            mCtx.project->library,
                                             true,
                                             false)) {
-                    if (warningEnabled && isWithoutSideEffects(mTokenizer->isCPP(), tok->astOperand1())) {
+                    if (warningEnabled && isWithoutSideEffects(mCtx.tokenizer->isCPP(), tok->astOperand1())) {
                         selfAssignmentError(tok, tok->astOperand1()->expressionString());
                     }
                 } else if (styleEnabled &&
-                           isOppositeExpression(mTokenizer->isCPP(),
+                           isOppositeExpression(mCtx.tokenizer->isCPP(),
                                                 tok->astOperand1(),
                                                 tok->astOperand2(),
-                                                mProject->library,
+                                                mCtx.project->library,
                                                 false,
                                                 true,
                                                 &errorPath) &&
                            !Token::Match(tok, "=|-|-=|/|/=") &&
-                           isWithoutSideEffects(mTokenizer->isCPP(), tok->astOperand1())) {
+                           isWithoutSideEffects(mCtx.tokenizer->isCPP(), tok->astOperand1())) {
                     oppositeExpressionError(tok, errorPath);
                 } else if (!Token::Match(tok, "[-/%]")) { // These operators are not associative
                     if (styleEnabled && tok->astOperand2() && tok->str() == tok->astOperand1()->str() &&
-                        isSameExpression(mTokenizer->isCPP(),
+                        isSameExpression(mCtx.tokenizer->isCPP(),
                                          true,
                                          tok->astOperand2(),
                                          tok->astOperand1()->astOperand2(),
-                                         mProject->library,
+                                         mCtx.project->library,
                                          true,
                                          followVar,
                                          &errorPath) &&
-                        isWithoutSideEffects(mTokenizer->isCPP(), tok->astOperand2()))
+                        isWithoutSideEffects(mCtx.tokenizer->isCPP(), tok->astOperand2()))
                         duplicateExpressionError(tok->astOperand2(), tok->astOperand1()->astOperand2(), tok, errorPath);
-                    else if (tok->astOperand2() && isConstExpression(tok->astOperand1(), mProject->library, true, mTokenizer->isCPP())) {
+                    else if (tok->astOperand2() && isConstExpression(tok->astOperand1(), mCtx.project->library, true, mCtx.tokenizer->isCPP())) {
                         const Token *ast1 = tok->astOperand1();
                         while (ast1 && tok->str() == ast1->str()) {
-                            if (isSameExpression(mTokenizer->isCPP(), true, ast1->astOperand1(), tok->astOperand2(), mProject->library, true, true, &errorPath) &&
-                                isWithoutSideEffects(mTokenizer->isCPP(), ast1->astOperand1()) &&
-                                isWithoutSideEffects(mTokenizer->isCPP(), ast1->astOperand2()))
+                            if (isSameExpression(mCtx.tokenizer->isCPP(), true, ast1->astOperand1(), tok->astOperand2(), mCtx.project->library, true, true, &errorPath) &&
+                                isWithoutSideEffects(mCtx.tokenizer->isCPP(), ast1->astOperand1()) &&
+                                isWithoutSideEffects(mCtx.tokenizer->isCPP(), ast1->astOperand2()))
                                 // Probably the message should be changed to 'duplicate expressions X in condition or something like that'.
                                 duplicateExpressionError(ast1->astOperand1(), tok->astOperand2(), tok, errorPath);
                             ast1 = ast1->astOperand1();
@@ -2052,7 +2027,7 @@ void CheckOther::checkDuplicateExpression()
             } else if (styleEnabled && tok->astOperand1() && tok->astOperand2() && tok->str() == ":" && tok->astParent() && tok->astParent()->str() == "?") {
                 if (!tok->astOperand1()->values().empty() && !tok->astOperand2()->values().empty() && isEqualKnownValue(tok->astOperand1(), tok->astOperand2()))
                     duplicateValueTernaryError(tok);
-                else if (isSameExpression(mTokenizer->isCPP(), true, tok->astOperand1(), tok->astOperand2(), mProject->library, false, true, &errorPath))
+                else if (isSameExpression(mCtx.tokenizer->isCPP(), true, tok->astOperand1(), tok->astOperand2(), mCtx.project->library, false, true, &errorPath))
                     duplicateExpressionTernaryError(tok, errorPath);
             }
         }
@@ -2146,11 +2121,10 @@ void CheckOther::selfAssignmentError(const Token *tok, const std::string &varnam
 //-----------------------------------------------------------------------------
 void CheckOther::checkComparisonFunctionIsAlwaysTrueOrFalse()
 {
-    if (!mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (tok->isName() && Token::Match(tok, "isgreater|isless|islessgreater|isgreaterequal|islessequal ( %var% , %var% )")) {
                 const int varidLeft = tok->tokAt(2)->varId();// get the left varid
@@ -2189,12 +2163,10 @@ void CheckOther::checkComparisonFunctionIsAlwaysTrueOrFalseError(const Token* to
 //---------------------------------------------------------------------------
 void CheckOther::checkSignOfUnsignedVariable()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         // check all the code in the function
         for (const Token *tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (!tok->isComparisonOp() || !tok->astOperand1() || !tok->astOperand2())
@@ -2282,12 +2254,10 @@ static bool constructorTakesReference(const Scope * const classScope)
 //---------------------------------------------------------------------------
 void CheckOther::checkRedundantCopy()
 {
-    if (!mProject->severity.isEnabled(Severity::performance) || mTokenizer->isC() || !mProject->certainty.isEnabled(Certainty::inconclusive))
+    if (!mCtx.project->severity.isEnabled(Severity::performance) || mCtx.tokenizer->isC() || !mCtx.project->certainty.isEnabled(Certainty::inconclusive))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Variable* var : symbolDatabase->variableList()) {
+    for (const Variable* var : mCtx.symbolDB->variableList()) {
         if (!var || var->isReference() || !var->isConst() || var->isPointer() || (!var->type() && !var->isStlType())) // bailout if var is of standard type, if it is a pointer or non-const
             continue;
 
@@ -2335,9 +2305,9 @@ static bool isNegative(const Token *tok, const Project* project)
 
 void CheckOther::checkNegativeBitwiseShift()
 {
-    const bool portability = mProject->severity.isEnabled(Severity::portability);
+    const bool portability = mCtx.project->severity.isEnabled(Severity::portability);
 
-    for (const Token* tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token* tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (!tok->astOperand1() || !tok->astOperand2())
             continue;
 
@@ -2345,7 +2315,7 @@ void CheckOther::checkNegativeBitwiseShift()
             continue;
 
         // don't warn if lhs is a class. this is an overloaded operator then
-        if (mTokenizer->isCPP()) {
+        if (mCtx.tokenizer->isCPP()) {
             const ValueType * lhsType = tok->astOperand1()->valueType();
             if (!lhsType || !lhsType->isIntegral())
                 continue;
@@ -2363,9 +2333,9 @@ void CheckOther::checkNegativeBitwiseShift()
             continue;
 
         // Get negative rhs value. preferably a value which doesn't have 'condition'.
-        if (portability && isNegative(tok->astOperand1(), mProject))
+        if (portability && isNegative(tok->astOperand1(), mCtx.project))
             negativeBitwiseShiftError(tok, 1);
-        else if (isNegative(tok->astOperand2(), mProject))
+        else if (isNegative(tok->astOperand2(), mCtx.project))
             negativeBitwiseShiftError(tok, 2);
     }
 }
@@ -2387,16 +2357,14 @@ void CheckOther::negativeBitwiseShiftError(const Token *tok, int op)
 //---------------------------------------------------------------------------
 void CheckOther::checkIncompleteArrayFill()
 {
-    if (!mProject->certainty.isEnabled(Certainty::inconclusive))
+    if (!mCtx.project->certainty.isEnabled(Certainty::inconclusive))
         return;
-    const bool printWarning = mProject->severity.isEnabled(Severity::warning);
-    const bool printPortability = mProject->severity.isEnabled(Severity::portability);
+    const bool printWarning = mCtx.project->severity.isEnabled(Severity::warning);
+    const bool printPortability = mCtx.project->severity.isEnabled(Severity::portability);
     if (!printPortability && !printWarning)
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart->next(); tok != scope->bodyEnd; tok = tok->next()) {
             if (Token::Match(tok, "memset|memcpy|memmove (") && Token::Match(tok->linkAt(1)->tokAt(-2), ", %num% )")) {
                 const Token* tok2 = tok->tokAt(2);
@@ -2412,11 +2380,11 @@ void CheckOther::checkIncompleteArrayFill()
                     continue;
 
                 if (MathLib::toLongNumber(tok->linkAt(1)->strAt(-1)) == var->dimension(0)) {
-                    unsigned int size = mTokenizer->sizeOfType(var->typeStartToken());
+                    unsigned int size = mCtx.tokenizer->sizeOfType(var->typeStartToken());
                     if (size == 0 && var->valueType()->pointer)
-                        size = mProject->sizeof_pointer;
+                        size = mCtx.project->sizeof_pointer;
                     else if (size == 0 && var->type())
-                        size = estimateSize(var->type(), mProject, symbolDatabase);
+                        size = estimateSize(var->type(), mCtx);
                     if ((size != 1 && size != 100 && size != 0) || var->isPointer()) {
                         if (printWarning)
                             incompleteArrayFillError(tok, var->name(), tok->str(), false);
@@ -2450,11 +2418,10 @@ void CheckOther::incompleteArrayFillError(const Token* tok, const std::string& b
 
 void CheckOther::checkVarFuncNullUB()
 {
-    if (!mProject->severity.isEnabled(Severity::portability))
+    if (!mCtx.project->severity.isEnabled(Severity::portability))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = scope->bodyStart; tok != scope->bodyEnd; tok = tok->next()) {
             // Is NULL passed to a function?
             if (Token::Match(tok,"[(,] NULL [,)]")) {
@@ -2533,10 +2500,10 @@ void CheckOther::varFuncNullUBError(const Token *tok)
 
 void CheckOther::checkRedundantPointerOp()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
 
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (!tok->isUnaryOp("&") || !tok->astOperand1()->isUnaryOp("*"))
             continue;
 
@@ -2562,11 +2529,11 @@ void CheckOther::redundantPointerOpError(const Token* tok, const std::string &va
 
 void CheckOther::checkInterlockedDecrement()
 {
-    if (!mProject->isWindowsPlatform()) {
+    if (!mCtx.project->isWindowsPlatform()) {
         return;
     }
 
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (tok->isName() && Token::Match(tok, "InterlockedDecrement ( & %name% ) ; if ( %name%|!|0")) {
             const Token* interlockedVarTok = tok->tokAt(3);
             const Token* checkStartTok =  interlockedVarTok->tokAt(5);
@@ -2605,12 +2572,11 @@ void CheckOther::raceAfterInterlockedDecrementError(const Token* tok)
 
 void CheckOther::checkUnusedLabel()
 {
-    if (!mProject->severity.isEnabled(Severity::style) && !mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::style) && !mCtx.project->severity.isEnabled(Severity::warning))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
-        const bool hasIfdef = mTokenizer->hasIfdef(scope->bodyStart, scope->bodyEnd);
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
+        const bool hasIfdef = mCtx.tokenizer->hasIfdef(scope->bodyStart, scope->bodyEnd);
         for (const Token* tok = scope->bodyStart; tok != scope->bodyEnd; tok = tok->next()) {
             if (!tok->scope()->isExecutable())
                 tok = tok->scope()->bodyEnd;
@@ -2626,7 +2592,7 @@ void CheckOther::checkUnusedLabel()
 
 void CheckOther::unusedLabelError(const Token* tok, bool inSwitch, bool hasIfdef)
 {
-    if (tok && !mProject->severity.isEnabled(inSwitch ? Severity::warning : Severity::style))
+    if (tok && !mCtx.project->severity.isEnabled(inSwitch ? Severity::warning : Severity::style))
         return;
 
     std::string id = "unusedLabel";
@@ -2653,11 +2619,10 @@ void CheckOther::unusedLabelError(const Token* tok, bool inSwitch, bool hasIfdef
 void CheckOther::checkEvaluationOrder()
 {
     // This checker is not written according to C++11 sequencing rules
-    if (mTokenizer->isCPP() && mProject->standards.cpp >= Standards::CPP11)
+    if (mCtx.tokenizer->isCPP() && mCtx.project->standards.cpp >= Standards::CPP11)
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * functionScope : symbolDatabase->functionScopes) {
+    for (const Scope * functionScope : mCtx.symbolDB->functionScopes) {
         for (const Token* tok = functionScope->bodyStart; tok != functionScope->bodyEnd; tok = tok->next()) {
             if (tok->tokType() != Token::eIncDecOp && !tok->isAssignmentOp())
                 continue;
@@ -2694,9 +2659,9 @@ void CheckOther::checkEvaluationOrder()
                 if (tok2 == tok &&
                     tok->str() == "=" &&
                     parent->str() == "=" &&
-                    isSameExpression(mTokenizer->isCPP(), false, tok->astOperand1(), parent->astOperand1(), mProject->library, true, false)) {
-                    if (mProject->severity.isEnabled(Severity::warning) &&
-                        isSameExpression(mTokenizer->isCPP(), true, tok->astOperand1(), parent->astOperand1(), mProject->library, true, false))
+                    isSameExpression(mCtx.tokenizer->isCPP(), false, tok->astOperand1(), parent->astOperand1(), mCtx.project->library, true, false)) {
+                    if (mCtx.project->severity.isEnabled(Severity::warning) &&
+                        isSameExpression(mCtx.tokenizer->isCPP(), true, tok->astOperand1(), parent->astOperand1(), mCtx.project->library, true, false))
                         selfAssignmentError(parent, tok->astOperand1()->expressionString());
                     break;
                 }
@@ -2709,7 +2674,7 @@ void CheckOther::checkEvaluationOrder()
                         return ChildrenToVisit::none; // don't handle address-of for now
                     if (tok3->str() == "(" && Token::simpleMatch(tok3->previous(), "sizeof"))
                         return ChildrenToVisit::none; // don't care about sizeof usage
-                    if (isSameExpression(mTokenizer->isCPP(), false, tok->astOperand1(), tok3, mProject->library, true, false))
+                    if (isSameExpression(mCtx.tokenizer->isCPP(), false, tok->astOperand1(), tok3, mCtx.project->library, true, false))
                         foundError = true;
                     return foundError ? ChildrenToVisit::done : ChildrenToVisit::op1_and_op2;
                 });
@@ -2731,12 +2696,11 @@ void CheckOther::unknownEvaluationOrder(const Token* tok)
 
 void CheckOther::checkAccessOfMovedVariable()
 {
-    if (!mTokenizer->isCPP() || mProject->standards.cpp < Standards::CPP11 || !mProject->severity.isEnabled(Severity::warning))
+    if (!mCtx.tokenizer->isCPP() || mCtx.project->standards.cpp < Standards::CPP11 || !mCtx.project->severity.isEnabled(Severity::warning))
         return;
-    CheckUninitVar checkUninitVar(mTokenizer, mSettings, mErrorLogger, mProject);
-    const bool reportInconclusive = mProject->certainty.isEnabled(Certainty::inconclusive);
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope * scope : symbolDatabase->functionScopes) {
+    CheckUninitVar checkUninitVar(mCtx);
+    const bool reportInconclusive = mCtx.project->certainty.isEnabled(Certainty::inconclusive);
+    for (const Scope * scope : mCtx.symbolDB->functionScopes) {
         const Token * scopeStart = scope->bodyStart;
         if (scope->function) {
             const Token * memberInitializationStart = scope->function->constructorMemberInitialization();
@@ -2758,7 +2722,7 @@ void CheckOther::checkAccessOfMovedVariable()
                 else
                     inconclusive = true;
             } else {
-                const bool isVarChanged = isVariableChangedByFunctionCall(tok, 0, mProject, &inconclusive);
+                const bool isVarChanged = isVariableChangedByFunctionCall(tok, 0, mCtx.project, &inconclusive);
                 accessOfMoved = !isVarChanged && checkUninitVar.isVariableUsage(tok, false, CheckUninitVar::NO_ALLOC);
                 if (inconclusive) {
                     accessOfMoved = !isMovedParameterAllowedForInconclusiveFunction(tok);
@@ -2816,16 +2780,15 @@ void CheckOther::accessMovedError(const Token *tok, const std::string &varname, 
 
 void CheckOther::checkFuncArgNamesDifferent()
 {
-    const bool style = mProject->severity.isEnabled(Severity::style);
-    const bool inconclusive = mProject->certainty.isEnabled(Certainty::inconclusive);
-    const bool warning = mProject->severity.isEnabled(Severity::warning);
+    const bool style = mCtx.project->severity.isEnabled(Severity::style);
+    const bool inconclusive = mCtx.project->certainty.isEnabled(Certainty::inconclusive);
+    const bool warning = mCtx.project->severity.isEnabled(Severity::warning);
 
     if (!(warning || (style && inconclusive)))
         return;
 
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
     // check every function
-    for (const Scope *scope : symbolDatabase->functionScopes) {
+    for (const Scope *scope : mCtx.symbolDB->functionScopes) {
         const Function * function = scope->function;
         // only check functions with arguments
         if (!function || function->argCount() == 0)
@@ -2954,10 +2917,9 @@ static const Token *findShadowed(const Scope *scope, const std::string &varname,
 
 void CheckOther::checkShadowVariables()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope & scope : symbolDatabase->scopeList) {
+    for (const Scope & scope : mCtx.symbolDB->scopeList) {
         if (!scope.isExecutable() || scope.type == Scope::eLambda)
             continue;
         const Scope *functionScope = &scope;
@@ -3017,10 +2979,9 @@ static bool isVariableExpression(const Token* tok)
 
 void CheckOther::checkKnownArgument()
 {
-    if (!mProject->severity.isEnabled(Severity::style))
+    if (!mCtx.project->severity.isEnabled(Severity::style))
         return;
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope *functionScope : symbolDatabase->functionScopes) {
+    for (const Scope *functionScope : mCtx.symbolDB->functionScopes) {
         for (const Token *tok = functionScope->bodyStart; tok != functionScope->bodyEnd; tok = tok->next()) {
             if (!Token::simpleMatch(tok->astParent(), "("))
                 continue;
@@ -3066,8 +3027,7 @@ void CheckOther::knownArgumentError(const Token *tok, const Token *ftok, const V
 
 void CheckOther::checkComparePointers()
 {
-    const SymbolDatabase *symbolDatabase = mTokenizer->getSymbolDatabase();
-    for (const Scope *functionScope : symbolDatabase->functionScopes) {
+    for (const Scope *functionScope : mCtx.symbolDB->functionScopes) {
         for (const Token *tok = functionScope->bodyStart; tok != functionScope->bodyEnd; tok = tok->next()) {
             if (!Token::Match(tok, "<|>|<=|>=|-"))
                 continue;
@@ -3115,7 +3075,7 @@ void CheckOther::comparePointersError(const Token *tok, const ValueFlow::Value *
 
 void CheckOther::checkModuloOfOne()
 {
-    for (const Token *tok = mTokenizer->tokens(); tok; tok = tok->next()) {
+    for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (!tok->astOperand2() || !tok->astOperand1())
             continue;
         if (tok->str() != "%")

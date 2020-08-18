@@ -82,7 +82,7 @@ public:
     /** character that is inserted in expanded macros */
     static char macroChar;
 
-    explicit Preprocessor(Settings& settings, Project& project, ErrorLogger *errorLogger = nullptr);
+    explicit Preprocessor(const Settings& settings, Project& project, ErrorLogger *errorLogger = nullptr);
     virtual ~Preprocessor();
 
     static std::atomic<bool> missingIncludeFlag;
@@ -195,7 +195,7 @@ private:
 public:
 
 
-    static void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project);
+    static void getErrorMessages(Context ctx);
 
     void setFile0(const std::string &f) {
         mFile0 = f;
@@ -212,7 +212,7 @@ private:
     void missingInclude(const std::string &filename, unsigned int linenr, const std::string &header, HeaderTypes headerType);
     void error(const std::string &filename, unsigned int linenr, const std::string &msg);
 
-    Settings& mSettings;
+    const Settings& mSettings;
     Project& mProject;
     ErrorLogger *mErrorLogger;
 

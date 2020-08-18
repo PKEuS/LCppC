@@ -31,12 +31,8 @@
 #include <string>
 #include <vector>
 
-class ErrorLogger;
 class Function;
 class Scope;
-class Settings;
-class SymbolDatabase;
-class Token;
 
 /// @addtogroup Checks
 /// @{
@@ -46,18 +42,20 @@ class Token;
 class CPPCHECKLIB CheckClass : public Check {
 public:
     /** @brief This constructor is used when registering the CheckClass */
-    CheckClass() : Check(myName()), mSymbolDatabase(nullptr) {
+    CheckClass() : Check(myName()) {
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckClass(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project);
+    explicit CheckClass(Context ctx)
+        : Check(myName(), ctx) {
+    }
 
     /** @brief Run checks on the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        if (tokenizer->isC())
+    void runChecks(Context ctx) override {
+        if (ctx.tokenizer->isC())
             return;
 
-        CheckClass checkClass(tokenizer, settings, errorLogger, project);
+        CheckClass checkClass(ctx);
 
         // can't be a simplified check .. the 'sizeof' is used.
         checkClass.checkMemset();
@@ -152,7 +150,6 @@ public:
     void checkUnsafeClassRefMember();
 
 private:
-    const SymbolDatabase *mSymbolDatabase;
 
     // Reporting errors..
     void noConstructorError(const Token *tok, const std::string &classname, bool isStruct);
@@ -190,8 +187,8 @@ private:
     void thisUseAfterFree(const Token *self, const Token *free, const Token *use);
     void unsafeClassRefMemberError(const Token *tok, const std::string &varname);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckClass c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckClass c(ctx);
         c.noConstructorError(nullptr, "classname", false);
         c.noExplicitConstructorError(nullptr, "classname", false);
         //c.copyConstructorMallocError(nullptr, 0, "var");

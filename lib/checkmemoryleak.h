@@ -42,10 +42,7 @@
 
 class Function;
 class Scope;
-class Settings;
-class Token;
 class Variable;
-class ErrorLogger;
 
 /// @addtogroup Core
 /// @{
@@ -54,13 +51,7 @@ class ErrorLogger;
 class CPPCHECKLIB CheckMemoryLeak {
 private:
     /** For access to the tokens */
-    const Tokenizer * const mTokenizer_;
-
-    /** ErrorLogger used to report errors */
-    ErrorLogger * const mErrorLogger_;
-
-    /** Enabled standards */
-    const Project * const mProject_;
+    Context mCtx_;
 
     /**
      * Report error. Similar with the function Check::reportError
@@ -83,12 +74,12 @@ private:
     void reportErr(const std::vector<const Token *> &callstack, Severity::SeverityType severity, const std::string &id, const std::string &msg, CWE cwe) const;
 
 public:
-    CheckMemoryLeak() = delete;
+    CheckMemoryLeak() = default;
     CheckMemoryLeak(const CheckMemoryLeak &) = delete;
     CheckMemoryLeak& operator=(const CheckMemoryLeak &) = delete;
 
-    CheckMemoryLeak(const Tokenizer *t, ErrorLogger *e, const Project *p)
-        : mTokenizer_(t), mErrorLogger_(e), mProject_(p) {
+    CheckMemoryLeak(Context ctx)
+        : mCtx_(ctx) {
     }
 
     /** @brief What type of allocation are used.. the "Many" means that several types of allocation and deallocation are used */
@@ -172,16 +163,16 @@ public:
 class CPPCHECKLIB CheckMemoryLeakInFunction : private Check, public CheckMemoryLeak {
 public:
     /** @brief This constructor is used when registering this class */
-    CheckMemoryLeakInFunction() : Check(myName()), CheckMemoryLeak(nullptr, nullptr, nullptr) {
+    CheckMemoryLeakInFunction() : Check(myName()), CheckMemoryLeak() {
     }
 
     /** @brief This constructor is used when running checks */
-    CheckMemoryLeakInFunction(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project), CheckMemoryLeak(tokenizer, errorLogger, project) {
+    explicit CheckMemoryLeakInFunction(Context ctx)
+        : Check(myName(), ctx), CheckMemoryLeak(ctx) {
     }
 
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckMemoryLeakInFunction checkMemoryLeak(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckMemoryLeakInFunction checkMemoryLeak(ctx);
         checkMemoryLeak.checkReallocUsage();
     }
 
@@ -195,8 +186,8 @@ public:
 
 private:
     /** Report all possible errors (for the --errorlist) */
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckMemoryLeakInFunction c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckMemoryLeakInFunction c(ctx);
 
         c.memleakError(nullptr, "varname");
         c.resourceLeakError(nullptr, "varname");
@@ -234,18 +225,18 @@ private:
 
 class CPPCHECKLIB CheckMemoryLeakInClass : private Check, private CheckMemoryLeak {
 public:
-    CheckMemoryLeakInClass() : Check(myName()), CheckMemoryLeak(nullptr, nullptr, nullptr) {
+    CheckMemoryLeakInClass() : Check(myName()), CheckMemoryLeak() {
     }
 
-    CheckMemoryLeakInClass(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project), CheckMemoryLeak(tokenizer, errorLogger, project) {
+    explicit CheckMemoryLeakInClass(Context ctx)
+        : Check(myName(), ctx), CheckMemoryLeak(ctx) {
     }
 
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        if (!tokenizer->isCPP())
+    void runChecks(Context ctx) override {
+        if (!ctx.tokenizer->isCPP())
             return;
 
-        CheckMemoryLeakInClass checkMemoryLeak(tokenizer, settings, errorLogger, project);
+        CheckMemoryLeakInClass checkMemoryLeak(ctx);
         checkMemoryLeak.check();
     }
 
@@ -260,8 +251,8 @@ private:
 
     void unsafeClassError(const Token *tok, const std::string &classname, const std::string &varname);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckMemoryLeakInClass c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckMemoryLeakInClass c(ctx);
         c.publicAllocationError(nullptr, "varname");
         c.unsafeClassError(nullptr, "class", "class::varname");
     }
@@ -281,15 +272,15 @@ private:
 
 class CPPCHECKLIB CheckMemoryLeakStructMember : private Check, private CheckMemoryLeak {
 public:
-    CheckMemoryLeakStructMember() : Check(myName()), CheckMemoryLeak(nullptr, nullptr, nullptr) {
+    CheckMemoryLeakStructMember() : Check(myName()), CheckMemoryLeak() {
     }
 
-    CheckMemoryLeakStructMember(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project), CheckMemoryLeak(tokenizer, errorLogger, project) {
+    explicit CheckMemoryLeakStructMember(Context ctx)
+        : Check(myName(), ctx), CheckMemoryLeak(ctx) {
     }
 
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckMemoryLeakStructMember checkMemoryLeak(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckMemoryLeakStructMember checkMemoryLeak(ctx);
         checkMemoryLeak.check();
     }
 
@@ -302,7 +293,7 @@ private:
 
     void checkStructVariable(const Variable * const variable);
 
-    void getErrorMessages(ErrorLogger*, const Settings*, const Project*) const override {
+    void getErrorMessages(Context) const override {
     }
 
     static const char* myName() {
@@ -320,15 +311,15 @@ private:
 
 class CPPCHECKLIB CheckMemoryLeakNoVar : private Check, private CheckMemoryLeak {
 public:
-    CheckMemoryLeakNoVar() : Check(myName()), CheckMemoryLeak(nullptr, nullptr, nullptr) {
+    CheckMemoryLeakNoVar() : Check(myName()), CheckMemoryLeak() {
     }
 
-    CheckMemoryLeakNoVar(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project), CheckMemoryLeak(tokenizer, errorLogger, project) {
+    explicit CheckMemoryLeakNoVar(Context ctx)
+        : Check(myName(), ctx), CheckMemoryLeak(ctx) {
     }
 
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckMemoryLeakNoVar checkMemoryLeak(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckMemoryLeakNoVar checkMemoryLeak(ctx);
         checkMemoryLeak.check();
     }
 
@@ -358,8 +349,8 @@ private:
     void returnValueNotUsedError(const Token* tok, const std::string &alloc);
     void unsafeArgAllocError(const Token *tok, const std::string &funcName, const std::string &ptrType, const std::string &objType);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckMemoryLeakNoVar c(nullptr, settings, errorLogger, project);
+    void getErrorMessages(Context ctx) const override {
+        CheckMemoryLeakNoVar c(ctx);
 
         c.functionCallLeak(nullptr, "funcName", "funcName");
         c.returnValueNotUsedError(nullptr, "funcName");

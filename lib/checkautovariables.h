@@ -28,10 +28,6 @@
 
 #include <string>
 
-class Settings;
-class Token;
-class Tokenizer;
-class ErrorLogger;
 class Variable;
 
 /// @addtogroup Checks
@@ -46,13 +42,13 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    CheckAutoVariables(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckAutoVariables(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project) override {
-        CheckAutoVariables checkAutoVariables(tokenizer, settings, errorLogger, project);
+    void runChecks(Context ctx) override {
+        CheckAutoVariables checkAutoVariables(ctx);
         checkAutoVariables.assignFunctionArg();
         checkAutoVariables.checkVarLifetime();
         checkAutoVariables.autoVariables();
@@ -85,9 +81,9 @@ private:
     void errorUselessAssignmentArg(const Token *tok);
     void errorUselessAssignmentPtrArg(const Token *tok);
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
+    void getErrorMessages(Context ctx) const override {
         ErrorPath errorPath;
-        CheckAutoVariables c(nullptr, settings, errorLogger, project);
+        CheckAutoVariables c(ctx);
         c.errorAutoVariableAssignment(nullptr, false);
         c.errorReturnAddressToAutoVariable(nullptr);
         c.errorReturnPointerToLocalArray(nullptr);

@@ -109,7 +109,7 @@ private:
         tokenizer.simplifyTokens1();
 
         // Check for unused private functions..
-        CheckClass checkClass(&tokenizer, &settings, this, &project);
+        CheckClass checkClass(Context(this, &settings, &project, &tokenizer));
         checkClass.privateFunctions();
     }
 

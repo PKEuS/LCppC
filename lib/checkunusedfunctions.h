@@ -28,10 +28,6 @@
 #include <list>
 #include <string>
 
-class ErrorLogger;
-class Settings;
-class Tokenizer;
-
 /// @addtogroup Checks
 /** @brief Check for functions never called */
 /// @{
@@ -43,26 +39,27 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    CheckUnusedFunctions(const Tokenizer* tokenizer, const Settings* settings, ErrorLogger* errorLogger, const Project* project)
-        : Check(myName(), tokenizer, settings, errorLogger, project) {
+    explicit CheckUnusedFunctions(Context ctx)
+        : Check(myName(), ctx) {
     }
 
     /** @brief Parse current TU and extract file info */
-    Check::FileInfo* getFileInfo(const Tokenizer* tokenizer, const Settings* settings, const Project* project) const override;
+    Check::FileInfo* getFileInfo(Context ctx) const override;
 
     Check::FileInfo* loadFileInfoFromXml(const tinyxml2::XMLElement* xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Settings& settings, ErrorLogger& errorLogger, const Project* project) override;
+    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx) override;
 
 private:
 
-    void getErrorMessages(ErrorLogger* errorLogger, const Settings* settings, const Project* project) const override {
-        CheckUnusedFunctions c(nullptr, settings, errorLogger, project);
-        c.unusedFunctionError(errorLogger, emptyString, 0, "funcName");
+    void getErrorMessages(Context ctx) const override {
+        CheckUnusedFunctions c(ctx);
+        c.unusedFunctionError(ctx.errorLogger, emptyString, 0, "funcName");
     }
 
-    void runChecks(const Tokenizer * /*tokenizer*/, const Settings * /*settings*/, ErrorLogger * /*errorLogger*/, const Project*) override {
+    void runChecks(Context ctx) override {
+        (void)ctx;
     }
 
     void unusedFunctionError(ErrorLogger* const errorLogger, const std::string &filename, unsigned int lineNumber, const std::string &funcname);
