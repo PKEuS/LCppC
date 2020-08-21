@@ -1,3 +1,21 @@
+/*
+ * LCppC - A tool for static C/C++ code analysis
+ * Copyright (C) 2020 LCppC project.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "MainWindow.h"
 #include "CheckExecutor.h"
 #include "CppField.h"
@@ -189,9 +207,10 @@ void MainWindow::CheckScratchpad()
         return;
 
     Settings settings;
-    scratchpad->fillSettings(settings);
-    CheckExecutor::init(settings);
-    CheckExecutor::check(settings, settings.enforcedLang == Settings::CPP ? "scratch.cpp" : "scratch.c", scratchpad->getText());
+    Project project;
+    scratchpad->fillProject(project);
+    CheckExecutor::init(project);
+    CheckExecutor::check(settings, project, project.enforcedLang == Project::CPP ? "scratch.cpp" : "scratch.c", scratchpad->getText());
 
     codeView->SetEditable(true);
     codeView->SetText(scratchpad->getText());

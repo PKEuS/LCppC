@@ -1,3 +1,21 @@
+/*
+ * LCppC - A tool for static C/C++ code analysis
+ * Copyright (C) 2020 LCppC project.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "Scratchpad.h"
 #include "MainWindow.h"
 #include "CppField.h"
@@ -107,21 +125,21 @@ void Scratchpad::OnCheck(wxCommandEvent&)
     parent.CheckScratchpad();
 }
 
-void Scratchpad::fillSettings(Settings& settings) const
+void Scratchpad::fillProject(Project& project) const
 {
-    settings.force = true;
+    project.force = true;
 
-    settings.severity.setEnabled(Severity::error, severities[0]->IsChecked());
-    settings.severity.setEnabled(Severity::warning, severities[1]->IsChecked());
-    settings.severity.setEnabled(Severity::performance, severities[2]->IsChecked());
-    settings.severity.setEnabled(Severity::portability, severities[3]->IsChecked());
-    settings.severity.setEnabled(Severity::style, severities[4]->IsChecked());
+    project.severity.setEnabled(Severity::error, severities[0]->IsChecked());
+    project.severity.setEnabled(Severity::warning, severities[1]->IsChecked());
+    project.severity.setEnabled(Severity::performance, severities[2]->IsChecked());
+    project.severity.setEnabled(Severity::portability, severities[3]->IsChecked());
+    project.severity.setEnabled(Severity::style, severities[4]->IsChecked());
 
-    settings.certainty.setEnabled(Certainty::safe, certainties[0]->IsChecked());
-    settings.certainty.setEnabled(Certainty::inconclusive, certainties[1]->IsChecked());
-    settings.certainty.setEnabled(Certainty::experimental, certainties[2]->IsChecked());
+    project.certainty.setEnabled(Certainty::safe, certainties[0]->IsChecked());
+    project.certainty.setEnabled(Certainty::inconclusive, certainties[1]->IsChecked());
+    project.certainty.setEnabled(Certainty::experimental, certainties[2]->IsChecked());
 
-    settings.userDefines = defines->GetValue().ToStdString();
+    project.userDefines = defines->GetValue().ToStdString();
     wxString str = defines->GetValue();
     for (wxString::size_type startPos = 0U; startPos < str.size();) {
         wxString::size_type endPos;
@@ -133,22 +151,22 @@ void Scratchpad::fillSettings(Settings& settings) const
             endPos = str.find(';', startPos + 1);
         }
         if (endPos == wxString::npos) {
-            settings.userUndefs.emplace(str.substr(startPos));
+            project.userUndefs.emplace(str.substr(startPos));
             break;
         }
-        settings.userUndefs.emplace(str.substr(startPos, endPos - startPos));
+        project.userUndefs.emplace(str.substr(startPos, endPos - startPos));
         startPos = str.find_first_not_of(";", endPos);
     }
     for (size_t i = 0; i < sizeof(platforms) / sizeof(*platforms); i++) {
         if (platformStrings[i] == platform->GetValue()) {
-            settings.platform(platforms[i]);
+            project.platform(platforms[i]);
             break;
         }
     }
-    bool cpp = settings.standards.setCPP(language->GetValue().ToStdString());
+    bool cpp = project.standards.setCPP(language->GetValue().ToStdString());
     if (!cpp)
-        settings.standards.setC(language->GetValue().ToStdString());
-    settings.enforcedLang = cpp ? Settings::CPP : Settings::C;
+        project.standards.setC(language->GetValue().ToStdString());
+    project.enforcedLang = cpp ? Project::CPP : Project::C;
 }
 
 wxString Scratchpad::getText() const

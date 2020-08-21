@@ -1,3 +1,21 @@
+/*
+ * LCppC - A tool for static C/C++ code analysis
+ * Copyright (C) 2020 LCppC project.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "CheckExecutor.h"
 #include "../lib/settings.h"
 #include "../lib/cppcheck.h"
@@ -22,18 +40,18 @@ bool tryLoadLibrary(Library& destination, const char* basepath, const char* file
     return true;
 }
 
-void CheckExecutor::init(Settings& settings)
+void CheckExecutor::init(Project& project)
 {
     libcount = 0;
     wxString exepath = wxStandardPaths::Get().GetExecutablePath();
 
     // Load libraries
-    settings.libraries.emplace("std");
-    if (settings.isWindowsPlatform())
-        settings.libraries.emplace("windows");
+    project.libraries.emplace("std");
+    if (project.isWindowsPlatform())
+        project.libraries.emplace("windows");
 
-    for (const std::string& lib : settings.libraries) {
-        if (!tryLoadLibrary(settings.library, exepath.c_str(), lib.c_str())) {
+    for (const std::string& lib : project.libraries) {
+        if (!tryLoadLibrary(project.library, exepath.c_str(), lib.c_str())) {
             std::string msg, details;
             if (lib == "std" || lib == "windows") {
                 msg = "Failed to load '" + lib + ".cfg'. Your Cppcheck installation is broken, please re-install. ";
@@ -58,18 +76,18 @@ void CheckExecutor::init(Settings& settings)
     }
 }
 
-void CheckExecutor::check(Settings& settings, const wxString& directory)
+void CheckExecutor::check(Settings& settings, Project& project, const wxString& directory)
 {
     AnalyzerInformation analyzerInformation;
 
-    CppCheck cppcheck(*errorlogger, settings, false);
+    CppCheck cppcheck(*errorlogger, settings, project, false);
 
-    ThreadExecutor executor(analyzerInformation.getCTUs(), settings, *errorlogger);
-    executor.check();
+    ThreadExecutor executor(analyzerInformation.getCTUs(), settings, project, *errorlogger);
+    executor.checkSync();
 
     cppcheck.analyseWholeProgram(analyzerInformation);
 }
-void CheckExecutor::check(Settings& settings, const wxString& filename, const wxString& code)
+void CheckExecutor::check(Settings& settings, Project& project, const wxString& filename, const wxString& code)
 {
     std::size_t status_init = libcount * 1024; // Assume initialization is equivalent to a 1024 bytes file per library loaded
     std::size_t status_wpa = (std::size_t)(code.size() * 0.02); // Assume whole program analysis is 2% of runtime
@@ -77,7 +95,7 @@ void CheckExecutor::check(Settings& settings, const wxString& filename, const wx
     AnalyzerInformation analyzerInformation;
     CTU::CTUInfo& ctu = analyzerInformation.addCTU(filename.ToStdString(), code.size(), emptyString);
 
-    CppCheck cppcheck(*errorlogger, settings, false);
+    CppCheck cppcheck(*errorlogger, settings, project, false);
 
     errorlogger->reportStatus(1, 1, status_init, status_init + status_wpa + code.size());
 
