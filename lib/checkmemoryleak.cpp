@@ -49,29 +49,6 @@ static const CWE CWE401(401U);  // Improper Release of Memory Before Removing La
 static const CWE CWE771(771U);  // Missing Reference to Active Allocated Resource
 static const CWE CWE772(772U);  // Missing Release of Resource after Effective Lifetime
 
-
-/** List of functions that can be ignored when searching for memory leaks.
- * These functions don't take the address of the given pointer
- * This list contains function names with const parameters e.g.: atof(const char *)
- * TODO: This list should be replaced by <leak-ignore/> in .cfg files.
- */
-static const std::set<std::string> call_func_white_list = {
-    "_open", "_wopen", "access", "adjtime", "asctime_r", "asprintf", "chdir", "chmod", "chown"
-    , "creat", "ctime_r", "execl", "execle", "execlp", "execv", "execve", "fchmod", "fcntl"
-    , "fdatasync", "fclose", "flock", "fmemopen", "fnmatch", "fopen", "fopencookie", "for", "free"
-    , "freopen", "fseeko", "fstat", "fsync", "ftello", "ftruncate", "getgrnam", "gethostbyaddr", "gethostbyname"
-    , "getnetbyname", "getopt", "getopt_long", "getprotobyname", "getpwnam", "getservbyname", "getservbyport"
-    , "glob", "gmtime", "gmtime_r", "if", "index", "inet_addr", "inet_aton", "inet_network", "initgroups"
-    , "ioctl", "link", "localtime_r", "lockf", "lseek", "lstat", "mkdir", "mkfifo", "mknod", "mkstemp"
-    , "obstack_printf", "obstack_vprintf", "open", "opendir", "parse_printf_format", "pathconf"
-    , "perror", "popen", "posix_fadvise", "posix_fallocate", "pread", "psignal", "pwrite", "read", "readahead"
-    , "readdir", "readdir_r", "readlink", "readv", "realloc", "regcomp", "return", "rewinddir", "rindex"
-    , "rmdir", "scandir", "seekdir", "setbuffer", "sethostname", "setlinebuf", "sizeof", "strdup"
-    , "stat", "stpcpy", "strcasecmp", "stricmp", "strncasecmp", "switch"
-    , "symlink", "sync_file_range", "telldir", "tempnam", "time", "typeid", "unlink"
-    , "utime", "utimes", "vasprintf", "while", "wordexp", "write", "writev"
-};
-
 //---------------------------------------------------------------------------
 
 CheckMemoryLeak::AllocType CheckMemoryLeak::getAllocationType(const Token *tok2, unsigned int varid, std::vector<const Function*> *callstack) const
@@ -489,11 +466,6 @@ static bool ifvar(const Token *tok, unsigned int varid, const std::string &comp,
     return (vartok && vartok->varId() == varid);
 }
 
-bool CheckMemoryLeakInFunction::test_white_list(const std::string &funcname, const Library& library, bool cpp)
-{
-    return ((call_func_white_list.find(funcname)!=call_func_white_list.end()) || library.isLeakIgnore(funcname) || (cpp && funcname == "delete"));
-}
-
 
 //---------------------------------------------------------------------------
 // Check for memory leaks due to improper realloc() usage.
@@ -684,8 +656,8 @@ void CheckMemoryLeakInClass::variable(const Scope *scope, const Token *tokVarnam
                 }
 
                 // Function call .. possible deallocation
-                else if (Token::Match(tok->previous(), "[{};] %name% (")) {
-                    if (!CheckMemoryLeakInFunction::test_white_list(tok->str(), mCtx.project->library, mCtx.tokenizer->isCPP())) {
+                else if (!tok->isKeyword() && Token::Match(tok->previous(), "[{};] %name% (")) {
+                    if (!mCtx.project->library.isLeakIgnore(tok->str())) {
                         return;
                     }
                 }
@@ -917,9 +889,9 @@ void CheckMemoryLeakStructMember::checkStructVariable(const Variable * const var
                     break;
 
                 // using struct in a function call..
-                else if (Token::Match(tok3, "%name% (")) {
+                else if (!tok3->isKeyword() && Token::Match(tok3, "%name% (")) {
                     // Calling non-function / function that doesn't deallocate?
-                    if (CheckMemoryLeakInFunction::test_white_list(tok3->str(), mCtx.project->library, mCtx.tokenizer->isCPP()))
+                    if (mCtx.project->library.isLeakIgnore(tok3->str()))
                         continue;
 
                     // Check if the struct is used..
@@ -976,7 +948,7 @@ void CheckMemoryLeakNoVar::checkForUnreleasedInputArgument(const Scope *scope)
     // parse the executable scope until tok is reached...
     for (const Token *tok = scope->bodyStart; tok != scope->bodyEnd; tok = tok->next()) {
         // allocating memory in parameter for function call..
-        if (!Token::Match(tok, "%name% ("))
+        if (tok->isKeyword() || !Token::Match(tok, "%name% ("))
             continue;
 
         // check if the output of the function is assigned
@@ -994,7 +966,7 @@ void CheckMemoryLeakNoVar::checkForUnreleasedInputArgument(const Scope *scope)
             functionName == "return")
             continue;
 
-        if (!CheckMemoryLeakInFunction::test_white_list(functionName, mCtx.project->library, mCtx.tokenizer->isCPP()))
+        if (!mCtx.project->library.isLeakIgnore(functionName))
             continue;
 
         const std::vector<const Token *> args = getArguments(tok);

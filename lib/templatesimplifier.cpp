@@ -3349,7 +3349,7 @@ void TemplateSimplifier::fixForwardDeclaredDefaultArgumentValues()
     }
 }
 
-void TemplateSimplifier::printOut(const TokenAndName &tokenAndName, const std::string &indent) const
+void TemplateSimplifier::printOut(const TokenAndName &tokenAndName, const char* indent) const
 {
     std::cout << indent << "token: ";
     if (tokenAndName.token())
