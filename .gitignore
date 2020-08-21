@@ -111,3 +111,7 @@ man/*.html
 .idea
 /.metadata/
 cmake-*
+
+# clang tooling temporary files
+.clangd/
+compile_commands.json

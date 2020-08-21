@@ -83,6 +83,10 @@ namespace ValueFlow {
                 return false;
             switch (valueType) {
             case ValueType::INT:
+            case ValueType::CONTAINER_SIZE:
+            case ValueType::BUFFER_SIZE:
+            case ValueType::ITERATOR_START:
+            case ValueType::ITERATOR_END:
                 if (intvalue != rhs.intvalue)
                     return false;
                 break;
@@ -101,14 +105,6 @@ namespace ValueFlow {
                 break;
             case ValueType::UNINIT:
                 break;
-            case ValueType::BUFFER_SIZE:
-                if (intvalue != rhs.intvalue)
-                    return false;
-                break;
-            case ValueType::CONTAINER_SIZE:
-                if (intvalue != rhs.intvalue)
-                    return false;
-                break;
             case ValueType::LIFETIME:
                 if (tokvalue != rhs.tokvalue)
                     return false;
@@ -121,7 +117,9 @@ namespace ValueFlow {
             switch (valueType) {
             case ValueType::INT:
             case ValueType::BUFFER_SIZE:
-            case ValueType::CONTAINER_SIZE: {
+            case ValueType::CONTAINER_SIZE:
+            case ValueType::ITERATOR_START:
+            case ValueType::ITERATOR_END: {
                 f(intvalue);
                 break;
             }
@@ -175,7 +173,7 @@ namespace ValueFlow {
 
         std::string infoString() const;
 
-        enum ValueType : uint8_t { INT, TOK, FLOAT, MOVED, UNINIT, CONTAINER_SIZE, LIFETIME, BUFFER_SIZE } valueType;
+        enum ValueType : uint8_t { INT, TOK, FLOAT, MOVED, UNINIT, CONTAINER_SIZE, LIFETIME, BUFFER_SIZE, ITERATOR_START, ITERATOR_END } valueType;
         bool isIntValue() const {
             return valueType == ValueType::INT;
         }
@@ -199,6 +197,15 @@ namespace ValueFlow {
         }
         bool isBufferSizeValue() const {
             return valueType == ValueType::BUFFER_SIZE;
+        }
+        bool isIteratorValue() const {
+            return valueType == ValueType::ITERATOR_START || valueType == ValueType::ITERATOR_END;
+        }
+        bool isIteratorStartValue() const {
+            return valueType == ValueType::ITERATOR_START;
+        }
+        bool isIteratorEndValue() const {
+            return valueType == ValueType::ITERATOR_END;
         }
 
         bool isLocalLifetimeValue() const {

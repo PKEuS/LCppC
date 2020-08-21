@@ -174,11 +174,9 @@ bool CheckNullPointer::isPointerDeRef(const Token *tok, bool &unknown, const Pro
     if (parent->str() == "." && parent->astOperand2() == tok)
         return isPointerDeRef(parent, unknown, project);
     const bool firstOperand = parent->astOperand1() == tok;
-    while (parent->str() == "(" && (parent->astOperand2() == nullptr && parent->strAt(1) != ")")) { // Skip over casts
-        parent = parent->astParent();
-        if (!parent)
-            return false;
-    }
+    parent = astParentSkipParens(tok);
+    if (!parent)
+        return false;
 
     // Dereferencing pointer..
     if (parent->isUnaryOp("*") && !Token::Match(parent->tokAt(-2), "sizeof|decltype|typeof"))

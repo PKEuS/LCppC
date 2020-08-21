@@ -211,6 +211,8 @@ private:
         TEST_CASE(setVarIdStructMembers1);
 
         TEST_CASE(decltype1);
+
+        TEST_CASE(exprid1);
     }
 
     std::string tokenize(const char code[], const char filename[] = "test.cpp") {
@@ -221,7 +223,27 @@ private:
         tokenizer.tokenize(istr, filename);
 
         // result..
-        return tokenizer.tokens()->stringifyList(true,true,true,true,false);
+        Token::stringifyOptions options = Token::stringifyOptions::forDebugVarId();
+        options.files = false;
+        return tokenizer.tokens()->stringifyList(options);
+    }
+
+    std::string tokenizeExpr(const char code[], const char filename[] = "test.cpp") {
+        errout.str("");
+
+        Project project_;
+        project_.platform(Project::Unix64);
+        project_.standards.c   = Standards::C89;
+        project_.standards.cpp = Standards::CPP11;
+
+        Tokenizer tokenizer(&settings, &project_, this);
+        std::istringstream istr(code);
+        tokenizer.tokenize(istr, filename);
+
+        // result..
+        Token::stringifyOptions options = Token::stringifyOptions::forDebugExprId();
+        options.files = false;
+        return tokenizer.tokens()->stringifyList(options);
     }
 
     std::string compareVaridsForVariable(const char code[], const char varname[], const char filename[] = "test.cpp") {
@@ -3198,6 +3220,29 @@ private:
         const char code[] = "void foo(int x, decltype(A::b) *p);";
         const char expected[] = "1: void foo ( int x@1 , decltype ( A :: b ) * p@2 ) ;\n";
         ASSERT_EQUALS(expected, tokenize(code));
+    }
+
+    void exprid1() {
+        const std::string actual = tokenizeExpr(
+                                       "struct A {\n"
+                                       "    int x, y;\n"
+                                       "};\n"
+                                       "int f(A a, A b) {\n"
+                                       "    int x = a.x + b.x;\n"
+                                       "    int y = b.x + a.x;\n"
+                                       "    return x + y + a.y + b.y;\n"
+                                       "}\n");
+
+        const char expected[] = "1: struct A {\n"
+                                "2: int x ; int y ;\n"
+                                "3: } ;\n"
+                                "4: int f ( A a , A b ) {\n"
+                                "5: int x@5 ; x@5 = a@3 .@9 x@6 +@10 b@4 .@11 x@7 ;\n"
+                                "6: int y@8 ; y@8 = b@4 .@11 x@7 +@10 a@3 .@9 x@6 ;\n"
+                                "7: return x@5 +@15 y@8 +@16 a@3 .@17 y@9 +@18 b@4 .@19 y@10 ;\n"
+                                "8: }\n";
+
+        ASSERT_EQUALS(expected, actual);
     }
 };
 

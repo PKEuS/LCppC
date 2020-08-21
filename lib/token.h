@@ -67,6 +67,7 @@ struct TokenImpl {
     unsigned int mFileIndex;
     unsigned int mLineNumber;
     unsigned int mColumn;
+    MathLib::bigint mExprId;
 
     // AST..
     Token *mAstOperand1;
@@ -131,6 +132,7 @@ struct TokenImpl {
         , mFileIndex(0)
         , mLineNumber(0)
         , mColumn(0)
+        , mExprId(0)
         , mAstOperand1(nullptr)
         , mAstOperand2(nullptr)
         , mAstParent(nullptr)
@@ -806,6 +808,13 @@ public:
         }
     }
 
+    MathLib::bigint exprId() const {
+        return mImpl->mExprId;
+    }
+    void exprId(MathLib::bigint id) {
+        mImpl->mExprId = id;
+    }
+
     /**
      * For debugging purposes, prints token and all tokens
      * followed by it.
@@ -838,6 +847,35 @@ public:
      */
     static void replace(Token *replaceThis, Token *start, Token *end);
 
+    struct stringifyOptions {
+        bool varid = false;
+        bool exprid = false;
+        bool attributes = false;
+        bool macro = false;
+        bool linenumbers = false;
+        bool linebreaks = false;
+        bool files = false;
+        static stringifyOptions forDebug() {
+            stringifyOptions options;
+            options.attributes = true;
+            options.macro = true;
+            options.linenumbers = true;
+            options.linebreaks = true;
+            options.files = true;
+            return options;
+        }
+        static stringifyOptions forDebugVarId() {
+            stringifyOptions options = forDebug();
+            options.varid = true;
+            return options;
+        }
+        static stringifyOptions forDebugExprId() {
+            stringifyOptions options = forDebug();
+            options.exprid = true;
+            return options;
+        }
+    };
+
     /**
      * Stringify a token
      * @param os The result is shifted into that output stream
@@ -845,6 +883,7 @@ public:
      * @param attributes Print attributes of tokens like "unsigned" in front of it.
      * @param macro Prints $ in front of the token if it was expanded from a macro.
      */
+    void stringify(std::ostream& os, const stringifyOptions& options) const;
     void stringify(std::ostream& os, bool varid, bool attributes, bool macro) const;
 
     /**
@@ -858,6 +897,7 @@ public:
      * @param end Stringification ends before this token is reached. 0 to stringify until end of list.
      * @return Stringified token list as a string
      */
+    std::string stringifyList(const stringifyOptions& options, const std::vector<std::string>* fileNames = nullptr, const Token* end = nullptr) const;
     std::string stringifyList(bool varid, bool attributes, bool linenumbers, bool linebreaks, bool files, const std::vector<std::string>* fileNames = nullptr, const Token* end = nullptr) const;
     std::string stringifyList(const Token* end, bool attributes = true) const;
     std::string stringifyList(bool varid = false) const;

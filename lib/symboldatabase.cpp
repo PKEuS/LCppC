@@ -22,6 +22,7 @@
 
 #include "astutils.h"
 #include "errorlogger.h"
+#include "mathlib.h"
 #include "platform.h"
 #include "settings.h"
 #include "templatesimplifier.h"
@@ -36,6 +37,7 @@
 #include <climits>
 #include <iomanip>
 #include <iostream>
+#include <unordered_map>
 //---------------------------------------------------------------------------
 
 SymbolDatabase::SymbolDatabase(Context ctx)
@@ -68,6 +70,7 @@ SymbolDatabase::SymbolDatabase(Context ctx)
     createSymbolDatabaseEnums();
     createSymbolDatabaseEscapeFunctions();
     createSymbolDatabaseIncompleteVars();
+    createSymbolDatabaseExprIds();
 }
 
 static const Token* skipScopeIdentifiers(const Token* tok)
@@ -1419,6 +1422,49 @@ void SymbolDatabase::createSymbolDatabaseEscapeFunctions()
         if (!function)
             continue;
         function->isEscapeFunction(isReturnScope(scope.bodyEnd, &mCtx.project->library, nullptr, true));
+    }
+}
+
+void SymbolDatabase::createSymbolDatabaseExprIds()
+{
+    MathLib::bigint base = 0;
+    // Find highest varId
+    for (const Variable *var : mVariableList) {
+        if (!var)
+            continue;
+        base = std::max<MathLib::bigint>(base, var->declarationId());
+    }
+    MathLib::bigint id = base+1;
+    for (const Scope * scope : functionScopes) {
+        std::unordered_map<std::string, std::vector<Token*>> exprs;
+
+        // Assign IDs
+        for (Token* tok = const_cast<Token*>(scope->bodyStart); tok != scope->bodyEnd; tok = tok->next()) {
+            if (tok->varId() > 0) {
+                tok->exprId(tok->varId());
+            } else if (Token::Match(tok, "(|.|%cop%")) {
+                exprs[tok->str()].push_back(tok);
+                tok->exprId(id++);
+            }
+        }
+
+        // Apply CSE
+        for (const auto& p:exprs) {
+            const std::vector<Token*>& tokens = p.second;
+            for (Token* tok1:tokens) {
+                for (Token* tok2:tokens) {
+                    if (tok1 == tok2)
+                        continue;
+                    if (tok1->exprId() == tok2->exprId())
+                        continue;
+                    if (!isSameExpression(isCPP(), true, tok1, tok2, mCtx.project->library, true, false))
+                        continue;
+                    MathLib::bigint cid = std::min(tok1->exprId(), tok2->exprId());
+                    tok1->exprId(cid);
+                    tok2->exprId(cid);
+                }
+            }
+        }
     }
 }
 

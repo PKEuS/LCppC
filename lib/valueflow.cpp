@@ -342,6 +342,10 @@ static void combineValueProperties(const ValueFlow::Value &value1, const ValueFl
         result->setInconclusive();
     else
         result->setPossible();
+    if (value1.isIteratorValue())
+        result->valueType = value1.valueType;
+    if (value2.isIteratorValue())
+        result->valueType = value2.valueType;
     result->condition = value1.condition ? value1.condition : value2.condition;
     result->varId = (value1.varId != 0U) ? value1.varId : value2.varId;
     result->varvalue = (result->varId == value1.varId) ? value1.varvalue : value2.varvalue;
@@ -369,6 +373,20 @@ static const Token *getCastTypeStartToken(const Token *parent)
     if (parent->astOperand2() && Token::Match(parent->astOperand1(), "const_cast|dynamic_cast|reinterpret_cast|static_cast <"))
         return parent->astOperand1()->tokAt(2);
     return nullptr;
+}
+
+static bool isComputableValue(const Token* parent, const ValueFlow::Value& value)
+{
+    const bool noninvertible = parent->isComparisonOp() || Token::Match(parent, "%|/|&|%or%");
+    if (noninvertible && value.isImpossible())
+        return false;
+    if (!value.isIntValue() && !value.isFloatValue() && !value.isTokValue() && !value.isIteratorValue())
+        return false;
+    if (value.isIteratorValue() && !Token::Match(parent, "+|-"))
+        return false;
+    if (value.isTokValue() && (!parent->isComparisonOp() || value.tokvalue->tokType() != Token::eString))
+        return false;
+    return true;
 }
 
 /** Set token value for cast */
@@ -559,20 +577,14 @@ static void setTokenValue(Token* tok, const ValueFlow::Value &value, const Proje
         }
 
         for (const ValueFlow::Value &value1 : parent->astOperand1()->values()) {
-            if (noninvertible && value1.isImpossible())
-                continue;
-            if (!value1.isIntValue() && !value1.isFloatValue() && !value1.isTokValue())
-                continue;
-            if (value1.isTokValue() && (!parent->isComparisonOp() || value1.tokvalue->tokType() != Token::eString))
+            if (!isComputableValue(parent, value1))
                 continue;
             for (const ValueFlow::Value &value2 : parent->astOperand2()->values()) {
                 if (value1.path != value2.path)
                     continue;
-                if (noninvertible && value2.isImpossible())
+                if (!isComputableValue(parent, value2))
                     continue;
-                if (!value2.isIntValue() && !value2.isFloatValue() && !value2.isTokValue())
-                    continue;
-                if (value2.isTokValue() && (!parent->isComparisonOp() || value2.tokvalue->tokType() != Token::eString || value1.isTokValue()))
+                if (value1.isIteratorValue() && value2.isIteratorValue())
                     continue;
                 if (value1.isKnown() || value2.isKnown() || value1.varId == 0U || value2.varId == 0U ||
                     (value1.varId == value2.varId && value1.varvalue == value2.varvalue && value1.isIntValue() &&
@@ -5754,6 +5766,31 @@ static void valueFlowSmartPointer(TokenList *tokenlist, ErrorLogger * errorLogge
     }
 }
 
+static void valueFlowIterators(TokenList *tokenlist)
+{
+    for (Token *tok = tokenlist->front(); tok; tok = tok->next()) {
+        if (!tok->scope())
+            continue;
+        if (!tok->scope()->isExecutable())
+            continue;
+        const Library::Container* container = astGetContainer(tok);
+        if (!container)
+            continue;
+        if (Token::Match(tok->astParent(), ". %name% (")) {
+            Library::Container::Yield yield = container->getYield(tok->astParent()->strAt(1));
+            ValueFlow::Value v(0);
+            v.setKnown();
+            if (yield == Library::Container::Yield::START_ITERATOR) {
+                v.valueType = ValueFlow::Value::ITERATOR_START;
+                setTokenValue(tok->astParent()->tokAt(2), v, tokenlist->getProject());
+            } else if (yield == Library::Container::Yield::END_ITERATOR) {
+                v.valueType = ValueFlow::Value::ITERATOR_END;
+                setTokenValue(tok->astParent()->tokAt(2), v, tokenlist->getProject());
+            }
+        }
+    }
+}
+
 static void valueFlowContainerSize(TokenList *tokenlist, SymbolDatabase* symboldatabase, ErrorLogger * /*errorLogger*/)
 {
     // declaration
@@ -6222,6 +6259,10 @@ std::string ValueFlow::Value::infoString() const
     case BUFFER_SIZE:
     case CONTAINER_SIZE:
         return "size=" + MathLib::toString(intvalue);
+    case ITERATOR_START:
+        return "start=" + MathLib::toString(intvalue);
+    case ITERATOR_END:
+        return "end=" + MathLib::toString(intvalue);
     case LIFETIME:
         return "lifetime=" + tokvalue->str();
     }
@@ -6301,6 +6342,7 @@ void ValueFlow::setValues(TokenList *tokenlist, SymbolDatabase* symboldatabase, 
         valueFlowUninit(tokenlist, symboldatabase, errorLogger);
         if (tokenlist->isCPP()) {
             valueFlowSmartPointer(tokenlist, errorLogger);
+            valueFlowIterators(tokenlist);
             valueFlowContainerSize(tokenlist, symboldatabase, errorLogger);
             valueFlowContainerAfterCondition(tokenlist, symboldatabase, errorLogger);
         }
