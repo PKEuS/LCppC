@@ -2421,6 +2421,47 @@ void CheckStl::useStlAlgorithm()
     }
 }
 
+void CheckStl::knownEmptyContainerLoopError(const Token *tok)
+{
+    const std::string cont = tok ? tok->expressionString() : std::string("var");
+
+    reportError(tok, Severity::style,
+                "knownEmptyContainerLoop",
+                "Iterating over container '" + cont + "' that is always empty.", CWE398, Certainty::safe);
+}
+
+void CheckStl::knownEmptyContainerLoop()
+{
+    if (!mCtx.project->severity.isEnabled(Severity::style))
+        return;
+    for (const Scope *function : mCtx.symbolDB->functionScopes) {
+        for (const Token *tok = function->bodyStart; tok != function->bodyEnd; tok = tok->next()) {
+            // Parse range-based for loop
+            if (!Token::simpleMatch(tok, "for ("))
+                continue;
+            if (!Token::simpleMatch(tok->next()->link(), ") {"))
+                continue;
+            const Token *splitTok = tok->next()->astOperand2();
+            if (!Token::simpleMatch(splitTok, ":"))
+                continue;
+            const Token* contTok = splitTok->astOperand2();
+            if (!contTok)
+                continue;
+            for (const ValueFlow::Value& v:contTok->values()) {
+                if (!v.isKnown())
+                    continue;
+                if (!v.isContainerSizeValue())
+                    continue;
+                if (v.intvalue != 0)
+                    continue;
+                knownEmptyContainerLoopError(contTok);
+            }
+
+
+        }
+    }
+}
+
 static bool isMutex(const Variable* var)
 {
     const Token* tok = Token::typeDecl(var->nameToken()).first;

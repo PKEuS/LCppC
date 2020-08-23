@@ -3076,6 +3076,9 @@ void CheckOther::comparePointersError(const Token *tok, const ValueFlow::Value *
 
 void CheckOther::checkModuloOfOne()
 {
+    if (!mCtx.project->severity.isEnabled(Severity::style))
+        return;
+
     for (const Token *tok = mCtx.tokenizer->tokens(); tok; tok = tok->next()) {
         if (!tok->astOperand2() || !tok->astOperand1())
             continue;
