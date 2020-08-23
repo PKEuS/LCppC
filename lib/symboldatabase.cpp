@@ -70,7 +70,7 @@ SymbolDatabase::SymbolDatabase(Context ctx)
     createSymbolDatabaseEnums();
     createSymbolDatabaseEscapeFunctions();
     createSymbolDatabaseIncompleteVars();
-    createSymbolDatabaseExprIds();
+    //createSymbolDatabaseExprIds();
 }
 
 static const Token* skipScopeIdentifiers(const Token* tok)
