@@ -23,6 +23,10 @@ New Features:
 
  - New Check: Detect incorrect usage of mutexes and lock guards (also in Cppcheck 2.2)
 
+ - New Check: Detect dereferenciation of end iterators (also in Cppcheck 2.2)
+
+ - New Check: Detect iteration over empty container (also in Cppcheck 2.2)
+
  - Initial support for C++20 features: modules, consteval and constinit
 
  - New library microsoft_unittest.cfg: Microsoft CppUnitTest library (also in Cppcheck 2.2)
@@ -61,6 +65,8 @@ Improvements:
  - Improved --showtime results for better readability and usability and fixed times for nested timers
 
  - Improved accuracy of ValueFlow analysis (also in Cppcheck 2.2)
+
+ - Ensure that Libraries are only loaded once
 
 
 Bugfixes:
