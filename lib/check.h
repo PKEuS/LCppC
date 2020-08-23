@@ -58,7 +58,7 @@ struct CPPCHECKLIB Context {
     ErrorLogger* errorLogger;
 
     constexpr Context(ErrorLogger* e = nullptr, const Settings* s = nullptr, const Project* p = nullptr, const Tokenizer* t = nullptr)
-        : tokenizer(t), project(p), settings(s), errorLogger(e), symbolDB(t?t->getSymbolDatabase():nullptr)
+        : tokenizer(t), project(p), symbolDB(t?t->getSymbolDatabase():nullptr), settings(s), errorLogger(e)
     {}
 };
 

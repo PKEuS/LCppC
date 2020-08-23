@@ -77,7 +77,7 @@ bool Project::isEnabled(const ValueFlow::Value *value, bool inconclusiveCheck) c
 
 void Project::addLibrary(const std::string& libname)
 {
-    if (libname.ends_with(".cfg"))
+    if (libname.size() > 4 && libname.compare(libname.size()-4, 4, ".cfg") == 0)
         libraries.emplace(libname.substr(0, libname.size()-4));
     else
         libraries.emplace(libname);

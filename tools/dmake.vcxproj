@@ -109,11 +109,11 @@
     <ClCompile Include="..\lib\pathmatch.cpp" />
     <ClCompile Include="..\lib\utils.cpp" />
     <ClCompile Include="dmake.cpp" />
-    <ClCompile Include="..\cli\filelister.cpp" />
+    <ClCompile Include="..\lib\filelister.cpp" />
     <ClCompile Include="..\lib\path.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\cli\filelister.h" />
+    <ClInclude Include="..\lib\filelister.h" />
     <ClInclude Include="..\lib\path.h" />
     <ClInclude Include="..\lib\utils.h" />
   </ItemGroup>

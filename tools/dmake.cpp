@@ -26,7 +26,7 @@
 #include <vector>
 #include <sstream>
 
-#include "../cli/filelister.h"
+#include "../lib/filelister.h"
 #include "../lib/pathmatch.h"
 
 static std::string builddir(std::string filename)
@@ -403,7 +403,7 @@ int main()
     fout << "all:\tlcppc lcppc-gui testrunner\n\n";
     fout << "cli:\tlcppc\n\n";
     fout << "gui:\tlcppc-gui\n\n";
-    fout << "testrunner: $(TESTOBJ) $(LIBOBJ) $(EXTOBJ) cli/cmdlineparser.o cli/cppcheckexecutor.o cli/filelister.o\n";
+    fout << "testrunner: $(TESTOBJ) $(LIBOBJ) $(EXTOBJ) cli/cmdlineparser.o cli/cppcheckexecutor.o\n";
     fout << "\t$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ $(LIBS) $(LDFLAGS) $(RDYNAMIC)\n\n";
     fout << "test:\ttestrunner\n";
     fout << "\t./testrunner\n\n";
@@ -411,7 +411,7 @@ int main()
     fout << "\t./testrunner -q\n\n";
     fout << "checkcfg:\tlcppc validateCFG\n";
     fout << "\t./test/cfg/runtests.sh\n\n";
-    fout << "dmake:\ttools/dmake.o cli/filelister.o $(libcppdir)/pathmatch.o $(libcppdir)/path.o $(libcppdir)/utils.o externals/simplecpp/simplecpp.o\n";
+    fout << "dmake:\ttools/dmake.o $(libcppdir)/filelister.o $(libcppdir)/pathmatch.o $(libcppdir)/path.o $(libcppdir)/utils.o externals/simplecpp/simplecpp.o\n";
     fout << "\t$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)\n\n";
     fout << "run-dmake: dmake\n";
     fout << "\t./dmake\n\n";

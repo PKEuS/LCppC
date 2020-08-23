@@ -35,6 +35,7 @@ HEADERS += $${PWD}/analyzerinfo.h \
            $${PWD}/ctu.h \
            $${PWD}/errorlogger.h \
            $${PWD}/errortypes.h \
+           $${PWD}/filelister.h \
            $${PWD}/forwardanalyzer.h \
            $${PWD}/library.h \
            $${PWD}/mathlib.h \
@@ -88,6 +89,7 @@ SOURCES += $${PWD}/analyzerinfo.cpp \
            $${PWD}/ctu.cpp \
            $${PWD}/errorlogger.cpp \
            $${PWD}/errortypes.cpp \
+           $${PWD}/filelister.cpp \
            $${PWD}/forwardanalyzer.cpp \
            $${PWD}/library.cpp \
            $${PWD}/mathlib.cpp \
