@@ -41,12 +41,12 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    explicit CheckBoost(Context ctx)
+    explicit CheckBoost(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         if (!ctx.tokenizer->isCPP())
             return;
 
@@ -60,7 +60,7 @@ public:
 private:
     void boostForeachError(const Token *tok);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckBoost c(ctx);
         c.boostForeachError(nullptr);
     }

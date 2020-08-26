@@ -1406,7 +1406,7 @@ static bool isVariableUsage(const Check* check, const Token* vartok, MathLib::bi
     return c && c->isVariableUsage(vartok, true, CheckUninitVar::Alloc::ARRAY);
 }
 
-Check::FileInfo* CheckUninitVar::getFileInfo(Context ctx) const
+Check::FileInfo* CheckUninitVar::getFileInfo(const Context& ctx) const
 {
     CheckUninitVar check(ctx);
     const std::list<CTU::CTUInfo::UnsafeUsage>& unsafeUsage = CTU::getUnsafeUsage(ctx, &check, ::isVariableUsage);
@@ -1429,7 +1429,7 @@ Check::FileInfo * CheckUninitVar::loadFileInfoFromXml(const tinyxml2::XMLElement
     return fileInfo;
 }
 
-bool CheckUninitVar::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, Context ctx)
+bool CheckUninitVar::analyseWholeProgram(const CTU::CTUInfo *ctu, AnalyzerInformation& analyzerInformation, const Context& ctx)
 {
     if (!ctu)
         return false;

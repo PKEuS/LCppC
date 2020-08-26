@@ -43,11 +43,11 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    explicit CheckPostfixOperator(Context ctx)
+    explicit CheckPostfixOperator(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         if (ctx.tokenizer->isC())
             return;
 
@@ -62,7 +62,7 @@ private:
     /** Report Error */
     void postfixOperatorError(const Token *tok);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckPostfixOperator c(ctx);
         c.postfixOperatorError(nullptr);
     }

@@ -97,11 +97,11 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    explicit CheckLeakAutoVar(Context ctx)
+    explicit CheckLeakAutoVar(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckLeakAutoVar checkLeakAutoVar(ctx);
         checkLeakAutoVar.check();
     }
@@ -148,7 +148,7 @@ private:
     /** message: user configuration is needed to complete analysis */
     void configurationInfo(const Token* tok, const std::string &functionName);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckLeakAutoVar c(ctx);
         c.deallocReturnError(nullptr, nullptr, "p");
         c.configurationInfo(nullptr, "f");  // user configuration is needed to complete analysis

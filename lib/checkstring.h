@@ -42,12 +42,12 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    explicit CheckString(Context ctx)
+    explicit CheckString(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckString checkString(ctx);
 
         // Checks
@@ -93,7 +93,7 @@ private:
     void suspiciousStringCompareError_char(const Token* tok, const std::string& var);
     void overlappingStrcmpError(const Token* eq0, const Token *ne0);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckString c(ctx);
 
         c.stringLiteralWriteError(nullptr, nullptr);

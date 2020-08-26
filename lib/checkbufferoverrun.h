@@ -60,11 +60,11 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    explicit CheckBufferOverrun(Context ctx)
+    explicit CheckBufferOverrun(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckBufferOverrun checkBufferOverrun(ctx);
         checkBufferOverrun.arrayIndex();
         checkBufferOverrun.pointerArithmetic();
@@ -76,7 +76,7 @@ public:
         checkBufferOverrun.checkInsecureCmdLineArgs();
     }
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckBufferOverrun c(ctx);
         c.arrayIndexError(nullptr, std::vector<Dimension>(), std::vector<const ValueFlow::Value *>());
         c.pointerArithmeticError(nullptr, nullptr, nullptr);
@@ -91,12 +91,12 @@ public:
     }
 
     /** @brief Parse current TU and extract file info */
-    Check::FileInfo* getFileInfo(Context ctx) const override;
+    Check::FileInfo* getFileInfo(const Context& ctx) const override;
 
     Check::FileInfo* loadFileInfoFromXml(const tinyxml2::XMLElement* xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx) override;
+    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Context& ctx) override;
 
 private:
 

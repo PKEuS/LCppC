@@ -42,12 +42,12 @@ public:
     CheckAssert() : Check(myName()) {
     }
 
-    explicit CheckAssert(Context ctx)
+    explicit CheckAssert(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** run checks, the token list is not simplified */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckAssert checkAssert(ctx);
         checkAssert.assertWithSideEffects();
     }
@@ -62,7 +62,7 @@ private:
     void sideEffectInAssertError(const Token *tok, const std::string& functionName);
     void assignmentInAssertError(const Token *tok, const std::string &varname);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckAssert c(ctx);
         c.sideEffectInAssertError(nullptr, "function");
         c.assignmentInAssertError(nullptr, "var");

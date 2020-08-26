@@ -51,12 +51,12 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    explicit CheckOther(Context ctx)
+    explicit CheckOther(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckOther checkOther(ctx);
 
         // Checks
@@ -269,7 +269,7 @@ private:
     void comparePointersError(const Token *tok, const ValueFlow::Value *v1, const ValueFlow::Value *v2);
     void checkModuloOfOneError(const Token *tok);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckOther c(ctx);
 
         ErrorPath errorPath;

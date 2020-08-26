@@ -40,11 +40,11 @@ public:
     CheckVaarg() : Check(myName()) {
     }
 
-    explicit CheckVaarg(Context ctx)
+    explicit CheckVaarg(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckVaarg check(ctx);
         check.va_start_argument();
         check.va_list_usage();
@@ -60,7 +60,7 @@ private:
     void va_list_usedBeforeStartedError(const Token *tok, const std::string& varname);
     void va_start_subsequentCallsError(const Token *tok, const std::string& varname);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckVaarg c(ctx);
         c.wrongParameterTo_va_start_error(nullptr, "arg1", "arg2");
         c.referenceAs_va_start_error(nullptr, "arg1");

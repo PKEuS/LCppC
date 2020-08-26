@@ -78,7 +78,7 @@ public:
     explicit Check(const char* aname);
 
     /** This constructor is used when running checks. */
-    Check(const char* aname, Context ctx)
+    Check(const char* aname, const Context& ctx)
         : mCtx(ctx), mName(aname) {
     }
 
@@ -91,10 +91,10 @@ public:
     static std::list<Check *> &instances();
 
     /** run checks, the token list is not simplified */
-    virtual void runChecks(Context ctx) = 0;
+    virtual void runChecks(const Context& ctx) = 0;
 
     /** get error messages */
-    virtual void getErrorMessages(Context ctx) const = 0;
+    virtual void getErrorMessages(const Context& ctx) const = 0;
 
     /** class name, used to generate documentation */
     const std::string& name() const {
@@ -122,7 +122,7 @@ public:
         }
     };
 
-    virtual FileInfo * getFileInfo(Context ctx) const {
+    virtual FileInfo * getFileInfo(const Context& ctx) const {
         (void)ctx;
         return nullptr;
     }
@@ -133,7 +133,7 @@ public:
     }
 
     // Return true if an error is reported.
-    virtual bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx) {
+    virtual bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Context& ctx) {
         (void)ctu;
         (void)analyzerInformation;
         (void)ctx;

@@ -44,12 +44,12 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    explicit CheckIO(Context ctx)
+    explicit CheckIO(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks on the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckIO checkIO(ctx);
 
         checkIO.checkWrongPrintfScanfArguments();
@@ -132,7 +132,7 @@ private:
     static void argumentType(std::ostream & os, const ArgumentInfo * argInfo);
     static Severity::SeverityType getSeverity(const ArgumentInfo *argInfo);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckIO c(ctx);
 
         c.coutCerrMisusageError(nullptr,  "cout");

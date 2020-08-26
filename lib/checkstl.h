@@ -48,12 +48,12 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    explicit CheckStl(Context ctx)
+    explicit CheckStl(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** run checks, the token list is not simplified */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         if (!ctx.tokenizer->isCPP()) {
             return;
         }
@@ -242,7 +242,7 @@ private:
     void globalLockGuardError(const Token *tok);
     void localMutexError(const Token *tok);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         ErrorPath errorPath;
         CheckStl c(ctx);
         c.outOfBoundsError(nullptr, "container", nullptr, "x", nullptr);

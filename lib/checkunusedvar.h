@@ -45,12 +45,12 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    explicit CheckUnusedVar(Context ctx)
+    explicit CheckUnusedVar(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckUnusedVar checkUnusedVar(ctx);
 
         // Coding style checks
@@ -76,7 +76,7 @@ private:
     void unreadVariableError(const Token *tok, const std::string &varname, bool modified);
     void unassignedVariableError(const Token *tok, const std::string &varname);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckUnusedVar c(ctx);
 
         // style/warning

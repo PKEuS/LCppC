@@ -41,11 +41,11 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    explicit CheckInternal(Context ctx)
+    explicit CheckInternal(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckInternal checkInternal(ctx);
 
         checkInternal.checkTokenMatchPatterns();
@@ -88,7 +88,7 @@ private:
     void extraWhitespaceError(const Token *tok, const std::string &pattern, const std::string &funcname);
     void checkRedundantTokCheckError(const Token *tok);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckInternal c(ctx);
         c.multiComparePatternError(nullptr, ";|%type%", "Match");
         c.simplePatternError(nullptr, "class {", "Match");

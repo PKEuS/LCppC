@@ -46,11 +46,11 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    explicit CheckCondition(Context ctx)
+    explicit CheckCondition(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckCondition checkCondition(ctx);
         checkCondition.multiCondition();
         checkCondition.clarifyCondition();   // not simplified because ifAssign
@@ -156,7 +156,7 @@ private:
 
     void duplicateConditionalAssignError(const Token *condTok, const Token* assignTok);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckCondition c(ctx);
 
         ErrorPath errorPath;

@@ -40,7 +40,7 @@
 #include <unordered_map>
 //---------------------------------------------------------------------------
 
-SymbolDatabase::SymbolDatabase(Context ctx)
+SymbolDatabase::SymbolDatabase(const Context& ctx)
     : mCtx(ctx)
 {
     mIsCpp = isCPP();

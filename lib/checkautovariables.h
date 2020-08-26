@@ -43,12 +43,12 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    explicit CheckAutoVariables(Context ctx)
+    explicit CheckAutoVariables(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckAutoVariables checkAutoVariables(ctx);
         checkAutoVariables.assignFunctionArg();
         checkAutoVariables.checkVarLifetime();
@@ -82,7 +82,7 @@ private:
     void errorUselessAssignmentArg(const Token *tok);
     void errorUselessAssignmentPtrArg(const Token *tok);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         ErrorPath errorPath;
         CheckAutoVariables c(ctx);
         c.errorAutoVariableAssignment(nullptr, false);

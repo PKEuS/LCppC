@@ -40,26 +40,26 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    explicit CheckUnusedFunctions(Context ctx)
+    explicit CheckUnusedFunctions(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Parse current TU and extract file info */
-    Check::FileInfo* getFileInfo(Context ctx) const override;
+    Check::FileInfo* getFileInfo(const Context& ctx) const override;
 
     Check::FileInfo* loadFileInfoFromXml(const tinyxml2::XMLElement* xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx) override;
+    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Context& ctx) override;
 
 private:
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckUnusedFunctions c(ctx);
         c.unusedFunctionError(ctx.errorLogger, emptyString, 0, "funcName");
     }
 
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         (void)ctx;
     }
 

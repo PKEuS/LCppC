@@ -47,12 +47,12 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    explicit CheckNullPointer(Context ctx)
+    explicit CheckNullPointer(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckNullPointer checkNullPointer(ctx);
         checkNullPointer.nullPointer();
         checkNullPointer.arithmetic();
@@ -96,16 +96,16 @@ public:
     void nullPointerError(const Token *tok, const std::string &varname, const ValueFlow::Value* value, bool inconclusive);
 
     /** @brief Parse current TU and extract file info */
-    Check::FileInfo * getFileInfo(Context ctx) const override;
+    Check::FileInfo * getFileInfo(const Context& ctx) const override;
 
     Check::FileInfo * loadFileInfoFromXml(const tinyxml2::XMLElement *xmlElement) const override;
 
     /** @brief Analyse all file infos for all TU */
-    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx) override;
+    bool analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Context& ctx) override;
 
 private:
     /** Get error messages. Used by --errorlist */
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckNullPointer c(ctx);
         c.nullPointerError(nullptr, "pointer", nullptr, false);
         c.pointerArithmeticError(nullptr, nullptr, false);

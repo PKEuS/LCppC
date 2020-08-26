@@ -882,7 +882,7 @@ void Preprocessor::validateCfgError(const std::string &file, const unsigned int 
     mErrorLogger->reportErr(errmsg);
 }
 
-void Preprocessor::getErrorMessages(Context ctx)
+void Preprocessor::getErrorMessages(const Context& ctx)
 {
     Preprocessor preprocessor(*ctx.settings, *const_cast<Project*>(ctx.project), ctx.errorLogger);
     preprocessor.missingInclude(emptyString, 1, emptyString, UserHeader);

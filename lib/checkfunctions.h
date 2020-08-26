@@ -52,12 +52,12 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    explicit CheckFunctions(Context ctx)
+    explicit CheckFunctions(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckFunctions checkFunctions(ctx);
 
         // Checks
@@ -114,7 +114,7 @@ private:
     void memsetSizeArgumentAsCharLiteralError(const Token* tok);
     void memsetSizeArgumentAsCharError(const Token* tok);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckFunctions c(ctx);
 
         for (std::map<std::string, Library::WarnInfo>::const_iterator i = ctx.project->library.functionwarn.cbegin(); i != ctx.project->library.functionwarn.cend(); ++i) {

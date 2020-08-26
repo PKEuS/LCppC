@@ -41,12 +41,12 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    explicit CheckBool(Context ctx)
+    explicit CheckBool(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckBool checkBool(ctx);
 
         // Checks
@@ -107,7 +107,7 @@ private:
     void pointerArithBoolError(const Token *tok);
     void returnValueBoolError(const Token *tok);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckBool c(ctx);
 
         c.assignBoolToPointerError(nullptr);

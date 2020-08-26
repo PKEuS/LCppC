@@ -47,12 +47,12 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    explicit CheckClass(Context ctx)
+    explicit CheckClass(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks on the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         if (ctx.tokenizer->isC())
             return;
 
@@ -188,7 +188,7 @@ private:
     void thisUseAfterFree(const Token *self, const Token *free, const Token *use);
     void unsafeClassRefMemberError(const Token *tok, const std::string &varname);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckClass c(ctx);
         c.noConstructorError(nullptr, "classname", false);
         c.noExplicitConstructorError(nullptr, "classname", false);

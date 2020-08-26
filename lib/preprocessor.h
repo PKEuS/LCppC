@@ -196,7 +196,7 @@ private:
 public:
 
 
-    static void getErrorMessages(Context ctx);
+    static void getErrorMessages(const Context& ctx);
 
     void setFile0(const std::string &f) {
         mFile0 = f;

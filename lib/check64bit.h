@@ -43,12 +43,12 @@ public:
     }
 
     /** This constructor is used when running checks. */
-    explicit Check64BitPortability(Context ctx)
+    explicit Check64BitPortability(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         Check64BitPortability check64BitPortability(ctx);
         check64BitPortability.pointerassignment();
     }
@@ -63,7 +63,7 @@ private:
     void returnIntegerError(const Token *tok);
     void returnPointerError(const Token *tok);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         Check64BitPortability c(ctx);
         c.assignmentAddressToIntegerError(nullptr);
         c.assignmentIntegerToAddressError(nullptr);

@@ -41,12 +41,12 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    explicit CheckSizeof(Context ctx)
+    explicit CheckSizeof(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckSizeof checkSizeof(ctx);
 
         // Checks
@@ -99,7 +99,7 @@ private:
     void sizeofDereferencedVoidPointerError(const Token *tok, const std::string &varname);
     void arithOperationsOnVoidPointerError(const Token* tok, const std::string &varname, const std::string &vartype);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckSizeof c(ctx);
 
         c.sizeofForArrayParameterError(nullptr);

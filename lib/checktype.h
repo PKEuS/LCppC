@@ -40,12 +40,12 @@ public:
     }
 
     /** @brief This constructor is used when running checks. */
-    explicit CheckType(Context ctx)
+    explicit CheckType(const Context& ctx)
         : Check(myName(), ctx) {
     }
 
     /** @brief Run checks against the normal token list */
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         // These are not "simplified" because casts can't be ignored
         CheckType checkType(ctx);
         checkType.checkTooBigBitwiseShift();
@@ -82,7 +82,7 @@ private:
     void longCastReturnError(const Token *tok);
     void floatToIntegerOverflowError(const Token *tok, const ValueFlow::Value &value);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckType c(ctx);
         c.tooBigBitwiseShiftError(nullptr, 32, ValueFlow::Value(64));
         c.tooBigSignedBitwiseShiftError(nullptr, 31, ValueFlow::Value(31));

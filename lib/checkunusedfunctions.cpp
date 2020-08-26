@@ -133,7 +133,7 @@ Check::FileInfo* CheckUnusedFunctions::loadFileInfoFromXml(const tinyxml2::XMLEl
     return fi;
 }
 
-Check::FileInfo *CheckUnusedFunctions::getFileInfo(Context ctx) const
+Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Context& ctx) const
 {
     if (!ctx.project->severity.isEnabled(Severity::style))
         return nullptr;
@@ -331,7 +331,7 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(Context ctx) const
     return fi;
 }
 
-bool CheckUnusedFunctions::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx)
+bool CheckUnusedFunctions::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Context& ctx)
 {
     if (!ctx.project->severity.isEnabled(Severity::style))
         return false;

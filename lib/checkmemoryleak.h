@@ -79,7 +79,7 @@ public:
     CheckMemoryLeak(const CheckMemoryLeak &) = delete;
     CheckMemoryLeak& operator=(const CheckMemoryLeak &) = delete;
 
-    CheckMemoryLeak(Context ctx)
+    CheckMemoryLeak(const Context& ctx)
         : mCtx_(ctx) {
     }
 
@@ -168,17 +168,14 @@ public:
     }
 
     /** @brief This constructor is used when running checks */
-    explicit CheckMemoryLeakInFunction(Context ctx)
+    explicit CheckMemoryLeakInFunction(const Context& ctx)
         : Check(myName(), ctx), CheckMemoryLeak(ctx) {
     }
 
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckMemoryLeakInFunction checkMemoryLeak(ctx);
         checkMemoryLeak.checkReallocUsage();
     }
-
-    /** @brief Unit testing : testing the white list */
-    static bool test_white_list(const std::string& funcname, const Library& library, bool cpp);
 
     /**
      * Checking for a memory leak caused by improper realloc usage.
@@ -187,7 +184,7 @@ public:
 
 private:
     /** Report all possible errors (for the --errorlist) */
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckMemoryLeakInFunction c(ctx);
 
         c.memleakError(nullptr, "varname");
@@ -229,11 +226,11 @@ public:
     CheckMemoryLeakInClass() : Check(myName()), CheckMemoryLeak() {
     }
 
-    explicit CheckMemoryLeakInClass(Context ctx)
+    explicit CheckMemoryLeakInClass(const Context& ctx)
         : Check(myName(), ctx), CheckMemoryLeak(ctx) {
     }
 
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         if (!ctx.tokenizer->isCPP())
             return;
 
@@ -252,7 +249,7 @@ private:
 
     void unsafeClassError(const Token *tok, const std::string &classname, const std::string &varname);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckMemoryLeakInClass c(ctx);
         c.publicAllocationError(nullptr, "varname");
         c.unsafeClassError(nullptr, "class", "class::varname");
@@ -276,11 +273,11 @@ public:
     CheckMemoryLeakStructMember() : Check(myName()), CheckMemoryLeak() {
     }
 
-    explicit CheckMemoryLeakStructMember(Context ctx)
+    explicit CheckMemoryLeakStructMember(const Context& ctx)
         : Check(myName(), ctx), CheckMemoryLeak(ctx) {
     }
 
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckMemoryLeakStructMember checkMemoryLeak(ctx);
         checkMemoryLeak.check();
     }
@@ -294,7 +291,7 @@ private:
 
     void checkStructVariable(const Variable * const variable);
 
-    void getErrorMessages(Context) const override {
+    void getErrorMessages(const Context&) const override {
     }
 
     static const char* myName() {
@@ -315,11 +312,11 @@ public:
     CheckMemoryLeakNoVar() : Check(myName()), CheckMemoryLeak() {
     }
 
-    explicit CheckMemoryLeakNoVar(Context ctx)
+    explicit CheckMemoryLeakNoVar(const Context& ctx)
         : Check(myName(), ctx), CheckMemoryLeak(ctx) {
     }
 
-    void runChecks(Context ctx) override {
+    void runChecks(const Context& ctx) override {
         CheckMemoryLeakNoVar checkMemoryLeak(ctx);
         checkMemoryLeak.check();
     }
@@ -350,7 +347,7 @@ private:
     void returnValueNotUsedError(const Token* tok, const std::string &alloc);
     void unsafeArgAllocError(const Token *tok, const std::string &funcName, const std::string &ptrType, const std::string &objType);
 
-    void getErrorMessages(Context ctx) const override {
+    void getErrorMessages(const Context& ctx) const override {
         CheckMemoryLeakNoVar c(ctx);
 
         c.functionCallLeak(nullptr, "funcName", "funcName");

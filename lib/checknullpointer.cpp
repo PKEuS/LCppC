@@ -558,7 +558,7 @@ static bool isUnsafeUsage(const Check *check, const Token *vartok, MathLib::bigi
     return checkNullPointer && checkNullPointer->isPointerDeRef(vartok, unknown);
 }
 
-Check::FileInfo *CheckNullPointer::getFileInfo(Context ctx) const
+Check::FileInfo *CheckNullPointer::getFileInfo(const Context& ctx) const
 {
     CheckNullPointer check(ctx);
     const std::list<CTU::CTUInfo::UnsafeUsage> &unsafeUsage = CTU::getUnsafeUsage(ctx, &check, ::isUnsafeUsage);
@@ -581,7 +581,7 @@ Check::FileInfo * CheckNullPointer::loadFileInfoFromXml(const tinyxml2::XMLEleme
     return fileInfo;
 }
 
-bool CheckNullPointer::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx)
+bool CheckNullPointer::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Context& ctx)
 {
     if (!ctu)
         return false;

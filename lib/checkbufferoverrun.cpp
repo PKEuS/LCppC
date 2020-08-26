@@ -812,7 +812,7 @@ bool CheckBufferOverrun::isCtuUnsafePointerArith(const Check *check, const Token
 }
 
 /** @brief Parse current TU and extract file info */
-Check::FileInfo* CheckBufferOverrun::getFileInfo(Context ctx) const
+Check::FileInfo* CheckBufferOverrun::getFileInfo(const Context& ctx) const
 {
     CheckBufferOverrun checkBufferOverrun(ctx);
     CBO_FileInfo*fileInfo = new CBO_FileInfo;
@@ -847,7 +847,7 @@ Check::FileInfo * CheckBufferOverrun::loadFileInfoFromXml(const tinyxml2::XMLEle
 }
 
 /** @brief Analyse all file infos for all TU */
-bool CheckBufferOverrun::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, Context ctx)
+bool CheckBufferOverrun::analyseWholeProgram(const CTU::CTUInfo* ctu, AnalyzerInformation& analyzerInformation, const Context& ctx)
 {
     if (!ctu)
         return false;
