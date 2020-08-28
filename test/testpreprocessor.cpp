@@ -366,7 +366,6 @@ private:
         // After including a file
         {
             errout.str("");
-            Project project;
             project.userDefines = "TEST";
             Preprocessor preprocessor(settings0, project, this);
             const std::string code("#file \"ab.h\"\n\n#endfile\n#error aaa");

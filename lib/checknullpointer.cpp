@@ -44,7 +44,7 @@ namespace {
 
 //---------------------------------------------------------------------------
 
-static bool checkNullpointerFunctionCallPlausibility(const Function* func, unsigned int arg)
+static bool checkNullpointerFunctionCallPlausibility(const Function* func, std::size_t arg)
 {
     return !func || (func->argCount() >= arg && func->getArgumentVar(arg - 1) && func->getArgumentVar(arg - 1)->isPointer());
 }

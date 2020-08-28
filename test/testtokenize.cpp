@@ -863,7 +863,7 @@ private:
                       tokenizeAndStringify("; template <typename... a> uint8_t b(std::tuple<uint8_t> d) {\n"
                                            "  std::tuple<a...> c{std::move(d)};\n"
                                            "  return std::get<0>(c);\n"
-                                           "}", 9));
+                                           "}", p));
         ASSERT_EQUALS("int g ( int ) ;",
                       tokenizeAndStringify("int g(int);\n"
                                            "template <class F, class... Ts> auto h(F f, Ts... xs) {\n"

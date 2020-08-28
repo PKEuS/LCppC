@@ -5666,8 +5666,8 @@ struct ContainerVariableForwardAnalyzer : VariableForwardAnalyzer {
     virtual Action isWritable(const Token* tok) const override {
         if (astIsIterator(tok))
             return Action::None;
-        const ValueFlow::Value* value = getValue(tok);
-        if (!value)
+        const ValueFlow::Value* v = getValue(tok);
+        if (!v)
             return Action::None;
         if (!tok->valueType() || !tok->valueType()->container)
             return Action::None;
@@ -5691,8 +5691,8 @@ struct ContainerVariableForwardAnalyzer : VariableForwardAnalyzer {
         return Action::None;
     }
 
-    virtual void writeValue(ValueFlow::Value* value, const Token* tok) const override {
-        if (!value)
+    virtual void writeValue(ValueFlow::Value* v, const Token* tok) const override {
+        if (!v)
             return;
         if (!tok->astParent())
             return;
@@ -5703,20 +5703,20 @@ struct ContainerVariableForwardAnalyzer : VariableForwardAnalyzer {
         if (tok->valueType()->container->stdStringLike && Token::simpleMatch(parent, "+=") && parent->astOperand2()) {
             const Token* rhs = parent->astOperand2();
             if (rhs->tokType() == Token::eString)
-                value->intvalue += Token::getStrLength(rhs);
+                v->intvalue += Token::getStrLength(rhs);
             else if (rhs->valueType() && rhs->valueType()->container && rhs->valueType()->container->stdStringLike) {
                 for (const ValueFlow::Value &rhsval : rhs->values()) {
                     if (rhsval.isKnown() && rhsval.isContainerSizeValue()) {
-                        value->intvalue += rhsval.intvalue;
+                        v->intvalue += rhsval.intvalue;
                     }
                 }
             }
         } else if (Token::Match(tok, "%name% . %name% (")) {
             Library::Container::Action action = tok->valueType()->container->getAction(tok->strAt(2));
             if (action == Library::Container::Action::PUSH)
-                value->intvalue++;
+                v->intvalue++;
             if (action == Library::Container::Action::POP)
-                value->intvalue--;
+                v->intvalue--;
         }
     }
 

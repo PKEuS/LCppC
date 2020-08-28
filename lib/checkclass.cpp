@@ -1068,20 +1068,20 @@ void CheckClass::privateFunctions()
             }
         }
 
-        for (size_t i = 0; i < privateFuncs.size(); i++) {
+        for (size_t j = 0; j < privateFuncs.size(); j++) {
             // Check that all private functions are used
-            bool used = checkFunctionUsage(privateFuncs[i], scope); // Usage in this class
+            bool used = checkFunctionUsage(privateFuncs[j], scope); // Usage in this class
             // Check in friend classes
             const std::vector<Type::FriendInfo>& friendList = scope->definedType->friendList;
             for (std::size_t i = 0; i < friendList.size() && !used; i++) {
                 if (friendList[i].type)
-                    used = checkFunctionUsage(privateFuncs[i], friendList[i].type->classScope);
+                    used = checkFunctionUsage(privateFuncs[j], friendList[i].type->classScope);
                 else
                     used = true; // Assume, it is used if we do not see friend class
             }
 
             if (!used)
-                unusedPrivateFunctionError(privateFuncs[i]->tokenDef, scope->className, privateFuncs[i]->name());
+                unusedPrivateFunctionError(privateFuncs[j]->tokenDef, scope->className, privateFuncs[j]->name());
         }
     }
 }
