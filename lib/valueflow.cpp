@@ -785,6 +785,38 @@ static void setTokenValue(Token* tok, const ValueFlow::Value &value, const Proje
         }
     }
 
+    // increment
+    else if (parent->str() == "++") {
+        for (const ValueFlow::Value &val : tok->values()) {
+            if (!val.isIntValue() && !val.isFloatValue())
+                continue;
+            ValueFlow::Value v(val);
+            if (parent == tok->previous()) {
+                if (v.isIntValue())
+                    v.intvalue = v.intvalue + 1;
+                else
+                    v.floatValue = v.floatValue + 1.0;
+            }
+            setTokenValue(parent, v, project);
+        }
+    }
+
+    // decrement
+    else if (parent->str() == "--") {
+        for (const ValueFlow::Value &val : tok->values()) {
+            if (!val.isIntValue() && !val.isFloatValue())
+                continue;
+            ValueFlow::Value v(val);
+            if (parent == tok->previous()) {
+                if (v.isIntValue())
+                    v.intvalue = v.intvalue - 1;
+                else
+                    v.floatValue = v.floatValue - 1.0;
+            }
+            setTokenValue(parent, v, project);
+        }
+    }
+
     // Array element
     else if (parent->str() == "[" && parent->isBinaryOp()) {
         for (const ValueFlow::Value &value1 : parent->astOperand1()->values()) {
@@ -2872,13 +2904,13 @@ std::string lifetimeMessage(const Token *tok, const ValueFlow::Value *val, Error
     return msg;
 }
 
-ValueFlow::Value getLifetimeObjValue(const Token *tok)
+ValueFlow::Value getLifetimeObjValue(const Token *tok, bool inconclusive)
 {
     ValueFlow::Value result;
-    auto pred = [](const ValueFlow::Value &v) {
+    auto pred = [&](const ValueFlow::Value &v) {
         if (!v.isLocalLifetimeValue())
             return false;
-        if (v.isInconclusive())
+        if (!inconclusive && v.isInconclusive())
             return false;
         if (!v.tokvalue->variable())
             return false;
@@ -4028,7 +4060,7 @@ static void valueFlowAfterAssign(TokenList *tokenlist, SymbolDatabase* symboldat
                 continue;
 
             // Lhs should be a variable
-            if (!tok->astOperand1() || !tok->astOperand1()->varId() || tok->astOperand1()->hasKnownValue())
+            if (!tok->astOperand1() || !tok->astOperand1()->varId())
                 continue;
             const unsigned int varid = tok->astOperand1()->varId();
             if (aliased.find(varid) != aliased.end())
@@ -4042,6 +4074,24 @@ static void valueFlowAfterAssign(TokenList *tokenlist, SymbolDatabase* symboldat
                 continue;
 
             std::vector<ValueFlow::Value> values = truncateValues(tok->astOperand2()->values(), tok->astOperand1()->valueType(), tokenlist->getProject());
+            // Remove known values
+            std::set<ValueFlow::Value::ValueType> types;
+            if (tok->astOperand1()->hasKnownValue()) {
+                for (const ValueFlow::Value& value:tok->astOperand1()->values()) {
+                    if (value.isKnown())
+                        types.insert(value.valueType);
+                }
+            }
+            values.erase(std::remove_if(values.begin(), values.end(), [&](const ValueFlow::Value& value) {
+                return types.count(value.valueType) > 0;
+            }), values.end());
+            // Remove container size if its not a container
+            if (!astGetContainer(tok->astOperand2()))
+                values.erase(std::remove_if(values.begin(), values.end(), [&](const ValueFlow::Value& value) {
+                return value.valueType == ValueFlow::Value::CONTAINER_SIZE;
+            }), values.end());
+            if (values.empty())
+                continue;
             const bool constValue = isLiteralNumber(tok->astOperand2(), tokenlist->isCPP());
             const bool init = var->nameToken() == tok->astOperand1();
             valueFlowForwardAssign(tok->astOperand2(), var, values, constValue, init, tokenlist, errorLogger);
@@ -4082,6 +4132,17 @@ static void insertImpossible(std::vector<ValueFlow::Value>& values, const std::v
     std::transform(input.begin(), input.end(), std::back_inserter(values), &asImpossible);
 }
 
+static void insertNegateKnown(std::vector<ValueFlow::Value>& values, const std::vector<ValueFlow::Value>& input)
+{
+    for (ValueFlow::Value value:input) {
+        if (!value.isIntValue() && !value.isContainerSizeValue())
+            continue;
+        value.intvalue = !value.intvalue;
+        value.setKnown();
+        values.push_back(value);
+    }
+}
+
 static std::vector<const Variable*> getExprVariables(const Token* expr,
         const TokenList* tokenlist,
         const SymbolDatabase* symboldatabase,
@@ -4101,8 +4162,9 @@ struct ValueFlowConditionHandler {
         const Token *vartok;
         std::vector<ValueFlow::Value> true_values;
         std::vector<ValueFlow::Value> false_values;
+        bool inverted = false;
 
-        Condition() : vartok(nullptr), true_values(), false_values() {}
+        Condition() : vartok(nullptr), true_values(), false_values(), inverted(false) {}
     };
     std::function<bool(Token* start, const Token* stop, const Token* exprTok, const std::vector<ValueFlow::Value>& values, bool constValue)>
     forward;
@@ -4203,16 +4265,22 @@ struct ValueFlowConditionHandler {
                     std::vector<ValueFlow::Value> thenValues;
                     std::vector<ValueFlow::Value> elseValues;
 
-                    if (!Token::Match(tok, "!=|=") && tok != cond.vartok) {
+                    if (!Token::Match(tok, "!=|=|(|.") && tok != cond.vartok) {
                         thenValues.insert(thenValues.end(), cond.true_values.begin(), cond.true_values.end());
                         if (isConditionKnown(tok, false))
                             insertImpossible(elseValues, cond.false_values);
                     }
                     if (!Token::Match(tok, "==|!")) {
                         elseValues.insert(elseValues.end(), cond.false_values.begin(), cond.false_values.end());
-                        if (isConditionKnown(tok, true))
+                        if (isConditionKnown(tok, true)) {
                             insertImpossible(thenValues, cond.true_values);
+                            if (Token::Match(tok, "(|.|%var%") && astIsBool(tok))
+                                insertNegateKnown(thenValues, cond.true_values);
+                        }
                     }
+
+                    if (cond.inverted)
+                        std::swap(thenValues, elseValues);
 
                     // start token of conditional code
                     Token* startTokens[] = {nullptr, nullptr};
@@ -5591,7 +5659,13 @@ struct ContainerVariableForwardAnalyzer : VariableForwardAnalyzer {
     ContainerVariableForwardAnalyzer(const Variable* v, const ValueFlow::Value& val, std::vector<const Variable*> paliases, const TokenList* t)
         : VariableForwardAnalyzer(v, val, std::move(paliases), t) {}
 
+    virtual bool match(const Token* tok) const override {
+        return tok->varId() == var->declarationId() || (astIsIterator(tok) && isAliasOf(tok, var->declarationId()));
+    }
+
     virtual Action isWritable(const Token* tok) const override {
+        if (astIsIterator(tok))
+            return Action::None;
         const ValueFlow::Value* value = getValue(tok);
         if (!value)
             return Action::None;
@@ -5648,6 +5722,9 @@ struct ContainerVariableForwardAnalyzer : VariableForwardAnalyzer {
 
     virtual Action isModified(const Token* tok) const override {
         Action read = Action::Read;
+        // An iterator wont change the container size
+        if (astIsIterator(tok))
+            return read;
         if (Token::Match(tok->astParent(), "%assign%") && astIsLHS(tok))
             return Action::Invalid;
         if (isLikelyStreamRead(isCPP(), tok->astParent()))
@@ -5801,6 +5878,8 @@ static void valueFlowContainerSize(TokenList *tokenlist, SymbolDatabase* symbold
             continue;
         if (!Token::Match(var->nameToken(), "%name% ;"))
             continue;
+        if (!astGetContainer(var->nameToken()))
+            continue;
         if (var->nameToken()->hasKnownValue())
             continue;
         ValueFlow::Value value(0);
@@ -5938,6 +6017,7 @@ static void valueFlowContainerAfterCondition(TokenList *tokenlist,
             cond.true_values.emplace_back(value);
             cond.false_values.emplace_back(std::move(value));
             cond.vartok = vartok;
+            cond.inverted = true;
             return cond;
         }
         // String compare
