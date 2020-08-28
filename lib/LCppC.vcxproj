@@ -137,6 +137,7 @@
     <ClInclude Include="errorlogger.h" />
     <ClInclude Include="errortypes.h" />
     <ClInclude Include="filelister.h" />
+    <ClInclude Include="forwardanalyzer.h" />
     <ClInclude Include="library.h" />
     <ClInclude Include="mathlib.h" />
     <ClInclude Include="path.h" />

@@ -1044,7 +1044,7 @@ void CheckBufferOverrun::checkInsecureCmdLineArgs()
             // Get the name of the argv variable
             const Variable* argcvar = function->getArgumentVar(0);
             const Variable* argvvar = function->getArgumentVar(1);
-            if (!argcvar || !argcvar)
+            if (!argcvar || !argvvar)
                 continue;
             if (!argcvar->valueType() || !argcvar->valueType()->isIntegral())
                 continue;

@@ -79,7 +79,7 @@ public:
     CheckMemoryLeak(const CheckMemoryLeak &) = delete;
     CheckMemoryLeak& operator=(const CheckMemoryLeak &) = delete;
 
-    CheckMemoryLeak(const Context& ctx)
+    explicit CheckMemoryLeak(const Context& ctx)
         : mCtx_(ctx) {
     }
 

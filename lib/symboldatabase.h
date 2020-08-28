@@ -1238,7 +1238,7 @@ public:
 class CPPCHECKLIB SymbolDatabase {
     friend class TestSymbolDatabase;
 public:
-    SymbolDatabase(const Context& ctx);
+    explicit SymbolDatabase(const Context& ctx);
     ~SymbolDatabase();
 
     /** @brief Information about all namespaces/classes/structrues */
