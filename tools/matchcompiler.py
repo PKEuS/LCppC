@@ -223,7 +223,7 @@ class MatchCompiler:
             more_args += ', const Token * end'
             endCondition = ' && start_tok != end'
         if varId:
-            more_args += ', int varid'
+            more_args += ', unsigned int varid'
 
         ret = '// pattern: ' + pattern + '\n'
         ret += 'template<class T> static T * findmatch' + \
@@ -438,7 +438,7 @@ class MatchCompiler:
         if endToken:
             more_args += ', const Token * endToken'
         if varId:
-            more_args += ', const int varid'
+            more_args += ', const unsigned int varid'
 
         ret = 'template < class T > static T * findmatch_verify' + \
             str(verifyNumber) + '(T * tok' + more_args + ') {\n'
