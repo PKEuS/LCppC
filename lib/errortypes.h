@@ -47,13 +47,13 @@ namespace Certainty {
     };
 
     CPPCHECKLIB std::string toString(CertaintyLevel certainty);
-};
+}
 
 namespace Output {
     enum OutputType : uint8_t {
         status, progress, verbose, config, findings
     };
-};
+}
 
 /** @brief enum class for severity. Used when reporting errors. */
 namespace Severity {
@@ -114,7 +114,7 @@ namespace Severity {
 
     CPPCHECKLIB std::string toString(SeverityType severity);
     CPPCHECKLIB SeverityType fromString(const std::string &severity);
-};
+}
 
 struct CPPCHECKLIB CWE {
     explicit constexpr CWE(unsigned short cweId) : id(cweId) {}

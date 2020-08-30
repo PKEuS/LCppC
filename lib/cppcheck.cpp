@@ -201,7 +201,7 @@ static std::string executeAddon(const AddonInfo &addonInfo,
 #else
         const char *p[] = { "python3", "python" };
 #endif
-        for (int i = 0; i < sizeof(p)/sizeof(*p); ++i) {
+        for (size_t i = 0; i < sizeof(p)/sizeof(*p); ++i) {
             std::string out;
             if (executeCommand(p[i], { "--version" }, redirect, &out) && out.compare(0, 7, "Python ") == 0 && std::isdigit(out[7])) {
                 pythonExe = p[i];
