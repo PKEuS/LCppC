@@ -2,12 +2,12 @@
 LCppC - Release Notes
 =====================
 
-Version 1.1 - August 2020 (planned)
-----------------------------
+Version 1.1 - 30th August 2020
+------------------------------
 
 This release focuses on bringing back useful checks that got lost in recent years
 of Cppcheck development and improving existing checks to fix false negatives - 
-besides fixing bugs from the first release. Additionally, the first incarnation of
+besides fixing bugs from the first release. Additionally, a first preview of
 a new GUI is included in the release.
 
 New Features:
@@ -23,7 +23,7 @@ New Features:
 
  - New Check: Detect incorrect usage of mutexes and lock guards (also in Cppcheck 2.2)
 
- - New Check: Detect dereferenciation of end iterators (also in Cppcheck 2.2)
+ - New Check: Dereferencing out of bounds and end iterators (also in Cppcheck 2.2)
 
  - New Check: Detect iteration over empty container (also in Cppcheck 2.2)
 
@@ -87,7 +87,7 @@ Notes:
  - The message hash introduced in Cppcheck 2.2 is not part of LCppC.
 
 
------------------------------
+----------------------------
 Version 1.0 - 14th June 2020
 ----------------------------
 
