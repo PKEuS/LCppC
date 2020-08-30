@@ -21,7 +21,7 @@
 /**
  *
  * @mainpage LCppC
- * @version 1.1
+ * @version 1.2 dev
  *
  * @section overview_sec Overview
  * Cppcheck is a simple tool for static analysis of C/C++ code.

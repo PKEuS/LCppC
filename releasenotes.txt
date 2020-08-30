@@ -2,6 +2,32 @@
 LCppC - Release Notes
 =====================
 
+Version 1.2 - November 2020 (planned)
+--------------------------------
+
+In the next release, the fruits of the work in the previous release should be harvested:
+The new GUI should be brought close to feature parity with the command line interface.
+
+New Features:
+
+ - 
+
+
+Improvements:
+
+ - 
+
+
+Bugfixes:
+
+ - 
+
+
+Notes:
+ - 
+
+
+------------------------------
 Version 1.1 - 30th August 2020
 ------------------------------
 
