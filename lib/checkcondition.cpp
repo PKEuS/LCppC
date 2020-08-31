@@ -55,6 +55,13 @@ bool CheckCondition::diag(const Token* tok, bool insert)
     if (!tok)
         return false;
 
+    const Token* parent = tok->astParent();
+    while (Token::Match(parent, "&&|%oror%")) {
+        if (mCondDiags.count(parent) != 0) {
+            return true;
+        }
+        parent = parent->astParent();
+    }
     if (insert)
         return !mCondDiags.insert(tok).second;
     else
@@ -1201,6 +1208,8 @@ void CheckCondition::checkIncorrectLogicOperator()
 
 void CheckCondition::incorrectLogicOperatorError(const Token *tok, const std::string &condition, bool always, bool inconclusive, ErrorPath errors)
 {
+    if (diag(tok))
+        return;
     errors.emplace_back(tok, emptyString);
     if (always)
         reportError(errors, Severity::warning, "incorrectLogicOperator",
@@ -1216,6 +1225,8 @@ void CheckCondition::incorrectLogicOperatorError(const Token *tok, const std::st
 
 void CheckCondition::redundantConditionError(const Token *tok, const std::string &text, bool inconclusive)
 {
+    if (diag(tok))
+        return;
     reportError(tok, Severity::style, "redundantCondition", "Redundant condition: " + text, CWE398, inconclusive ? Certainty::inconclusive : Certainty::safe);
 }
 
