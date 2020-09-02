@@ -26,6 +26,7 @@
 
 
 ErrorLogger* CheckExecutor::errorlogger = nullptr;
+Settings CheckExecutor::settings;
 static size_t libcount = 0;
 
 bool tryLoadLibrary(Library& destination, const char* basepath, const char* filename)
@@ -76,7 +77,7 @@ void CheckExecutor::init(Project& project)
     }
 }
 
-void CheckExecutor::check(Settings& settings, Project& project, const wxString& directory)
+void CheckExecutor::check(Project& project, const wxString& directory)
 {
     AnalyzerInformation analyzerInformation;
 
@@ -87,7 +88,7 @@ void CheckExecutor::check(Settings& settings, Project& project, const wxString& 
 
     cppcheck.analyseWholeProgram(analyzerInformation);
 }
-void CheckExecutor::check(Settings& settings, Project& project, const wxString& filename, const wxString& code)
+void CheckExecutor::check(Project& project, const wxString& filename, const wxString& code)
 {
     std::size_t status_init = libcount * 1024; // Assume initialization is equivalent to a 1024 bytes file per library loaded
     std::size_t status_wpa = (std::size_t)(code.size() * 0.02); // Assume whole program analysis is 2% of runtime

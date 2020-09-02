@@ -17,24 +17,15 @@
  */
 
 #pragma once
+#include "precompiled.h"
 
-// For compilers that support precompilation, includes "wx/wx.h".
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-#include <wx/treelist.h>
-#include <wx/treectrl.h>
-#include <wx/statline.h>
-#include <wx/stc/stc.h>
-#include <wx/cmdline.h>
-#include <wx/config.h>
-#include <wx/stdpaths.h>
-#include <wx/aboutdlg.h>
-#include <wx/propdlg.h>
-#include <wx/bookctrl.h>
-#include <wx/spinctrl.h>
-#include <wx/valgen.h>
+class Settings;
 
-#include "../lib/config.h"
-#include "../lib/settings.h"
+class SettingsWindow : public wxPropertySheetDialog {
+public:
+    SettingsWindow(wxWindow* parent, Settings& settings);
+
+    bool Create(Settings& settings);
+private:
+    wxDECLARE_EVENT_TABLE();
+};

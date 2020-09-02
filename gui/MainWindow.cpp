@@ -17,6 +17,7 @@
  */
 
 #include "MainWindow.h"
+#include "SettingsWindow.h"
 #include "CheckExecutor.h"
 #include "CppField.h"
 #include "UIErrorLogger.h"
@@ -62,6 +63,7 @@ wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
     EVT_MENU(ID_CHECK_DIRECTORY, MainWindow::OnCheckDirectory)
     EVT_MENU(ID_CHECK, MainWindow::OnCheck)
     EVT_MENU(ID_RECHECK, MainWindow::OnReCheck)
+    EVT_MENU(ID_LCPPC_SETTINGS, MainWindow::OnLCppCSettings)
     EVT_MENU(wxID_EXIT, MainWindow::OnExit)
     EVT_MENU(wxID_ABOUT, MainWindow::OnAbout)
     EVT_TREELIST_SELECTION_CHANGED(ID_RESULTSTREE, MainWindow::OnResultSelect)
@@ -156,6 +158,11 @@ void MainWindow::OnExit(wxCommandEvent&)
 {
     Close(true);
 }
+void MainWindow::OnLCppCSettings(wxCommandEvent&)
+{
+    SettingsWindow dialog(this, CheckExecutor::settings);
+    dialog.ShowModal();
+}
 void MainWindow::OnAbout(wxCommandEvent&)
 {
     wxAboutDialogInfo info;
@@ -206,11 +213,10 @@ void MainWindow::CheckScratchpad()
     if (!scratchpad)
         return;
 
-    Settings settings;
     Project project;
     scratchpad->fillProject(project);
     CheckExecutor::init(project);
-    CheckExecutor::check(settings, project, project.enforcedLang == Project::CPP ? "scratch.cpp" : "scratch.c", scratchpad->getText());
+    CheckExecutor::check(project, project.enforcedLang == Project::CPP ? "scratch.cpp" : "scratch.c", scratchpad->getText());
 
     codeView->SetEditable(true);
     codeView->SetText(scratchpad->getText());

@@ -18,19 +18,21 @@
 
 #pragma once
 #include "precompiled.h"
+#include "../lib/settings.h"
 
 class ErrorLogger;
-class Settings;
 
 
 class CheckExecutor {
     static ErrorLogger* errorlogger;
 
 public:
+    static Settings settings;
+
     static void setErrorLogger(ErrorLogger* errorLogger) {
         errorlogger = errorLogger;
     }
     static void init(Project& project);
-    static void check(Settings& settings, Project& project, const wxString& directory);
-    static void check(Settings& settings, Project& project, const wxString& filename, const wxString& code);
+    static void check(Project& project, const wxString& directory);
+    static void check(Project& project, const wxString& filename, const wxString& code);
 };

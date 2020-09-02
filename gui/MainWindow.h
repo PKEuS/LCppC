@@ -45,6 +45,7 @@ private:
     void OnCheckDirectory(wxCommandEvent& event);
     void OnCheck(wxCommandEvent& event);
     void OnReCheck(wxCommandEvent& event);
+    void OnLCppCSettings(wxCommandEvent& event);
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
     void OnResultSelect(wxTreeListEvent& event);

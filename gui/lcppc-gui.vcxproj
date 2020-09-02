@@ -207,6 +207,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Scratchpad.cpp" />
+    <ClCompile Include="SettingsWindow.cpp" />
     <ClCompile Include="UIErrorLogger.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -215,6 +216,7 @@
     <ClInclude Include="MainWindow.h" />
     <ClInclude Include="precompiled.h" />
     <ClInclude Include="Scratchpad.h" />
+    <ClInclude Include="SettingsWindow.h" />
     <ClInclude Include="UIErrorLogger.h" />
   </ItemGroup>
   <ItemGroup>
