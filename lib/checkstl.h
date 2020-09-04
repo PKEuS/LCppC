@@ -79,7 +79,7 @@ public:
         checkStl.invalidContainerLoop();
         checkStl.mismatchingContainers();
         checkStl.mismatchingContainerIterator();
-        checkStl.knownEmptyContainerLoop();
+        checkStl.knownEmptyContainer();
 
         checkStl.stlBoundaries();
         checkStl.checkDereferenceInvalidIterator();
@@ -188,7 +188,7 @@ public:
     /** @brief Look for loops that can replaced with std algorithms */
     void useStlAlgorithm();
 
-    void knownEmptyContainerLoop();
+    void knownEmptyContainer();
 
     void checkMutexes();
 
@@ -237,7 +237,7 @@ private:
 
     void useStlAlgorithmError(const Token *tok, const std::string &algoName);
 
-    void knownEmptyContainerLoopError(const Token *tok);
+    void knownEmptyContainerError(const Token *tok, const std::string& algo);
 
     void globalLockGuardError(const Token *tok);
     void localMutexError(const Token *tok);
@@ -279,7 +279,7 @@ private:
         c.dereferenceInvalidIteratorError(nullptr, "i");
         c.readingEmptyStlContainerError(nullptr);
         c.useStlAlgorithmError(nullptr, "");
-        c.knownEmptyContainerLoopError(nullptr);
+        c.knownEmptyContainerError(nullptr, emptyString);
         c.globalLockGuardError(nullptr);
         c.localMutexError(nullptr);
     }

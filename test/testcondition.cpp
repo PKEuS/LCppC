@@ -2313,7 +2313,7 @@ private:
         ASSERT_EQUALS("[test.cpp:1] -> [test.cpp:1]: (warning) Opposite inner 'if' condition leads to a dead code block.\n", errout.str());
 
         check("template<class T> void f1(const T &s) { if(s.size() > 42) if(s.empty()) {}}");
-        ASSERT_EQUALS("[test.cpp:1] -> [test.cpp:1]: (warning) Opposite inner 'if' condition leads to a dead code block.\n", errout.str());
+        ASSERT_EQUALS("", errout.str()); //We don't know the type of T so we don't know the relationship between size() and empty(). e.g. s might be a 50 tonne truck with nothing in it.
 
         check("void f2(const std::wstring &s) { if(s.empty()) if(s.size() > 42) {}}");
         ASSERT_EQUALS("[test.cpp:1] -> [test.cpp:1]: (warning) Opposite inner 'if' condition leads to a dead code block.\n", errout.str());
@@ -3293,6 +3293,17 @@ private:
               "}");
         ASSERT_EQUALS("", errout.str());
 
+        check("int foo() {\n"
+              "    auto x = getX();\n"
+              "    if (x == nullptr)\n"
+              "        return 1;\n"
+              "    auto y = dynamic_cast<Y*>(x)\n"
+              "    if (y == nullptr)\n"
+              "        return 2;\n"
+              "    return 3;\n"
+              "}");
+        ASSERT_EQUALS("", errout.str());
+
         // handleKnownValuesInLoop
         check("bool g();\n"
               "void f(bool x) {\n"
@@ -3397,6 +3408,18 @@ private:
               "        } while(false);\n"
               "    } while(!b);\n"
               "}\n");
+        ASSERT_EQUALS("", errout.str());
+
+        // #9865
+        check("void f(const std::string &s) {\n"
+              "    for (std::string::const_iterator it = s.begin(); it != s.end(); ++it) {\n"
+              "        const unsigned char c = static_cast<unsigned char>(*it);\n"
+              "        if (c == '0') {}\n"
+              "        else if ((c == 'a' || c == 'A')\n"
+              "                 || (c == 'b' || c == 'B')) {}\n"
+              "        else {}\n"
+              "    }\n"
+              "}");
         ASSERT_EQUALS("", errout.str());
 
     }

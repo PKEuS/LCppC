@@ -483,7 +483,7 @@ static void setTokenValue(Token* tok, const ValueFlow::Value &value, const Proje
 
     // cast..
     if (const Token *castType = getCastTypeStartToken(parent)) {
-        if (astIsPointer(tok) && value.valueType == ValueFlow::Value::INT &&
+        if (((tok->valueType() == nullptr && value.isImpossible()) || astIsPointer(tok)) && value.valueType == ValueFlow::Value::INT &&
             Token::simpleMatch(parent->astOperand1(), "dynamic_cast"))
             return;
         const ValueType &valueType = ValueType::parseDecl(castType, project);
@@ -3017,7 +3017,7 @@ std::vector<LifetimeToken> getLifetimeTokens(const Token* tok, ValueFlow::Value:
                 }
             }
             return result;
-        } else if (Token::Match(tok->tokAt(-2), ". %name% (")) {
+        } else if (Token::Match(tok->tokAt(-2), ". %name% (") && tok->tokAt(-2)->originalName() != "->") {
             const Library::Container* library = astGetContainer(tok->tokAt(-2)->astOperand1());
             if (library) {
                 Library::Container::Yield y = library->getYield(tok->previous()->str());
@@ -3179,6 +3179,21 @@ static bool isNotEqual(std::pair<const Token*, const Token*> x, std::pair<const 
     start2 = skipCVRefs(start2, y.second);
     return !(start1 == x.second && start2 == y.second);
 }
+static bool isNotEqual(std::pair<const Token*, const Token*> x, const std::string& y)
+{
+    TokenList tokenList(nullptr, nullptr);
+    std::istringstream istr(y);
+    tokenList.createTokens(istr);
+    return isNotEqual(x, std::make_pair(tokenList.front(), tokenList.back()));
+}
+static bool isNotEqual(std::pair<const Token*, const Token*> x, const ValueType* y)
+{
+    if (y == nullptr)
+        return false;
+    if (y->originalTypeName.empty())
+        return false;
+    return isNotEqual(x, y->originalTypeName);
+}
 
 bool isLifetimeBorrowed(const Token *tok, const Project* project)
 {
@@ -3207,6 +3222,10 @@ bool isLifetimeBorrowed(const Token *tok, const Project* project)
                 std::pair<const Token*, const Token*> decl = Token::typeDecl(tok);
                 std::pair<const Token*, const Token*> parentdecl = Token::typeDecl(tok->astParent());
                 if (isNotEqual(decl, parentdecl))
+                    return false;
+                if (isNotEqual(decl, tok->astParent()->valueType()))
+                    return false;
+                if (isNotEqual(parentdecl, tok->valueType()))
                     return false;
             }
         }
@@ -4279,6 +4298,8 @@ struct ValueFlowConditionHandler {
                         if (!values.empty()) {
                             bool assign = false;
                             visitAstNodes(parent->astOperand2(), [&](Token* tok2) {
+                                if (tok2 == tok)
+                                    return ChildrenToVisit::done;
                                 if (isSameExpression(tokenlist->isCPP(), false, cond.vartok, tok2, project->library, true, false))
                                     setTokenValue(tok2, values.front(), project);
                                 else if (Token::Match(tok2, "++|--|=") && isSameExpression(tokenlist->isCPP(),

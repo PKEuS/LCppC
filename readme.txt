@@ -20,7 +20,7 @@ Compiling
 
     To build the GUI, you need Qt.
 
-    When building the command line tool, PCRE is optional. It is used if you build with rules.
+    While building the command line tool, PCRE is optional. It is used if you build with rules.
 
     There are multiple compilation choices:
       * qmake - cross platform build tool

@@ -1141,12 +1141,18 @@ private:
     void findFunctionInBase(const std::string & name, std::size_t args, std::vector<const Function *> & matches) const;
 };
 
+enum class Reference : uint8_t {
+    None,
+    LValue,
+    RValue
+};
 
 /** Value type */
 class CPPCHECKLIB ValueType {
 public:
     enum Sign : uint8_t { UNKNOWN_SIGN, SIGNED, UNSIGNED } sign;
     enum Type : uint8_t { UNKNOWN_TYPE, NONSTD, RECORD, CONTAINER, ITERATOR, VOID, BOOL, CHAR, SHORT, WCHAR_T, INT, LONG, LONGLONG, UNKNOWN_INT, FLOAT, DOUBLE, LONGDOUBLE } type;
+    Reference reference = Reference::None;///< Is the outermost indirection of this type a reference or rvalue reference or not? pointer=2, Reference=LValue would be a T**&
     unsigned int bits;                    ///< bitfield bitcount
     unsigned int pointer;                 ///< 0=>not pointer, 1=>*, 2=>**, 3=>***, etc
     unsigned int constness;               ///< bit 0=data, bit 1=*, bit 2=**

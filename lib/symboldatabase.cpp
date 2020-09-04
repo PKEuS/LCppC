@@ -2624,8 +2624,8 @@ void SymbolDatabase::addClassFunction(Scope **scope, const Token **tok, const To
                         if (!func->hasBody()) {
                             const Token *closeParen = (*tok)->next()->link();
                             if (closeParen) {
-                                if (Token::Match(closeParen, ") noexcept| = default ;") ||
-                                    Token::Match(closeParen, ") noexcept @( = default ;")) {
+                                const Token *eq = mCtx.tokenizer->isFunctionHead(closeParen, ";");
+                                if (eq && Token::simpleMatch(eq->tokAt(-2), "= default ;")) {
                                     func->isDefault(true);
                                     return;
                                 }
@@ -2698,8 +2698,8 @@ void SymbolDatabase::addClassFunction(Scope **scope, const Token **tok, const To
                             // normal function?
                             const Token *closeParen = (*tok)->next()->link();
                             if (closeParen) {
-                                if (Token::Match(closeParen, ") noexcept| = default ;") ||
-                                    (Token::Match(closeParen, ") noexcept @( = default ;"))) {
+                                const Token *eq = mCtx.tokenizer->isFunctionHead(closeParen, ";");
+                                if (eq && Token::simpleMatch(eq->tokAt(-2), "= default ;")) {
                                     func->isDefault(true);
                                     return;
                                 }
@@ -5345,10 +5345,12 @@ void SymbolDatabase::setValueType(Token *tok, const ValueType &valuetype)
     }
 
     if (parent->isAssignmentOp()) {
-        if (vt1)
-            setValueType(parent, *vt1);
-        else if (mIsCpp && ((Token::Match(parent->tokAt(-3), "%var% ; %var% =") && parent->strAt(-3) == parent->strAt(-1)) ||
-                            Token::Match(parent->tokAt(-1), "%var% ="))) {
+        if (vt1) {
+            auto vt = *vt1;
+            vt.reference = Reference::None;
+            setValueType(parent, vt);
+        } else if (mIsCpp && ((Token::Match(parent->tokAt(-3), "%var% ; %var% =") && parent->strAt(-3) == parent->strAt(-1)) ||
+                              Token::Match(parent->tokAt(-1), "%var% ="))) {
             Token *var1Tok = parent->strAt(-2) == ";" ? parent->tokAt(-3) : parent->tokAt(-1);
             Token *autoTok = nullptr;
             if (Token::Match(var1Tok->tokAt(-2), ";|{|}|(|const auto"))
@@ -5439,6 +5441,7 @@ void SymbolDatabase::setValueType(Token *tok, const ValueType &valuetype)
     }
     if (parent->str() == "&" && !parent->astOperand2()) {
         ValueType vt(valuetype);
+        vt.reference = Reference::None; //Given int& x; the type of &x is int* not int&*
         vt.pointer += 1U;
         setValueType(parent, vt);
         return;
@@ -5682,7 +5685,7 @@ static const Token * parsedecl(const Token *type, ValueType * const valuetype, V
     } else
         valuetype->type = ValueType::Type::RECORD;
     bool par = false;
-    while (Token::Match(type, "%name%|*|&|::|(") && !Token::Match(type, "typename|template") &&
+    while (Token::Match(type, "%name%|*|&|&&|::|(") && !Token::Match(type, "typename|template") && type->varId() == 0 &&
            !type->variable() && !type->function()) {
         if (type->str() == "(") {
             if (Token::Match(type->link(), ") const| {"))
@@ -5788,6 +5791,10 @@ static const Token * parsedecl(const Token *type, ValueType * const valuetype, V
             return nullptr;
         else if (type->str() == "*")
             valuetype->pointer++;
+        else if (type->str() == "&")
+            valuetype->reference = Reference::LValue;
+        else if (type->str() == "&&")
+            valuetype->reference = Reference::RValue;
         else if (type->isStandardType())
             valuetype->fromLibraryType(type->str(), project);
         else if (Token::Match(type->previous(), "!!:: %name% !!::"))
@@ -5805,7 +5812,7 @@ static const Token * parsedecl(const Token *type, ValueType * const valuetype, V
             valuetype->sign = ValueType::Sign::SIGNED;
     }
 
-    return (type && (valuetype->type != ValueType::Type::UNKNOWN_TYPE || valuetype->pointer > 0)) ? type : nullptr;
+    return (type && (valuetype->type != ValueType::Type::UNKNOWN_TYPE || valuetype->pointer > 0 || valuetype->reference != Reference::None)) ? type : nullptr;
 }
 
 static const Scope *getClassScope(const Token *tok)
@@ -6034,7 +6041,11 @@ void SymbolDatabase::setValueTypeInTokenList(bool reportDebugWarnings, Token *to
                 const std::string& typestr(mCtx.project->library.returnValueType(tok->previous()));
                 if (!typestr.empty()) {
                     ValueType valuetype;
-                    if (valuetype.fromLibraryType(typestr, mCtx.project)) {
+                    TokenList tokenList(mCtx.settings, mCtx.project);
+                    std::istringstream istr(typestr+";");
+                    tokenList.createTokens(istr);
+                    if (parsedecl(tokenList.front(), &valuetype, mDefaultSignedness, mCtx.project)) {
+                        valuetype.originalTypeName = typestr;
                         setValueType(tok, valuetype);
                     }
                 }
@@ -6067,6 +6078,7 @@ void SymbolDatabase::setValueTypeInTokenList(bool reportDebugWarnings, Token *to
                     tokenList.simplifyPlatformTypes();
                     tokenList.simplifyStdType();
                     if (parsedecl(tokenList.front(), &vt, mDefaultSignedness, mCtx.project)) {
+                        vt.originalTypeName = typestr;
                         setValueType(tok, vt);
                     }
                 }
@@ -6332,11 +6344,18 @@ std::string ValueType::dump() const
     if (constness > 0)
         ret << " valueType-constness=\"" << constness << '\"';
 
+    if (reference == Reference::None)
+        ret << " valueType-reference=\"None\"";
+    else if (reference == Reference::LValue)
+        ret << " valueType-reference=\"LValue\"";
+    else if (reference == Reference::RValue)
+        ret << " valueType-reference=\"RValue\"";
+
     if (typeScope)
         ret << " valueType-typeScope=\"" << typeScope << '\"';
 
     if (!originalTypeName.empty())
-        ret << " valueType-originalTypeName=\"" << originalTypeName << '\"';
+        ret << " valueType-originalTypeName=\"" << ErrorLogger::toxml(originalTypeName) << '\"';
 
     return ret.str();
 }
@@ -6433,6 +6452,10 @@ std::string ValueType::str() const
         if (constness & (2 << p))
             ret += " const";
     }
+    if (reference == Reference::LValue)
+        ret += " &";
+    else if (reference == Reference::RValue)
+        ret += " &&";
     return ret.empty() ? ret : ret.substr(1);
 }
 
