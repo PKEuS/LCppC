@@ -846,9 +846,7 @@ void TemplateSimplifier::getTemplateInstantiations()
             std::string qualification;
             Token * qualificationTok = tok;
             while (Token::Match(tok, "%name% :: %name%")) {
-                // ignore redundant namespaces
-                if (scopeName.find(tok->str()) == std::string::npos)
-                    qualification += (qualification.empty() ? "" : " :: ") + tok->str();
+                qualification += (qualification.empty() ? "" : " :: ") + tok->str();
                 tok = tok->tokAt(2);
             }
 
@@ -1132,7 +1130,7 @@ void TemplateSimplifier::useDefaultArgumentValues(TokenAndName &declaration)
                         (from->strAt(1) == ">" || (from->previous()->isName() &&
                                                    typeParameterNames.find(from->strAt(-1)) == typeParameterNames.end())))
                         ++indentlevel;
-                    else if (from->str() == ">" && (links.empty() || links.top()->str() == "<"))
+                    else if (from->str() == ">" && (links.empty() || links.top()->str() == "<" || indentlevel))
                         --indentlevel;
                     auto entry = typeParameterNames.find(from->str());
                     if (entry != typeParameterNames.end() && entry->second < instantiationArgs.size()) {

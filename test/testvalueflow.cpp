@@ -138,6 +138,8 @@ private:
         TEST_CASE(valueFlowCrash);
         TEST_CASE(valueFlowHang);
         TEST_CASE(valueFlowCrashConstructorInitialization);
+
+        TEST_CASE(valueFlowUnknownMixedOperators);
     }
 
     static bool isNotTokValue(const ValueFlow::Value &val) {
@@ -154,6 +156,24 @@ private:
             if (tok->str() == "x" && tok->linenr() == linenr) {
                 for (const ValueFlow::Value& val:tok->values()) {
                     if (val.isKnown() && val.intvalue == value)
+                        return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    bool testValueOfXImpossible(const char code[], unsigned int linenr, int value) {
+        // Tokenize..
+        Tokenizer tokenizer(&settings, &project, this);
+        std::istringstream istr(code);
+        tokenizer.tokenize(istr, "test.cpp");
+
+        for (const Token *tok = tokenizer.tokens(); tok; tok = tok->next()) {
+            if (tok->str() == "x" && tok->linenr() == linenr) {
+                for (const ValueFlow::Value& val:tok->values()) {
+                    if (val.isImpossible() && val.intvalue == value)
                         return true;
                 }
             }
@@ -2424,6 +2444,40 @@ private:
                "    }"
                "}";
         ASSERT_EQUALS(false, testValueOfXKnown(code, 3U, 2));
+
+        code = "int f(int i, int j) {\n"
+               "    if (i == 0) {\n"
+               "        if (j < 0)\n"
+               "            return 0;\n"
+               "        i = j+1;\n"
+               "    }\n"
+               "    int x = i;\n"
+               "    return x;\n"
+               "}\n";
+        ASSERT_EQUALS(false, testValueOfX(code, 8U, 0));
+
+        code = "int f(int i, int j) {\n"
+               "    if (i == 0) {\n"
+               "        if (j < 0)\n"
+               "            return 0;\n"
+               "        if (j < 0)\n"
+               "            i = j+1;\n"
+               "    }\n"
+               "    int x = i;\n"
+               "    return x;\n"
+               "}\n";
+        ASSERT_EQUALS(true, testValueOfX(code, 9U, 0));
+
+        code = "void g(long& a);\n"
+               "void f(long a) {\n"
+               "    if (a == 0)\n"
+               "        return;\n"
+               "    if (a > 1)\n"
+               "         g(a);\n"
+               "    int x = a;\n"
+               "    return x;\n"
+               "}\n";
+        ASSERT_EQUALS(false, testValueOfXImpossible(code, 8U, 0));
     }
 
     void valueFlowAfterConditionExpr() {
@@ -4688,6 +4742,15 @@ private:
                "}\n";
         valueOfTok(code, "x");
 
+        code = "void f(){\n"
+               "      struct dwarf_data **pp;\n"
+               "      for (pp = (struct dwarf_data **) (void *) &state->fileline_data;\n"
+               "       *pp != NULL;\n"
+               "       pp = &(*pp)->next)\n"
+               "    ;\n"
+               "}\n";
+        valueOfTok(code, "x");
+
         code = "void *foo(void *x);\n"
                "void *foo(void *x)\n"
                "{\n"
@@ -4697,6 +4760,15 @@ private:
                "    return x;\n"
                "}\n";
         valueOfTok(code, "x");
+
+        code = "void f() {\n"
+               "    std::string a = b[c->d()];\n"
+               "    if(a.empty()) {\n"
+               "        INFO(std::string{\"a\"} + c->d());\n"
+               "        INFO(std::string{\"b\"} + a);\n"
+               "    }\n"
+               "}\n";
+        valueOfTok(code, "a");
     }
 
     void valueFlowHang() {
@@ -4767,6 +4839,20 @@ private:
                "    }\n"
                "}";
         valueOfTok(code, "path");
+    }
+
+    void valueFlowUnknownMixedOperators() {
+        const char *code= "int f(int a, int b, bool x) {\n"
+                          "  if (a == 1 && (!(b == 2 && x))) {\n"
+                          "  } else {\n"
+                          "    if (x) {\n"
+                          "    }\n"
+                          "  }\n"
+                          "\n"
+                          "  return 0;\n"
+                          "}" ;
+
+        ASSERT_EQUALS(false, testValueOfXKnown(code, 4U, 1));
     }
 };
 

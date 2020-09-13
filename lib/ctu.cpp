@@ -283,7 +283,7 @@ void CTU::CTUInfo::parseTokens(const Tokenizer *tokenizer)
             if (!tok->astOperand1()->function())
                 continue;
             const std::vector<const Token *> args(getArguments(tok->previous()));
-            for (std::size_t argnr = 0; argnr < args.size(); ++argnr) {
+            for (unsigned int argnr = 0; argnr < args.size(); ++argnr) {
                 const Token *argtok = args[argnr];
                 if (!argtok)
                     continue;

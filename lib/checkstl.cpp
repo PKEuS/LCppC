@@ -60,6 +60,11 @@ static const struct CWE CWE825(825U);   // Expired Pointer Dereference
 static const struct CWE CWE833(833U);   // Deadlock
 static const struct CWE CWE834(834U);   // Excessive Iteration
 
+static bool isElementAccessYield(const Library::Container::Yield& yield)
+{
+    return yield == Library::Container::Yield::ITEM || yield == Library::Container::Yield::AT_INDEX;
+}
+
 void CheckStl::outOfBounds()
 {
     for (const Scope *function : mCtx.symbolDB->functionScopes) {
@@ -77,9 +82,28 @@ void CheckStl::outOfBounds()
                     continue;
                 if (!value.errorSeverity() && !mCtx.project->severity.isEnabled(Severity::warning))
                     continue;
-                if (value.intvalue == 0 && Token::Match(parent, ". %name% (") && container->getYield(parent->strAt(1)) == Library::Container::Yield::ITEM) {
-                    outOfBoundsError(parent->tokAt(2), tok->expressionString(), &value, parent->strAt(1), nullptr);
-                    continue;
+                if (Token::Match(parent, ". %name% (") && isElementAccessYield(container->getYield(parent->strAt(1)))) {
+                    if (value.intvalue == 0) {
+                        outOfBoundsError(parent->tokAt(2), tok->expressionString(), &value, parent->strAt(1), nullptr);
+                        continue;
+                    }
+                    const Token* indexTok = parent->tokAt(2)->astOperand2();
+                    if (!indexTok)
+                        continue;
+                    const ValueFlow::Value* indexValue = indexTok->getMaxValue(false);
+                    if (indexValue && indexValue->intvalue >= value.intvalue) {
+                        outOfBoundsError(
+                            parent, tok->expressionString(), &value, indexTok->expressionString(), indexValue);
+                        continue;
+                    }
+                    if (mCtx.project->severity.isEnabled(Severity::warning)) {
+                        indexValue = indexTok->getMaxValue(true);
+                        if (indexValue && indexValue->intvalue >= value.intvalue) {
+                            outOfBoundsError(
+                                parent, tok->expressionString(), &value, indexTok->expressionString(), indexValue);
+                            continue;
+                        }
+                    }
                 }
                 if (Token::Match(tok, "%name% . %name% (") && container->getYield(tok->strAt(2)) == Library::Container::Yield::START_ITERATOR) {
                     const Token *fparent = tok->tokAt(3)->astParent();
@@ -2507,7 +2531,6 @@ void CheckStl::knownEmptyContainer()
             if (tok->str() == "for") {
                 if (!Token::simpleMatch(tok->next()->link(), ") {"))
                     continue;
-                const Token *bodyTok = tok->next()->link()->next();
                 const Token *splitTok = tok->next()->astOperand2();
                 if (!Token::simpleMatch(splitTok, ":"))
                     continue;

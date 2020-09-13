@@ -10,8 +10,18 @@
 
 struct ForwardTraversal {
     enum class Progress { Continue, Break, Skip };
+    ForwardTraversal(const ValuePtr<ForwardAnalyzer>& analyzer, const Project* project_)
+        : analyzer(analyzer), project(project_), actions(ForwardAnalyzer::Action::None), analyzeOnly(false)
+    {}
     ValuePtr<ForwardAnalyzer> analyzer;
     const Project* project;
+    ForwardAnalyzer::Action actions;
+    bool analyzeOnly;
+
+    bool stopUpdates() {
+        analyzeOnly = true;
+        return actions.isModified();
+    }
 
     std::pair<bool, bool> evalCond(const Token* tok) {
         std::vector<int> result = analyzer->evaluate(tok);
@@ -91,7 +101,7 @@ struct ForwardTraversal {
             std::tie(checkThen, checkElse) = evalCond(condTok);
             if (!checkThen && !checkElse) {
                 // Stop if the value is conditional
-                if (!traverseUnknown && analyzer->isConditional())
+                if (!traverseUnknown && analyzer->isConditional() && stopUpdates())
                     return Progress::Break;
                 checkThen = true;
                 checkElse = true;
@@ -115,7 +125,8 @@ struct ForwardTraversal {
 
     Progress update(Token* tok) {
         ForwardAnalyzer::Action action = analyzer->analyze(tok);
-        if (!action.isNone())
+        actions |= action;
+        if (!action.isNone() && !analyzeOnly)
             analyzer->update(tok, action);
         if (action.isInconclusive() && !analyzer->lowerToInconclusive())
             return Progress::Break;
@@ -218,6 +229,7 @@ struct ForwardTraversal {
             allAnalysis |= analyzeRecursive(initTok);
         if (stepTok)
             allAnalysis |= analyzeRecursive(stepTok);
+        actions |= allAnalysis;
         if (allAnalysis.isInconclusive()) {
             if (!analyzer->lowerToInconclusive())
                 return Progress::Break;
@@ -392,6 +404,7 @@ struct ForwardTraversal {
                     } else {
                         tok = endBlock;
                     }
+                    actions |= (thenAction | elseAction);
                     if (bail)
                         return Progress::Break;
                     if (returnThen && returnElse)
@@ -405,7 +418,7 @@ struct ForwardTraversal {
                         if (checkThen) {
                             return Progress::Break;
                         } else {
-                            if (analyzer->isConditional())
+                            if (analyzer->isConditional() && stopUpdates())
                                 return Progress::Break;
                             analyzer->assume(condTok, false);
                         }
@@ -414,7 +427,7 @@ struct ForwardTraversal {
                         if (!analyzer->lowerToInconclusive())
                             return Progress::Break;
                     } else if (thenAction.isModified() || elseAction.isModified()) {
-                        if (!hasElse && analyzer->isConditional())
+                        if (!hasElse && analyzer->isConditional() && stopUpdates())
                             return Progress::Break;
                         if (!analyzer->lowerToPossible())
                             return Progress::Break;
@@ -545,8 +558,9 @@ struct ForwardTraversal {
 
 };
 
-void valueFlowGenericForward(Token* start, const Token* end, const ValuePtr<ForwardAnalyzer>& fa, const Project* project)
+ForwardAnalyzer::Action valueFlowGenericForward(Token* start, const Token* end, const ValuePtr<ForwardAnalyzer>& fa, const Project* project)
 {
     ForwardTraversal ft{fa, project };
     ft.updateRange(start, end);
+    return ft.actions;
 }

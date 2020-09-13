@@ -383,7 +383,7 @@ void CheckOther::checkRedundantAssignment()
                 // Do not warn about redundant initialization when rhs is trivial
                 // TODO : do not simplify the variable declarations
                 bool isInitialization = false;
-                if (Token::Match(tok->tokAt(-3), "%var% ; %var% =") && tok->previous()->variable() && tok->previous()->variable()->nameToken() == tok->tokAt(-3) && tok->tokAt(-3)->linenr() == tok->previous()->linenr()) {
+                if (Token::Match(tok->tokAt(-2), "; %var% =") && tok->tokAt(-2)->isSplittedVarDeclEq()) {
                     isInitialization = true;
                     bool trivial = true;
                     visitAstNodes(tok->astOperand2(),
@@ -1349,9 +1349,15 @@ void CheckOther::checkConstVariable()
             bool castToNonConst = false;
             for (const Token* tok = var->nameToken(); tok != scope->bodyEnd && tok != nullptr; tok = tok->next()) {
                 if (tok->isCast()) {
+                    if (!tok->valueType()) {
+                        castToNonConst = true; // safe guess
+                        break;
+                    }
                     bool isConst = 0 != (tok->valueType()->constness & (1 << tok->valueType()->pointer));
-                    if (!isConst)
+                    if (!isConst) {
                         castToNonConst = true;
+                        break;
+                    }
                 }
             }
             if (castToNonConst)

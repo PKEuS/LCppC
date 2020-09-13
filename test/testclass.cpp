@@ -2704,6 +2704,13 @@ private:
                                "    ~Base(){}\n"
                                "};\n", true);
         ASSERT_EQUALS("", errout.str());
+
+        checkVirtualDestructor("class C {\n"
+                               "private:\n"
+                               "    C();\n"
+                               "    virtual ~C();\n"
+                               "};\n", true);
+        ASSERT_EQUALS("", errout.str());
     }
 
     void checkNoMemset(const char code[]) {
@@ -6722,6 +6729,19 @@ private:
                                      "    C(C& c) : m_i(c.m_i) { c.m_i = (Foo)-1; }\n"
                                      "private:\n"
                                      "    Foo m_i;\n"
+                                     "};");
+        ASSERT_EQUALS("", errout.str());
+
+        checkInitializationListUsage("class A {\n" // #9821 - delegate constructor
+                                     "public:\n"
+                                     "    A() : st{} {}\n"
+                                     "\n"
+                                     "    explicit A(const std::string &input): A() {\n"
+                                     "        st = input;\n"
+                                     "    }\n"
+                                     "\n"
+                                     "private:\n"
+                                     "    std::string st;\n"
                                      "};");
         ASSERT_EQUALS("", errout.str());
     }

@@ -114,6 +114,6 @@ struct ForwardAnalyzer {
     virtual ~ForwardAnalyzer() {}
 };
 
-void valueFlowGenericForward(Token* start, const Token* end, const ValuePtr<ForwardAnalyzer>& fa, const Project* project);
+ForwardAnalyzer::Action valueFlowGenericForward(Token* start, const Token* end, const ValuePtr<ForwardAnalyzer>& fa, const Project* project);
 
 #endif

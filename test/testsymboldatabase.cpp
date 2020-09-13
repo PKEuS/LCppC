@@ -382,6 +382,8 @@ private:
         TEST_CASE(findFunctionExternC);
         TEST_CASE(findFunctionGlobalScope); // ::foo
 
+        TEST_CASE(overloadedFunction1);
+
         TEST_CASE(valueTypeMatchParameter); // ValueType::matchParameter
 
         TEST_CASE(noexceptFunction1);
@@ -434,6 +436,7 @@ private:
         TEST_CASE(auto11); // #8964 - const auto startX = x;
         TEST_CASE(auto12); // #8993 - const std::string &x; auto y = x; if (y.empty()) ..
         TEST_CASE(auto13);
+        TEST_CASE(auto14);
 
         TEST_CASE(unionWithConstructor);
 
@@ -6208,6 +6211,19 @@ private:
         ASSERT(bar->function());
     }
 
+    void overloadedFunction1() {
+        GET_SYMBOL_DB("struct S {\n"
+                      "    int operator()(int);\n"
+                      "};\n"
+                      "\n"
+                      "void foo(S x) {\n"
+                      "    x(123);\n"
+                      "}");
+        const Token *tok = Token::findsimplematch(tokenizer.tokens(), "x . operator() ( 123 )");
+        ASSERT(tok);
+        ASSERT(tok->tokAt(2)->function());
+    }
+
     void valueTypeMatchParameter() {
         ValueType vt_int(ValueType::Sign::SIGNED, ValueType::Type::INT, 0);
         ValueType vt_const_int(ValueType::Sign::SIGNED, ValueType::Type::INT, 0, 1);
@@ -6321,15 +6337,10 @@ private:
                       "   :a(std::move(b.a)) { }\n"
                       "};");
         ASSERT_EQUALS("", errout.str());
-        ASSERT_EQUALS(true,  db != nullptr); // not null
-
-        if (db) {
-            const Scope *b = db->findScopeByName("B");
-            ASSERT_EQUALS(true, b != nullptr);
-            if (b) {
-                CLASS_FUNC(B, b, true);
-            }
-        }
+        ASSERT(db != nullptr); // not null
+        const Scope *b = db->findScopeByName("B");
+        ASSERT(b != nullptr);
+        CLASS_FUNC(B, b, true);
     }
 
 #define FUNC_THROW(x) do { \
@@ -6344,14 +6355,12 @@ private:
                       "void func3() throw(int);\n"
                       "void func4() throw(int) { }");
         ASSERT_EQUALS("", errout.str());
-        ASSERT_EQUALS(true,  db != nullptr); // not null
+        ASSERT(db != nullptr); // not null
 
-        if (db) {
-            FUNC_THROW(func1);
-            FUNC_THROW(func2);
-            FUNC_THROW(func3);
-            FUNC_THROW(func4);
-        }
+        FUNC_THROW(func1);
+        FUNC_THROW(func2);
+        FUNC_THROW(func3);
+        FUNC_THROW(func4);
     }
 
 #define CLASS_FUNC_THROW(x, y) do { \
@@ -6845,6 +6854,7 @@ private:
         ASSERT_EQUALS("A::BC *", typeOf("namespace A { struct BC { int b; int c; }; }; struct A::BC abc; x=&abc;", "&"));
         ASSERT_EQUALS("A::BC *", typeOf("namespace A { struct BC { int b; int c; }; }; struct A::BC *abc; x=abc+1;", "+"));
         ASSERT_EQUALS("signed int", typeOf("auto a(int& x, int& y) { return x + y; }", "+"));
+        ASSERT_EQUALS("signed int", typeOf("auto a(int& x) { return x << 1; }", "<<"));
         ASSERT_EQUALS("signed int", typeOf("void a(int& x, int& y) { x = y; }", "=")); //Debatably this should be a signed int & but we'll stick with the current behavior for now
         ASSERT_EQUALS("signed int", typeOf("auto a(int* y) { return *y; }", "*")); //Debatably this should be a signed int & but we'll stick with the current behavior for now
 
@@ -6917,7 +6927,7 @@ private:
         ASSERT_EQUALS("signed int", typeOf("int (*a)(int); a(5);", "( 5"));
         ASSERT_EQUALS("s", typeOf("struct s { s foo(); s(int, int); }; s s::foo() { return s(1, 2); } ", "( 1 , 2 )"));
         // Some standard template functions.. TODO library configuration
-        ASSERT_EQUALS("signed int", typeOf("std::move(5);", "( 5 )"));
+        ASSERT_EQUALS("signed int &&", typeOf("std::move(5);", "( 5 )"));
 
         // struct member..
         ASSERT_EQUALS("signed int", typeOf("struct AB { int a; int b; } ab; x = ab.a;", "."));
@@ -7853,6 +7863,18 @@ private:
         ASSERT(tok->valueType()->pointer);
         ASSERT(tok->variable()->valueType());
         ASSERT(tok->variable()->valueType()->pointer);
+    }
+
+    void auto14() { // #9892 - crash in Token::declType
+        GET_SYMBOL_DB("static void foo() {\n"
+                      "    auto combo = widget->combo = new Combo{};\n"
+                      "    combo->addItem();\n"
+                      "}");
+
+        const Token *tok;
+
+        tok = Token::findsimplematch(tokenizer.tokens(), "combo =");
+        ASSERT(tok && !tok->valueType());
     }
 
     void unionWithConstructor() {

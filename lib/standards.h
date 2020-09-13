@@ -90,7 +90,7 @@ struct Standards {
         }
         return false;
     }
-    const std::string getCPP() const {
+    std::string getCPP() const {
         switch (cpp) {
         case CPP03:
             return "c++03";

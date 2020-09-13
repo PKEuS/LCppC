@@ -22,6 +22,7 @@
 
 #include "astutils.h"
 #include "errorlogger.h"
+#include "library.h"
 #include "mathlib.h"
 #include "platform.h"
 #include "settings.h"
@@ -1895,6 +1896,13 @@ const Token * Variable::declEndToken() const
 
 void Variable::evaluate(const Project* project)
 {
+    // Is there initialization in variable declaration
+    const Token *initTok = mNameToken ? mNameToken->next() : nullptr;
+    while (initTok && initTok->str() == "[")
+        initTok = initTok->link()->next();
+    if (Token::Match(initTok, "=|{") || (initTok && initTok->isSplittedVarDeclEq()))
+        setFlag(fIsInit, true);
+
     if (!project)
         return;
 
@@ -1935,7 +1943,7 @@ void Variable::evaluate(const Project* project)
             setFlag(fIsReference, true); // Set also fIsReference
         }
 
-        if (tok->isMaybeUnused()) {
+        if (tok->isAttributeMaybeUnused()) {
             setFlag(fIsMaybeUnused, true);
         }
 
@@ -5312,12 +5320,15 @@ void SymbolDatabase::setValueType(Token *tok, const ValueType &valuetype)
 
     if (vt1 && Token::Match(parent, "<<|>>")) {
         if (!mIsCpp || (vt2 && vt2->isIntegral())) {
-            if (vt1->type < ValueType::Type::BOOL || vt1->type >= ValueType::Type::INT)
-                setValueType(parent, *vt1);
-            else {
+            if (vt1->type < ValueType::Type::BOOL || vt1->type >= ValueType::Type::INT) {
+                ValueType vt(*vt1);
+                vt.reference = Reference::None;
+                setValueType(parent, vt);
+            } else {
                 ValueType vt(*vt1);
                 vt.type = ValueType::Type::INT; // Integer promotion
                 vt.sign = ValueType::Sign::SIGNED;
+                vt.reference = Reference::None;
                 setValueType(parent, vt);
             }
 
@@ -5413,7 +5424,9 @@ void SymbolDatabase::setValueType(Token *tok, const ValueType &valuetype)
     }
     // std::move
     if (vt2 && parent->str() == "(" && Token::simpleMatch(parent->tokAt(-3), "std :: move (")) {
-        setValueType(parent, valuetype);
+        ValueType vt = valuetype;
+        vt.reference = Reference::RValue;
+        setValueType(parent, vt);
         return;
     }
     if (parent->str() == "*" && !parent->astOperand2() && valuetype.pointer > 0U) {
@@ -5935,7 +5948,8 @@ void SymbolDatabase::setValueTypeInTokenList(bool reportDebugWarnings, Token *to
                 valuetype.sign = ValueType::Sign::SIGNED;
             }
             setValueType(tok, valuetype);
-        } else if (tok->link() && tok->str() == "(") {
+        } else if (tok->link() && Token::Match(tok, "(|{")) {
+            const Token* start = tok->astOperand1() ? tok->astOperand1()->findExpressionStartEndTokens().first : nullptr;
             // cast
             if (tok->isCast() && !tok->astOperand2() && Token::Match(tok, "( %name%")) {
                 ValueType valuetype;
@@ -5948,6 +5962,16 @@ void SymbolDatabase::setValueTypeInTokenList(bool reportDebugWarnings, Token *to
                 ValueType valuetype;
                 if (Token::simpleMatch(parsedecl(tok->astOperand1()->tokAt(2), &valuetype, mDefaultSignedness, mCtx.project), ">"))
                     setValueType(tok, valuetype);
+            }
+
+            // Construct smart pointer
+            else if (mCtx.project->library.isSmartPointer(start)) {
+                ValueType valuetype;
+                if (parsedecl(start, &valuetype, mDefaultSignedness, mCtx.project)) {
+                    setValueType(tok, valuetype);
+                    setValueType(tok->astOperand1(), valuetype);
+                }
+
             }
 
             // function

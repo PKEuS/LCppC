@@ -5,19 +5,31 @@
 #include "symboldatabase.h"
 #include <algorithm>
 #include <cassert>
+#include <memory>
 
 void ProgramMemory::setValue(unsigned int varid, const ValueFlow::Value &value)
 {
     values[varid] = value;
 }
 
-bool ProgramMemory::getIntValue(unsigned int varid, MathLib::bigint* result) const
+const ValueFlow::Value* ProgramMemory::getValue(unsigned int varid) const
 {
     const ProgramMemory::Map::const_iterator it = values.find(varid);
-    const bool found = it != values.end() && it->second.isIntValue();
+    const bool found = it != values.end() && !it->second.isImpossible();
     if (found)
-        *result = it->second.intvalue;
-    return found;
+        return &it->second;
+    else
+        return nullptr;
+}
+
+bool ProgramMemory::getIntValue(unsigned int varid, MathLib::bigint* result) const
+{
+    const ValueFlow::Value* value = getValue(varid);
+    if (value && value->isIntValue()) {
+        *result = value->intvalue;
+        return true;
+    }
+    return false;
 }
 
 void ProgramMemory::setIntValue(unsigned int varid, MathLib::bigint value)
@@ -27,20 +39,22 @@ void ProgramMemory::setIntValue(unsigned int varid, MathLib::bigint value)
 
 bool ProgramMemory::getTokValue(unsigned int varid, const Token** result) const
 {
-    const ProgramMemory::Map::const_iterator it = values.find(varid);
-    const bool found = it != values.end() && it->second.isTokValue();
-    if (found)
-        *result = it->second.tokvalue;
-    return found;
+    const ValueFlow::Value* value = getValue(varid);
+    if (value && value->isTokValue()) {
+        *result = value->tokvalue;
+        return true;
+    }
+    return false;
 }
 
 bool ProgramMemory::getContainerSizeValue(unsigned int varid, MathLib::bigint* result) const
 {
-    const ProgramMemory::Map::const_iterator it = values.find(varid);
-    const bool found = it != values.end() && it->second.isContainerSizeValue();
-    if (found)
-        *result = it->second.intvalue;
-    return found;
+    const ValueFlow::Value* value = getValue(varid);
+    if (value && value->isContainerSizeValue()) {
+        *result = value->intvalue;
+        return true;
+    }
+    return false;
 }
 
 void ProgramMemory::setUnknown(unsigned int varid)

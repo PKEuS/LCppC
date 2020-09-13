@@ -1500,7 +1500,23 @@ static std::string stringFromTokenRange(const Token* start, const Token* end)
             ret << "unsigned ";
         if (tok->isLong() && !tok->isLiteral())
             ret << "long ";
-        if (tok->originalName().empty() || tok->isUnsigned() || tok->isLong()) {
+        if (tok->tokType() == Token::eString) {
+            for (unsigned char c: tok->str()) {
+                if (c == '\n')
+                    ret << "\\n";
+                else if (c == '\r')
+                    ret << "\\r";
+                else if (c == '\t')
+                    ret << "\\t";
+                else if (c >= ' ' && c <= 126)
+                    ret << c;
+                else {
+                    char str[10];
+                    sprintf(str, "\\x%02x", c);
+                    ret << str;
+                }
+            }
+        } else if (tok->originalName().empty() || tok->isUnsigned() || tok->isLong()) {
             ret << tok->str();
         } else
             ret << tok->originalName();
@@ -2179,7 +2195,7 @@ std::pair<const Token*, const Token*> Token::typeDecl(const Token * tok)
             const Token * tok2 = var->declEndToken();
             if (Token::Match(tok2, "; %varid% =", var->declarationId()))
                 tok2 = tok2->tokAt(2);
-            if (Token::simpleMatch(tok2, "=") && tok2->astOperand2()) {
+            if (Token::simpleMatch(tok2, "=") && Token::Match(tok2->astOperand2(), "!!=")) {
                 std::pair<const Token*, const Token*> r = typeDecl(tok2->astOperand2());
                 if (r.first)
                     return r;

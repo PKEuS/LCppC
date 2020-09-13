@@ -90,11 +90,11 @@ Compiling
         3. Add all cpp files in the externals folders to the project file / makefile.
         4. Compile.
 
-Cross compiling Win32 (CLI) version of Cppcheck in Linux
+    Cross compiling Win32 (CLI) version of Cppcheck in Linux
 
-    sudo apt-get install mingw32
-    make CXX=i586-mingw32msvc-g++ LDFLAGS="-lshlwapi"
-    mv cppcheck cppcheck.exe
+        sudo apt-get install mingw32
+        make CXX=i586-mingw32msvc-g++ LDFLAGS="-lshlwapi"
+        mv cppcheck cppcheck.exe
 
 Webpage
 

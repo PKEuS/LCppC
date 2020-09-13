@@ -2297,6 +2297,12 @@ private:
               "  }"
               "}");
         ASSERT_EQUALS("[test.cpp:2] -> [test.cpp:3]: (warning) Opposite inner 'if' condition leads to a dead code block.\n", errout.str());
+
+        check("void f(bool x, const int a, const int b) {\n"
+              "        if(x && a < b)\n"
+              "            if( x && a > b){}\n"
+              "}");
+        ASSERT_EQUALS("[test.cpp:2] -> [test.cpp:3]: (warning) Opposite inner 'if' condition leads to a dead code block.\n", errout.str());
     }
 
     void oppositeInnerConditionEmpty() {
@@ -3639,6 +3645,15 @@ private:
               "  if(b[1] == 2) {}\n"
               "}");
         ASSERT_EQUALS("[test.cpp:3]: (style) Condition 'b[1]==2' is always false\n", errout.str());
+
+        // #9878
+        check("void f(bool a, bool b) {\n"
+              "    if (a && b){;}\n"
+              "    else if (!a && b){;}\n"
+              "    else if (!a && !b){;}\n"
+              "    else {;}\n"
+              "}");
+        ASSERT_EQUALS("", errout.str());
     }
 
     void duplicateCondition() {

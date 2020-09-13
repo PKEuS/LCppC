@@ -200,6 +200,7 @@ private:
         TEST_CASE(template156);
         TEST_CASE(template157); // #9854
         TEST_CASE(template158); // daca crash
+        TEST_CASE(template159); // #9886
         TEST_CASE(template_specialization_1);  // #7868 - template specialization template <typename T> struct S<C<T>> {..};
         TEST_CASE(template_specialization_2);  // #7868 - template specialization template <typename T> struct S<C<T>> {..};
         TEST_CASE(template_enum);  // #6299 Syntax error in complex enum declaration (including template)
@@ -2092,22 +2093,64 @@ private:
                                 "        template<typename T> T foo(T t) { return t; }\n"
                                 "        template<> char foo<char>(char a) { return a; }\n"
                                 "        template<> int foo<int>(int a) { return a; }\n"
+                                "        template short NS2::foo<short>(short);\n"
+                                "        template long NS1::NS2::foo<long>(long);\n"
                                 "    }\n"
                                 "    template float NS2::foo<float>(float);\n"
+                                "    template bool NS1::NS2::foo<bool>(bool);\n"
                                 "}\n"
                                 "template double NS1::NS2::foo<double>(double);";
             const char exp[] = "namespace NS1 { "
                                "namespace NS2 { "
                                "int foo<int> ( int a ) ; "
                                "char foo<char> ( char a ) ; "
+                               "short foo<short> ( short t ) ; "
+                               "long foo<long> ( long t ) ; "
                                "float foo<float> ( float t ) ; "
+                               "bool foo<bool> ( bool t ) ; "
                                "double foo<double> ( double t ) ; "
                                "char foo<char> ( char a ) { return a ; } "
                                "int foo<int> ( int a ) { return a ; } "
                                "} "
                                "} "
+                               "short NS1 :: NS2 :: foo<short> ( short t ) { return t ; } "
+                               "long NS1 :: NS2 :: foo<long> ( long t ) { return t ; } "
                                "float NS1 :: NS2 :: foo<float> ( float t ) { return t ; } "
+                               "bool NS1 :: NS2 :: foo<bool> ( bool t ) { return t ; } "
                                "double NS1 :: NS2 :: foo<double> ( double t ) { return t ; }";
+            ASSERT_EQUALS(exp, tok(code));
+        }
+        {
+            const char code[] = "namespace NS1 {\n"
+                                "    namespace NS {\n"
+                                "        template<typename T> T foo(T t) { return t; }\n"
+                                "        template<> char foo<char>(char a) { return a; }\n"
+                                "        template<> int foo<int>(int a) { return a; }\n"
+                                "        template short NS::foo<short>(short);\n"
+                                "        template long NS1::NS::foo<long>(long);\n"
+                                "    }\n"
+                                "    template float NS::foo<float>(float);\n"
+                                "    template bool NS1::NS::foo<bool>(bool);\n"
+                                "}\n"
+                                "template double NS1::NS::foo<double>(double);";
+            const char exp[] = "namespace NS1 { "
+                               "namespace NS { "
+                               "int foo<int> ( int a ) ; "
+                               "char foo<char> ( char a ) ; "
+                               "short foo<short> ( short t ) ; "
+                               "long foo<long> ( long t ) ; "
+                               "float foo<float> ( float t ) ; "
+                               "bool foo<bool> ( bool t ) ; "
+                               "double foo<double> ( double t ) ; "
+                               "char foo<char> ( char a ) { return a ; } "
+                               "int foo<int> ( int a ) { return a ; } "
+                               "} "
+                               "} "
+                               "short NS1 :: NS :: foo<short> ( short t ) { return t ; } "
+                               "long NS1 :: NS :: foo<long> ( long t ) { return t ; } "
+                               "float NS1 :: NS :: foo<float> ( float t ) { return t ; } "
+                               "bool NS1 :: NS :: foo<bool> ( bool t ) { return t ; } "
+                               "double NS1 :: NS :: foo<double> ( double t ) { return t ; }";
             ASSERT_EQUALS(exp, tok(code));
         }
     }
@@ -3976,6 +4019,24 @@ private:
                             "b<a100<int>> d100;";
         // don't bother checking the output because this is not instantiated properly
         tok(code); // don't crash
+    }
+
+    void template159() {  // #9886
+        const char code[] = "struct impl { template <class T> static T create(); };\n"
+                            "template<class T, class U, class = decltype(impl::create<T>()->impl::create<U>())>\n"
+                            "struct tester{};\n"
+                            "tester<impl*, int> ti;\n"
+                            "template<class T, class U, class = decltype(impl::create<T>()->impl::create<U>())>\n"
+                            "int test() { return 0; }\n"
+                            "int i = test<impl*, int>();";
+        const char exp[]  = "struct impl { template < class T > static T create ( ) ; } ; "
+                            "struct tester<impl*,int,decltype(impl::create<impl*>().impl::create<int>())> ; "
+                            "tester<impl*,int,decltype(impl::create<impl*>().impl::create<int>())> ti ; "
+                            "int test<impl*,int,decltype(impl::create<impl*>().impl::create<int>())> ( ) ; "
+                            "int i ; i = test<impl*,int,decltype(impl::create<impl*>().impl::create<int>())> ( ) ; "
+                            "int test<impl*,int,decltype(impl::create<impl*>().impl::create<int>())> ( ) { return 0 ; } "
+                            "struct tester<impl*,int,decltype(impl::create<impl*>().impl::create<int>())> { } ;";
+        ASSERT_EQUALS(exp, tok(code));
     }
 
     void template_specialization_1() {  // #7868 - template specialization template <typename T> struct S<C<T>> {..};

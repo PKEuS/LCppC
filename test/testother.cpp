@@ -684,6 +684,16 @@ private:
               "    a = b / -x;\n"
               "}");
         ASSERT_EQUALS("", errout.str());
+
+        check("struct A {\n"
+              "    int x;\n"
+              "};\n"
+              "int f(A* a) {\n"
+              "    if (a->x == 0) \n"
+              "        a->x = 1;\n"
+              "    return 1/a->x;\n"
+              "}\n");
+        ASSERT_EQUALS("", errout.str());
     }
 
     void nanInArithmeticExpression() {
@@ -2219,6 +2229,13 @@ private:
               "}");
         ASSERT_EQUALS("", errout.str());
 
+        check("struct C { void f() const; };\n" // #9875 - crash
+              "\n"
+              "void foo(C& x) {\n"
+              "   x.f();\n"
+              "   foo( static_cast<U2>(0) );\n"
+              "}");
+        ASSERT_EQUALS("", errout.str());
 
         check("class a {\n"
               "    void foo(const int& i) const;\n"
