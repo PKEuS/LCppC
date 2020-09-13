@@ -15,7 +15,15 @@ New Features:
 
 Improvements:
 
- - 
+ - Improved empty container checking: Support STL algorithms (also in Cppcheck 2.2)
+
+ - Improved accuracy of checking for returning references to temporary variables (also in Cppcheck 2.2)
+
+ - Improved handling of operator() (also in Cppcheck 2.2)
+
+ - Improved support for Lambdas in ValueFlow analysis (also in Cppcheck 2.2)
+ 
+ - Improved std.cfg and wxwidgets.cfg (also in Cppcheck 2.2)
 
 
 Bugfixes:
