@@ -3471,6 +3471,7 @@ struct LifetimeStore {
                 ValueFlow::Value value;
                 value.valueType = ValueFlow::Value::LIFETIME;
                 value.lifetimeScope = v.lifetimeScope;
+                value.path = v.path;
                 value.tokvalue = lt.token;
                 value.errorPath = std::move(er);
                 value.lifetimeKind = type;
@@ -3548,7 +3549,7 @@ static void valueFlowLifetimeFunction(Token *tok, TokenList *tokenlist, ErrorLog
             LifetimeStore{argtok, "Passed to '" + tok->str() + "'.", ValueFlow::Value::LifetimeKind::Object} .byRef(
                 tok->next(), tokenlist, errorLogger);
         }
-    } else if (Token::Match(tok->tokAt(-2), "std :: make_tuple|tuple_cat|make_pair|make_reverse_iterator|next|prev|move")) {
+    } else if (Token::Match(tok->tokAt(-2), "std :: make_tuple|tuple_cat|make_pair|make_reverse_iterator|next|prev|move|bind")) {
         for (const Token *argtok : getArguments(tok)) {
             LifetimeStore{argtok, "Passed to '" + tok->str() + "'.", ValueFlow::Value::LifetimeKind::Object} .byVal(
                 tok->next(), tokenlist, errorLogger);
@@ -3576,7 +3577,7 @@ static void valueFlowLifetimeFunction(Token *tok, TokenList *tokenlist, ErrorLog
         for (const Token* returnTok : returns) {
             if (returnTok == tok)
                 continue;
-            const Variable *returnVar = returnTok->variable();
+            const Variable *returnVar = getLifetimeVariable(returnTok);
             if (returnVar && returnVar->isArgument() && (returnVar->isConst() || !isVariableChanged(returnVar, project, tokenlist->isCPP()))) {
                 LifetimeStore ls = LifetimeStore::fromFunctionArg(f, tok, returnVar, tokenlist, errorLogger);
                 ls.inconclusive = inconclusive;
@@ -3594,7 +3595,7 @@ static void valueFlowLifetimeFunction(Token *tok, TokenList *tokenlist, ErrorLog
                 ls.inconclusive = inconclusive;
                 ls.errorPath = v.errorPath;
                 ls.errorPath.emplace_front(returnTok, "Return " + lifetimeType(returnTok, &v) + ".");
-                if (var->isReference() || var->isRValueReference()) {
+                if (!v.isArgumentLifetimeValue() && (var->isReference() || var->isRValueReference())) {
                     ls.byRef(tok->next(), tokenlist, errorLogger);
                 } else if (v.isArgumentLifetimeValue()) {
                     ls.byVal(tok->next(), tokenlist, errorLogger);
@@ -3804,6 +3805,8 @@ static void valueFlowLifetime(TokenList *tokenlist, SymbolDatabase*, ErrorLogger
             }
 
             for (const Token * tok2 = lam.bodyTok; tok2 != lam.bodyTok->link(); tok2 = tok2->next()) {
+                if (!tok2->variable())
+                    continue;
                 captureVariable(tok2, lam.implicitCapture, isImplicitCapturingVariable);
             }
 
@@ -4465,9 +4468,10 @@ struct ValueFlowConditionHandler {
                     if (Token::simpleMatch(top->link(), ") {")) {
                         Token *after = top->link()->linkAt(1);
                         const Token* unknownFunction = nullptr;
-                        bool dead_if = isReturnScope(after, &project->library, &unknownFunction) ||
-                                       (tok->astParent() && Token::simpleMatch(tok->astParent()->previous(), "while (") &&
-                                        !isBreakScope(after));
+                        const bool isWhile =
+                            tok->astParent() && Token::simpleMatch(tok->astParent()->previous(), "while (");
+                        bool dead_if = (!isBreakScope(after) && isWhile) ||
+                                       (isReturnScope(after, &project->library, &unknownFunction) && !isWhile);
                         bool dead_else = false;
 
                         if (!dead_if && unknownFunction) {
@@ -5468,6 +5472,12 @@ static void valueFlowSubFunction(TokenList* tokenlist, SymbolDatabase* symboldat
                 // passing value(s) to function
                 std::vector<ValueFlow::Value> argvalues(getFunctionArgumentValues(argtok));
 
+                // Remove non-local lifetimes
+                argvalues.erase(std::remove_if(argvalues.begin(), argvalues.end(), [](const ValueFlow::Value& v) {
+                    if (v.isLifetimeValue())
+                        return !v.isLocalLifetimeValue() && !v.isSubFunctionLifetimeValue();
+                    return false;
+                }), argvalues.end());
                 // Don't forward container sizes for now since programmemory can't evaluate conditions
                 argvalues.erase(std::remove_if(argvalues.begin(), argvalues.end(), &isContainerSizeValue), argvalues.end());
 

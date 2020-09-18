@@ -192,8 +192,8 @@ bool isVariableChangedByFunctionCall(const Token *tok, unsigned int indirect, co
 bool isVariableChangedByFunctionCall(const Token* tok, unsigned int indirect, const Project* project);
 
 /** Is variable changed in block of code? */
-bool isVariableChanged(const Token *start, const Token *end, const unsigned int varid, bool globalvar, const Project* project, bool cpp, int depth = 20);
-bool isVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Project* project, bool cpp, int depth = 20);
+bool isVariableChanged(const Token *start, const Token *end, const unsigned int exprid, bool globalvar, const Project* project, bool cpp, int depth = 20);
+bool isVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int exprid, bool globalvar, const Project* project, bool cpp, int depth = 20);
 
 bool isVariableChanged(const Token *tok, int indirect, const Project* project, bool cpp, int depth = 20);
 
@@ -208,8 +208,8 @@ bool isVariablesChanged(const Token* start,
 
 bool isThisChanged(const Token* start, const Token* end, int indirect, const Project* project, bool cpp);
 
-const Token* findVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Project* project, bool cpp, int depth = 20);
-Token* findVariableChanged(Token *start, const Token *end, int indirect, const unsigned int varid, bool globalvar, const Project* project, bool cpp, int depth = 20);
+const Token* findVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int exprid, bool globalvar, const Project* project, bool cpp, int depth = 20);
+Token* findVariableChanged(Token *start, const Token *end, int indirect, const unsigned int exprid, bool globalvar, const Project* project, bool cpp, int depth = 20);
 
 /// If token is an alias if another variable
 bool isAliasOf(const Token *tok, unsigned int varid);

@@ -1203,6 +1203,9 @@ void CheckUnusedVar::checkFunctionVariableUsage()
 
             const Token *expr = varDecl ? varDecl : tok->astOperand1();
 
+            if (isInitialization)
+                expr = tok->previous();
+
             // Is variable in lhs a union member?
             if (tok->previous() && tok->previous()->variable() && tok->previous()->variable()->nameToken()->scope()->type == Scope::eUnion)
                 continue;

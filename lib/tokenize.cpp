@@ -1666,7 +1666,7 @@ void Tokenizer::simplifyTypedef()
                         // handle missing variable name
                         if (Token::Match(tok3, "( *|&|&& *|&|&& %name%"))
                             tok = tok3->tokAt(3);
-                        else if (Token::Match(tok->tokAt(3), "[(),]"))
+                        else if (Token::Match(tok->tokAt(3), "[(),;]"))
                             tok = tok->tokAt(2);
                         else
                             tok = tok->tokAt(3);
