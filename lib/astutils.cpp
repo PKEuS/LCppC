@@ -527,17 +527,22 @@ bool precedes(const Token * tok1, const Token * tok2)
     return tok1->index() < tok2->index();
 }
 
-bool isAliasOf(const Token *tok, unsigned int varid)
+bool isAliasOf(const Token *tok, unsigned int varid, bool* inconclusive)
 {
     if (tok->varId() == varid)
         return false;
     for (const ValueFlow::Value &val : tok->values()) {
         if (!val.isLocalLifetimeValue())
             continue;
-        if (val.isInconclusive())
-            continue;
-        if (val.tokvalue->varId() == varid)
+        if (val.tokvalue->varId() == varid) {
+            if (val.isInconclusive()) {
+                if (inconclusive)
+                    *inconclusive = true;
+                else
+                    continue;
+            }
             return true;
+        }
     }
     return false;
 }
@@ -1396,6 +1401,11 @@ const Token * getTokenArgumentFunction(const Token * tok, int& argn)
     while (Token::simpleMatch(tok, "."))
         tok = tok->astOperand2();
     while (Token::simpleMatch(tok, "::")) {
+        // If there is only a op1 and not op2, then this is a global scope
+        if (!tok->astOperand2() && tok->astOperand1()) {
+            tok = tok->astOperand1();
+            break;
+        }
         tok = tok->astOperand2();
         if (Token::simpleMatch(tok, "<") && tok->link())
             tok = tok->astOperand1();

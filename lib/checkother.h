@@ -221,7 +221,7 @@ private:
     void cstyleCastError(const Token *tok);
     void invalidPointerCastError(const Token* tok, const std::string& from, const std::string& to, bool inconclusive, bool toIsInt);
     void passedByValueError(const Token *tok, const std::string &parname, bool inconclusive);
-    void constVariableError(const Variable *var);
+    void constVariableError(const Variable *var, const Function *function);
     void constStatementError(const Token *tok, const std::string &type, bool inconclusive);
     void signedCharArrayIndexError(const Token *tok);
     void unknownSignCharArrayIndexError(const Token *tok);
@@ -265,7 +265,7 @@ private:
     void funcArgNamesDifferent(const std::string & functionName, std::size_t index, const Token* declaration, const Token* definition);
     void funcArgOrderDifferent(const std::string & functionName, const Token * declaration, const Token * definition, const std::vector<const Token*> & declarations, const std::vector<const Token*> & definitions);
     void shadowError(const Token *var, const Token *shadowed, std::string type);
-    void knownArgumentError(const Token *tok, const Token *ftok, const ValueFlow::Value *value);
+    void knownArgumentError(const Token *tok, const Token *ftok, const ValueFlow::Value *value, const std::string &varexpr, bool isVariableExpressionHidden);
     void comparePointersError(const Token *tok, const ValueFlow::Value *v1, const ValueFlow::Value *v2);
     void checkModuloOfOneError(const Token *tok);
 
@@ -292,7 +292,7 @@ private:
         c.checkCastIntToCharAndBackError(nullptr, "func_name");
         c.cstyleCastError(nullptr);
         c.passedByValueError(nullptr, "parametername", false);
-        c.constVariableError(nullptr);
+        c.constVariableError(nullptr, nullptr);
         c.constStatementError(nullptr, "type", false);
         c.signedCharArrayIndexError(nullptr);
         c.unknownSignCharArrayIndexError(nullptr);
@@ -333,7 +333,7 @@ private:
         c.shadowError(nullptr, nullptr, "variable");
         c.shadowError(nullptr, nullptr, "function");
         c.shadowError(nullptr, nullptr, "argument");
-        c.knownArgumentError(nullptr, nullptr, nullptr);
+        c.knownArgumentError(nullptr, nullptr, nullptr, "x", false);
         c.comparePointersError(nullptr, nullptr, nullptr);
         c.redundantAssignmentError(nullptr, nullptr, "var", false);
         c.redundantInitializationError(nullptr, nullptr, "var", false);
@@ -401,7 +401,8 @@ private:
                "- function declaration and definition argument order different.\n"
                "- shadow variable.\n"
                "- variable can be declared const.\n"
-               "- calculating modulo of one.\n";
+               "- calculating modulo of one.\n"
+               "- known function argument, suspicious calculation.\n";
     }
 };
 /// @}

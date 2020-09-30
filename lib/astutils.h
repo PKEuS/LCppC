@@ -212,7 +212,7 @@ const Token* findVariableChanged(const Token *start, const Token *end, int indir
 Token* findVariableChanged(Token *start, const Token *end, int indirect, const unsigned int exprid, bool globalvar, const Project* project, bool cpp, int depth = 20);
 
 /// If token is an alias if another variable
-bool isAliasOf(const Token *tok, unsigned int varid);
+bool isAliasOf(const Token *tok, unsigned int varid, bool* inconclusive = nullptr);
 
 bool isAliased(const Variable *var);
 

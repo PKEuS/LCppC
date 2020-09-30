@@ -79,6 +79,7 @@ private:
         TEST_CASE(testautovar_return3);
         TEST_CASE(testautovar_return4);
         TEST_CASE(testautovar_extern);
+        TEST_CASE(testautovar_reassigned);
         TEST_CASE(testinvaliddealloc);
         TEST_CASE(testinvaliddealloc_C);
         TEST_CASE(testassign1);  // Ticket #1819
@@ -280,10 +281,26 @@ private:
               "    FN fn;\n"
               "    FP fp;\n"
               "    p = &fn.i;\n"
-              "    p = &p_fp->i;\n"
-              "    p = &fp.f->i;\n"
               "}", false);
         ASSERT_EQUALS("[test.cpp:6]: (error) Address of local auto-variable assigned to a function parameter.\n", errout.str());
+
+        check("struct FN {int i;};\n"
+              "struct FP {FN* f};\n"
+              "void foo(int*& p, FN* p_fp) {\n"
+              "    FN fn;\n"
+              "    FP fp;\n"
+              "    p = &p_fp->i;\n"
+              "}", false);
+        ASSERT_EQUALS("", errout.str());
+
+        check("struct FN {int i;};\n"
+              "struct FP {FN* f};\n"
+              "void foo(int*& p, FN* p_fp) {\n"
+              "    FN fn;\n"
+              "    FP fp;\n"
+              "    p = &fp.f->i;\n"
+              "}", false);
+        ASSERT_EQUALS("", errout.str());
     }
 
     void testautovar10() { // #2930 - assignment of function parameter
@@ -554,6 +571,34 @@ private:
               "    return &f;\n"
               "}");
         ASSERT_EQUALS("", errout.str());
+    }
+
+    void testautovar_reassigned() {
+        check("void foo(cb* pcb) {\n"
+              "  int root0;\n"
+              "  pcb->root0 = &root0;\n"
+              "  dostuff(pcb);\n"
+              "  pcb->root0 = 0;\n"
+              "}");
+        ASSERT_EQUALS("", errout.str());
+
+        check("void foo(cb* pcb) {\n"
+              "  int root0;\n"
+              "  pcb->root0 = &root0;\n"
+              "  dostuff(pcb);\n"
+              "  if (condition) return;\n" // <- not reassigned => error
+              "  pcb->root0 = 0;\n"
+              "}");
+        ASSERT_EQUALS("[test.cpp:3]: (error) Address of local auto-variable assigned to a function parameter.\n", errout.str());
+
+        check("void foo(cb* pcb) {\n"
+              "  int root0;\n"
+              "  pcb->root0 = &root0;\n"
+              "  dostuff(pcb);\n"
+              "  if (condition)\n"
+              "    pcb->root0 = 0;\n"  // <- conditional reassign => error
+              "}");
+        ASSERT_EQUALS("[test.cpp:3]: (error) Address of local auto-variable assigned to a function parameter.\n", errout.str());
     }
 
     void testinvaliddealloc() {
@@ -2610,7 +2655,6 @@ private:
             "[test.cpp:7] -> [test.cpp:6] -> [test.cpp:7]: (error) Returning object that points to local variable 'i' that will be invalid when returning.\n",
             errout.str());
 
-        // TODO: Ast is missing for this case
         check("struct A {\n"
               "    const int& x;\n"
               "    int y;\n"
@@ -2620,9 +2664,8 @@ private:
               "    A r{i, i};\n"
               "    return r;\n"
               "}");
-        TODO_ASSERT_EQUALS(
-            "[test.cpp:7] -> [test.cpp:6] -> [test.cpp:7]: (error) Returning object that points to local variable 'i' that will be invalid when returning.\n",
-            "",
+        ASSERT_EQUALS(
+            "[test.cpp:7] -> [test.cpp:6] -> [test.cpp:8]: (error) Returning object that points to local variable 'i' that will be invalid when returning.\n",
             errout.str());
 
         check("struct A {\n"

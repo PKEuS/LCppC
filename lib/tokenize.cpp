@@ -3207,6 +3207,8 @@ static bool setVarIdParseDeclaration(const Token **tok, const VariableMap& varia
             ref = !bracket;
         } else if (singleNameCount >= 1 && Token::Match(tok2, "( [*&]") && Token::Match(tok2->link()->next(), "(|[")) {
             bracket = true; // Skip: Seems to be valid pointer to array or function pointer
+        } else if (singleNameCount >= 1 && Token::Match(tok2, "( * %name% [") && Token::Match(tok2->linkAt(3), "] ) [;,]")) {
+            bracket = true;
         } else if (tok2->str() == "::") {
             singleNameCount = 0;
         } else if (tok2->str() != "*" && tok2->str() != "::" && tok2->str() != "...") {
@@ -5971,7 +5973,9 @@ bool Tokenizer::simplifyCAlternativeTokens()
     /* executable scope level */
     int executableScopeLevel = 0;
 
-    bool ret = false;
+    std::vector<Token *> alt;
+    bool replaceAll = false;  // replace all or none
+
     for (Token *tok = list.front(); tok; tok = tok->next()) {
         if (tok->str() == ")") {
             if (const Token *end = isFunctionHead(tok, "{")) {
@@ -5998,9 +6002,10 @@ bool Tokenizer::simplifyCAlternativeTokens()
 
         const std::map<std::string, const char*>::const_iterator cOpIt = cAlternativeTokens.find(tok->str());
         if (cOpIt != cAlternativeTokens.end()) {
+            alt.push_back(tok);
             if (!Token::Match(tok->previous(), "%name%|%num%|%char%|)|]|> %name% %name%|%num%|%char%|%op%|("))
                 continue;
-            if (Token::Match(tok->next(), "%assign%|%or%|%oror%|&&|*|/|%|^") && !Token::Match(tok->previous(), "%num%|%char% %name% *"))
+            if (Token::Match(tok->next(), "%assign%|%or%|%oror%|&&|*|/|%|^") && !Token::Match(tok->previous(), "%num%|%char%|) %name% *"))
                 continue;
             if (executableScopeLevel == 0 && Token::Match(tok, "%name% (")) {
                 const Token *start = tok;
@@ -6009,19 +6014,34 @@ bool Tokenizer::simplifyCAlternativeTokens()
                 if (!start || Token::Match(start, "[;}]"))
                     continue;
             }
-            tok->str(cOpIt->second);
-            ret = true;
+            replaceAll = true;
         } else if (Token::Match(tok, "not|compl")) {
+            alt.push_back(tok);
+
             // Don't simplify 'not p;' (in case 'not' is a type)
             if (!Token::Match(tok->next(), "%name%|(") ||
                 Token::Match(tok->previous(), "[;{}]") ||
                 (executableScopeLevel == 0U && tok->strAt(-1) == "("))
                 continue;
-            tok->str((tok->str() == "not") ? "!" : "~");
-            ret = true;
+
+            replaceAll = true;
         }
     }
-    return ret;
+
+    if (!replaceAll)
+        return false;
+
+    for (Token *tok: alt) {
+        const std::map<std::string, const char*>::const_iterator cOpIt = cAlternativeTokens.find(tok->str());
+        if (cOpIt != cAlternativeTokens.end())
+            tok->str(cOpIt->second);
+        else if (tok->str() == "not")
+            tok->str("!");
+        else
+            tok->str("~");
+    }
+
+    return !alt.empty();
 }
 
 // int i(0); => int i; i = 0;
@@ -6143,6 +6163,21 @@ bool Tokenizer::simplifyRedundantParentheses()
         if (Token::Match(tok->link(), ") %num%")) {
             tok = tok->link();
             continue;
+        }
+
+        // Do not simplify if there is comma inside parantheses..
+        if (Token::Match(tok->previous(), "%op% (") || Token::Match(tok->link(), ") %op%")) {
+            bool innerComma = false;
+            for (const Token *inner = tok->link()->previous(); inner != tok; inner = inner->previous()) {
+                if (inner->str() == ")")
+                    inner = inner->link();
+                if (inner->str() == ",") {
+                    innerComma = true;
+                    break;
+                }
+            }
+            if (innerComma)
+                continue;
         }
 
         // !!operator = ( x ) ;

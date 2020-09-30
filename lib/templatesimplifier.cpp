@@ -2940,6 +2940,9 @@ bool TemplateSimplifier::simplifyTemplateInstantiations(
     bool instantiated = false;
 
     for (const TokenAndName &instantiation : mTemplateInstantiations) {
+        // skip deleted instantiations
+        if (!instantiation.token())
+            continue;
         if (numberOfTemplateInstantiations != mTemplateInstantiations.size()) {
             numberOfTemplateInstantiations = mTemplateInstantiations.size();
             ++recursiveCount;

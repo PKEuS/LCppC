@@ -903,6 +903,7 @@ public:
     const Token *noexceptArg;         ///< noexcept token
     const Token *throwArg;            ///< throw token
     const Token *templateDef;         ///< points to 'template <' before function
+    const Token *functionPointerUsage; ///< function pointer usage
 
     static bool argsMatch(const Scope *scope, const Token *first, const Token *second, const std::string &path, unsigned int path_length);
 

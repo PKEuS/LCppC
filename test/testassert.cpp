@@ -53,6 +53,7 @@ private:
         TEST_CASE(functionCallInAssert);
         TEST_CASE(memberFunctionCallInAssert);
         TEST_CASE(safeFunctionCallInAssert);
+        TEST_CASE(crash);
     }
 
 
@@ -226,6 +227,13 @@ private:
               "                  auto const expected = someOtherValue;\n"
               "                  return tmp == expected;\n"
               "                }));\n"
+              "}");
+        ASSERT_EQUALS("", errout.str());
+    }
+
+    void crash() {
+        check("void foo() {\n"
+              "  assert(sizeof(struct { int a[x++]; })==sizeof(int));\n"
               "}");
         ASSERT_EQUALS("", errout.str());
     }

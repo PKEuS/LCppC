@@ -1054,10 +1054,26 @@ void SymbolDatabase::createSymbolDatabaseSetFunctionPointers(bool firstPass)
 
     // Set function call pointers
     for (const Token* tok = mCtx.tokenizer->list.front(); tok != mCtx.tokenizer->list.back(); tok = tok->next()) {
-        if (!tok->function() && tok->varId() == 0 && tok->linkAt(1) && Token::Match(tok, "%name% (") && !isReservedName(tok->str())) {
+        if (tok->isName() && !tok->function() && tok->varId() == 0 && Token::Match(tok, "%name% [(,)>]") && !isReservedName(tok->str())) {
+            if (tok->next()->str() == ">" && !tok->next()->link())
+                continue;
+
+            if (tok->next()->str() != "(") {
+                const Token *start = tok;
+                while (Token::Match(start->tokAt(-2), "%name% ::"))
+                    start = start->tokAt(-2);
+                if (!Token::Match(start->previous(), "[(,<]") && !Token::Match(start->tokAt(-2), "[(,<] &"))
+                    continue;
+            }
+
             const Function *function = findFunction(tok);
-            if (function)
-                const_cast<Token *>(tok)->function(function);
+            if (!function)
+                continue;
+
+            const_cast<Token *>(tok)->function(function);
+
+            if (tok->next()->str() != "(")
+                const_cast<Function *>(function)->functionPointerUsage = tok;
         }
     }
 
@@ -2059,6 +2075,7 @@ Function::Function(const Tokenizer *tokenizer,
       noexceptArg(nullptr),
       throwArg(nullptr),
       templateDef(nullptr),
+      functionPointerUsage(nullptr),
       mFlags(0)
 {
     // operator function
@@ -2202,6 +2219,7 @@ Function::Function(const Token *tokenDef)
       noexceptArg(nullptr),
       throwArg(nullptr),
       templateDef(nullptr),
+      functionPointerUsage(nullptr),
       mFlags(0)
 {
 }
@@ -4576,10 +4594,7 @@ static std::string getTypeString(const Token *typeToken)
 
 const Function* Scope::findFunction(const Token *tok, bool requireConst) const
 {
-    // make sure this is a function call
-    const Token *end = tok->linkAt(1);
-    if (!end)
-        return nullptr;
+    const bool isCall = Token::Match(tok->next(), "(|{");
 
     const std::vector<const Token *> arguments = getArguments(tok);
 
@@ -4592,7 +4607,7 @@ const Function* Scope::findFunction(const Token *tok, bool requireConst) const
         auto range = scope->functionMap.equal_range(tok->str());
         for (std::multimap<std::string, const Function *>::const_iterator it = range.first; it != range.second; ++it) {
             const Function *func = it->second;
-            if (args == func->argCount() ||
+            if (!isCall || args == func->argCount() ||
                 (func->isVariadic() && args >= (func->argCount() - 1)) ||
                 (args < func->argCount() && args >= func->minArgCount())) {
                 matches.push_back(func);
@@ -4610,6 +4625,11 @@ const Function* Scope::findFunction(const Token *tok, bool requireConst) const
 
     // check in base classes
     findFunctionInBase(tok->str(), args, matches);
+
+    // Non-call => Do not match parameters
+    if (!isCall) {
+        return matches.empty() ? nullptr : matches[0];
+    }
 
     const Function* fallback1Func = nullptr;
     const Function* fallback2Func = nullptr;
@@ -4837,8 +4857,8 @@ const Function* SymbolDatabase::findFunction(const Token *tok) const
         }
 
         if (currScope) {
-            while (currScope && !(Token::Match(tok1, "%type% :: %any% (") ||
-                                  (Token::Match(tok1, "%type% @< :: %any% (")))) {
+            while (currScope && !(Token::Match(tok1, "%type% :: %name% [(),>]") ||
+                                  (Token::Match(tok1, "%type% @< :: %name% (")))) {
                 if (tok1->strAt(1) == "::")
                     tok1 = tok1->tokAt(2);
                 else

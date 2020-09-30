@@ -3428,6 +3428,18 @@ private:
               "}");
         ASSERT_EQUALS("", errout.str());
 
+        // #9711
+        check("int main(int argc, char* argv[]) {\n"
+              "  int foo = 0;\n"
+              "  struct option options[] = {\n"
+              "    {\"foo\", no_argument, &foo, \'f\'},\n"
+              "    {NULL, 0, NULL, 0},\n"
+              "  };\n"
+              "  getopt_long(argc, argv, \"f\", options, NULL);\n"
+              "  if (foo) {}\n"
+              "}\n");
+        ASSERT_EQUALS("", errout.str());
+
     }
 
     void alwaysTrueInfer() {
