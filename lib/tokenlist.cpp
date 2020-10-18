@@ -1542,13 +1542,26 @@ static Token * createAstAtToken(Token *tok, bool cpp)
         return tok->linkAt(1);
 
     if (Token::Match(tok, "%type% %name%|*|&|::") && tok->str() != "return") {
+        int typecount = 0;
         Token *typetok = tok;
-        while (Token::Match(typetok, "%type%|::|*|&"))
+        while (Token::Match(typetok, "%type%|::|*|&")) {
+            if (typetok->isName() && !Token::simpleMatch(typetok->previous(), "::"))
+                typecount++;
             typetok = typetok->next();
+        }
         if (!typetok)
             return nullptr;
         if (Token::Match(typetok, "%var% =") && typetok->varId())
             tok = typetok;
+
+        // Do not create AST for function declaration
+        if (typecount >= 2 &&
+            !Token::Match(tok, "return|throw") &&
+            Token::Match(typetok->previous(), "%name% (") &&
+            typetok->previous()->varId() == 0 &&
+            !typetok->previous()->isKeyword() &&
+            Token::Match(typetok->link(), ") const|;|{"))
+            return typetok;
     }
 
     if (Token::Match(tok, "return|case") ||

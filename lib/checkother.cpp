@@ -257,8 +257,9 @@ void CheckOther::checkSuspiciousSemicolon()
             // Ensure the semicolon is at the same line number as the if/for/while statement
             // and the {..} block follows it without an extra empty line.
             if (Token::simpleMatch(scope.bodyStart, "{ ; } {") &&
-                scope.bodyStart->previous()->linenr() == scope.bodyStart->tokAt(2)->linenr()
-                && scope.bodyStart->linenr()+1 >= scope.bodyStart->tokAt(3)->linenr()) {
+                scope.bodyStart->previous()->linenr() == scope.bodyStart->tokAt(2)->linenr() &&
+                scope.bodyStart->linenr()+1 >= scope.bodyStart->tokAt(3)->linenr() &&
+                !scope.bodyStart->tokAt(3)->isExpandedMacro()) {
                 suspiciousSemicolonError(scope.classDef);
             }
         }
@@ -268,7 +269,7 @@ void CheckOther::checkSuspiciousSemicolon()
 void CheckOther::suspiciousSemicolonError(const Token* tok)
 {
     reportError(tok, Severity::warning, "suspiciousSemicolon",
-                "Suspicious use of ; at the end of '" + (tok ? tok->str() : std::string()) + "' statement.", CWE398, Certainty::inconclusive);
+                "Suspicious use of ; at the end of '" + (tok ? tok->str() : std::string()) + "' statement.", CWE398, Certainty::safe);
 }
 
 

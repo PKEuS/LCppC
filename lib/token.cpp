@@ -1602,7 +1602,7 @@ void Token::astStringVerboseRecursive(std::string& ret, const unsigned int inden
         ret += " \'" + mImpl->mValueType->str() + '\'';
     if (function()) {
         std::ostringstream ostr;
-        ostr << "0x" << std::hex << function();
+        ostr << std::hex << function();
         ret += " f:" + ostr.str();
     }
     ret += '\n';

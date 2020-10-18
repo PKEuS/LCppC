@@ -50,8 +50,21 @@ public:
     };
 
     struct CPPCHECKLIB Suppression {
-        Suppression() : lineNumber(NO_LINE), matched(false) {}
-        Suppression(const std::string &id, const std::string &file, int line=NO_LINE) : errorId(id), fileName(file), lineNumber(line), matched(false) {}
+        Suppression() : lineNumber(NO_LINE), thisAndNextLine(false), matched(false) {}
+        Suppression(const Suppression &other) {
+            *this = other;
+        }
+        Suppression(const std::string &id, const std::string &file, int line=NO_LINE) : errorId(id), fileName(file), lineNumber(line), thisAndNextLine(false), matched(false) {}
+
+        Suppression & operator=(const Suppression &other) {
+            errorId = other.errorId;
+            fileName = other.fileName;
+            lineNumber = other.lineNumber;
+            symbolName = other.symbolName;
+            thisAndNextLine = other.thisAndNextLine;
+            matched = other.matched;
+            return *this;
+        }
 
         bool operator<(const Suppression &other) const {
             if (errorId != other.errorId)
@@ -62,6 +75,8 @@ public:
                 return fileName < other.fileName;
             if (symbolName != other.symbolName)
                 return symbolName < other.symbolName;
+            if (thisAndNextLine != other.thisAndNextLine)
+                return thisAndNextLine;
             return false;
         }
 
@@ -86,6 +101,7 @@ public:
         std::string fileName;
         int lineNumber;
         std::string symbolName;
+        bool thisAndNextLine; // Special case for backwards compatibility: { // cppcheck-suppress something
         bool matched;
 
         enum { NO_LINE = -1 };
