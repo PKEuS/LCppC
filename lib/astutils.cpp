@@ -1682,7 +1682,7 @@ Token* findVariableChanged(Token *start, const Token *end, int indirect, const u
             // Is aliased function call
             if (Token::Match(tok, "%var% (") && std::any_of(tok->values().begin(), tok->values().end(), std::mem_fn(&ValueFlow::Value::isLifetimeValue))) {
                 bool aliased = false;
-                // If we cant find the expression then assume it was modified
+                // If we can't find the expression then assume it was modified
                 if (!getExprTok())
                     return tok;
                 visitAstNodes(getExprTok(), [&](const Token* childTok) {
