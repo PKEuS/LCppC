@@ -236,47 +236,6 @@ const Token *parseCompareInt(const Token *tok, ValueFlow::Value &true_value, Val
     return nullptr;
 }
 
-/**
- * Should value be skipped because it's hidden inside && || or ?: expression.
- * Example: ((x!=NULL) && (*x == 123))
- * If 'valuetok' points at the x in '(*x == 123)'. Then the '&&' will be returned.
- * @param valuetok original variable token
- * @return NULL=>don't skip, non-NULL=>The operator token that cause the skip. For instance the '&&'.
- * */
-static const Token * skipValueInConditionalExpression(const Token * const valuetok)
-{
-    // Walk up the ast
-    const Token *prev = valuetok;
-    for (const Token *tok = valuetok->astParent(); tok; tok = tok->astParent()) {
-        const bool prevIsLhs = (prev == tok->astOperand1());
-        prev = tok;
-
-        if (prevIsLhs || !Token::Match(tok, "%oror%|&&|?|:"))
-            continue;
-
-        if (tok->hasKnownIntValue())
-            return tok;
-
-        // Is variable protected in LHS..
-        bool bailout = false;
-        visitAstNodes(tok->astOperand1(), [&](const Token *tok2) {
-            if (tok2->str() == ".")
-                return ChildrenToVisit::none;
-            // A variable is seen..
-            if (tok2 != valuetok && tok2->variable() &&
-                (tok2->varId() == valuetok->varId() || (!tok2->variable()->isArgument() && !tok2->hasKnownIntValue()))) {
-                // TODO: limit this bailout
-                bailout = true;
-                return ChildrenToVisit::done;
-            }
-            return ChildrenToVisit::op1_and_op2;
-        });
-        if (bailout)
-            return tok;
-    }
-    return nullptr;
-}
-
 static bool isEscapeScope(const Token* tok, TokenList * tokenlist, bool unknown = false)
 {
     if (!Token::simpleMatch(tok, "{"))
@@ -288,29 +247,6 @@ static bool isEscapeScope(const Token* tok, TokenList * tokenlist, bool unknown 
     std::string unknownFunction;
     if (tokenlist && tokenlist->getProject()->library.isScopeNoReturn(tok->link(), &unknownFunction))
         return unknownFunction.empty() || unknown;
-    return false;
-}
-
-static bool bailoutSelfAssignment(const Token * const tok)
-{
-    const Token *parent = tok;
-    while (parent) {
-        const Token *op = parent;
-        parent = parent->astParent();
-
-        // Assignment where lhs variable exists in rhs => return true
-        if (parent                         != nullptr      &&
-            parent->astOperand2()          == op           &&
-            parent->astOperand1()          != nullptr      &&
-            parent->str()                  == "=") {
-            for (const Token *lhs = parent->astOperand1(); lhs; lhs = lhs->astOperand1()) {
-                if (lhs->varId() == tok->varId())
-                    return true;
-                if (lhs->astOperand2() && lhs->astOperand2()->varId() == tok->varId())
-                    return true;
-            }
-        }
-    }
     return false;
 }
 
@@ -1740,22 +1676,11 @@ static Analyzer::Action valueFlowForwardVariable(Token* const startToken,
         std::vector<ValueFlow::Value> values,
         TokenList* const tokenlist);
 
-// Old deprecated version
-static void valueFlowForward(Token* startToken,
-                             const Token* endToken,
-                             const Token* exprTok,
-                             std::vector<ValueFlow::Value> values,
-                             const bool constValue,
-                             const bool subFunction,
-                             TokenList* const tokenlist,
-                             ErrorLogger* const errorLogger);
-
 static void valueFlowReverse(TokenList* tokenlist,
                              Token* tok,
                              const Token* const varToken,
                              ValueFlow::Value val,
                              ValueFlow::Value val2,
-                             ErrorLogger* errorLogger,
                              const Project* project);
 
 static bool isConditionKnown(const Token* tok, bool then)
@@ -1864,7 +1789,7 @@ static void valueFlowBeforeCondition(TokenList *tokenlist, SymbolDatabase *symbo
                 }
             }
             Token* startTok = tok->astParent() ? tok->astParent() : tok->previous();
-            valueFlowReverse(tokenlist, startTok, vartok, val, val2, errorLogger, project);
+            valueFlowReverse(tokenlist, startTok, vartok, val, val2, project);
         }
     }
 }
@@ -2694,24 +2619,11 @@ static Analyzer::Action valueFlowForward(Token* startToken,
     }
 }
 
-static void valueFlowForward(Token* startToken,
-                             const Token* endToken,
-                             const Token* exprTok,
-                             std::vector<ValueFlow::Value> values,
-                             const bool,
-                             const bool,
-                             TokenList* const tokenlist,
-                             ErrorLogger* const)
-{
-    valueFlowForward(startToken, endToken, exprTok, std::move(values), tokenlist);
-}
-
 static void valueFlowReverse(TokenList* tokenlist,
                              Token* tok,
                              const Token* const varToken,
                              ValueFlow::Value val,
                              ValueFlow::Value val2,
-                             ErrorLogger* errorLogger,
                              const Project* project)
 {
     std::vector<ValueFlow::Value> values = {val};
@@ -5163,7 +5075,6 @@ static void valueFlowSwitchVariable(TokenList *tokenlist, SymbolDatabase* symbol
                                      vartok,
                                      *val,
                                      ValueFlow::Value(),
-                                     errorLogger,
                                      tokenlist->getProject());
                 }
                 if (vartok->variable()->scope()) {
@@ -5757,8 +5668,8 @@ struct ContainerVariableAnalyzer : VariableAnalyzer {
             return Action::None;
         if (d == Direction::Reverse)
             return Action::None;
-        const ValueFlow::Value* value = getValue(tok);
-        if (!value)
+        const ValueFlow::Value* v = getValue(tok);
+        if (!v)
             return Action::None;
         if (!tok->valueType() || !tok->valueType()->container)
             return Action::None;
@@ -5782,10 +5693,10 @@ struct ContainerVariableAnalyzer : VariableAnalyzer {
         return Action::None;
     }
 
-    virtual void writeValue(ValueFlow::Value* value, const Token* tok, Direction d) const override {
+    virtual void writeValue(ValueFlow::Value* v, const Token* tok, Direction d) const override {
         if (d == Direction::Reverse)
             return;
-        if (!value)
+        if (!v)
             return;
         if (!tok->astParent())
             return;
@@ -5796,20 +5707,20 @@ struct ContainerVariableAnalyzer : VariableAnalyzer {
         if (tok->valueType()->container->stdStringLike && Token::simpleMatch(parent, "+=") && parent->astOperand2()) {
             const Token* rhs = parent->astOperand2();
             if (rhs->tokType() == Token::eString)
-                value->intvalue += Token::getStrLength(rhs);
+                v->intvalue += Token::getStrLength(rhs);
             else if (rhs->valueType() && rhs->valueType()->container && rhs->valueType()->container->stdStringLike) {
                 for (const ValueFlow::Value &rhsval : rhs->values()) {
                     if (rhsval.isKnown() && rhsval.isContainerSizeValue()) {
-                        value->intvalue += rhsval.intvalue;
+                        v->intvalue += rhsval.intvalue;
                     }
                 }
             }
         } else if (Token::Match(tok, "%name% . %name% (")) {
             Library::Container::Action action = tok->valueType()->container->getAction(tok->strAt(2));
             if (action == Library::Container::Action::PUSH)
-                value->intvalue++;
+                v->intvalue++;
             if (action == Library::Container::Action::POP)
-                value->intvalue--;
+                v->intvalue--;
         }
     }
 
