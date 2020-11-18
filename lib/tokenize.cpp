@@ -416,9 +416,10 @@ Token * Tokenizer::deleteInvalidTypedef(Token *typeDef)
 
 namespace {
     struct Space {
-        Space() : bodyEnd(nullptr), isNamespace(false) { }
+        Space() : bodyEnd(nullptr), bodyEnd2(nullptr), isNamespace(false) { }
         std::string className;
-        const Token * bodyEnd;
+        const Token * bodyEnd;  // for body contains typedef define
+        const Token * bodyEnd2; // for body contains typedef using
         bool isNamespace;
     };
 }
@@ -1125,7 +1126,7 @@ void Tokenizer::simplifyTypedef()
                             p.inMemberFunc = false;
                     }
 
-                    if (p.classLevel > 0 && tok == p.spaceInfo[p.classLevel - 1].bodyEnd) {
+                    if (p.classLevel > 0 && tok == p.spaceInfo[p.classLevel - 1].bodyEnd2) {
                         --p.classLevel;
                         p.pattern.clear();
 
@@ -1190,6 +1191,7 @@ void Tokenizer::simplifyTypedef()
                     info.isNamespace = isNamespace;
                     info.className = *className;
                     info.bodyEnd = tok->link();
+                    info.bodyEnd2 = tok->link();
                     spaceInfo.push_back(info);
 
                     className = nullptr;
@@ -1205,7 +1207,7 @@ void Tokenizer::simplifyTypedef()
                         if (p.classLevel < p.spaceInfo.size() &&
                             p.spaceInfo[p.classLevel].isNamespace &&
                             p.spaceInfo[p.classLevel].className == tok->previous()->str()) {
-                            p.spaceInfo[p.classLevel].bodyEnd = tok->link();
+                            p.spaceInfo[p.classLevel].bodyEnd2 = tok->link();
                             ++p.classLevel;
                             p.pattern.clear();
                             for (std::size_t i = p.classLevel; i < p.spaceInfo.size(); ++i)
@@ -3612,6 +3614,15 @@ void Tokenizer::setVarIdPass1()
                 syntaxError(errTok);
             }
             if (decl) {
+                if (isCPP()) {
+                    if (Token *declTypeTok = Token::findsimplematch(tok, "decltype (", tok2)) {
+                        for (Token *declTok = declTypeTok->linkAt(1); declTok != declTypeTok; declTok = declTok->previous()) {
+                            if (declTok->isName() && !Token::Match(declTok->previous(), "::|.") && variableMap.hasVariable(declTok->str()))
+                                declTok->varId(variableMap.find(declTok->str(), false)->second);
+                        }
+                    }
+                }
+
                 if (tok->str() == "(" && isFunctionHead(tok,"{") && scopeStack.top().isExecutable)
                     inlineFunction = true;
 
@@ -3748,7 +3759,7 @@ void Tokenizer::setVarIdPass1()
                     continue;
             }
 
-            if (!scopeStack.top().isEnum) {
+            if (!scopeStack.top().isEnum || !(Token::Match(tok->previous(), "{|,")  && Token::Match(tok->next(), ",|=|}"))) {
                 const std::map<std::string, unsigned int>::const_iterator it = variableMap.find(tok->str(), globalNamespace);
                 if (it != variableMap.map(globalNamespace).end()) {
                     tok->varId(it->second);
@@ -4306,6 +4317,8 @@ bool Tokenizer::simplifyTokenList0()
     // remove calling conventions __cdecl, __stdcall..
     simplifyCallingConvention();
 
+    removePragma();
+
     reportUnknownMacros();
 
     simplifyHeaders();
@@ -4691,7 +4704,7 @@ void Tokenizer::printDebugOutput() const
         }
 
         if (list.mSettings->verbose)
-            list.front()->printAst(list.mSettings->verbose, list.mSettings->xml, std::cout);
+            list.front()->printAst(list.mSettings->verbose, list.mSettings->xml, list.getFiles(), std::cout);
 
         list.front()->printValueFlow(list.mSettings->xml, std::cout);
 
@@ -4804,9 +4817,6 @@ void Tokenizer::dump(std::ostream &out) const
 
 void Tokenizer::simplifyHeaders()
 {
-    // TODO : can we remove anything in headers here? Like unused declarations.
-    // Maybe if --dump is used we want to have _everything_.
-
     if (list.mProject->checkHeaders && list.mProject->checkUnusedTemplates)
         // Full analysis. All information in the headers are kept.
         return;
@@ -4817,11 +4827,16 @@ void Tokenizer::simplifyHeaders()
     const bool removeUnusedIncludedTemplates = !list.mProject->checkUnusedTemplates || !list.mProject->checkHeaders;
     const bool removeUnusedTemplates = !list.mProject->checkUnusedTemplates;
 
-    // We want to remove selected stuff from the headers but not *everything*.
-    // The intention here is to not damage the analysis of the source file.
-    // You should get all warnings in the source file.
-
-    // TODO: Remove unused types/variables/etc in headers..
+    // checkHeaders:
+    //
+    // If it is true then keep all code in the headers. It's possible
+    // to remove unused types/variables if false positives / false
+    // negatives can be avoided.
+    //
+    // If it is false, then we want to remove selected stuff from the
+    // headers but not *everything*. The intention here is to not damage
+    // the analysis of the source file. You should get all warnings in
+    // the source file. You should not get false positives.
 
     // functions and types to keep
     std::set<std::string> keep;
@@ -4829,7 +4844,7 @@ void Tokenizer::simplifyHeaders()
         if (!tok->isName())
             continue;
 
-        if (checkHeaders && tok->fileIndex() != 0)
+        if (!checkHeaders && tok->fileIndex() != 0)
             continue;
 
         if (Token::Match(tok, "%name% @( !!{")) {
@@ -4992,6 +5007,22 @@ void Tokenizer::removeMacrosInGlobalScope()
                 prev = prev->previous();
             if (prev && prev->str() == ")")
                 tok = tok->link();
+        }
+    }
+}
+
+//---------------------------------------------------------------------------
+
+void Tokenizer::removePragma()
+{
+    if (isC() && list.mProject->standards.c == Standards::C89)
+        return;
+    if (isCPP() && list.mProject->standards.cpp == Standards::CPP03)
+        return;
+    for (Token *tok = list.front(); tok; tok = tok->next()) {
+        while (Token::simpleMatch(tok, "_Pragma (")) {
+            Token::eraseTokens(tok, tok->linkAt(1)->next());
+            tok->deleteThis();
         }
     }
 }
@@ -6779,6 +6810,15 @@ void Tokenizer::reportUnknownMacros()
     for (const Token *tok = tokens(); tok; tok = tok->next()) {
         if (Token::Match(tok, "%str% %name% @( %str%")) {
             if (tok->next()->isKeyword())
+                continue;
+            unknownMacroError(tok->next());
+        }
+        if (Token::Match(tok, "[(,] %name% (") && Token::Match(tok->linkAt(2), ") %name% %name%|,|)")) {
+            if (tok->next()->isKeyword() || tok->linkAt(2)->next()->isKeyword())
+                continue;
+            if (cAlternativeTokens.count(tok->linkAt(2)->next()->str()) > 0)
+                continue;
+            if (tok->next()->str().compare(0, 2, "__") == 0) // attribute/annotation
                 continue;
             unknownMacroError(tok->next());
         }

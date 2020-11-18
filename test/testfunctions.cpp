@@ -79,6 +79,7 @@ private:
 
         // Ignored return value
         TEST_CASE(checkIgnoredReturnValue);
+        TEST_CASE(checkIgnoredErrorCode);
 
         // memset..
         TEST_CASE(memsetZeroBytes);
@@ -1236,6 +1237,27 @@ private:
               "}\n"
               "A g() { return f(1); }");
         ASSERT_EQUALS("", errout.str());
+    }
+
+    void checkIgnoredErrorCode() {
+        Project project2;
+        project2.severity.enable(Severity::style);
+        const char xmldata[] = "<?xml version=\"1.0\"?>\n"
+                               "<def version=\"2\">\n"
+                               "  <function name=\"mystrcmp\">\n"
+                               "    <use-retval type=\"error-code\"/>\n"
+                               "    <arg nr=\"1\"/>\n"
+                               "    <arg nr=\"2\"/>\n"
+                               "  </function>\n"
+                               "</def>";
+        tinyxml2::XMLDocument doc;
+        doc.Parse(xmldata, sizeof(xmldata));
+        project2.library.load(doc);
+
+        check("void foo() {\n"
+              "  mystrcmp(a, b);\n"
+              "}", "test.cpp", &project2);
+        ASSERT_EQUALS("[test.cpp:2]: (style) Error code from the return value of function mystrcmp() is not used.\n", errout.str());
     }
 
     void memsetZeroBytes() {

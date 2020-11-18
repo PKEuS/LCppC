@@ -249,6 +249,8 @@ private:
 
         TEST_CASE(templateTypeDeduction1); // #8962
         TEST_CASE(templateTypeDeduction2);
+        TEST_CASE(templateTypeDeduction3);
+        TEST_CASE(templateTypeDeduction4); // #9983
 
         TEST_CASE(simplifyTemplateArgs1);
         TEST_CASE(simplifyTemplateArgs2);
@@ -5258,6 +5260,114 @@ private:
                               "}";
 
         TODO_ASSERT_EQUALS(expected, actual, tok(code));
+    }
+
+    void templateTypeDeduction3() {  // #9975
+        const char code[] = "struct A {\n"
+                            "    int a = 1;\n"
+                            "    void f() { g(1); }\n"
+                            "    template <typename T> void g(T x) { a = 2; }\n"
+                            "};\n"
+                            "int main() {\n"
+                            "    A a;\n"
+                            "    a.f();\n"
+                            "}";
+        const char exp[]  = "struct A { "
+                            "int a ; a = 1 ; "
+                            "void f ( ) { g<int> ( 1 ) ; } "
+                            "void g<int> ( int x ) ; "
+                            "} ; "
+                            "int main ( ) { "
+                            "A a ; "
+                            "a . f ( ) ; "
+                            "} void A :: g<int> ( int x ) { a = 2 ; }";
+        ASSERT_EQUALS(exp, tok(code));
+    }
+
+    void templateTypeDeduction4() {  // #9983
+        {
+            const char code[] = "int a = 1;\n"
+                                "template <typename T> void f(T x, T y) { a = x + y; }\n"
+                                "void test() { f(0, 0); }";
+            const char exp[]  = "int a ; a = 1 ; "
+                                "void f<int> ( int x , int y ) ; "
+                                "void test ( ) { f<int> ( 0 , 0 ) ; } "
+                                "void f<int> ( int x , int y ) { a = x + y ; }";
+            ASSERT_EQUALS(exp, tok(code));
+        }
+        {
+            const char code[] = "int a = 1;\n"
+                                "template <typename T> void f(T x, double y) { a = x + y; }\n"
+                                "void test() { f(0, 0.0); }";
+            const char exp[]  = "int a ; a = 1 ; "
+                                "void f<int> ( int x , double y ) ; "
+                                "void test ( ) { f<int> ( 0 , 0.0 ) ; } "
+                                "void f<int> ( int x , double y ) { a = x + y ; }";
+            ASSERT_EQUALS(exp, tok(code));
+        }
+        {
+            const char code[] = "int a = 1;\n"
+                                "template <typename T> void f(double x, T y) { a = x + y; }\n"
+                                "void test() { f(0.0, 0); }";
+            const char exp[]  = "int a ; a = 1 ; "
+                                "void f<int> ( double x , int y ) ; "
+                                "void test ( ) { f<int> ( 0.0 , 0 ) ; } "
+                                "void f<int> ( double x , int y ) { a = x + y ; }";
+            ASSERT_EQUALS(exp, tok(code));
+        }
+
+        {
+            const char code[] = "int a = 1;\n"
+                                "template <typename T> void f(double x, T y) { a = x + y; }\n"
+                                "template <typename T> void f(int x, T y) { a = x + y; }\n"
+                                "void test() {\n"
+                                "    f(0, 0);\n"
+                                "    f(0.0, 0);\n"
+                                "    f(0, 0.0);\n"
+                                "    f(0.0, 0.0);\n"
+                                "}";
+            const char exp[]  = "int a ; a = 1 ; "
+                                "void f<int> ( int x , int y ) ; "
+                                "void f<int> ( double x , int y ) ; "
+                                "void f<double> ( int x , double y ) ; "
+                                "void f<double> ( double x , double y ) ; "
+                                "void test ( ) { "
+                                "f<int> ( 0 , 0 ) ; "
+                                "f<int> ( 0.0 , 0 ) ; "
+                                "f<double> ( 0 , 0.0 ) ; "
+                                "f<double> ( 0.0 , 0.0 ) ; "
+                                "} "
+                                "void f<int> ( int x , int y ) { a = x + y ; } "
+                                "void f<int> ( double x , int y ) { a = x + y ; } "
+                                "void f<double> ( int x , double y ) { a = x + y ; } "
+                                "void f<double> ( double x , double y ) { a = x + y ; }";
+
+            const char act[]  = "int a ; a = 1 ; "
+                                "template < typename T > void f ( double x , T y ) { a = x + y ; } "
+                                "void f<int> ( int x , int y ) ; void f<double> ( int x , double y ) ; "
+                                "void test ( ) { "
+                                "f<int> ( 0 , 0 ) ; "
+                                "f<int> ( 0.0 , 0 ) ; "
+                                "f<double> ( 0 , 0.0 ) ; "
+                                "f<double> ( 0.0 , 0.0 ) ; "
+                                "} "
+                                "void f<int> ( int x , int y ) { a = x + y ; } "
+                                "void f<double> ( int x , double y ) { a = x + y ; }";
+            TODO_ASSERT_EQUALS(exp, act, tok(code));
+        }
+        {
+            const char code[] = "int a = 1;\n"
+                                "template <typename T, typename U> void f(T x, U y) { a = x + y; }\n"
+                                "void test() { f(0, 0.0); }";
+            const char exp[]  = "int a ; a = 1 ; "
+                                "void f<int,double> ( int x , double y ) ; "
+                                "void test ( ) { f<int,double> ( 0 , 0.0 ) ; } "
+                                "void f<int,double> ( int x , double y ) { a = x + y ; }";
+            const char act[]  = "int a ; a = 1 ; "
+                                "template < typename T , typename U > void f ( T x , U y ) { a = x + y ; } "
+                                "void test ( ) { f ( 0 , 0.0 ) ; }";
+            TODO_ASSERT_EQUALS(exp, act, tok(code));
+        }
     }
 
     void simplifyTemplateArgs1() {

@@ -191,7 +191,7 @@ void CheckFunctions::invalidFunctionArgStrError(const Token *tok, const std::str
 //---------------------------------------------------------------------------
 void CheckFunctions::checkIgnoredReturnValue()
 {
-    if (!mCtx.project->severity.isEnabled(Severity::warning))
+    if (!mCtx.project->severity.isEnabled(Severity::warning) && !mCtx.project->severity.isEnabled(Severity::style))
         return;
 
     for (const Scope *scope : mCtx.symbolDB->functionScopes) {
@@ -214,9 +214,15 @@ void CheckFunctions::checkIgnoredReturnValue()
             }
 
             if ((!tok->function() || !Token::Match(tok->function()->retDef, "void %name%")) &&
-                (mCtx.project->library.isUseRetVal(tok) || (tok->function() && tok->function()->isAttributeNodiscard())) &&
                 !WRONG_DATA(!tok->next()->astOperand1(), tok)) {
-                ignoredReturnValueError(tok, tok->next()->astOperand1()->expressionString());
+                const Library::UseRetValType retvalTy = mCtx.project->library.getUseRetValType(tok);
+                if (mCtx.project->severity.isEnabled(Severity::warning) &&
+                    ((retvalTy == Library::UseRetValType::DEFAULT) ||
+                     (tok->function() && tok->function()->isAttributeNodiscard())))
+                    ignoredReturnValueError(tok, tok->next()->astOperand1()->expressionString());
+                else if (mCtx.project->severity.isEnabled(Severity::style) &&
+                         retvalTy == Library::UseRetValType::ERROR_CODE)
+                    ignoredReturnErrorCode(tok, tok->next()->astOperand1()->expressionString());
             }
         }
     }
@@ -228,6 +234,11 @@ void CheckFunctions::ignoredReturnValueError(const Token* tok, const std::string
                 "$symbol:" + function + "\nReturn value of function $symbol() is not used.", CWE252, Certainty::safe);
 }
 
+void CheckFunctions::ignoredReturnErrorCode(const Token* tok, const std::string& function)
+{
+    reportError(tok, Severity::style, "ignoredReturnErrorCode",
+                "$symbol:" + function + "\nError code from the return value of function $symbol() is not used.", CWE252, Certainty::safe);
+}
 
 //---------------------------------------------------------------------------
 // Detect passing wrong values to <cmath> functions like atan(0, x);

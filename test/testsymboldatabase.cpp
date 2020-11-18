@@ -157,6 +157,7 @@ private:
         TEST_CASE(isVariablePointerToConstVolatilePointer);
         TEST_CASE(isVariableMultiplePointersAndQualifiers);
         TEST_CASE(variableVolatile);
+        TEST_CASE(isVariableDecltype);
 
         TEST_CASE(VariableValueType1);
         TEST_CASE(VariableValueType2);
@@ -340,6 +341,8 @@ private:
         TEST_CASE(enum5);
         TEST_CASE(enum6);
         TEST_CASE(enum7);
+        TEST_CASE(enum8);
+        TEST_CASE(enum9);
 
         TEST_CASE(sizeOfType);
 
@@ -380,6 +383,7 @@ private:
         TEST_CASE(findFunction29);
         TEST_CASE(findFunction30);
         TEST_CASE(findFunction31);
+        TEST_CASE(findFunction32); // C: relax type matching
         TEST_CASE(findFunctionContainer);
         TEST_CASE(findFunctionExternC);
         TEST_CASE(findFunctionGlobalScope); // ::foo
@@ -1315,6 +1319,33 @@ private:
         ASSERT(y);
         ASSERT(y->variable());
         ASSERT(y->variable()->isVolatile());
+    }
+
+    void isVariableDecltype() {
+        GET_SYMBOL_DB("int x;\n"
+                      "decltype(x) a;\n"
+                      "const decltype(x) b;\n"
+                      "decltype(x) *c;\n");
+        ASSERT(db);
+        ASSERT_EQUALS(4, db->scopeList.front().varlist.size());
+
+        const Variable *a = Token::findsimplematch(tokenizer.tokens(), "a")->variable();
+        ASSERT(a);
+        ASSERT_EQUALS("a", a->name());
+        ASSERT(a->valueType());
+        ASSERT_EQUALS("signed int", a->valueType()->str());
+
+        const Variable *b = Token::findsimplematch(tokenizer.tokens(), "b")->variable();
+        ASSERT(b);
+        ASSERT_EQUALS("b", b->name());
+        ASSERT(b->valueType());
+        ASSERT_EQUALS("const signed int", b->valueType()->str());
+
+        const Variable *c = Token::findsimplematch(tokenizer.tokens(), "c")->variable();
+        ASSERT(c);
+        ASSERT_EQUALS("c", c->name());
+        ASSERT(c->valueType());
+        ASSERT_EQUALS("signed int *", c->valueType()->str());
     }
 
     void arrayMemberVar1() {
@@ -5038,6 +5069,44 @@ private:
         TEST(project1.sizeof_long_long);
     }
 
+    void enum8() {
+        GET_SYMBOL_DB("enum E { X0 = x, X1, X2 = 2, X3, X4 = y, X5 };\n");
+        ASSERT(db != nullptr);
+        const Enumerator *X0 = db->scopeList.back().findEnumerator("X0");
+        ASSERT(X0);
+        ASSERT(!X0->value_known);
+        const Enumerator *X1 = db->scopeList.back().findEnumerator("X1");
+        ASSERT(X1);
+        ASSERT(!X1->value_known);
+        const Enumerator *X2 = db->scopeList.back().findEnumerator("X2");
+        ASSERT(X2);
+        ASSERT(X2->value_known);
+        ASSERT_EQUALS(X2->value, 2);
+        const Enumerator *X3 = db->scopeList.back().findEnumerator("X3");
+        ASSERT(X3);
+        ASSERT(X3->value_known);
+        ASSERT_EQUALS(X3->value, 3);
+        const Enumerator *X4 = db->scopeList.back().findEnumerator("X4");
+        ASSERT(X4);
+        ASSERT(!X4->value_known);
+        const Enumerator *X5 = db->scopeList.back().findEnumerator("X5");
+        ASSERT(X5);
+        ASSERT(!X5->value_known);
+    }
+
+    void enum9() {
+        GET_SYMBOL_DB("const int x = 7; enum E { X0 = x, X1 };\n");
+        ASSERT(db != nullptr);
+        const Enumerator *X0 = db->scopeList.back().findEnumerator("X0");
+        ASSERT(X0);
+        ASSERT(X0->value_known);
+        ASSERT_EQUALS(X0->value, 7);
+        const Enumerator *X1 = db->scopeList.back().findEnumerator("X1");
+        ASSERT(X1);
+        ASSERT(X1->value_known);
+        ASSERT_EQUALS(X1->value, 8);
+    }
+
     void sizeOfType() {
         // #7615 - crash in Symboldatabase::sizeOfType()
         GET_SYMBOL_DB("enum e;\n"
@@ -6162,6 +6231,17 @@ private:
         GET_SYMBOL_DB("void foo(bool);\n"
                       "void foo(std::string s);\n"
                       "void bar() { foo(\"123\"); }");
+        const Token *foo = Token::findsimplematch(tokenizer.tokens(), "foo ( \"123\" ) ;");
+        ASSERT(foo);
+        ASSERT(foo->function());
+        ASSERT(foo->function()->tokenDef);
+        ASSERT_EQUALS(1, foo->function()->tokenDef->linenr());
+    }
+
+    void findFunction32() {
+        GET_SYMBOL_DB_C("void foo(char *p);\n"
+                        "void bar() { foo(\"123\"); }");
+        (void)db;
         const Token *foo = Token::findsimplematch(tokenizer.tokens(), "foo ( \"123\" ) ;");
         ASSERT(foo);
         ASSERT(foo->function());

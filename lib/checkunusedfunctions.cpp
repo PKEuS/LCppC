@@ -154,13 +154,8 @@ Check::FileInfo *CheckUnusedFunctions::getFileInfo(const Context& ctx) const
             continue;
 
         // Don't care about templates
-        if (ctx.tokenizer->isCPP()) {
-            const Token* retDef = func->retDef;
-            while (retDef && retDef->isName())
-                retDef = retDef->previous();
-            if (retDef && retDef->str() == ">")
-                continue;
-        }
+        if (ctx.tokenizer->isCPP() && func->templateDef != nullptr)
+            continue;
 
         CUF_FileInfo::FunctionUsage& usage = fi->mFunctions[func->name()];
 

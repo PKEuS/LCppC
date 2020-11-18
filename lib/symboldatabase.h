@@ -742,7 +742,7 @@ public:
     enum Type : uint8_t { eConstructor, eCopyConstructor, eMoveConstructor, eOperatorEqual, eDestructor, eFunction, eLambda };
 
     Function(const Tokenizer *mTokenizer, const Token *tok, const Scope *scope, const Token *tokDef, const Token *tokArgDef);
-    explicit Function(const Token *tokenDef);
+    Function(const Token *tokenDef, const std::string &clangType);
 
     const std::string &name() const {
         return tokenDef->str();
@@ -981,6 +981,7 @@ private:
     void hasTrailingReturnType(bool state) {
         setFlag(fHasTrailingReturnType, state);
     }
+    const Token *setFlags(const Token *tok1, const Scope *scope);
 };
 
 class CPPCHECKLIB Scope {

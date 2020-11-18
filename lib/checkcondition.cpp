@@ -438,7 +438,7 @@ void CheckCondition::duplicateCondition()
                 }
             }
             if (tok3->varId() > 0 &&
-                isVariableChanged(scope.classDef->next(), cond2, tok3->varId(), false, mCtx.project, mCtx.tokenizer->isCPP())) {
+                isVariableChanged(scope.classDef->next(), cond2, tok3->valueType() ? tok3->valueType()->pointer : 0, tok3->varId(), false, mCtx.project, mCtx.tokenizer->isCPP())) {
                 modified = true;
                 return ChildrenToVisit::done;
             }
@@ -1429,7 +1429,6 @@ void CheckCondition::alwaysTrueFalse()
 
             // don't warn when condition checks sizeof result
             bool hasSizeof = false;
-            bool hasNonNumber = false;
             visitAstNodes(tok, [&](const Token * tok2) {
                 if (!tok2)
                     return ChildrenToVisit::none;
@@ -1441,11 +1440,10 @@ void CheckCondition::alwaysTrueFalse()
                 }
                 if (tok2->isComparisonOp() || tok2->isArithmeticalOp()) {
                     return ChildrenToVisit::op1_and_op2;
-                } else
-                    hasNonNumber = true;
+                }
                 return ChildrenToVisit::none;
             });
-            if (!hasNonNumber && hasSizeof)
+            if (hasSizeof)
                 continue;
 
             alwaysTrueFalseError(tok, &tok->values().front());

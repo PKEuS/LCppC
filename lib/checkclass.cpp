@@ -1942,7 +1942,9 @@ bool CheckClass::isMemberFunc(const Scope *scope, const Token *tok) const
                     else
                         break;
                 }
-                if (argsPassed == func.argCount() || (argsPassed < func.argCount() && argsPassed >= func.minArgCount()))
+                if (argsPassed == func.argCount() ||
+                    (func.isVariadic() && argsPassed >= (func.argCount() - 1)) ||
+                    (argsPassed < func.argCount() && argsPassed >= func.minArgCount()))
                     return true;
             }
         }

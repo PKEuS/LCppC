@@ -775,9 +775,15 @@ void CheckStl::mismatchingContainerIterator()
                 continue;
             if (val.lifetimeKind != ValueFlow::Value::LifetimeKind::Iterator)
                 continue;
-            if (isSameExpression(true, false, tok, val.tokvalue, mCtx.project->library, false, false))
-                continue;
-            mismatchingContainerIteratorError(tok, iterTok);
+            for (const LifetimeToken& lt:getLifetimeTokens(tok)) {
+                if (lt.inconclusive)
+                    continue;
+                const Token* contTok = lt.token;
+                if (isSameExpression(true, false, contTok, val.tokvalue, mCtx.project->library, false, false))
+                    continue;
+                mismatchingContainerIteratorError(tok, iterTok);
+            }
+
         }
     }
 }

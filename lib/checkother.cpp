@@ -495,7 +495,7 @@ void CheckOther::redundantCopyError(const Token *tok1, const Token* tok2, const 
 void CheckOther::redundantCopyInSwitchError(const Token *tok1, const Token* tok2, const std::string &var)
 {
     const std::vector<const Token *> callstack = { tok1, tok2 };
-    reportError(callstack, Severity::warning, "redundantCopyInSwitch",
+    reportError(callstack, Severity::style, "redundantCopyInSwitch",
                 "$symbol:" + var + "\n"
                 "Buffer '$symbol' is being written before its old content has been used. 'break;' missing?", CWE563, Certainty::safe);
 }
@@ -526,7 +526,7 @@ void CheckOther::redundantInitializationError(const Token *tok1, const Token* to
 void CheckOther::redundantAssignmentInSwitchError(const Token *tok1, const Token* tok2, const std::string &var)
 {
     const ErrorPath errorPath = { ErrorPathItem(tok1, "$symbol is assigned"), ErrorPathItem(tok2, "$symbol is overwritten") };
-    reportError(errorPath, Severity::warning, "redundantAssignInSwitch",
+    reportError(errorPath, Severity::style, "redundantAssignInSwitch",
                 "$symbol:" + var + "\n"
                 "Variable '$symbol' is reassigned a value before the old one has been used. 'break;' missing?", CWE563, Certainty::safe);
 }
@@ -664,7 +664,7 @@ void CheckOther::checkRedundantAssignmentInSwitch()
 
 void CheckOther::redundantBitwiseOperationInSwitchError(const Token *tok, const std::string &varname)
 {
-    reportError(tok, Severity::warning,
+    reportError(tok, Severity::style,
                 "redundantBitwiseOperationInSwitch",
                 "$symbol:" + varname + "\n"
                 "Redundant bitwise operation on '$symbol' in 'switch' statement. 'break;' missing?");
@@ -2063,7 +2063,7 @@ void CheckOther::checkDuplicateExpression()
                         if (assignment && warningEnabled)
                             selfAssignmentError(tok, tok->astOperand1()->expressionString());
                         else if (styleEnabled) {
-                            if (mCtx.tokenizer->isCPP() && mCtx.project->standards.cpp==Standards::CPP11 && tok->str() == "==") {
+                            if (mCtx.tokenizer->isCPP() && mCtx.project->standards.cpp >= Standards::CPP11 && tok->str() == "==") {
                                 const Token* parent = tok->astParent();
                                 while (parent && parent->astParent()) {
                                     parent = parent->astParent();
@@ -3159,7 +3159,7 @@ void CheckOther::knownArgumentError(const Token *tok, const Token *ftok, const V
     const std::string &expr = tok->expressionString();
     const std::string &fun = ftok->str();
 
-    const char *id;;
+    const char *id;
     std::string errmsg = "Argument '" + expr + "' to function " + fun + " is always " + std::to_string(intvalue) + ". ";
     if (!isVariableExpressionHidden) {
         id = "knownArgument";

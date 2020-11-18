@@ -88,6 +88,8 @@ private:
 
         TEST_CASE(syntax_case_default);
 
+        TEST_CASE(removePragma);
+
         TEST_CASE(foreach);     // #3690
         TEST_CASE(ifconstexpr);
 
@@ -409,6 +411,8 @@ private:
         TEST_CASE(unknownMacroBeforeReturn);
 
         TEST_CASE(cppcast);
+
+        TEST_CASE(checkHeader1);
     }
 
     std::string tokenizeAndStringify(const char code[], bool expand = true, Project::PlatformType platform = Project::Native, const char* filename = "test.cpp", Standards::cppstd_t cpp = Standards::CPP20) {
@@ -467,13 +471,13 @@ private:
             return "";
     }
 
-    std::string tokenizeAndStringify(const char code[], const Project& project) {
+    std::string tokenizeAndStringify(const char code[], const Project& project, const char filename[] = "test.cpp") {
         errout.str("");
 
         // tokenize..
         Tokenizer tokenizer(&settings0, &project, this);
         std::istringstream istr(code);
-        tokenizer.tokenize(istr, "test.cpp");
+        tokenizer.tokenize(istr, filename);
         if (!tokenizer.tokens())
             return "";
         return tokenizer.tokens()->stringifyList(false, true, false, true, false, nullptr, nullptr);
@@ -823,6 +827,21 @@ private:
         //valid, when 'x' and 'y' are constexpr.
         tokenizeAndStringify("void f() {switch (n) { case sqrt(x+y): z(); break;}}");
         ASSERT_EQUALS("", errout.str());
+    }
+
+    void removePragma() {
+        const char code[] = "_Pragma(\"abc\") int x;";
+        Project p;
+
+        p.standards.c = Standards::C89;
+        ASSERT_EQUALS("_Pragma ( \"abc\" ) int x ;", tokenizeAndStringify(code, p, "test.c"));
+        p.standards.c = Standards::CLatest;
+        ASSERT_EQUALS("int x ;", tokenizeAndStringify(code, p, "test.c"));
+
+        p.standards.cpp = Standards::CPP03;
+        ASSERT_EQUALS("_Pragma ( \"abc\" ) int x ;", tokenizeAndStringify(code, p, "test.cpp"));
+        p.standards.cpp = Standards::CPPLatest;
+        ASSERT_EQUALS("int x ;", tokenizeAndStringify(code, p, "test.cpp"));
     }
 
     void foreach () {
@@ -5713,6 +5732,9 @@ private:
         ASSERT_EQUALS("unoRef:: var0(", testAst(code1));
 
         ASSERT_EQUALS("vary=", testAst("std::string var = y;"));
+
+        // create ast for decltype
+        ASSERT_EQUALS("decltypex( var1=", testAst("decltype(x) var = 1;"));
     }
 
     void astunaryop() { // unary operators
@@ -5727,6 +5749,7 @@ private:
         ASSERT_EQUALS("x(throw", testAst(";throw x();"));
         ASSERT_EQUALS("a*bc:?return", testAst("return *a ? b : c;"));
         ASSERT_EQUALS("xy*--=", testAst("x = -- * y;"));
+        ASSERT_EQUALS("x(throw", testAst(";throw (foo) x;")); // #9955
 
         // Unary :: operator
         ASSERT_EQUALS("abcd::12,(e/:?=", testAst("a = b ? c : ::d(1,2) / e;"));
@@ -5991,6 +6014,12 @@ private:
 
         const char code6[] = "void foo() { dostuff(a, .x=0); }";
         ASSERT_THROW(tokenizeAndStringify(code6), InternalError);
+
+        const char code7[] = "void foo() { dostuff(ZEND_NUM_ARGS() TSRMLS_CC, x, y); }"; // #9476
+        ASSERT_THROW(tokenizeAndStringify(code7), InternalError);
+
+        const char code8[] = "void foo() { a = [](int x, decltype(vec) y){}; }";
+        ASSERT_NO_THROW(tokenizeAndStringify(code8));
     }
 
     void findGarbageCode() { // Test Tokenizer::findGarbageCode()
@@ -6438,6 +6467,61 @@ private:
         for (const Token *tok = tokenizer.tokens(); tok; tok = tok->next()) {
             ASSERT_EQUALS(tok->str() == "(", tok->isCast());
         }
+    }
+
+    std::string checkHeaders(const char code[], bool f) {
+        // Clear the error buffer..
+        errout.str("");
+
+        Project project;
+        project.checkHeaders = f;
+
+        // Raw tokens..
+        std::vector<std::string> files(1, "test.cpp");
+        std::istringstream istr(code);
+        const simplecpp::TokenList tokens1(istr, files, files[0]);
+
+        // Preprocess..
+        simplecpp::TokenList tokens2(files);
+        std::map<std::string, simplecpp::TokenList*> filedata;
+        simplecpp::preprocess(tokens2, tokens1, files, filedata, simplecpp::DUI());
+
+        Preprocessor preprocessor(settings0, project, nullptr);
+        preprocessor.setDirectives(tokens1);
+
+        // Tokenizer..
+        Tokenizer tokenizer(&settings0, &project, this);
+        tokenizer.createTokens(std::move(tokens2));
+        tokenizer.simplifyTokens0("");
+        tokenizer.simplifyTokens1();
+
+        return tokenizer.tokens()->stringifyList();
+    }
+
+    void checkHeader1() {
+        // #9977
+        const char code[] = "# 1 \"test.h\"\n"
+                            "struct A {\n"
+                            "    int a = 1;\n"
+                            "    void f() { g(1); }\n"
+                            "    template <typename T> void g(T x) { a = 2; }\n" // <- template is used and should be kept
+                            "};";
+
+        ASSERT_EQUALS("\n\n##file 1\n"
+                      "1: struct A {\n"
+                      "2: int a ; a = 1 ;\n"
+                      "3: void f ( ) { g<int> ( 1 ) ; }\n"
+                      "4: void g<int> ( int x ) ;\n"
+                      "5: } ; void A :: g<int> ( int x ) { a = 2 ; }\n",
+                      checkHeaders(code, true));
+
+        ASSERT_EQUALS("\n\n##file 1\n"
+                      "1: struct A {\n"
+                      "2: int a ; a = 1 ;\n"
+                      "3: void f ( ) ;\n"
+                      "4:\n"
+                      "5: } ;\n",
+                      checkHeaders(code, false));
     }
 };
 

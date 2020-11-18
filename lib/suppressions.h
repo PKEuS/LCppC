@@ -91,10 +91,19 @@ public:
         bool isSuppressed(const ErrorMessage &errmsg) const;
 
         bool isMatch(const ErrorMessage &errmsg);
+
         std::string getText() const;
 
         bool isLocal() const {
             return !fileName.empty() && fileName.find_first_of("?*") == std::string::npos;
+        }
+
+        bool isSameParameters(const Suppression &other) const {
+            return errorId == other.errorId &&
+                   fileName == other.fileName &&
+                   lineNumber == other.lineNumber &&
+                   symbolName == other.symbolName &&
+                   thisAndNextLine == other.thisAndNextLine;
         }
 
         std::string errorId;
@@ -145,6 +154,13 @@ public:
     std::string addSuppression(const Suppression &suppression);
 
     /**
+     * @brief Combine list of suppressions into the current suppressions.
+     * @param suppressions list of suppression details
+     * @return error message. empty upon success
+     */
+    std::string addSuppressions(const std::list<Suppression> &suppressions);
+
+    /**
      * @brief Returns true if this message should not be shown to the user.
      * @param errmsg error message
      * @return true if this error is suppressed.
@@ -175,6 +191,12 @@ public:
      * @return list of unmatched suppressions
      */
     std::list<Suppression> getUnmatchedGlobalSuppressions() const;
+
+    /**
+     * @brief Returns list of all suppressions.
+     * @return list of suppressions
+     */
+    std::list<Suppression> getSuppressions() const;
 
 private:
     /** @brief List of error which the user doesn't want to see. */

@@ -217,7 +217,12 @@ const Token * astIsVariableComparison(const Token *tok, const std::string &comp,
             ret = tok->astOperand1();
         }
     } else if (comp == "!=" && rhs == "0") {
-        ret = tok;
+        if (tok->str() == "!") {
+            ret = tok->astOperand1();
+            // handle (!(x==0)) as (x!=0)
+            astIsVariableComparison(ret, "==", "0", &ret);
+        } else
+            ret = tok;
     } else if (comp == "==" && rhs == "0") {
         if (tok->str() == "!") {
             ret = tok->astOperand1();
@@ -303,6 +308,24 @@ static bool hasToken(const Token * startTok, const Token * stopTok, const Token 
             return true;
     }
     return false;
+}
+
+template <class T, REQUIRES("T must be a Token class", std::is_convertible<T*, const Token*>)>
+static T* previousBeforeAstLeftmostLeafGeneric(T* tok)
+{
+    T* leftmostLeaf = tok;
+    while (leftmostLeaf && leftmostLeaf->astOperand1())
+        leftmostLeaf = leftmostLeaf->astOperand1();
+    return leftmostLeaf->previous();
+}
+
+const Token* previousBeforeAstLeftmostLeaf(const Token* tok)
+{
+    return previousBeforeAstLeftmostLeafGeneric(tok);
+}
+Token* previousBeforeAstLeftmostLeaf(Token* tok)
+{
+    return previousBeforeAstLeftmostLeafGeneric(tok);
 }
 
 template <class T, REQUIRES("T must be a Token class", std::is_convertible<T*, const Token*>)>
@@ -1358,6 +1381,8 @@ const Token * getTokenArgumentFunction(const Token * tok, int& argn)
             parent = parent->astParent();
         while (parent && parent->isCast())
             parent = parent->astParent();
+        if (Token::Match(parent, "[+-]") && parent->valueType() && parent->valueType()->pointer)
+            parent = parent->astParent();
 
         // passing variable to subfunction?
         if (Token::Match(parent, "[(,{]"))
@@ -1535,12 +1560,12 @@ bool isVariableChangedByFunctionCall(const Token* tok, unsigned int indirect, co
     return isVariableChangedByFunctionCall(tok, indirect, project, &inconclusive) || inconclusive;
 }
 
-bool isVariableChanged(const Token *tok, int indirect, const Project* project, bool cpp, int depth)
+bool isVariableChanged(const Token *tok, unsigned int indirect, const Project* project, bool cpp, int depth)
 {
     if (!tok)
         return false;
     const Token *tok2 = tok;
-    int derefs = 0;
+    unsigned int derefs = 0;
     while (Token::simpleMatch(tok2->astParent(), "*") ||
            (Token::simpleMatch(tok2->astParent(), ".") && !Token::simpleMatch(tok2->astParent()->astParent(), "(")) ||
            (Token::simpleMatch(tok2->astParent(), "[") && tok2 == tok2->astParent()->astOperand1())) {
@@ -1631,7 +1656,7 @@ bool isVariableChanged(const Token *start, const Token *end, const unsigned int 
     return findVariableChanged(start, end, 0, exprid, globalvar, project, cpp, depth) != nullptr;
 }
 
-bool isVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int exprid, bool globalvar, const Project* project, bool cpp, int depth)
+bool isVariableChanged(const Token *start, const Token *end, unsigned int indirect, const unsigned int exprid, bool globalvar, const Project* project, bool cpp, int depth)
 {
     return findVariableChanged(start, end, indirect, exprid, globalvar, project, cpp, depth) != nullptr;
 }
@@ -1667,7 +1692,7 @@ static std::function<R()> memoize(F f)
     };
 }
 
-Token* findVariableChanged(Token *start, const Token *end, int indirect, const unsigned int exprid, bool globalvar, const Project *project, bool cpp, int depth)
+Token* findVariableChanged(Token *start, const Token *end, unsigned int indirect, const unsigned int exprid, bool globalvar, const Project *project, bool cpp, int depth)
 {
     if (!precedes(start, end))
         return nullptr;
@@ -1704,7 +1729,7 @@ Token* findVariableChanged(Token *start, const Token *end, int indirect, const u
     return nullptr;
 }
 
-const Token* findVariableChanged(const Token *start, const Token *end, int indirect, const unsigned int exprid, bool globalvar, const Project* project, bool cpp, int depth)
+const Token* findVariableChanged(const Token *start, const Token *end, unsigned int indirect, const unsigned int exprid, bool globalvar, const Project* project, bool cpp, int depth)
 {
     return findVariableChanged(const_cast<Token*>(start), end, indirect, exprid, globalvar, project, cpp, depth);
 }

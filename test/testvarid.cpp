@@ -203,6 +203,12 @@ private:
         TEST_CASE(varidclass20);   // #7578: int (*p)[2]
         TEST_CASE(varid_classnameshaddowsvariablename); // #3990
 
+        TEST_CASE(varidenum1);
+        TEST_CASE(varidenum2);
+        TEST_CASE(varidenum3);
+        TEST_CASE(varidenum4);
+        TEST_CASE(varidenum5);
+
         TEST_CASE(varidnamespace1);
         TEST_CASE(varidnamespace2);
         TEST_CASE(usingNamespace1);
@@ -212,6 +218,7 @@ private:
         TEST_CASE(setVarIdStructMembers1);
 
         TEST_CASE(decltype1);
+        TEST_CASE(decltype2);
 
         TEST_CASE(exprid1);
     }
@@ -3104,6 +3111,70 @@ private:
         ASSERT_EQUALS(expected, tokenize(code));
     }
 
+    void varidenum1() {
+        const char code[] = "const int eStart = 6;\n"
+                            "enum myEnum {\n"
+                            "  A = eStart;\n"
+                            "};\n";
+        const char expected[] = "1: const int eStart@1 = 6 ;\n"
+                                "2: enum myEnum {\n"
+                                "3: A = eStart@1 ;\n"
+                                "4: } ;\n";
+        ASSERT_EQUALS(expected, tokenize(code));
+    }
+
+    void varidenum2() {
+        const char code[] = "const int eStart = 6;\n"
+                            "enum myEnum {\n"
+                            "  A = f(eStart);\n"
+                            "};\n";
+        const char expected[] = "1: const int eStart@1 = 6 ;\n"
+                                "2: enum myEnum {\n"
+                                "3: A = f ( eStart@1 ) ;\n"
+                                "4: } ;\n";
+        ASSERT_EQUALS(expected, tokenize(code));
+    }
+
+    void varidenum3() {
+        const char code[] = "const int eStart = 6;\n"
+                            "enum myEnum {\n"
+                            "  A = f(eStart, x);\n"
+                            "};\n";
+        const char expected[] = "1: const int eStart@1 = 6 ;\n"
+                                "2: enum myEnum {\n"
+                                "3: A = f ( eStart@1 , x ) ;\n"
+                                "4: } ;\n";
+        ASSERT_EQUALS(expected, tokenize(code));
+    }
+
+    void varidenum4() {
+        const char code[] = "const int eStart = 6;\n"
+                            "enum myEnum {\n"
+                            "  A = f(x, eStart);\n"
+                            "};\n";
+        const char expected[] = "1: const int eStart@1 = 6 ;\n"
+                                "2: enum myEnum {\n"
+                                "3: A = f ( x , eStart@1 ) ;\n"
+                                "4: } ;\n";
+        ASSERT_EQUALS(expected, tokenize(code));
+    }
+
+    void varidenum5() {
+        const char code[] = "const int eStart = 6;\n"
+                            "enum myEnum {\n"
+                            "  A = f(x, eStart, y);\n"
+                            "};\n";
+        const char expected[] = "1: const int eStart@1 = 6 ;\n"
+                                "2: enum myEnum {\n"
+                                "3: A = f ( x , eStart@1 , y ) ;\n"
+                                "4: } ;\n";
+        const char current[] = "1: const int eStart@1 = 6 ;\n"
+                               "2: enum myEnum {\n"
+                               "3: A = f ( x , eStart , y ) ;\n"
+                               "4: } ;\n";
+        TODO_ASSERT_EQUALS(expected, current, tokenize(code));
+    }
+
     void varid_classnameshaddowsvariablename() {
         const char code[] = "class Data;\n"
                             "void strange_declarated(const Data& Data);\n"
@@ -3226,6 +3297,12 @@ private:
     void decltype1() {
         const char code[] = "void foo(int x, decltype(A::b) *p);";
         const char expected[] = "1: void foo ( int x@1 , decltype ( A :: b ) * p@2 ) ;\n";
+        ASSERT_EQUALS(expected, tokenize(code));
+    }
+
+    void decltype2() {
+        const char code[] = "int x; decltype(x) y;";
+        const char expected[] = "1: int x@1 ; decltype ( x@1 ) y@2 ;\n";
         ASSERT_EQUALS(expected, tokenize(code));
     }
 
